@@ -53,16 +53,16 @@ Automation summaries must include:
 - validation status and blockers
 - draft Harness id, version, digest, and draft path
 - approval actor and confirmation when present
-- publication Harness id, version, Harness root, and Catalog root when present
-- Catalog id, Catalog digest, entry path, and entry digest after publication
+- publication Harness id, version, Harness root, Catalog root, and Registry file when present
+- Registry digest, Catalog id, Catalog digest, entry path, and entry digest after publication
 - `nextAction`
 
 ## EvoPilot Hand-Off
 
-After publication, do not call EvoPilot from this CLI. Report the Catalog directory to the EvoPilot operator:
+After publication, do not call EvoPilot from this CLI. Report the Registry file to the EvoPilot operator:
 
 ```text
-EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published
+EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
 ```
 
 EvoPilot planning must then report `plan.selectedHarness` from its own API/CLI response.

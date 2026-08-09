@@ -73,10 +73,10 @@ node src/index.mjs evolution publish <evolution-id> --json
 
 ## EvoPilot Boundary
 
-After publication, EvoPilot reads the `published/` directory dynamically:
+After publication, EvoPilot reads `harness-registry.yaml` dynamically:
 
 ```bash
-EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published
+EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
 ```
 
 EvoPilot records the selected published Harness during goal planning as `plan.selectedHarness`. It does not copy Harness files into its own lifecycle store and does not mutate this repository.

@@ -67,16 +67,22 @@ The CLI redacts common token, password, secret, API key, authorization, and emai
 
 ## EvoPilot Does Not Select A Harness
 
-Verify the published Catalog first:
+Verify the Registry first:
+
+```bash
+node src/index.mjs registry validate --registry harness-registry.yaml --json
+```
+
+Then verify the published Catalog:
 
 ```bash
 node src/index.mjs catalog validate --source published --json
 ```
 
-Then verify EvoPilot is configured with the correct directory:
+Then verify EvoPilot is configured with the correct Registry file:
 
 ```bash
-EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published
+EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
 ```
 
 If the Catalog is valid but no Harness matches, evolve or create a better Harness in `evopilot-harness`, publish it, and regenerate the EvoPilot goal plan.

@@ -2,9 +2,9 @@
 
 > Independent Harness Factory, lifecycle CLI, Harness Hub, and published Catalog for EvoPilot-compatible domain templates.
 
-Current release: `1.1.1` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
+Current release: `1.2.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
 
-[Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
+[Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Registry Contract](docs/reference/registry-contract.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
 
 `evopilot-harness` owns Harness authoring, source-driven evolution, review, approval, versioning, publication, and the standalone Harness Hub UI. EvoPilot consumes the result by reading published Catalog directories at goal-plan time. EvoPilot does not import, publish, approve, or evolve Harness definitions.
 
@@ -14,11 +14,13 @@ Current release: `1.1.1` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=
 |---|---|
 | Publish a usable Harness Catalog | `node src/index.mjs catalog publish --source harnesses --out published --json` |
 | Validate a Catalog before EvoPilot uses it | `node src/index.mjs catalog validate --source published --json` |
+| Publish a multi-Catalog Registry | `node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json` |
+| Validate Registry and enabled Catalog roots | `node src/index.mjs registry validate --registry harness-registry.yaml --json` |
 | Inspect and validate source Harness packs | `node src/index.mjs harness list --json` |
 | Evolve a Harness from a project, attachment, log, or note | `node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
 | Review, approve, and publish generated drafts | `node src/index.mjs evolution review <id> --json` |
 | Run the independent Harness Hub | `node src/index.mjs hub serve --catalog published --source harnesses` |
-| Let EvoPilot read the published result | `EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published` |
+| Let EvoPilot read published Harnesses | `EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml` |
 
 ## Quick Start
 
@@ -60,7 +62,8 @@ flowchart LR
   Factory --> Draft["Draft Harness pack"]
   Draft --> Review["Review and approval"]
   Review --> Catalog["published/CATALOG.md"]
-  Catalog --> EvoPilot["EvoPilot goal planning"]
+  Catalog --> Registry["harness-registry.yaml"]
+  Registry --> EvoPilot["EvoPilot goal planning"]
   Catalog --> Hub["Harness Hub UI"]
   Hub --> Dashboard["Dashboard iframe container"]
   EvoPilot --> Selected["plan.selectedHarness evidence"]
@@ -68,8 +71,9 @@ flowchart LR
 
 The boundary is intentionally strict:
 
-- `evopilot-harness` manages Harness lifecycle and owns `CATALOG.md`.
-- EvoPilot dynamically reads configured published Catalog directories and records `selectedHarness` evidence.
+- `evopilot-harness` manages Harness lifecycle, owns `CATALOG.md`, and publishes `harness-registry.yaml`.
+- `harness-registry.yaml` only lists enabled Catalog roots, priority, release, and optional expected digest. It does not duplicate Harness entries.
+- EvoPilot dynamically reads the Registry or legacy Catalog directories and records `selectedHarness` evidence.
 - Dashboard can embed the Harness Hub, but it does not own Harness state.
 - Harness definitions are EvoPilot-compatible contracts, not a universal control-plane format.
 
@@ -83,13 +87,15 @@ The boundary is intentionally strict:
 | EvoPilot integrators | [EvoPilot Integration](docs/guides/evopilot-integration.md), [Catalog Boundary](docs/architecture/catalog-consumption-boundary.md) |
 | Dashboard integrators | [Harness Hub Integration](docs/guides/harness-hub-integration.md) |
 | Release operators | [Release Management](docs/operations/release-management.md), [Deployment](docs/operations/deployment.md) |
-| Schema reviewers | [Catalog Contract](docs/reference/catalog-contract.md), [Template Schema](docs/reference/template-schema.md) |
+| Schema reviewers | [Registry Contract](docs/reference/registry-contract.md), [Catalog Contract](docs/reference/catalog-contract.md), [Template Schema](docs/reference/template-schema.md) |
 
 ## Development
 
 ```bash
 npm run catalog:publish
 npm run catalog:validate
+npm run registry:publish
+npm run registry:validate
 npm run hub:snapshot
 npm run docs:links
 npm test
@@ -108,6 +114,7 @@ npm run verify:release-artifact
 ```text
 harnesses/             Source Harness packs maintained by this project
 published/             Usable Catalog directory read by EvoPilot
+harness-registry.yaml  Optional multi-Catalog discovery config read by EvoPilot
 src/index.mjs          CLI, Catalog publisher, evolution engine, and Hub server
 ui/harness-hub/        Standalone browser UI
 docs/                  Human, AI-agent, architecture, operation, and reference docs

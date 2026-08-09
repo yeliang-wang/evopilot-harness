@@ -1,0 +1,11 @@
+schema: evopilot-harness-registry/v1
+generatedBy: evopilot-harness
+generatedAt: 2026-08-09T05:24:19.115Z
+catalogs:
+  - id: evopilot-public-harness-catalog
+    enabled: true
+    priority: 100
+    root: ./published
+    release: v1.2.0
+    expectedCatalogDigest: sha256:81fc4d635b7d1a292c42ec97a3444995ec95e90281ceeec1f7706e286e640a5c
+    description: Published Harness Catalog evopilot-public-harness-catalog

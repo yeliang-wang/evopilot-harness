@@ -12,11 +12,13 @@ node src/index.mjs --help
 
 Continue only when Node.js is `>=22` and the CLI prints the expected command groups.
 
-## 2. Publish And Validate The Catalog
+## 2. Publish And Validate The Catalog And Registry
 
 ```bash
 node src/index.mjs catalog publish --source harnesses --out published --json
 node src/index.mjs catalog validate --source published --json
+node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json
+node src/index.mjs registry validate --registry harness-registry.yaml --json
 ```
 
 Expected result:
@@ -24,14 +26,16 @@ Expected result:
 ```text
 catalog publish status=PUBLISHED
 catalog validate status=VALIDATED
+registry publish status=PUBLISHED
+registry validate status=VALIDATED
 ```
 
-The `published/` directory must contain `CATALOG.md` with a fenced `yaml evopilot-harness-catalog` block.
+The `published/` directory must contain `CATALOG.md` with a fenced `yaml evopilot-harness-catalog` block. `harness-registry.yaml` points EvoPilot at one or more Catalog roots and must not duplicate Harness entries.
 
 ## 3. Start Harness Hub
 
 ```bash
-node src/index.mjs hub serve --catalog published --source harnesses
+node src/index.mjs hub serve --catalog published --registry harness-registry.yaml --source harnesses
 ```
 
 Open:
@@ -70,10 +74,10 @@ node src/index.mjs evolution publish <evolution-id> --json
 
 ## 5. Configure EvoPilot
 
-EvoPilot reads the published directory at use time:
+EvoPilot reads the Registry at use time:
 
 ```bash
-EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published
+EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
 ```
 
 New or regenerated EvoPilot plans can bind newer Harness versions. Existing plans keep their recorded `selectedHarness` digests.

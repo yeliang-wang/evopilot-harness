@@ -24,6 +24,58 @@ test("publishes and validates a Harness Catalog", () => {
   assert.equal(validation.status, "VALIDATED");
 });
 
+test("publishes and validates a Harness Registry without duplicating Catalog entries", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-registry-"));
+  const catalogRoot = path.join(tmp, "published");
+  const registryPath = path.join(tmp, "harness-registry.yaml");
+  const catalog = runJson(["catalog", "publish", "--source", path.join(root, "harnesses"), "--out", catalogRoot, "--json"]);
+  const registry = runJson([
+    "registry",
+    "publish",
+    "--catalog", catalogRoot,
+    "--registry", registryPath,
+    "--priority", "250",
+    "--json"
+  ]);
+  assert.equal(registry.status, "PUBLISHED");
+  assert.equal(registry.catalogDigest, catalog.catalogDigest);
+  assert.ok(fs.existsSync(registryPath));
+  const registryYaml = fs.readFileSync(registryPath, "utf8");
+  assert.match(registryYaml, /schema: evopilot-harness-registry\/v1/);
+  assert.match(registryYaml, /root: \.\/published/);
+  assert.match(registryYaml, /priority: 250/);
+  assert.doesNotMatch(registryYaml, /\nentries:/);
+
+  const validation = runJson(["registry", "validate", "--registry", registryPath, "--json"]);
+  assert.equal(validation.status, "VALIDATED");
+  assert.equal(validation.catalogCount, 1);
+  assert.equal(validation.enabledCount, 1);
+  assert.equal(validation.catalogs[0].status, "VALIDATED");
+});
+
+test("rejects Harness Registry files that duplicate Catalog entries", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-registry-bad-"));
+  const catalogRoot = path.join(tmp, "published");
+  const registryPath = path.join(tmp, "harness-registry.yaml");
+  runJson(["catalog", "publish", "--source", path.join(root, "harnesses"), "--out", catalogRoot, "--json"]);
+  fs.writeFileSync(registryPath, [
+    "schema: evopilot-harness-registry/v1",
+    "catalogs:",
+    "  - id: bad-catalog",
+    "    enabled: true",
+    "    priority: 10",
+    "    root: ./published",
+    "    entries:",
+    "      - name: should-not-be-here",
+    ""
+  ].join("\n"));
+  const run = spawnSync(process.execPath, [cli, "registry", "validate", "--registry", registryPath, "--json"], { encoding: "utf8" });
+  assert.equal(run.status, 2, run.stderr || run.stdout);
+  const validation = JSON.parse(run.stdout);
+  assert.equal(validation.status, "FAILED");
+  assert.ok(validation.blockers.some((blocker) => blocker.includes("no-entries")));
+});
+
 test("supports atomic Harness lifecycle commands", () => {
   const list = runJson(["harness", "list", "--source", path.join(root, "harnesses"), "--json"]);
   assert.equal(list.status, "READY");
@@ -87,11 +139,16 @@ test("one-click evolve auto-matches, approves, publishes, and keeps JSON parseab
 
 test("Harness Hub snapshot exposes Catalog, lifecycle commands, source types, and evolution runs", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-hub-"));
+  const catalogRoot = path.join(tmp, "published");
+  const registryPath = path.join(tmp, "harness-registry.yaml");
   const snapshotFile = path.join(tmp, "snapshot.json");
+  runJson(["catalog", "publish", "--source", path.join(root, "harnesses"), "--out", catalogRoot, "--json"]);
+  runJson(["registry", "publish", "--catalog", catalogRoot, "--registry", registryPath, "--json"]);
   const result = runJson([
     "hub",
     "snapshot",
-    "--catalog", path.join(root, "published"),
+    "--catalog", catalogRoot,
+    "--registry", registryPath,
     "--source", path.join(root, "harnesses"),
     "--data-root", path.join(tmp, "data"),
     "--out", snapshotFile,
@@ -100,6 +157,8 @@ test("Harness Hub snapshot exposes Catalog, lifecycle commands, source types, an
 
   assert.equal(result.schema, "evopilot-harness-hub-snapshot/v1");
   assert.equal(result.status, "READY");
+  assert.equal(result.registry.status, "VALIDATED");
+  assert.ok(result.registry.catalogs.some((catalog) => catalog.id === "evopilot-public-harness-catalog"));
   assert.ok(result.catalog.entryCount >= 2);
   assert.ok(result.harnesses.some((harness) => harness.id === "database-product-harness" && harness.commands.evolve.includes("evopilot-harness evolve")));
   assert.ok(result.sourceTypes.some((source) => source.id === "production-log"));

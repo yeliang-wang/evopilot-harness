@@ -21,6 +21,7 @@
 
 - [Source To Harness](guides/source-to-harness.md) - convert source projects, attachments, logs, and notes into a Harness draft.
 - [Harness Evolution](guides/harness-evolution.md) - lifecycle from source collection through approval and publication.
+- [Registry Contract](reference/registry-contract.md) - `harness-registry.yaml` discovery file and multi-Catalog rules.
 - [Catalog Contract](reference/catalog-contract.md) - `CATALOG.md` block, directory shape, and validation rules.
 - [Template Schema](reference/template-schema.md) - required Harness template fields.
 
@@ -28,7 +29,7 @@
 
 - [Architecture](architecture/README.md) - architecture entry point.
 - [Overview](architecture/overview.md) - system model and repository boundary.
-- [Catalog Consumption Boundary](architecture/catalog-consumption-boundary.md) - how EvoPilot reads published Catalog directories.
+- [Catalog Consumption Boundary](architecture/catalog-consumption-boundary.md) - how EvoPilot reads the Registry and published Catalog directories.
 - [EvoPilot Integration](guides/evopilot-integration.md) - configure EvoPilot and verify selected Harness evidence.
 - [Selected Harness Binding](reference/selected-harness-binding.md) - fields recorded by EvoPilot during goal planning.
 
@@ -41,6 +42,7 @@
 
 ## Releases
 
+- [1.2.0](releases/1.2.0.md)
 - [1.1.1](releases/1.1.1.md)
 - [1.1.0](releases/1.1.0.md)
 - [1.0.0](releases/1.0.0.md)

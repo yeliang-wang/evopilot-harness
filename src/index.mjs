@@ -6,6 +6,7 @@ import path from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 const CATALOG_BLOCK = "evopilot-harness-catalog";
+const REGISTRY_SCHEMA = "evopilot-harness-registry/v1";
 const DEFAULT_COMPATIBLE_EVOPILOT = ">=3.0.0";
 const DEFAULT_DATA_ROOT = ".evopilot-harness";
 const EVOLUTION_STATUSES = ["CREATED", "SOURCES_COLLECTED", "ANALYZED", "REVIEW_REQUIRED", "APPROVED", "PUBLISHED", "BLOCKED"];
@@ -20,6 +21,8 @@ async function main(argv) {
   }
   if (group === "catalog" && action === "publish") return publishCatalog(args);
   if (group === "catalog" && action === "validate") return validateCatalog(args);
+  if (group === "registry" && action === "publish") return publishRegistry(args);
+  if (group === "registry" && action === "validate") return validateRegistry(args);
   if (group === "harness" && action === "list") return listHarnesses(args);
   if (group === "harness" && action === "inspect") return inspectHarness(args, idArg);
   if (group === "harness" && action === "validate") return validateHarness(args, idArg);
@@ -36,7 +39,196 @@ async function main(argv) {
   if (group === "evolve") return oneClickEvolve(args);
   if (group === "hub" && action === "snapshot") return hubSnapshot(args);
   if (group === "hub" && action === "serve") return serveHub(args);
-  throw usage("Use: evopilot-harness <catalog|harness|evolution|evolve> --help.");
+  throw usage("Use: evopilot-harness <catalog|registry|harness|evolution|evolve|hub> --help.");
+}
+
+function publishRegistry(args) {
+  const registryPath = registryFilePath(args);
+  const catalogRoot = hubCatalogRoot(args);
+  const catalogPath = path.join(catalogRoot, "CATALOG.md");
+  if (!fs.existsSync(catalogPath)) throw usage(`CATALOG.md was not found in ${catalogRoot}. Run catalog publish first.`);
+  const markdown = fs.readFileSync(catalogPath, "utf8");
+  const block = extractCatalogBlock(markdown);
+  if (!block) throw usage(`CATALOG.md must contain a non-empty ${CATALOG_BLOCK} YAML block.`);
+  const parsed = parseYaml(block);
+  const catalogId = safeId(stringOption(args, "catalog-id") ?? stringOption(args, "id") ?? parsed?.catalogId ?? path.basename(catalogRoot));
+  const existing = readRegistryFileIfExists(registryPath);
+  const catalogs = Array.isArray(existing.catalogs) ? existing.catalogs.filter((catalog) => isRecord(catalog)) : [];
+  const updatedRef = {
+    id: catalogId,
+    enabled: args.options.disabled ? false : true,
+    priority: numberOption(args, "priority", 100),
+    root: stringOption(args, "root") ?? portableCatalogRoot(registryPath, catalogRoot),
+    release: stringOption(args, "release") ?? `v${readPackageVersion()}`,
+    expectedCatalogDigest: stringOption(args, "expected-catalog-digest") ?? digestText(markdown),
+    description: stringOption(args, "description") ?? `Published Harness Catalog ${catalogId}`,
+    owner: stringOption(args, "owner")
+  };
+  const nextCatalogs = catalogs
+    .filter((catalog) => safeId(catalog.id) !== catalogId)
+    .concat(updatedRef)
+    .map(compactRecord)
+    .sort(compareRegistryCatalogRefs);
+  const registry = compactRecord({
+    schema: REGISTRY_SCHEMA,
+    generatedBy: "evopilot-harness",
+    generatedAt: generatedTimestamp(args),
+    catalogs: nextCatalogs
+  });
+  fs.mkdirSync(path.dirname(registryPath), { recursive: true });
+  fs.writeFileSync(registryPath, stringifyYaml(registry), "utf8");
+  const result = {
+    schema: "evopilot-harness-registry-publish-result/v1",
+    status: "PUBLISHED",
+    registryPath,
+    registryDigest: digestText(fs.readFileSync(registryPath, "utf8")),
+    catalogId,
+    catalogRoot,
+    catalogDigest: digestText(markdown),
+    catalogCount: nextCatalogs.length,
+    nextAction: "configure-evopilot-with-EVOPILOT_HARNESS_REGISTRY_CONFIG"
+  };
+  printResult(args, result, `registry=${registryPath} catalogs=${nextCatalogs.length}`);
+  return 0;
+}
+
+function validateRegistry(args) {
+  const registryPath = registryFilePath(args);
+  const result = validateRegistryResult(registryPath);
+  printResult(args, result, `registry=${registryPath} status=${result.status} catalogs=${result.catalogCount}`);
+  return result.blockers.length === 0 ? 0 : 2;
+}
+
+function validateRegistryResult(registryPath) {
+  const checks = [];
+  const catalogResults = [];
+  let registry;
+  if (!fs.existsSync(registryPath)) {
+    checks.push({ id: "registry-file", status: "FAIL", evidence: [`missing=${registryPath}`] });
+  } else {
+    checks.push({ id: "registry-file", status: "PASS", evidence: [`path=${registryPath}`] });
+    try {
+      registry = parseYaml(fs.readFileSync(registryPath, "utf8"));
+    } catch (error) {
+      checks.push({ id: "registry-yaml", status: "FAIL", evidence: [error instanceof Error ? error.message : String(error)] });
+    }
+  }
+
+  const registryRecord = isRecord(registry) ? registry : {};
+  checks.push({
+    id: "registry-schema",
+    status: registryRecord.schema === REGISTRY_SCHEMA ? "PASS" : "FAIL",
+    evidence: [`schema=${String(registryRecord.schema ?? "missing")}`]
+  });
+  if (Array.isArray(registryRecord.entries)) {
+    checks.push({ id: "registry-no-entries", status: "FAIL", evidence: ["registry must not duplicate CATALOG.md entries"] });
+  } else {
+    checks.push({ id: "registry-no-entries", status: "PASS", evidence: ["entries=absent"] });
+  }
+
+  const catalogs = Array.isArray(registryRecord.catalogs) ? registryRecord.catalogs : [];
+  checks.push({
+    id: "registry-catalogs",
+    status: catalogs.length > 0 ? "PASS" : "FAIL",
+    evidence: [`count=${catalogs.length}`]
+  });
+
+  const seenIds = new Set();
+  for (const catalog of catalogs) {
+    const record = isRecord(catalog) ? catalog : {};
+    const id = safeId(record.id ?? "");
+    const enabled = record.enabled !== false;
+    const rootValue = String(record.root ?? "").trim();
+    const resolvedRoot = rootValue ? resolveRegistryCatalogRoot(registryPath, rootValue) : "";
+    const result = {
+      id: id || "missing",
+      enabled,
+      priority: numberOption({ options: record }, "priority", 0),
+      root: rootValue,
+      resolvedRoot,
+      status: "SKIPPED",
+      catalogDigest: undefined,
+      blockers: []
+    };
+    catalogResults.push(result);
+    if (!id) {
+      checks.push({ id: "catalog:id", status: "FAIL", evidence: ["missing id"] });
+      result.blockers.push("missing id");
+    } else if (seenIds.has(id)) {
+      checks.push({ id: `catalog:${id}:unique-id`, status: "FAIL", evidence: ["duplicate id"] });
+      result.blockers.push("duplicate id");
+    } else {
+      seenIds.add(id);
+      checks.push({ id: `catalog:${id}:id`, status: "PASS", evidence: [`id=${id}`] });
+    }
+    if (Array.isArray(record.entries)) {
+      checks.push({ id: `catalog:${id || "missing"}:no-entries`, status: "FAIL", evidence: ["registry catalog refs must not duplicate CATALOG.md entries"] });
+      result.blockers.push("registry catalog ref contains entries");
+    }
+    if (!rootValue) {
+      checks.push({ id: `catalog:${id || "missing"}:root`, status: "FAIL", evidence: ["missing root"] });
+      result.blockers.push("missing root");
+      continue;
+    }
+    checks.push({ id: `catalog:${id || "missing"}:root`, status: "PASS", evidence: [`root=${rootValue}`] });
+    if (!enabled) {
+      result.status = "DISABLED";
+      continue;
+    }
+    const catalogPath = path.join(resolvedRoot, "CATALOG.md");
+    if (!fs.existsSync(catalogPath)) {
+      checks.push({ id: `catalog:${id}:catalog-md`, status: "FAIL", evidence: [`missing=${catalogPath}`] });
+      result.status = "FAILED";
+      result.blockers.push(`missing=${catalogPath}`);
+      continue;
+    }
+    checks.push({ id: `catalog:${id}:catalog-md`, status: "PASS", evidence: [`path=${catalogPath}`] });
+    const markdown = fs.readFileSync(catalogPath, "utf8");
+    result.catalogDigest = digestText(markdown);
+    const block = extractCatalogBlock(markdown);
+    if (!block) {
+      checks.push({ id: `catalog:${id}:catalog-block`, status: "FAIL", evidence: [`block=${CATALOG_BLOCK}`] });
+      result.status = "FAILED";
+      result.blockers.push(`missing block=${CATALOG_BLOCK}`);
+      continue;
+    }
+    checks.push({ id: `catalog:${id}:catalog-block`, status: "PASS", evidence: [`block=${CATALOG_BLOCK}`] });
+    let parsed;
+    try {
+      parsed = parseYaml(block);
+    } catch (error) {
+      checks.push({ id: `catalog:${id}:catalog-yaml`, status: "FAIL", evidence: [error instanceof Error ? error.message : String(error)] });
+      result.status = "FAILED";
+      result.blockers.push("catalog yaml parse failed");
+      continue;
+    }
+    const expectedDigest = stringOption({ options: record }, "expectedCatalogDigest") ?? stringOption({ options: record }, "expected-catalog-digest");
+    if (expectedDigest && expectedDigest !== result.catalogDigest) {
+      checks.push({ id: `catalog:${id}:digest`, status: "FAIL", evidence: [`expected=${expectedDigest}`, `actual=${result.catalogDigest}`] });
+      result.status = "FAILED";
+      result.blockers.push("catalog digest mismatch");
+    } else {
+      checks.push({ id: `catalog:${id}:digest`, status: "PASS", evidence: [`digest=${result.catalogDigest}`] });
+      result.status = "VALIDATED";
+    }
+    if (parsed?.catalogId && safeId(parsed.catalogId) !== id) {
+      checks.push({ id: `catalog:${id}:catalog-id`, status: "WARN", evidence: [`catalogId=${parsed.catalogId}`] });
+    }
+  }
+
+  const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
+  const result = {
+    schema: "evopilot-harness-registry-validation-result/v1",
+    status: blockers.length === 0 ? "VALIDATED" : "FAILED",
+    registryPath,
+    registryDigest: fs.existsSync(registryPath) ? digestText(fs.readFileSync(registryPath, "utf8")) : undefined,
+    catalogCount: catalogs.length,
+    enabledCount: catalogResults.filter((catalog) => catalog.enabled).length,
+    catalogs: catalogResults,
+    checks,
+    blockers
+  };
+  return result;
 }
 
 function publishCatalog(args) {
@@ -326,6 +518,7 @@ function serveHub(args) {
         url: `http://${host}:${actualPort}`,
         uiRoot,
         catalogRoot: hubCatalogRoot(args),
+        registryPath: hubRegistryPath(args),
         sourceRoot: hubSourceRoot(args)
       }, `Harness Hub listening on http://${host}:${actualPort}`);
     });
@@ -340,6 +533,7 @@ function buildHubSnapshot(args) {
   const sourceRoot = hubSourceRoot(args);
   const dataRoot = evolutionDataRoot(args);
   const catalog = readHubCatalog(catalogRoot);
+  const registry = readHubRegistry(args);
   const harnesses = listHarnessPacks(sourceRoot).map((pack) => ({
     ...packSummary(pack),
     sourcePath: path.relative(process.cwd(), pack.root),
@@ -363,14 +557,39 @@ function buildHubSnapshot(args) {
       name: "evopilot-harness",
       version: readPackageVersion(),
       compatibleEvopilot: DEFAULT_COMPATIBLE_EVOPILOT,
-      boundary: "Harness lifecycle is managed here; EvoPilot reads published Catalog directories at goal-plan time."
+      boundary: "Harness lifecycle is managed here; EvoPilot reads the Harness registry and published Catalog directories at goal-plan time."
     },
+    registry,
     catalog,
     harnesses,
     evolutions,
     sourceTypes: hubSourceTypes(),
     lifecycleCommands: lifecycleCommandModel(),
-    nextAction: catalog.status === "READY" ? "use-hub-review-evolve-or-publish" : "run-catalog-publish-and-validate"
+    nextAction: catalog.status === "READY" ? "use-hub-review-evolve-or-publish-registry" : "run-catalog-publish-and-validate"
+  };
+}
+
+function readHubRegistry(args) {
+  const registryPath = hubRegistryPath(args);
+  if (!registryPath) {
+    return {
+      status: "NOT_CONFIGURED",
+      registryPath: undefined,
+      catalogCount: 0,
+      enabledCount: 0,
+      catalogs: [],
+      blockers: []
+    };
+  }
+  const result = validateRegistryResult(registryPath);
+  return {
+    status: result.status,
+    registryPath,
+    registryDigest: result.registryDigest,
+    catalogCount: result.catalogCount,
+    enabledCount: result.enabledCount,
+    catalogs: result.catalogs,
+    blockers: result.blockers
   };
 }
 
@@ -472,7 +691,9 @@ function lifecycleCommandModel() {
     { id: "review-draft", label: "Review draft", command: "evopilot-harness evolution review <evolution-id> --json" },
     { id: "approve", label: "Approve", command: "evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json" },
     { id: "publish", label: "Publish usable Harness", command: "evopilot-harness evolution publish <evolution-id> --json" },
-    { id: "validate-catalog", label: "Validate Catalog", command: "evopilot-harness catalog validate --source published --json" }
+    { id: "validate-catalog", label: "Validate Catalog", command: "evopilot-harness catalog validate --source published --json" },
+    { id: "publish-registry", label: "Publish Registry", command: "evopilot-harness registry publish --catalog published --registry harness-registry.yaml --json" },
+    { id: "validate-registry", label: "Validate Registry", command: "evopilot-harness registry validate --registry harness-registry.yaml --json" }
   ];
 }
 
@@ -520,6 +741,13 @@ function contentType(filePath) {
 
 function hubCatalogRoot(args) {
   return path.resolve(stringOption(args, "catalog") ?? stringOption(args, "catalog-root") ?? process.env.EVOPILOT_HARNESS_CATALOG_ROOT ?? "published");
+}
+
+function hubRegistryPath(args) {
+  const configured = stringOption(args, "registry") ?? process.env.EVOPILOT_HARNESS_REGISTRY_CONFIG;
+  if (configured) return path.resolve(configured);
+  const defaultPath = path.resolve("harness-registry.yaml");
+  return fs.existsSync(defaultPath) ? defaultPath : undefined;
 }
 
 function hubSourceRoot(args) {
@@ -1161,6 +1389,37 @@ function readPackageVersion() {
   }
 }
 
+function registryFilePath(args) {
+  return path.resolve(stringOption(args, "registry") ?? stringOption(args, "out") ?? "harness-registry.yaml");
+}
+
+function readRegistryFileIfExists(registryPath) {
+  if (!fs.existsSync(registryPath)) return {};
+  const parsed = parseYaml(fs.readFileSync(registryPath, "utf8"));
+  return isRecord(parsed) ? parsed : {};
+}
+
+function portableCatalogRoot(registryPath, catalogRoot) {
+  const relative = path.relative(path.dirname(registryPath), catalogRoot) || ".";
+  if (!relative.startsWith("..") && !path.isAbsolute(relative)) return relative === "." ? "." : `./${relative}`;
+  return catalogRoot;
+}
+
+function resolveRegistryCatalogRoot(registryPath, rootValue) {
+  return path.isAbsolute(rootValue) ? path.resolve(rootValue) : path.resolve(path.dirname(registryPath), rootValue);
+}
+
+function compareRegistryCatalogRefs(left, right) {
+  const leftPriority = Number(left.priority ?? 0);
+  const rightPriority = Number(right.priority ?? 0);
+  if (rightPriority !== leftPriority) return rightPriority - leftPriority;
+  return String(left.id ?? "").localeCompare(String(right.id ?? ""));
+}
+
+function compactRecord(record) {
+  return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined && value !== ""));
+}
+
 function generatedTimestamp(args) {
   return stringOption(args, "generated-at") ?? process.env.EVOPILOT_HARNESS_GENERATED_AT ?? new Date().toISOString();
 }
@@ -1325,13 +1584,15 @@ function printHelp() {
 Usage:
   evopilot-harness catalog publish --source harnesses --out published [--catalog-id <id>] [--json]
   evopilot-harness catalog validate --source published [--json]
+  evopilot-harness registry publish --catalog published --registry harness-registry.yaml [--id <catalog-id>] [--priority 100] [--json]
+  evopilot-harness registry validate --registry harness-registry.yaml [--json]
   evopilot-harness harness list|inspect|validate|publish|deprecate [harness-id] [--json]
   evopilot-harness evolution create --source-project <path> --goal <text> [--json]
   evopilot-harness evolution sources <evolution-id> --source-project <path> [--json]
   evopilot-harness evolution advance|review|approve|publish|impact <evolution-id> [--json]
   evopilot-harness evolve --source-project <path> --goal <text> [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
-  evopilot-harness hub snapshot [--catalog published] [--source harnesses] [--out ui/harness-hub/catalog-snapshot.json] [--json]
-  evopilot-harness hub serve [--host 127.0.0.1] [--port 4176] [--catalog published] [--source harnesses]
+  evopilot-harness hub snapshot [--catalog published] [--registry harness-registry.yaml] [--source harnesses] [--out ui/harness-hub/catalog-snapshot.json] [--json]
+  evopilot-harness hub serve [--host 127.0.0.1] [--port 4176] [--catalog published] [--registry harness-registry.yaml] [--source harnesses]
 `);
 }
 
@@ -1344,6 +1605,12 @@ function requiredOption(args, name) {
 function stringOption(args, name) {
   const value = args.options[name];
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function numberOption(args, name, fallback) {
+  const value = args.options[name];
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 function stringListOption(args, name) {

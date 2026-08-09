@@ -1,6 +1,6 @@
 {
   "name": "evopilot-harness",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "description": "EvoPilot-compatible Harness Factory and Published Harness Catalog.",
   "license": "Apache-2.0",
@@ -11,10 +11,12 @@
   "scripts": {
     "catalog:publish": "node src/index.mjs catalog publish --source harnesses --out published --generated-at 2026-08-09T05:24:19.115Z --json",
     "catalog:validate": "node src/index.mjs catalog validate --source published --json",
-    "hub:snapshot": "node src/index.mjs hub snapshot --catalog published --source harnesses --out ui/harness-hub/catalog-snapshot.json --json",
-    "hub:serve": "node src/index.mjs hub serve --catalog published --source harnesses",
+    "registry:publish": "node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --generated-at 2026-08-09T05:24:19.115Z --json",
+    "registry:validate": "node src/index.mjs registry validate --registry harness-registry.yaml --json",
+    "hub:snapshot": "node src/index.mjs hub snapshot --catalog published --registry harness-registry.yaml --source harnesses --out ui/harness-hub/catalog-snapshot.json --json",
+    "hub:serve": "node src/index.mjs hub serve --catalog published --registry harness-registry.yaml --source harnesses",
     "docs:links": "node scripts/check-doc-links.mjs",
-    "check": "npm run catalog:publish && npm run catalog:validate && npm run hub:snapshot && npm run docs:links && npm test",
+    "check": "npm run catalog:publish && npm run catalog:validate && npm run registry:publish && npm run registry:validate && npm run hub:snapshot && npm run docs:links && npm test",
     "release:artifact": "node scripts/build-release-artifacts.mjs",
     "verify:release-artifact": "node scripts/verify-release-artifacts.mjs",
     "test": "node --test tests/*.test.mjs"

@@ -11,6 +11,7 @@ From the repository, use `node src/index.mjs`. If the command is installed on th
 | `--json` | Print machine-readable JSON. |
 | `--source <dir>` | Source Harness pack directory. Default: `harnesses`. |
 | `--out <dir>` | Output Catalog directory. Default: `published`. |
+| `--registry <file>` | Registry config file. Default: `harness-registry.yaml`. |
 | `--data-root <dir>` | Evolution run state directory. Default: `.evopilot-harness`. |
 | `--generated-at <iso>` | Deterministic Catalog timestamp for publication. |
 | `--compatible-evopilot <range>` | Compatibility range written to Catalog. Default: `>=3.0.0`. |
@@ -40,6 +41,34 @@ JSON schema:
 ```text
 evopilot-harness-catalog-publish-result/v1
 evopilot-harness-catalog-validation-result/v1
+```
+
+## Registry
+
+Publish or update a Registry entry for a Catalog:
+
+```bash
+node src/index.mjs registry publish \
+  --catalog published \
+  --registry harness-registry.yaml \
+  --id evopilot-public-harness-catalog \
+  --priority 100 \
+  --json
+```
+
+Validate the Registry and all enabled Catalog roots:
+
+```bash
+node src/index.mjs registry validate --registry harness-registry.yaml --json
+```
+
+The Registry is a discovery layer. It must not contain Harness `entries`; those remain only in each Catalog's `CATALOG.md`.
+
+JSON schema:
+
+```text
+evopilot-harness-registry-publish-result/v1
+evopilot-harness-registry-validation-result/v1
 ```
 
 ## Harness
@@ -197,6 +226,7 @@ Generate a static snapshot:
 ```bash
 node src/index.mjs hub snapshot \
   --catalog published \
+  --registry harness-registry.yaml \
   --source harnesses \
   --out ui/harness-hub/catalog-snapshot.json \
   --json
@@ -209,6 +239,7 @@ node src/index.mjs hub serve \
   --host 127.0.0.1 \
   --port 4176 \
   --catalog published \
+  --registry harness-registry.yaml \
   --source harnesses
 ```
 
@@ -219,6 +250,7 @@ Environment variables:
 | `EVOPILOT_HARNESS_HUB_HOST` | Hub bind host. Default: `127.0.0.1`. |
 | `EVOPILOT_HARNESS_HUB_PORT` | Hub port. Default: `4176`. |
 | `EVOPILOT_HARNESS_CATALOG_ROOT` | Catalog root used by Hub. |
+| `EVOPILOT_HARNESS_REGISTRY_CONFIG` | Registry file used by Hub snapshot and EvoPilot hand-off. |
 | `EVOPILOT_HARNESS_SOURCE_ROOT` | Source pack root used by Hub. |
 
 JSON schema:

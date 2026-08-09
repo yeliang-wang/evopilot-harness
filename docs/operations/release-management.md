@@ -68,4 +68,4 @@ The release workflow is `.github/workflows/release-artifacts.yml`. On tag push o
 - Minor: new CLI commands, new Hub surfaces, new source types, new template capabilities.
 - Major: Catalog contract break, EvoPilot compatibility break, or lifecycle boundary change.
 
-The documentation upgrade that adds complete docs and README routing without changing runtime behavior is released as `1.1.1`.
+The Registry upgrade that adds `registry publish`, `registry validate`, and Registry-aware Hub snapshots is released as `1.2.0`.

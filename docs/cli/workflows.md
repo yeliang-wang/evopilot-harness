@@ -124,7 +124,7 @@ It can run without EvoPilot or Dashboard.
 After publication:
 
 ```bash
-EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published
+EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
 ```
 
-EvoPilot reads `CATALOG.md` at planning time and records `plan.selectedHarness`. Existing plans remain immutable and keep their old digests.
+EvoPilot reads the Registry, resolves enabled Catalog roots, reads `CATALOG.md` at planning time, and records `plan.selectedHarness`. Existing plans remain immutable and keep their old digests.
