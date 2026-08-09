@@ -125,7 +125,7 @@ runtimePatterns:
         phase: alpha
         description: Declare that the evolved target is the owner's self-developed database product and record reference databases as compatibility oracles only.
         requiredEvidence: [product-scope-declaration, reference-role-declaration]
-        suggestedCommands: [evopilot harness profile inspect --json]
+        suggestedCommands: [inspect EvoPilot goal plan selectedHarness output]
       - id: map-engine-module-boundaries
         phase: alpha
         description: Map parser, planner, executor, storage, transaction, replication, and recovery modules to repository paths before goal planning.
@@ -190,10 +190,10 @@ observabilityBaseline:
 governanceRules:
   tenantWorkspaceScopeRequired: true
   targetPlanRequiresApproval: true
-  profileActivationRequiresApproval: true
+  selectedHarnessBindingRequiresReview: true
   promotionRequiresReleaseDecision: true
   sourceClosureRequired: true
-  noSilentProfileMutation: true
+  noSilentSelectedHarnessMutation: true
 phaseMapping:
   alpha: [source-boundary, database-product-runtime, database-product-boundary, sql-compatibility-boundary, failure-diagnostics]
   beta: [test-and-quality, database-engine-correctness, observability, exception-tracking, slo-monitoring]

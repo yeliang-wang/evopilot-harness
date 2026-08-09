@@ -145,8 +145,8 @@ observabilityBaseline:
   structuredLogs:
     requiredFields: [requestId, traceId, nodeId, shardId, slotId, command, errorCode]
 governanceRules:
-  profileActivationRequiresApproval: true
-  noSilentProfileMutation: true
+  selectedHarnessBindingRequiresReview: true
+  noSilentSelectedHarnessMutation: true
   releaseRequiresFailoverEvidence: true
 phaseMapping:
   alpha: [source-boundary, cache-product-runtime, exception-tracking, failure-diagnostics]

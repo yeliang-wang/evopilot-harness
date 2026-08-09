@@ -24,8 +24,9 @@ PostgreSQL, MySQL, SQLite, CockroachDB, TiDB, or similar systems are references 
 ## Administrator Flow
 
 ```bash
-evopilot harness template pack validate harness-templates/public/database-product-harness --json
-evopilot harness template pack publish harness-templates/public/database-product-harness --json
+evopilot-harness harness validate database-product-harness --json
+evopilot-harness harness publish database-product-harness --source harnesses --out published --json
+evopilot-harness catalog validate --source published --json
 ```
 
-Publishing creates or replaces the control-plane `database-product-harness@2.2.0` version according to server-side RBAC, validation, digesting, persistence, and audit rules.
+Publishing writes `database-product-harness@2.2.0` into the usable Catalog directory. EvoPilot reads that directory dynamically and records the selected Harness in goal plan `selectedHarness`.

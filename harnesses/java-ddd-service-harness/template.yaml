@@ -71,11 +71,11 @@ observabilityBaseline:
 governanceRules:
   tenantWorkspaceScopeRequired: true
   targetPlanRequiresApproval: true
-  profileActivationRequiresApproval: true
+  selectedHarnessBindingRequiresReview: true
   promotionRequiresReleaseDecision: true
   sourceClosureRequired: true
-  noSilentProfileMutation: true
-  mandatoryGates: [project-harness-profile-active, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
+  noSilentSelectedHarnessMutation: true
+  mandatoryGates: [selected-harness-bound, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
 phaseMapping:
   alpha: [source-boundary, java-runtime, ddd-boundaries, exception-tracking, failure-diagnostics]
   beta: [test-and-quality, ddd-boundaries, observability, exception-tracking, slo-monitoring]

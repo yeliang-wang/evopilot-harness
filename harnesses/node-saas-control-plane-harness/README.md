@@ -13,4 +13,4 @@ Baseline for Node.js SaaS control planes, API platforms, tenant/workspace servic
 
 ## How EvoPilot Uses It
 
-EvoPilot automatically matches this template when repository/runtime context and goal target text indicate a Node.js SaaS control plane or API/worker system. The project profile maps the generic tenant, RBAC, audit, worker, and observability controls onto the actual codebase.
+EvoPilot automatically matches this template when repository/runtime context and goal target text indicate a Node.js SaaS control plane or API/worker system. The selected Harness binding maps the generic tenant, RBAC, audit, worker, and observability controls onto the actual codebase.

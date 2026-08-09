@@ -2,18 +2,17 @@
 
 This directory contains human-readable source Harness packs maintained by `evopilot-harness`.
 
-EvoPilot automatically matches one published template when a project is onboarded and a goal loop target is submitted, but EvoPilot does not read this source directory directly. Run `evopilot-harness catalog publish` to produce the offline `published/` directory, then let EvoPilot mount that published Catalog.
+EvoPilot does not read this source directory. Run `evopilot-harness catalog publish` to produce the usable `published/` Catalog directory, then configure EvoPilot with that directory through `EVOPILOT_HARNESS_CATALOG_DIRS`.
 
-## v2 Template Model
+## Template Model
 
-EvoPilot v2.2 keeps domain-first templates alongside the existing runtime/language templates. A domain template defines the product harness first, then records compatibility, architecture, implementation runtime profiles, project required actions, evidence adapters, and release blockers.
+Domain templates define product evolution controls first, then record compatible runtime profiles, project actions, evidence adapters, and release blockers. Runtime and language templates remain useful fallback baselines, but domain signals should win when a source project clearly belongs to a business or technical domain.
 
-Current domain templates:
+Current domain templates include:
 
 - `database-product-harness@2.2.0` for self-developed database products. PostgreSQL, MySQL, and similar systems are compatibility references or differential oracles, not the default evolution target.
 - `api-gateway-harness@2.2.0` for gateway, ingress, traffic proxy, and service-mesh gateway products.
-
-The existing Python, Java, Node, Go, observability, and generic management templates remain useful runtime or broad software-type baselines. Automatic matching gives strong database/gateway domain signals priority and uses language/runtime signals as a secondary layer.
+- `distributed-cache-harness@0.1.0` for self-developed distributed cache and key-value storage products.
 
 ## Pack Shape
 
@@ -25,47 +24,52 @@ Each template pack uses the same minimal directory shape:
   template.yaml
   CHANGELOG.md
   examples/
-    default-project-profile.yaml
+    selected-harness-binding.yaml
 ```
 
-`README.md` is for humans and AI agents. `template.yaml` is the structured server-authoritative source used for validation, versioning, digesting, and publishing. `CHANGELOG.md` explains version movement in normal text. `examples/` gives LLMs and administrators a concrete ProjectHarnessProfile shape.
+`README.md` is for humans and AI agents. `template.yaml` is the structured source used for validation, versioning, digesting, and publishing. `CHANGELOG.md` explains version movement in normal text. `examples/` provides optional consumer binding examples; EvoPilot writes the real `selectedHarness` binding at goal plan time.
 
 ## Publish Commands
 
 ```bash
+evopilot-harness harness list --json
+evopilot-harness harness validate database-product-harness --json
+evopilot-harness harness publish database-product-harness --source harnesses --out published --json
 evopilot-harness catalog publish --source harnesses --out published --json
 evopilot-harness catalog validate --source published --json
-evopilot-harness harness publish --name distributed-cache-harness --source harnesses --out published --json
 ```
 
-Pack commands are intentionally small. Diff and review happen through Git and the readable files in this directory. The published Catalog is the artifact EvoPilot consumes through a server-side mount.
+Pack commands are intentionally small. Review happens through Git, draft files, validation output, and the readable files in this directory. The published Catalog directory is the artifact EvoPilot consumes dynamically.
 
 ## Source-Driven Evolution
 
-When a template should be upgraded from reviewable source material rather than direct file editing, run that evolution through EvoPilot's server-governed lifecycle, then bring the approved Harness definition back into this project if it should become a reusable Catalog asset:
+Use atomic lifecycle commands when an administrator wants full control:
 
 ```bash
-evopilot harness template evolution create \
-  --base-template python-enterprise-harness \
-  --target-version 1.1.1 \
-  --intent "Add stronger exception tracking, observability, and AI troubleshooting metadata." \
-  --source github=fastapi/fastapi#master \
-  --source url=https://opentelemetry.io/docs/languages/python/ \
-  --source runtime-evidence=release-evidence-2026-08-python \
-  --file ./workspace-observability-notes.md \
-  --note "Require requestId/traceId/errorCode/nextAction in error logs." \
+evopilot-harness evolution create \
+  --source-project /path/to/source-project \
+  --file ./architecture-notes.md \
+  --production-log ./production-error.log \
+  --goal "Create or evolve a distributed cache Harness." \
   --json
-evopilot harness template evolution advance <evolution-id> --json
-evopilot harness template evolution advance <evolution-id> --json
-evopilot harness template evolution advance <evolution-id> --llm-profile platform-harness-llm --json
+
+evopilot-harness evolution advance <evolution-id> --json
+evopilot-harness evolution review <evolution-id> --json
+evopilot-harness evolution approve <evolution-id> --confirmed-by <admin> --confirmation <text> --json
+evopilot-harness evolution publish <evolution-id> --json
+evopilot-harness evolution impact <evolution-id> --json
 ```
 
-Stop at `REVIEW_REQUIRED`, inspect the generated draft pack, validation, diff, and source coverage, then publish only after explicit administrator approval:
+Use the one-command flow when a normal user should not need to understand the atomic lifecycle:
 
 ```bash
-evopilot harness template evolution approve <evolution-id> --confirmed-by <admin> --confirmation <text> --json
-evopilot harness template evolution publish <evolution-id> --json
-evopilot harness template evolution impact <evolution-id> --refresh --json
+evopilot-harness evolve \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable Harness from this project." \
+  --approve-and-publish \
+  --confirmed-by <admin> \
+  --confirmation <text> \
+  --json
 ```
 
-The EvoPilot lifecycle stores evidence under `<dataRoot>/harness-template-evolutions/<evolutionId>/`. This project stores the reusable source pack and publishes the Catalog. Existing active project profiles are not silently rewritten.
+Evolution evidence is stored under `.evopilot-harness/evolutions/<evolution-id>/`. Existing EvoPilot goal plans are not silently rewritten; new or regenerated plans can bind the newly published Harness version.

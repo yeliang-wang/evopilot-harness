@@ -13,4 +13,4 @@ Baseline for observability platforms, APM systems, telemetry collectors, metric/
 
 ## How EvoPilot Uses It
 
-EvoPilot automatically matches this template when a repository or goal target describes observability, APM, metrics, traces, logs, collectors, dashboards, or alerting. Current project profile generation binds one selected public HarnessTemplate plus active tenant/workspace policies; normal operators do not select this template manually.
+EvoPilot automatically matches this template when a repository or goal target describes observability, APM, metrics, traces, logs, collectors, dashboards, or alerting. Current selected Harness binding generation binds one selected public HarnessTemplate plus active tenant/workspace policies; normal operators do not select this template manually.

@@ -13,4 +13,4 @@ Baseline for Java enterprise services that use Spring Boot, tactical DDD, hexago
 
 ## How EvoPilot Uses It
 
-EvoPilot automatically matches this template for Java services when repository/runtime context and the goal loop target indicate DDD, Spring Boot, or enterprise service boundaries. The project profile then maps these controls onto the actual modules, commands, APIs, and evidence paths.
+EvoPilot automatically matches this template for Java services when repository/runtime context and the goal loop target indicate DDD, Spring Boot, or enterprise service boundaries. The selected Harness binding then maps these controls onto the actual modules, commands, APIs, and evidence paths.

@@ -22,6 +22,7 @@ Use this pack when EvoPilot is onboarding a gateway, ingress, traffic proxy, or 
 ## Administrator Flow
 
 ```bash
-evopilot harness template pack validate harness-templates/public/api-gateway-harness --json
-evopilot harness template pack publish harness-templates/public/api-gateway-harness --json
+evopilot-harness harness validate api-gateway-harness --json
+evopilot-harness harness publish api-gateway-harness --source harnesses --out published --json
+evopilot-harness catalog validate --source published --json
 ```

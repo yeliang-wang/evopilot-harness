@@ -7,7 +7,7 @@ scope: platform
 languageFamily: generic
 capabilities:
   - { id: source-boundary, name: Source and workspace boundary, boundary: Tenant/workspace/repository/branch/writeback boundaries are explicit., requiredEvidence: [project-registration, source-readiness-preflight] }
-  - { id: telemetry-runtime, name: Telemetry runtime harness, boundary: Collector, ingestion, storage, query, UI/API, alert, and agent commands are declared by the project profile., requiredEvidence: [collector-output, ingestion-proof, query-proof, alert-proof, storage-proof] }
+  - { id: telemetry-runtime, name: Telemetry runtime harness, boundary: Collector, ingestion, storage, query, UI/API, alert, and agent commands are declared by the selected Harness binding., requiredEvidence: [collector-output, ingestion-proof, query-proof, alert-proof, storage-proof] }
   - { id: telemetry-signal-contract, name: Telemetry signal contract, boundary: Trace, metric, log, context, resource, sampling, cardinality, and retention behaviors are explicit., requiredEvidence: [trace-sample, metric-sample, log-sample, cardinality-review, retention-policy] }
   - { id: exception-tracking, name: Exception and error tracking, boundary: Receiver, processor, exporter, query, storage, alert, and partial ingestion errors are mapped and correlated., requiredEvidence: [error-code-contract, exception-sample, trace-link, repair-verification] }
   - { id: test-and-quality, name: Test and quality gates, boundary: Collector, ingestion, query, alert, retention, schema compatibility, and load tests produce evidence., requiredEvidence: [test-report, schema-compatibility-proof, alert-test, retention-proof] }
@@ -76,11 +76,11 @@ observabilityBaseline:
 governanceRules:
   tenantWorkspaceScopeRequired: true
   targetPlanRequiresApproval: true
-  profileActivationRequiresApproval: true
+  selectedHarnessBindingRequiresReview: true
   promotionRequiresReleaseDecision: true
   sourceClosureRequired: true
-  noSilentProfileMutation: true
-  mandatoryGates: [project-harness-profile-active, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
+  noSilentSelectedHarnessMutation: true
+  mandatoryGates: [selected-harness-bound, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
 phaseMapping:
   alpha: [source-boundary, telemetry-runtime, telemetry-signal-contract, exception-tracking, failure-diagnostics]
   beta: [test-and-quality, observability, telemetry-signal-contract, exception-tracking, slo-monitoring]

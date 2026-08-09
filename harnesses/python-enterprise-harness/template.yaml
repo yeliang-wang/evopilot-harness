@@ -12,7 +12,7 @@ capabilities:
     requiredEvidence: [project-registration, source-readiness-preflight, credential-or-read-only-boundary]
   - id: python-runtime
     name: Python runtime harness
-    boundary: Install, lint, typecheck, unit, smoke, package, and readiness commands are declared by the project profile.
+    boundary: Install, lint, typecheck, unit, smoke, package, and readiness commands are declared by the selected Harness binding.
     requiredEvidence: [install-output, lint-output, typecheck-output, unit-output, smoke-output]
   - id: exception-tracking
     name: Exception and error tracking
@@ -103,12 +103,12 @@ observabilityBaseline:
 governanceRules:
   tenantWorkspaceScopeRequired: true
   targetPlanRequiresApproval: true
-  profileActivationRequiresApproval: true
+  selectedHarnessBindingRequiresReview: true
   promotionRequiresReleaseDecision: true
   sourceClosureRequired: true
-  noSilentProfileMutation: true
-  mandatoryGates: [project-harness-profile-active, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
-  cannotWeaken: [tenantWorkspaceScopeRequired, targetPlanRequiresApproval, profileActivationRequiresApproval, promotionRequiresReleaseDecision, sourceClosureRequired, noSilentProfileMutation]
+  noSilentSelectedHarnessMutation: true
+  mandatoryGates: [selected-harness-bound, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
+  cannotWeaken: [tenantWorkspaceScopeRequired, targetPlanRequiresApproval, selectedHarnessBindingRequiresReview, promotionRequiresReleaseDecision, sourceClosureRequired, noSilentSelectedHarnessMutation]
 phaseMapping:
   alpha: [source-boundary, python-runtime, exception-tracking, failure-diagnostics]
   beta: [test-and-quality, observability, exception-tracking, slo-monitoring, failure-diagnostics]
