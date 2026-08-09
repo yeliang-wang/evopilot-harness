@@ -2,6 +2,25 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 1.1.1 - 2026-08-09
+
+### Added
+
+- Added a complete `docs/` technical documentation tree for humans, AI agents, CLI automation, architecture review, EvoPilot integration, Harness Hub embedding, operations, and reference contracts.
+- Added `docs/cli/AGENTS.md` as the shortest safe entry point for WorkBuddy, Codex, Claude Code, CI jobs, and other command-line agents.
+- Added a local Markdown link checker and wired it into `npm run check`.
+
+### Changed
+
+- Reworked the root README into a compact public product entry with quick start, capability routing, architecture overview, and documentation links.
+- Clarified that `evopilot-harness` remains the Harness lifecycle system of record while EvoPilot reads published Catalog directories dynamically.
+
+### Validation
+
+- `npm run check`
+- `git diff --check`
+- Harness Hub `/api/hub/snapshot` smoke on a local port
+
 ## 1.1.0 - 2026-08-09
 
 ### Added

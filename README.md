@@ -1,102 +1,120 @@
 # EvoPilot Harness
 
-`evopilot-harness` owns EvoPilot-compatible Harness lifecycle outside the EvoPilot runtime. It manages source Harness packs, scans projects or supplied materials, evolves Harness definitions, reviews drafts, and publishes a usable Harness Catalog directory.
+> Independent Harness Factory, lifecycle CLI, Harness Hub, and published Catalog for EvoPilot-compatible domain templates.
 
-Current release: `1.1.0`, compatible with EvoPilot `>=3.0.0`.
+Current release: `1.1.1` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
+
+[Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
+
+`evopilot-harness` owns Harness authoring, source-driven evolution, review, approval, versioning, publication, and the standalone Harness Hub UI. EvoPilot consumes the result by reading published Catalog directories at goal-plan time. EvoPilot does not import, publish, approve, or evolve Harness definitions.
+
+## What You Can Do
+
+| Capability | Command or Artifact |
+|---|---|
+| Publish a usable Harness Catalog | `node src/index.mjs catalog publish --source harnesses --out published --json` |
+| Validate a Catalog before EvoPilot uses it | `node src/index.mjs catalog validate --source published --json` |
+| Inspect and validate source Harness packs | `node src/index.mjs harness list --json` |
+| Evolve a Harness from a project, attachment, log, or note | `node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
+| Review, approve, and publish generated drafts | `node src/index.mjs evolution review <id> --json` |
+| Run the independent Harness Hub | `node src/index.mjs hub serve --catalog published --source harnesses` |
+| Let EvoPilot read the published result | `EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published` |
 
 ## Quick Start
 
 ```bash
 npm install
-npm run catalog:publish
-npm run catalog:validate
+npm run check
 npm run hub:serve
 ```
 
-One-command Harness evolution from a source project:
+Open `http://127.0.0.1:4176` for the Harness Hub.
+
+Use the one-command evolution path when a user should not need the atomic lifecycle:
 
 ```bash
-evopilot-harness evolve \
+node src/index.mjs evolve \
   --source-project /path/to/source-project \
   --goal "Create or evolve a distributed cache Harness from this project." \
   --approve-and-publish \
   --confirmed-by admin@example.com \
-  --confirmation "Reviewed source coverage, draft diff, and validation." \
+  --confirmation "Reviewed source coverage, draft diff, validation, and impact." \
   --json
 ```
 
-## Boundary
+Use atomic commands when an administrator needs review gates:
 
-- `evopilot-harness` owns Harness lifecycle management, source collection, matching, draft generation, review, approval, versioning, and publication.
-- `evopilot-harness` owns its browser UI. The Harness Hub can run by itself and does not require EvoPilot or Dashboard.
-- EvoPilot owns project registration, RBAC, goal planning, selected Harness binding, loop execution, evidence, and release decisions.
-- EvoPilot does not import, mount, publish, or evolve Harness definitions. It reads configured Catalog directories at use time.
-- Dashboard may embed the independent Harness Hub in an iframe, but it does not own Harness UI state and does not read this repository or local files directly.
-- Harness definitions are EvoPilot-compatible contracts. They are intentionally not a universal harness format for every control plane.
+```bash
+node src/index.mjs evolution create --source-project /path/to/project --goal "..." --json
+node src/index.mjs evolution advance <evolution-id> --json
+node src/index.mjs evolution review <evolution-id> --json
+node src/index.mjs evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json
+node src/index.mjs evolution publish <evolution-id> --json
+```
 
-## Catalog Contract
+## Architecture
 
-Publishing creates a usable Harness Catalog directory. The directory must contain `CATALOG.md` with a machine-readable fenced block named `evopilot-harness-catalog`. EvoPilot parses that block and then reads each referenced `template.yaml` or `harness.yaml`.
+```mermaid
+flowchart LR
+  Source["Source projects, attachments, logs, notes"] --> Factory["evopilot-harness CLI"]
+  Factory --> Draft["Draft Harness pack"]
+  Draft --> Review["Review and approval"]
+  Review --> Catalog["published/CATALOG.md"]
+  Catalog --> EvoPilot["EvoPilot goal planning"]
+  Catalog --> Hub["Harness Hub UI"]
+  Hub --> Dashboard["Dashboard iframe container"]
+  EvoPilot --> Selected["plan.selectedHarness evidence"]
+```
+
+The boundary is intentionally strict:
+
+- `evopilot-harness` manages Harness lifecycle and owns `CATALOG.md`.
+- EvoPilot dynamically reads configured published Catalog directories and records `selectedHarness` evidence.
+- Dashboard can embed the Harness Hub, but it does not own Harness state.
+- Harness definitions are EvoPilot-compatible contracts, not a universal control-plane format.
+
+## Documentation
+
+| Reader | Start Here |
+|---|---|
+| New users | [Documentation Index](docs/README.md), [CLI Quickstart](docs/cli/quickstart.md) |
+| AI agents and CI | [CLI Agent Instructions](docs/cli/AGENTS.md), [Automation Rules](docs/cli/automation.md) |
+| Harness administrators | [Harness Lifecycle](docs/guides/harness-evolution.md), [Source To Harness](docs/guides/source-to-harness.md) |
+| EvoPilot integrators | [EvoPilot Integration](docs/guides/evopilot-integration.md), [Catalog Boundary](docs/architecture/catalog-consumption-boundary.md) |
+| Dashboard integrators | [Harness Hub Integration](docs/guides/harness-hub-integration.md) |
+| Release operators | [Release Management](docs/operations/release-management.md), [Deployment](docs/operations/deployment.md) |
+| Schema reviewers | [Catalog Contract](docs/reference/catalog-contract.md), [Template Schema](docs/reference/template-schema.md) |
+
+## Development
+
+```bash
+npm run catalog:publish
+npm run catalog:validate
+npm run hub:snapshot
+npm run docs:links
+npm test
+npm run check
+```
+
+Release artifacts are built from a clean checkout:
+
+```bash
+npm run release:artifact
+npm run verify:release-artifact
+```
+
+## Repository Layout
 
 ```text
-published/
-  CATALOG.md
-  database-product-harness/2.2.0/template.yaml
-  api-gateway-harness/2.2.0/template.yaml
-  distributed-cache-harness/0.1.0/template.yaml
+harnesses/             Source Harness packs maintained by this project
+published/             Usable Catalog directory read by EvoPilot
+src/index.mjs          CLI, Catalog publisher, evolution engine, and Hub server
+ui/harness-hub/        Standalone browser UI
+docs/                  Human, AI-agent, architecture, operation, and reference docs
+scripts/               Release and documentation verification helpers
+tests/                 CLI and Catalog behavior tests
 ```
 
-Configure EvoPilot with the published directory:
+## License
 
-```bash
-EVOPILOT_HARNESS_CATALOG_DIRS=/path/to/evopilot-harness/published
-```
-
-Multiple Catalog directories can be separated with `:` on macOS/Linux. EvoPilot dynamically reads every configured directory when listing Catalogs or planning a goal, then records the selected Harness id, version, Catalog id, path, and digests in `selectedHarness`.
-
-## CLI Model
-
-Atomic lifecycle commands stay available for administrators and automation:
-
-```bash
-evopilot-harness harness list --json
-evopilot-harness harness inspect database-product-harness --json
-evopilot-harness harness validate database-product-harness --json
-evopilot-harness catalog publish --source harnesses --out published --json
-evopilot-harness catalog validate --source published --json
-evopilot-harness evolution create --source-project /path/to/project --goal "..." --json
-evopilot-harness evolution advance <evolution-id> --json
-evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json
-evopilot-harness evolution publish <evolution-id> --json
-```
-
-The user-facing shortcut is `evopilot-harness evolve`, which runs source scan, auto-match or new Harness creation, draft generation, validation, optional approval, and publication.
-
-## Harness Hub UI
-
-Run the independent Harness Hub:
-
-```bash
-evopilot-harness hub serve --catalog published --source harnesses
-```
-
-Open `http://127.0.0.1:4176`. The UI displays the published Catalog, Harness contracts, lifecycle commands, source types, local evolution runs, and a one-command evolve builder. It reads local state from `evopilot-harness` through `/api/hub/snapshot`; it does not call EvoPilot or Dashboard.
-
-## Source Inputs
-
-Harness evolution can use:
-
-- `--source-project` for local project code and documentation.
-- `--file` or `--attachment` for supporting material such as Markdown, text exports, PDFs, Word, PowerPoint, or design notes. Binary attachments are digested and recorded even when their full text cannot be extracted.
-- `--production-log` for runtime logs. The CLI redacts common token, password, secret, API key, authorization, and email patterns before adding them to the source corpus.
-- `--note` for administrator context.
-
-## Release Flow
-
-1. Edit source packs under `harnesses/<harness-id>/` or run `evopilot-harness evolve`.
-2. Review generated drafts under `.evopilot-harness/evolutions/<evolution-id>/draft/`.
-3. Approve and publish only after source coverage, validation, and impact are acceptable.
-4. Run `npm run catalog:publish`, `npm run catalog:validate`, and `npm test`.
-5. Release `evopilot-harness` independently when Harness definitions or lifecycle tooling change.
-
-EvoPilot automatically picks up Catalog content changes the next time it reads the configured directory. Active goal plans keep their recorded `selectedHarness` digest; new or regenerated plans can bind newer Harness versions.
+`evopilot-harness` is declared as `Apache-2.0` in `package.json`.
