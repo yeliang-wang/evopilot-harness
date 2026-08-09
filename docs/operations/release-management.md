@@ -68,4 +68,4 @@ The release workflow is `.github/workflows/release-artifacts.yml`. On tag push o
 - Minor: new CLI commands, new Hub surfaces, new source types, new template capabilities.
 - Major: Catalog contract break, EvoPilot compatibility break, or lifecycle boundary change.
 
-The Registry upgrade that adds `registry publish`, `registry validate`, and Registry-aware Hub snapshots is released as `1.2.0`.
+The Registry upgrade that adds `registry publish`, `registry validate`, and Registry-aware Hub snapshots is released as `1.2.0`. Harness Detect Algorithm v1 and Template Quality Standard v1 are released as `1.3.0`.

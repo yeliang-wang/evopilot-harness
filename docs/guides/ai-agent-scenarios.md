@@ -6,8 +6,10 @@ This matrix is for third-party AI agents that simulate human operation through `
 
 | Scenario | Actor | Commands | Human stop point | Success evidence |
 |---|---|---|---|---|
-| Publish existing Harness Catalog and Registry | Agent or admin | `harness list`, `harness validate`, `catalog publish`, `catalog validate`, `registry publish`, `registry validate` | Stop on validation blockers | `status=VALIDATED`, Registry digest, Catalog digest, entry digests |
-| One-command source evolution | Agent and admin | `evolve --source-project ... --json` | Stop at `REVIEW_REQUIRED` | source coverage, auto-match decision, draft digest |
+| Publish existing Harness Catalog and Registry | Agent or admin | `harness list`, `harness validate --strict`, `catalog publish --strict`, `catalog validate`, `registry publish`, `registry validate` | Stop on validation blockers | `status=VALIDATED`, template quality scores, Registry digest, Catalog digest, entry digests |
+| Single-source detection | Agent and admin | `detect --source-project ... --json` | Stop when `autoMatch.decision=REVIEW_REQUIRED` or a new target needs review | `sourceProfile`, `autoMatch`, parent candidates |
+| Batch source detection | Agent and admin | `detect batch --source-root ... --include-modules --json` | Stop after presenting detections; do not publish automatically | detected roles, targets, decisions, confidence |
+| One-command source evolution | Agent and admin | `detect --source-project ... --json`, then `evolve --source-project ... --json` | Stop at `REVIEW_REQUIRED` | source coverage, source profile, auto-match decision, draft digest |
 | Review-gated evolution | Agent and admin | `evolution create`, `advance`, `review`, `impact`, `approve`, `publish` | Stop before approval | approval actor, confirmation, publication root |
 | Attachment-driven evolution | Agent and admin | `evolve --attachment ... --file ... --json` | Stop at draft review | source digests and draft files |
 | Production log learning | Agent and admin | `evolve --production-log ... --json` | Stop if sensitive material is still visible | redaction flag, runtime evidence guidance |
@@ -23,8 +25,10 @@ Every completed scenario summary must include:
 - JSON schema and status
 - `nextAction`
 - source count and source digests when sources were used
-- auto-match target Harness, version, confidence, and reasons
+- source profile primary role, recommended Harness, architecture signals, negative signals, and sensitive material findings
+- auto-match target Harness, version, confidence, parent candidates, candidate scores, and reasons
 - validation blockers
+- strict template quality scores when applicable
 - draft digest and draft directory
 - approval actor and confirmation when approval occurred
 - publication Harness root, Catalog root, and Registry path when publication occurred
@@ -48,5 +52,6 @@ missing harness-registry.yaml
 missing CATALOG.md
 missing evopilot-harness-catalog fenced block
 nextAction=review-approve-harness
+nextAction=review-candidate-match
 nextAction=repair-draft-validation
 ```

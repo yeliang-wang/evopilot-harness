@@ -15,7 +15,7 @@ catalogs:
     enabled: true
     priority: 100
     root: ./published
-    release: v1.2.0
+    release: v1.3.0
     expectedCatalogDigest: sha256:...
     description: Published Harness Catalog evopilot-public-harness-catalog
 ```
@@ -26,7 +26,7 @@ catalogs:
 |---|---|---|
 | `id` | yes | Registry-visible Catalog id. It should match the `CATALOG.md` `catalogId`. |
 | `enabled` | yes | `true` means EvoPilot should scan this Catalog. |
-| `priority` | yes | Higher priority wins only when Harness auto-match scores tie. |
+| `priority` | yes | Higher priority wins only when Harness detect scores tie. |
 | `root` | yes | Catalog directory. Relative paths resolve from the Registry file directory. |
 | `release` | recommended | `evopilot-harness` release that published the Catalog reference. |
 | `expectedCatalogDigest` | recommended | Optional SHA-256 digest of `CATALOG.md` used for drift detection. |

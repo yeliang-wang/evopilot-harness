@@ -15,6 +15,7 @@ From the repository, use `node src/index.mjs`. If the command is installed on th
 | `--data-root <dir>` | Evolution run state directory. Default: `.evopilot-harness`. |
 | `--generated-at <iso>` | Deterministic Catalog timestamp for publication. |
 | `--compatible-evopilot <range>` | Compatibility range written to Catalog. Default: `>=3.0.0`. |
+| `--strict` | Enforce Template Quality Standard v1 during `harness validate` or `catalog publish`. |
 
 ## Catalog
 
@@ -28,6 +29,12 @@ Publish one named pack:
 
 ```bash
 node src/index.mjs catalog publish --source harnesses --out published --name database-product-harness --json
+```
+
+Publish only when source templates pass Template Quality Standard v1:
+
+```bash
+node src/index.mjs catalog publish --source harnesses --out published --strict --json
 ```
 
 Validate a published Catalog:
@@ -90,6 +97,7 @@ Validate one or all packs:
 ```bash
 node src/index.mjs harness validate database-product-harness --source harnesses --json
 node src/index.mjs harness validate --source harnesses --json
+node src/index.mjs harness validate --source harnesses --strict --json
 ```
 
 Publish one pack through the Catalog publisher:
@@ -113,6 +121,72 @@ evopilot-harness-list/v1
 evopilot-harness-inspect/v1
 evopilot-harness-validation-result/v1
 evopilot-harness-deprecate-result/v1
+```
+
+## Detect
+
+Run deterministic Harness detection before creating an evolution draft:
+
+```bash
+node src/index.mjs detect \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable domain Harness from this project." \
+  --json
+```
+
+Run detection across many candidate project roots:
+
+```bash
+node src/index.mjs detect batch \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --limit 50 \
+  --json
+```
+
+Accepted source inputs are the same as evolution: `--source-project`, `--file`, `--attachment`, `--production-log`, `--note`, and `--goal`.
+
+Detection options:
+
+| Option | Meaning |
+|---|---|
+| `--match-threshold <number>` | Override deterministic match threshold. Default: `0.45`. |
+| `--source-root <path>` | Root scanned by `detect batch`. |
+| `--include-modules` | Include nested module roots discovered under a project root. |
+| `--limit <number>` | Maximum batch detections. Default: `50`. |
+| `--max-depth <number>` | Maximum source-root discovery depth. Default: `5`. |
+
+The detector produces a `sourceProfile` from code, manifests, filenames, imports, dependencies, symbols, logs, attachments, and notes. The profile includes:
+
+```text
+sourceProfile.primaryRole
+sourceProfile.languages[]
+sourceProfile.buildTools[]
+sourceProfile.frameworks[]
+sourceProfile.dependencies[]
+sourceProfile.architectureSignals[]
+sourceProfile.recommendedHarness
+sourceProfile.negativeSignals[]
+sourceProfile.sensitiveMaterialFindings[]
+```
+
+`autoMatch` is the deterministic decision used again by `evolve`:
+
+| Decision | Meaning |
+|---|---|
+| `EVOLVE_EXISTING` | A published source pack matches the source role and product boundary. |
+| `CREATE_NEW_WITH_PARENT_REFERENCE` | The source needs a narrower Harness that does not exist yet, while one or more existing packs should be referenced as parents. |
+| `CREATE_NEW` | No confident existing Harness or parent reference was found. |
+| `FORK_FROM_MATCH` | `--target-id` requested a new target while another pack is a useful base. |
+| `REVIEW_REQUIRED` | Candidate scores are ambiguous or the recommended target needs human selection before draft generation. |
+
+JSON schema:
+
+```text
+evopilot-harness-detect-result/v1
+evopilot-harness-detect-batch-result/v1
+evopilot-harness-source-profile/v1
+evopilot-harness-auto-match/v1
 ```
 
 ## Evolution
@@ -180,7 +254,14 @@ Accepted source inputs:
 | `--note <text>` | Administrator context. |
 | `--goal <text>` or `--intent <text>` | Evolution objective. |
 | `--target-id <id>` | Force the target Harness id. |
-| `--match-threshold <number>` | Override auto-match threshold. Default: `0.08`. |
+| `--match-threshold <number>` | Override deterministic detect threshold. Default: `0.45`. |
+| `--llm-advisor [optional|required]` | Run semantic LLM Advisor review after deterministic auto-match. |
+| `--require-llm-advisor` | Block review when the Advisor cannot run successfully. |
+| `--apply-llm-advisor` | Use a high-confidence Advisor recommendation for draft target selection. |
+| `--llm-provider-preset glm` | Use GLM-compatible defaults: provider `zhipu`, model `glm-5.2`, base URL `https://open.bigmodel.cn/api/paas/v4`. |
+| `--llm-base-url <url>` | OpenAI-compatible chat completions base URL. |
+| `--llm-model <id>` | Model name for the Advisor. |
+| `--llm-api-key-env <env>` | Environment variable that holds the API key. Default: `EVOPILOT_HARNESS_LLM_API_KEY`. |
 
 JSON schema:
 
@@ -189,6 +270,50 @@ evopilot-harness-evolution/v1
 evopilot-harness-evolution-detail/v1
 evopilot-harness-evolution-impact/v1
 ```
+
+Evolution responses include the same `sourceProfile` and `autoMatch` that `detect` returns, so administrators can compare preflight detection with the generated draft target.
+
+## LLM Advisor
+
+The Advisor is off by default. It is a semantic review stage, not an approval gate. It reads redacted source excerpts, deterministic `autoMatch`, and available Harness metadata, then returns `llmAdvisor`:
+
+```text
+llmAdvisor.status
+llmAdvisor.sourceClassification
+llmAdvisor.recommendation.action
+llmAdvisor.recommendation.targetHarnessId
+llmAdvisor.alternatives[]
+llmAdvisor.reviewWarnings[]
+llmAdvisor.provider
+llmAdvisor.model
+llmAdvisor.usage.totalTokens
+```
+
+Use `optional` when a model outage should not block deterministic evolution:
+
+```bash
+export EVOPILOT_HARNESS_LLM_ADVISOR=optional
+export EVOPILOT_HARNESS_LLM_PROVIDER_PRESET=glm
+export EVOPILOT_HARNESS_LLM_API_KEY="<secret>"
+
+node src/index.mjs evolve \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable domain Harness." \
+  --json
+```
+
+Use `required` for production policies that demand model review before draft approval:
+
+```bash
+node src/index.mjs evolve \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable domain Harness." \
+  --llm-advisor required \
+  --llm-provider-preset glm \
+  --json
+```
+
+Use `--apply-llm-advisor` only when policy allows the Advisor to change the generated draft target. Explicit `--target-id` still wins over Advisor output.
 
 ## One-Command Evolve
 

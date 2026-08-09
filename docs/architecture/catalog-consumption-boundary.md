@@ -18,8 +18,8 @@ This document defines the boundary between `evopilot-harness`, EvoPilot, and Das
 harness-registry.yaml
 published/
   CATALOG.md
-  database-product-harness/2.2.0/template.yaml
-  api-gateway-harness/2.2.0/template.yaml
+  database-product-harness/2.3.0/template.yaml
+  api-gateway-harness/2.3.0/template.yaml
 ```
 
 The Registry lists enabled Catalog roots and their priority. It must not duplicate Harness entries. The Catalog index is maintained by `evopilot-harness`; EvoPilot reads the Registry and Catalog directories dynamically.
@@ -46,7 +46,7 @@ At goal-plan time, EvoPilot should:
 4. Extract the `yaml evopilot-harness-catalog` block.
 5. Read each referenced `template.yaml` or `harness.yaml`.
 6. Score entries against project metadata and the goal loop target.
-7. Use Catalog priority only as an auto-match tie breaker.
+7. Use Catalog priority only as a detect tie breaker.
 8. Record the selected entry as `plan.selectedHarness`.
 
 Existing plans must keep the digest they used. Republished Catalog content affects only new or regenerated plans.

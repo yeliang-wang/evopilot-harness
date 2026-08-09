@@ -91,6 +91,135 @@ test("supports atomic Harness lifecycle commands", () => {
   assert.equal(validate.harnessCount, 1);
 });
 
+test("strict Harness validation enforces Template Quality Standard v1", () => {
+  const result = runJson(["harness", "validate", "--source", path.join(root, "harnesses"), "--strict", "--json"]);
+  assert.equal(result.status, "VALIDATED");
+  assert.equal(result.strict, true);
+  assert.ok(result.quality.every((item) => item.score >= 0.8));
+  assert.ok(result.checks.some((check) => check.id.includes(":productBoundary") && check.status === "PASS"));
+  assert.ok(result.checks.some((check) => check.id.includes(":matchPolicy") && check.status === "PASS"));
+  assert.ok(result.checks.some((check) => check.id.includes(":executionModel") && check.status === "PASS"));
+});
+
+test("detect classifies a Redis client library as a new narrow Harness target", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-detect-"));
+  const project = path.join(tmp, "redisclient");
+  fs.mkdirSync(path.join(project, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(project, "pom.xml"), [
+    "<project>",
+    "  <dependencies>",
+    "    <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-redis</artifactId><version>1.0.1</version></dependency>",
+    "    <dependency><groupId>redis.clients</groupId><artifactId>jedis</artifactId><version>2.0.0</version></dependency>",
+    "  </dependencies>",
+    "</project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(project, "src", "main", "java", "com", "example", "RedisClientService.java"), [
+    "package com.example;",
+    "import org.springframework.data.redis.core.RedisTemplate;",
+    "import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;",
+    "import org.springframework.data.redis.serializer.RedisSerializer;",
+    "public class RedisClientService {",
+    "  private RedisTemplate<String, String> redisTemplate;",
+    "  public RedisSerializer<String> serializer;",
+    "  public JedisConnectionFactory connectionFactory;",
+    "}"
+  ].join("\n"));
+
+  const result = runJson([
+    "detect",
+    "--source", path.join(root, "harnesses"),
+    "--source-project", project,
+    "--goal", "Create or evolve a reusable domain Harness from this project.",
+    "--json"
+  ]);
+
+  assert.equal(result.status, "READY");
+  assert.equal(result.sourceProfile.primaryRole, "redis-client-library");
+  assert.equal(result.sourceProfile.recommendedHarness.id, "redis-client-harness");
+  assert.equal(result.autoMatch.decision, "CREATE_NEW_WITH_PARENT_REFERENCE");
+  assert.equal(result.autoMatch.targetHarnessId, "redis-client-harness");
+  assert.ok(result.autoMatch.parentCandidates.some((candidate) => candidate.id === "distributed-cache-harness"));
+  assert.ok(!result.autoMatch.candidates.slice(0, 2).some((candidate) => candidate.harnessId === "api-gateway-harness"));
+});
+
+test("evolve reuses detect profile and generates a strict-valid Redis client draft", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-redis-evolve-"));
+  const dataRoot = path.join(tmp, "data");
+  const project = path.join(tmp, "redisclient");
+  fs.mkdirSync(path.join(project, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(project, "pom.xml"), [
+    "<project>",
+    "  <dependencies>",
+    "    <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-redis</artifactId><version>1.0.1</version></dependency>",
+    "    <dependency><groupId>redis.clients</groupId><artifactId>jedis</artifactId><version>2.0.0</version></dependency>",
+    "  </dependencies>",
+    "</project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(project, "src", "main", "java", "com", "example", "RedisClientService.java"), [
+    "package com.example;",
+    "import org.springframework.data.redis.core.RedisTemplate;",
+    "import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;",
+    "public class RedisClientService { RedisTemplate<String, String> template; JedisConnectionFactory factory; }"
+  ].join("\n"));
+
+  const result = runJson([
+    "evolve",
+    "--source", path.join(root, "harnesses"),
+    "--data-root", dataRoot,
+    "--source-project", project,
+    "--goal", "Create or evolve a reusable domain Harness from this project.",
+    "--json"
+  ]);
+
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.equal(result.sourceProfile.primaryRole, "redis-client-library");
+  assert.equal(result.autoMatch.targetHarnessId, "redis-client-harness");
+  assert.equal(result.draft.harnessId, "redis-client-harness");
+  assert.equal(result.validation.status, "VALIDATED");
+  assert.ok(result.validation.checks.some((check) => check.id === "quality:redis-client-harness@0.1.0:score" && check.status === "PASS"));
+});
+
+test("optional LLM Advisor without provider config does not block deterministic evolution", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-llm-optional-"));
+  const project = path.join(tmp, "project");
+  fs.mkdirSync(project, { recursive: true });
+  fs.writeFileSync(path.join(project, "README.md"), "Self-developed distributed cache with Redis compatible protocol, ttl, eviction, replica failover, and slot migration.");
+  const result = runJson([
+    "evolve",
+    "--source", path.join(root, "harnesses"),
+    "--data-root", path.join(tmp, "data"),
+    "--source-project", project,
+    "--goal", "Evolve a distributed cache Harness from this source project.",
+    "--llm-advisor", "optional",
+    "--json"
+  ], { env: withoutAdvisorEnv() });
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.equal(result.llmAdvisor.status, "SKIPPED");
+  assert.equal(result.nextAction, "review-approve-harness");
+});
+
+test("required LLM Advisor without provider config blocks before review", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-llm-required-"));
+  const project = path.join(tmp, "project");
+  fs.mkdirSync(project, { recursive: true });
+  fs.writeFileSync(path.join(project, "README.md"), "Self-developed distributed cache with Redis compatible protocol, ttl, eviction, replica failover, and slot migration.");
+  const run = spawnSync(process.execPath, [
+    cli,
+    "evolve",
+    "--source", path.join(root, "harnesses"),
+    "--data-root", path.join(tmp, "data"),
+    "--source-project", project,
+    "--goal", "Evolve a distributed cache Harness from this source project.",
+    "--llm-advisor", "required",
+    "--json"
+  ], { encoding: "utf8", env: withoutAdvisorEnv() });
+  assert.equal(run.status, 2, run.stderr || run.stdout);
+  const result = JSON.parse(run.stdout);
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.llmAdvisor.status, "FAILED");
+  assert.equal(result.nextAction, "repair-llm-advisor-config");
+});
+
 test("one-click evolve auto-matches, approves, publishes, and keeps JSON parseable", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-evolve-"));
   const harnessSource = path.join(tmp, "harnesses");
@@ -176,4 +305,17 @@ function runJson(args) {
   } catch (error) {
     assert.fail(`Expected JSON output, got:\n${run.stdout}\n${error.message}`);
   }
+}
+
+function withoutAdvisorEnv() {
+  const env = { ...process.env };
+  for (const key of [
+    "EVOPILOT_HARNESS_LLM_API_KEY",
+    "EVOPILOT_HARNESS_LLM_BASE_URL",
+    "EVOPILOT_HARNESS_LLM_MODEL_NAME",
+    "EVOPILOT_LLM_API_KEY",
+    "EVOPILOT_LLM_BASE_URL",
+    "EVOPILOT_LLM_MODEL_NAME"
+  ]) delete env[key];
+  return env;
 }

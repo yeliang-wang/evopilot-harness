@@ -1,0 +1,9 @@
+schema: evopilot-selected-harness-example/v1
+scope: example-only
+selectedHarness:
+  harnessId: distributed-cache-harness
+  version: 0.1.0
+  domain: distributed-cache
+  catalogId: evopilot-public-harness-catalog
+  binding: EvoPilot writes this at goal plan time after reading the published
+    Catalog directory.

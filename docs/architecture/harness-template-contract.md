@@ -9,11 +9,52 @@ Every template should provide:
 ```yaml
 schema: evopilot-harness-template/v1
 id: database-product-harness
-version: 2.2.0
+version: 2.3.0
 name: Database Product Harness
 description: Domain baseline for self-developed database products.
 harnessLayer: domain
 domain: database-product
+productBoundary:
+  includes:
+    - Self-developed database kernels, SQL engines, storage engines, replication, query optimization, transaction, recovery, and compatibility work.
+  excludes:
+    - Application data access layers, database clients, migration scripts, and ORM-only projects.
+matchPolicy:
+  requiredAny:
+    - database product
+    - sql engine
+    - storage engine
+  positive:
+    dependencies: []
+    imports: []
+    files:
+      - README.md
+      - docs/architecture.md
+    symbols:
+      - optimizer
+      - wal
+    architectureSignals:
+      - database-product
+  negative:
+    productBoundaryExcludes:
+      - database client
+      - orm application
+    signals:
+      - jdbc-only
+executionModel:
+  phases:
+    - detect
+    - draft
+    - strict-validate
+    - review
+    - publish
+  requiredCommands:
+    detect:
+      - evopilot-harness detect --source-project <path> --json
+    strictValidate:
+      - evopilot-harness harness validate <harness-id> --strict --json
+qualityGate:
+  minTemplateScore: 0.8
 ```
 
 Domain templates must also define domain execution controls:
@@ -40,15 +81,46 @@ The validator checks:
 
 - `id`
 - `version`
+- Template Quality Standard v1 fields when `--strict` is supplied
 - domain `requiredActions`
 - domain `evidenceAdapters`
 - domain `releaseBlockers`
 
 Runtime templates can omit domain-specific fields when they are language or runtime baselines.
 
-## Match Signals
+## Match Policy
 
-Templates can provide `matchSignals.include`. The current CLI uses deterministic signal matching from template metadata, tags, source text, and goal text. A confident match evolves an existing Harness; otherwise the CLI creates a new domain Harness id.
+Templates can still provide `matchSignals.include`, but `matchPolicy` and `productBoundary` are the primary matching contract in v1.3.0.
+
+The detector builds a source profile, scores positive evidence, subtracts negative signals, checks product-boundary exclusions, and returns one of:
+
+```text
+EVOLVE_EXISTING
+CREATE_NEW_WITH_PARENT_REFERENCE
+CREATE_NEW
+FORK_FROM_MATCH
+REVIEW_REQUIRED
+```
+
+A confident match evolves an existing Harness. A narrow source role, such as a Redis client library, should create a narrow target and reference a broader parent Harness instead of evolving the full distributed cache product Harness.
+
+## Template Quality Standard v1
+
+Strict validation checks that templates have enough structure for human review, AI Agent automation, and EvoPilot planning:
+
+| Section | Required Shape |
+|---|---|
+| `productBoundary` | Non-empty `includes[]` and `excludes[]`. |
+| `matchPolicy` | Non-empty `requiredAny[]`, at least one positive signal, and at least one negative exclusion. |
+| `executionModel` | Non-empty `phases[]` and command groups under `requiredCommands`. |
+| `evidenceContract` | Required artifacts and correlation fields. |
+| `qualityGate` | `minTemplateScore`, defaulting to `0.8` in generated drafts. |
+| `runtimePatterns.domainExecution` | Required for domain Harnesses. |
+
+```bash
+node src/index.mjs harness validate --source harnesses --strict --json
+node src/index.mjs catalog publish --source harnesses --out published --strict --json
+```
 
 ## Source References
 

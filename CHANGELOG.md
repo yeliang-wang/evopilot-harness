@@ -2,6 +2,48 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 1.3.0 - 2026-08-09
+
+### Added
+
+- Added Harness Detect Algorithm v1 with `detect` and `detect batch` CLI commands.
+- Added deterministic Source Profile generation for languages, build tools, frameworks, dependencies, imports, symbols, architecture signals, source roles, negative signals, and sensitive material findings.
+- Added Template Quality Standard v1 with strict validation for `productBoundary`, `matchPolicy`, `executionModel`, `evidenceContract`, `qualityGate`, and domain execution.
+- Added an external sample validation script for local historical project corpora without copying those projects into Harness templates.
+
+### Changed
+
+- Updated `evolve` to reuse the detect profile and auto-match result before draft generation.
+- Updated source Harness templates with richer product boundaries, match policies, execution models, evidence contracts, and quality gates.
+- Raised the default deterministic match threshold from `0.08` to `0.45`.
+- Documented the `CREATE_NEW_WITH_PARENT_REFERENCE` and `REVIEW_REQUIRED` decisions for narrow-domain Harness evolution.
+
+### Validation
+
+- `node --check src/index.mjs`
+- `npm test`
+- `npm run check`
+- `node scripts/validate-howbuy-samples.mjs --source-root /Users/wangyejing/project/howbuy_project --source harnesses`
+- `git diff --check`
+
+## 1.2.0 - 2026-08-09
+
+### Added
+
+- Added multi-Catalog Registry support through `registry publish` and `registry validate`.
+- Added Registry-aware Harness Hub snapshots.
+
+### Changed
+
+- Clarified that `harness-registry.yaml` is a Catalog discovery layer and must not duplicate per-Catalog Harness entries.
+
+### Validation
+
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 1.1.1 - 2026-08-09
 
 ### Added

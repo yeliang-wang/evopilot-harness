@@ -9,11 +9,11 @@
 ```yaml
 schema: evopilot-goal-plan-selected-harness/v1
 harnessId: distributed-cache-harness
-version: 0.1.0
+version: 0.2.0
 domain: distributed-cache
 catalogId: evopilot-public-harness-catalog
 catalogDigest: sha256:...
-entryPath: ./distributed-cache-harness/0.1.0/template.yaml
+entryPath: ./distributed-cache-harness/0.2.0/template.yaml
 entryDigest: sha256:...
 selectionReasons:
   - goal mentions cache, ttl, eviction, and failover

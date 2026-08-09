@@ -6,8 +6,8 @@ These workflows describe how Harness administrators and AI agents use the CLI.
 
 ```bash
 node src/index.mjs harness list --source harnesses --json
-node src/index.mjs harness validate --source harnesses --json
-node src/index.mjs catalog publish --source harnesses --out published --json
+node src/index.mjs harness validate --source harnesses --strict --json
+node src/index.mjs catalog publish --source harnesses --out published --strict --json
 node src/index.mjs catalog validate --source published --json
 ```
 
@@ -22,6 +22,17 @@ entries[].digest is present
 
 ## One-Command Source Project Evolution
 
+Detect first:
+
+```bash
+node src/index.mjs detect \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable domain Harness from this project." \
+  --json
+```
+
+Continue only after reviewing `sourceProfile.primaryRole`, `autoMatch.decision`, `autoMatch.targetHarnessId`, `autoMatch.parentCandidates`, and `nextAction`.
+
 ```bash
 node src/index.mjs evolve \
   --source-project /path/to/source-project \
@@ -29,7 +40,7 @@ node src/index.mjs evolve \
   --json
 ```
 
-The CLI scans the source project, computes source coverage, auto-matches existing packs by signals, generates a draft pack, validates it, and stops for review when the result is valid.
+The CLI scans the source project, computes source coverage, builds a Source Profile, runs Harness Detect Algorithm v1, generates a draft pack, validates Template Quality Standard v1, and stops for review when the result is valid.
 
 Expected review fields:
 
@@ -38,10 +49,25 @@ status=REVIEW_REQUIRED
 nextAction=review-approve-harness
 autoMatch.decision
 autoMatch.targetHarnessId
+sourceProfile.primaryRole
 draft.harnessId
 draft.version
 validation.status=VALIDATED
 ```
+
+## Batch Source Detection
+
+Use batch detection to evaluate many historical project directories without publishing anything:
+
+```bash
+node src/index.mjs detect batch \
+  --source-root /path/to/source-root \
+  --include-modules \
+  --limit 50 \
+  --json
+```
+
+Review `detections[]` and choose which source project should enter `evolve`. This workflow is for upgrading the algorithm and operator decision quality; it does not copy source code or convert every detected project into a Harness template.
 
 Review generated files:
 

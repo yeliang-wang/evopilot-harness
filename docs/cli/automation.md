@@ -19,12 +19,14 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 | `catalog validate --json` | `status`, `source`, `entryCount`, `checks[]`, `blockers[]` |
 | `harness list --json` | `status`, `source`, `count`, `harnesses[]`, `nextAction` |
 | `harness inspect --json` | `status`, `harness`, `template`, `templateDigest`, `paths` |
-| `harness validate --json` | `status`, `harnessCount`, `checks[]`, `blockers[]` |
+| `harness validate --json` | `status`, `harnessCount`, `strict`, `quality[]`, `checks[]`, `blockers[]` |
+| `detect --json` | `status`, `sourceCoverage`, `sourceProfile`, `autoMatch`, `nextAction` |
+| `detect batch --json` | `status`, `discoveredCount`, `evaluatedCount`, `detections[]`, `nextAction` |
 | `evolution create --json` | `evolutionId`, `status`, `sources[]`, `nextAction` |
-| `evolution advance --json` | `sourceCoverage`, `autoMatch`, `draft`, `validation`, `nextAction` |
+| `evolution advance --json` | `sourceCoverage`, `sourceProfile`, `autoMatch`, `draft`, `validation`, `nextAction` |
 | `evolution approve --json` | `status`, `approval`, `nextAction` |
 | `evolution publish --json` | `status`, `publication`, `impactReport`, `nextAction` |
-| `evolve --json` | `evolutionId`, `status`, `autoMatch`, `sourceCoverage`, `validation`, `draft`, `publication`, `nextAction` |
+| `evolve --json` | `evolutionId`, `status`, `sourceProfile`, `autoMatch`, `sourceCoverage`, `validation`, `draft`, `publication`, `nextAction` |
 | `hub snapshot --json` | `status`, `project`, `catalog`, `harnesses[]`, `evolutions[]`, `sourceTypes[]`, `lifecycleCommands[]` |
 
 ## Stop Conditions
@@ -36,6 +38,7 @@ status=BLOCKED
 status=FAILED
 blockers.length > 0
 nextAction=review-approve-harness
+nextAction=review-candidate-match
 nextAction=repair-draft-validation
 nextAction=publish-catalog-directory-and-configure-evopilot-catalog-dir
 process exit code != 0
@@ -49,8 +52,10 @@ Automation summaries must include:
 
 - `evolutionId`
 - source count and source digests
-- auto-match decision, confidence, target Harness id, target version, and reasons
+- `sourceProfile.primaryRole`, recommended Harness id, architecture signals, negative signals, and sensitive material findings
+- auto-match decision, confidence, target Harness id, target version, parent candidates, candidate scores, and reasons
 - validation status and blockers
+- strict template quality scores when validation is run with `--strict`
 - draft Harness id, version, digest, and draft path
 - approval actor and confirmation when present
 - publication Harness id, version, Harness root, Catalog root, and Registry file when present

@@ -2,7 +2,7 @@
 
 > Command-line access to the independent Harness Factory, Catalog publisher, evolution workflow, and Harness Hub.
 
-The CLI manages local repository state. It reads source Harness packs from `harnesses/`, writes evolution runs under `.evopilot-harness/`, publishes usable Catalog files under `published/`, and serves the standalone Harness Hub.
+The CLI manages local repository state. It reads source Harness packs from `harnesses/`, detects source roles and target Harnesses, writes evolution runs under `.evopilot-harness/`, publishes usable Catalog files under `published/`, maintains `harness-registry.yaml`, and serves the standalone Harness Hub.
 
 ## Install
 
@@ -20,9 +20,11 @@ If the command is installed on the shell path, replace `node src/index.mjs` with
 | Group | Purpose |
 |---|---|
 | `catalog` | Publish or validate a usable Catalog directory. |
+| `registry` | Publish or validate the multi-Catalog discovery file. |
 | `harness` | List, inspect, validate, publish, or deprecate source packs. |
+| `detect` | Build Source Profiles and choose candidate Harness targets before evolution. |
 | `evolution` | Run the review-gated lifecycle for generated Harness changes. |
-| `evolve` | One-command source scan, match, draft, optional approval, and publication. |
+| `evolve` | One-command source scan, detect, draft, optional approval, and publication. |
 | `hub` | Build a Hub snapshot or serve the browser UI. |
 
 ## JSON First

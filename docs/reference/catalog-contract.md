@@ -26,11 +26,11 @@ generatedAt: 2026-08-09T05:24:19.115Z
 compatibleEvopilot: ">=3.0.0"
 entries:
   - name: database-product-harness
-    version: 2.2.0
+    version: 2.3.0
     layer: domain
     domain: database-product
     status: published
-    path: ./database-product-harness/2.2.0/template.yaml
+    path: ./database-product-harness/2.3.0/template.yaml
     digest: sha256:...
     tags:
       - database

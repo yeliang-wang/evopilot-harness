@@ -7,7 +7,8 @@ EvoPilot consumes the Harness Registry and the published Catalog directories it 
 In `evopilot-harness`:
 
 ```bash
-node src/index.mjs catalog publish --source harnesses --out published --json
+node src/index.mjs harness validate --source harnesses --strict --json
+node src/index.mjs catalog publish --source harnesses --out published --strict --json
 node src/index.mjs catalog validate --source published --json
 node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json
 node src/index.mjs registry validate --registry harness-registry.yaml --json

@@ -34,10 +34,30 @@ The package requires Node.js 22 or later.
 node src/index.mjs catalog publish --source harnesses --out published --json
 node src/index.mjs catalog validate --source published --json
 node src/index.mjs harness list --source harnesses --json
+node src/index.mjs harness validate --source harnesses --strict --json
 node src/index.mjs hub snapshot --catalog published --source harnesses --json
 ```
 
 For one-command evolution:
+
+```bash
+node src/index.mjs detect \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable domain Harness from this project." \
+  --json
+```
+
+Show the detection fields to the administrator before draft generation when the decision is ambiguous or creates a new target:
+
+```text
+sourceProfile.primaryRole
+sourceProfile.recommendedHarness
+autoMatch.decision
+autoMatch.targetHarnessId
+autoMatch.parentCandidates
+autoMatch.candidates
+nextAction
+```
 
 ```bash
 node src/index.mjs evolve \
@@ -52,6 +72,7 @@ Stop after the draft reaches `REVIEW_REQUIRED`. Show the response fields to the 
 evolutionId
 status
 sourceCoverage
+sourceProfile
 autoMatch
 validation
 draft.harnessId

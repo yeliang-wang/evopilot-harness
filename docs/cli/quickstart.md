@@ -48,6 +48,17 @@ The Hub reads `/api/hub/snapshot` from the local `evopilot-harness` server. It d
 
 ## 4. Evolve From A Source Project
 
+Detect the source role and candidate Harness first:
+
+```bash
+node src/index.mjs detect \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable domain Harness from this project." \
+  --json
+```
+
+Review `sourceProfile.primaryRole`, `autoMatch.decision`, `autoMatch.targetHarnessId`, and `autoMatch.parentCandidates`.
+
 ```bash
 node src/index.mjs evolve \
   --source-project /path/to/source-project \

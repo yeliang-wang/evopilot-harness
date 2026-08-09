@@ -1,0 +1,8 @@
+schema: evopilot-selected-harness-example/v1
+scope: example-only
+selectedHarness:
+  harnessId: observability-apm-harness
+  version: 1.1.0
+  catalogId: evopilot-public-harness-catalog
+  binding: EvoPilot writes this at goal plan time after reading the published
+    Catalog directory.

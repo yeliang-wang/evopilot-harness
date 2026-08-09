@@ -2,7 +2,7 @@
 
 This directory contains human-readable source Harness packs maintained by `evopilot-harness`.
 
-EvoPilot does not read this source directory. Run `evopilot-harness catalog publish` to produce the usable `published/` Catalog directory, then configure EvoPilot with that directory through `EVOPILOT_HARNESS_CATALOG_DIRS`.
+EvoPilot does not read this source directory. Run `evopilot-harness catalog publish` to produce the usable `published/` Catalog directory, then configure EvoPilot with `harness-registry.yaml` through `EVOPILOT_HARNESS_REGISTRY_CONFIG`.
 
 ## Template Model
 
@@ -10,9 +10,9 @@ Domain templates define product evolution controls first, then record compatible
 
 Current domain templates include:
 
-- `database-product-harness@2.2.0` for self-developed database products. PostgreSQL, MySQL, and similar systems are compatibility references or differential oracles, not the default evolution target.
-- `api-gateway-harness@2.2.0` for gateway, ingress, traffic proxy, and service-mesh gateway products.
-- `distributed-cache-harness@0.1.0` for self-developed distributed cache and key-value storage products.
+- `database-product-harness@2.3.0` for self-developed database products. PostgreSQL, MySQL, and similar systems are compatibility references or differential oracles, not the default evolution target.
+- `api-gateway-harness@2.3.0` for gateway, ingress, traffic proxy, and service-mesh gateway products.
+- `distributed-cache-harness@0.2.0` for self-developed distributed cache and key-value storage products.
 
 ## Pack Shape
 
@@ -33,9 +33,9 @@ Each template pack uses the same minimal directory shape:
 
 ```bash
 evopilot-harness harness list --json
-evopilot-harness harness validate database-product-harness --json
+evopilot-harness harness validate database-product-harness --strict --json
 evopilot-harness harness publish database-product-harness --source harnesses --out published --json
-evopilot-harness catalog publish --source harnesses --out published --json
+evopilot-harness catalog publish --source harnesses --out published --strict --json
 evopilot-harness catalog validate --source published --json
 ```
 
@@ -44,6 +44,13 @@ Pack commands are intentionally small. Review happens through Git, draft files, 
 ## Source-Driven Evolution
 
 Use atomic lifecycle commands when an administrator wants full control:
+
+```bash
+evopilot-harness detect \
+  --source-project /path/to/source-project \
+  --goal "Create or evolve a reusable Harness from this project." \
+  --json
+```
 
 ```bash
 evopilot-harness evolution create \

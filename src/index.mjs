@@ -11,6 +11,13 @@ const DEFAULT_COMPATIBLE_EVOPILOT = ">=3.0.0";
 const DEFAULT_DATA_ROOT = ".evopilot-harness";
 const EVOLUTION_STATUSES = ["CREATED", "SOURCES_COLLECTED", "ANALYZED", "REVIEW_REQUIRED", "APPROVED", "PUBLISHED", "BLOCKED"];
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
+const LLM_ADVISOR_SCHEMA = "evopilot-harness-llm-advisor/v1";
+const DETECT_SCHEMA = "evopilot-harness-detect-result/v1";
+const SOURCE_PROFILE_SCHEMA = "evopilot-harness-source-profile/v1";
+const DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
+const DEFAULT_GLM_MODEL = "glm-5.2";
+const DEFAULT_MATCH_THRESHOLD = 0.45;
+const AMBIGUOUS_MATCH_DELTA = 0.1;
 
 async function main(argv) {
   const args = parseArgs(argv);
@@ -36,10 +43,12 @@ async function main(argv) {
   if (group === "evolution" && action === "approve") return approveEvolution(args, idArg);
   if (group === "evolution" && action === "publish") return publishEvolution(args, idArg);
   if (group === "evolution" && action === "impact") return evolutionImpact(args, idArg);
+  if (group === "detect" && action === "batch") return detectBatch(args);
+  if (group === "detect") return detectSources(args);
   if (group === "evolve") return oneClickEvolve(args);
   if (group === "hub" && action === "snapshot") return hubSnapshot(args);
   if (group === "hub" && action === "serve") return serveHub(args);
-  throw usage("Use: evopilot-harness <catalog|registry|harness|evolution|evolve|hub> --help.");
+  throw usage("Use: evopilot-harness <catalog|registry|harness|detect|evolution|evolve|hub> --help.");
 }
 
 function publishRegistry(args) {
@@ -238,6 +247,20 @@ function publishCatalog(args) {
   const names = stringListOption(args, "name");
   const packs = listHarnessPacks(source).filter((pack) => names.length === 0 || names.includes(pack.id));
   if (packs.length === 0) throw usage(`No Harness packs found in ${source}.`);
+  if (args.options.strict) {
+    const checks = packs.flatMap((pack) => validateHarnessTemplateContract(pack.template, {
+      name: pack.id,
+      version: pack.version,
+      layer: pack.template.harnessLayer ?? pack.template.runtimePatterns?.harnessLayer,
+      domain: pack.template.domain ?? pack.template.runtimePatterns?.domain
+    }, { strict: true }));
+    const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
+    if (blockers.length > 0) {
+      const result = { schema: "evopilot-harness-catalog-publish-result/v1", status: "FAILED", source, blockers, checks };
+      printResult(args, result, `catalog=${catalogId} status=FAILED`);
+      return 2;
+    }
+  }
   fs.mkdirSync(out, { recursive: true });
   const entries = packs.map((pack) => publishPack(pack, out));
   const catalog = {
@@ -352,21 +375,25 @@ function validateHarness(args, idArg) {
   const ids = idArg ? [safeId(idArg)] : stringListOption(args, "name");
   const packs = listHarnessPacks(source).filter((pack) => ids.length === 0 || ids.includes(pack.id));
   if (packs.length === 0) throw usage(`No Harness packs found in ${source}.`);
+  const strict = Boolean(args.options.strict);
   const checks = packs.flatMap((pack) => validateHarnessTemplateContract(pack.template, {
     name: pack.id,
     version: pack.version,
     layer: pack.template.harnessLayer ?? pack.template.runtimePatterns?.harnessLayer,
     domain: pack.template.domain ?? pack.template.runtimePatterns?.domain
-  }));
+  }, { strict }));
   for (const pack of packs) {
     checks.unshift({ id: `pack:${pack.id}@${pack.version}:template`, status: "PASS", evidence: [path.relative(process.cwd(), pack.templatePath)] });
   }
+  const quality = packs.map((pack) => templateQualitySummary(pack.template, pack.id));
   const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
   const result = {
     schema: "evopilot-harness-validation-result/v1",
     status: blockers.length === 0 ? "VALIDATED" : "FAILED",
     source,
     harnessCount: packs.length,
+    strict,
+    quality,
     checks,
     blockers
   };
@@ -402,6 +429,61 @@ function deprecateHarness(args, idArg) {
   return 0;
 }
 
+function detectSources(args) {
+  const sources = collectSourceInputs(args);
+  if (sources.length === 0) throw usage("Supply at least one source with --source-project, --file, --attachment, --production-log, or --note.");
+  const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Detect the best Harness target for this source.";
+  const result = detectHarnessForSources(args, sources, goal);
+  printResult(args, publicDetectResult(result), `detect=${result.autoMatch.targetHarnessId} decision=${result.autoMatch.decision} confidence=${result.autoMatch.confidence}`);
+  return 0;
+}
+
+function detectBatch(args) {
+  const sourceRoot = path.resolve(requiredOption(args, "source-root"));
+  if (!fs.existsSync(sourceRoot)) throw usage(`source-root not found: ${sourceRoot}`);
+  const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Detect the best Harness target for this source project.";
+  const limit = numberOption(args, "limit", 50);
+  const projects = discoverSourceProjects(sourceRoot, {
+    maxDepth: numberOption(args, "max-depth", 5),
+    includeModules: Boolean(args.options["include-modules"]),
+    limit
+  });
+  const detections = projects.slice(0, limit).map((project) => {
+    const source = sourceProjectSource(project.path);
+    const detected = detectHarnessForSources(args, [source], goal);
+    return {
+      path: project.path,
+      relativePath: path.relative(sourceRoot, project.path) || ".",
+      rootType: project.rootType,
+      markers: project.markers,
+      status: detected.status,
+      primaryRole: detected.sourceProfile.primaryRole,
+      recommendedHarnessId: detected.sourceProfile.recommendedHarness?.id,
+      decision: detected.autoMatch.decision,
+      targetHarnessId: detected.autoMatch.targetHarnessId,
+      confidence: detected.autoMatch.confidence,
+      parentCandidates: detected.autoMatch.parentCandidates,
+      topCandidates: detected.autoMatch.candidates.slice(0, 3).map((candidate) => ({
+        harnessId: candidate.harnessId,
+        score: candidate.score,
+        boundaryFit: candidate.boundaryFit,
+        roleFit: candidate.roleFit
+      }))
+    };
+  });
+  const result = {
+    schema: "evopilot-harness-detect-batch-result/v1",
+    status: "READY",
+    sourceRoot,
+    discoveredCount: projects.length,
+    evaluatedCount: detections.length,
+    detections,
+    nextAction: "review-detections-and-run-evolve-for-selected-source-projects"
+  };
+  printResult(args, result, `detect-batch=${detections.length} sourceRoot=${sourceRoot}`);
+  return 0;
+}
+
 function listEvolutions(args) {
   const dataRoot = evolutionDataRoot(args);
   const runs = listEvolutionRuns(dataRoot);
@@ -416,9 +498,9 @@ function listEvolutions(args) {
   return 0;
 }
 
-function oneClickEvolve(args) {
+async function oneClickEvolve(args) {
   const run = createEvolutionRunFromArgs(args);
-  const advanced = advanceRunToReview(args, run);
+  const advanced = await advanceRunToReview(args, run);
   let result = advanced;
   if (args.options["approve-and-publish"]) {
     result = approveRun(args, result);
@@ -447,9 +529,9 @@ function addEvolutionSources(args, idArg) {
   return 0;
 }
 
-function advanceEvolution(args, idArg) {
+async function advanceEvolution(args, idArg) {
   const run = readRequiredEvolution(args, idArg);
-  const next = advanceRunToReview(args, run);
+  const next = await advanceRunToReview(args, run);
   printResult(args, evolutionDetail(next), `evolution=${next.evolutionId} status=${next.status}`);
   return next.status === "BLOCKED" ? 2 : 0;
 }
@@ -546,6 +628,8 @@ function buildHubSnapshot(args) {
     ...evolutionSummary(run),
     updatedAt: run.updatedAt,
     autoMatchDecision: run.autoMatch?.decision,
+    llmAdvisorStatus: run.llmAdvisor?.status,
+    llmAdvisorRecommendation: run.llmAdvisor?.recommendation,
     validationStatus: run.validation?.status,
     publication: run.publication
   }));
@@ -666,20 +750,23 @@ function hubCatalogEntry(catalogRoot, entry) {
 
 function templateContractSummary(template) {
   const domainExecution = isRecord(template.runtimePatterns?.domainExecution) ? template.runtimePatterns.domainExecution : {};
+  const quality = templateQualitySummary(template);
   return {
     requiredActionCount: Array.isArray(domainExecution.requiredActions) ? domainExecution.requiredActions.length : 0,
     evidenceAdapterCount: Array.isArray(domainExecution.evidenceAdapters) ? domainExecution.evidenceAdapters.length : 0,
     releaseBlockerCount: Array.isArray(domainExecution.releaseBlockers) ? domainExecution.releaseBlockers.length : 0,
     requiredActions: labels(domainExecution.requiredActions, "id").slice(0, 6),
     evidenceAdapters: labels(domainExecution.evidenceAdapters, "id").slice(0, 6),
-    releaseBlockers: Array.isArray(domainExecution.releaseBlockers) ? domainExecution.releaseBlockers.slice(0, 6).map(String) : []
+    releaseBlockers: Array.isArray(domainExecution.releaseBlockers) ? domainExecution.releaseBlockers.slice(0, 6).map(String) : [],
+    quality
   };
 }
 
 function lifecycleCommands(harnessId) {
   return {
+    detect: `evopilot-harness detect --source-project /path/to/source-project --goal "Match ${harnessId}" --json`,
     inspect: `evopilot-harness harness inspect ${harnessId} --json`,
-    validate: `evopilot-harness harness validate ${harnessId} --json`,
+    validate: `evopilot-harness harness validate ${harnessId} --strict --json`,
     publish: `evopilot-harness harness publish ${harnessId} --source harnesses --out published --json`,
     evolve: `evopilot-harness evolve --source-project /path/to/source-project --goal "Evolve ${harnessId}" --json`
   };
@@ -687,10 +774,12 @@ function lifecycleCommands(harnessId) {
 
 function lifecycleCommandModel() {
   return [
+    { id: "detect", label: "Detect source profile and Harness target", command: "evopilot-harness detect --source-project /path/to/source-project --goal \"...\" --json" },
     { id: "scan-auto-match", label: "Scan and auto-match", command: "evopilot-harness evolve --source-project /path/to/source-project --goal \"...\" --json" },
     { id: "review-draft", label: "Review draft", command: "evopilot-harness evolution review <evolution-id> --json" },
     { id: "approve", label: "Approve", command: "evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json" },
     { id: "publish", label: "Publish usable Harness", command: "evopilot-harness evolution publish <evolution-id> --json" },
+    { id: "strict-validate", label: "Strict template quality validation", command: "evopilot-harness harness validate --strict --json" },
     { id: "validate-catalog", label: "Validate Catalog", command: "evopilot-harness catalog validate --source published --json" },
     { id: "publish-registry", label: "Publish Registry", command: "evopilot-harness registry publish --catalog published --registry harness-registry.yaml --json" },
     { id: "validate-registry", label: "Validate Registry", command: "evopilot-harness registry validate --registry harness-registry.yaml --json" }
@@ -769,7 +858,9 @@ function createEvolutionRunFromArgs(args) {
     updatedAt: now,
     sources,
     sourceCoverage: undefined,
+    sourceProfile: undefined,
     autoMatch: undefined,
+    llmAdvisor: undefined,
     draft: undefined,
     validation: undefined,
     approval: undefined,
@@ -780,38 +871,75 @@ function createEvolutionRunFromArgs(args) {
   return run;
 }
 
-function advanceRunToReview(args, run) {
+async function advanceRunToReview(args, run) {
   if (run.status === "APPROVED" || run.status === "PUBLISHED") return run;
   const source = path.resolve(stringOption(args, "source") ?? "harnesses");
   const dataRoot = evolutionDataRoot(args);
-  const sourceCoverage = buildSourceCoverage(run.sources);
-  const corpus = buildCorpus(run.sources);
-  const packs = listHarnessPacks(source);
-  const autoMatch = autoMatchHarness(packs, corpus, run.goal, args);
-  const draft = createDraftPack(run, autoMatch, corpus, args);
+  const detection = detectHarnessForSources(args, run.sources, run.goal, source);
+  const { sourceCoverage, sourceProfile, corpus, packs } = detection;
+  const deterministicAutoMatch = detection.autoMatch;
+  const llmAdvisor = await adviseHarnessEvolution(args, { run, sourceCoverage, sourceProfile, corpus, packs, autoMatch: deterministicAutoMatch });
+  const autoMatch = applyLlmAdvisorToMatch(deterministicAutoMatch, llmAdvisor, packs, args);
+  const draft = createDraftPack(run, autoMatch, corpus, args, sourceProfile);
   const validation = validateDraftPack(draft);
-  const nextStatus = validation.blockers.length === 0 ? "REVIEW_REQUIRED" : "BLOCKED";
+  const advisorBlocking = isLlmAdvisorBlocking(llmAdvisor);
+  const nextStatus = advisorBlocking || validation.blockers.length > 0 ? "BLOCKED" : "REVIEW_REQUIRED";
   writeDraftFiles(dataRoot, run.evolutionId, draft);
   const next = {
     ...run,
     status: nextStatus,
     updatedAt: new Date().toISOString(),
     sourceCoverage,
+    sourceProfile,
     autoMatch,
+    llmAdvisor,
     draft,
     validation,
     workflow: {
       steps: [
         { id: "collect-sources", status: "COMPLETED" },
         { id: "auto-match", status: "COMPLETED" },
+        { id: "llm-advisor", status: advisorWorkflowStatus(llmAdvisor) },
         { id: "generate-draft", status: "COMPLETED" },
         { id: "validate-draft", status: validation.blockers.length === 0 ? "COMPLETED" : "BLOCKED" }
       ]
     },
-    nextAction: validation.blockers.length === 0 ? "review-approve-harness" : "repair-draft-validation"
+    nextAction: advisorBlocking ? llmAdvisor.nextAction : validation.blockers.length === 0 ? "review-approve-harness" : "repair-draft-validation"
   };
   writeEvolutionRun(args, next);
   return next;
+}
+
+function detectHarnessForSources(args, sources, goal, sourceRootOverride) {
+  const source = path.resolve(sourceRootOverride ?? stringOption(args, "source") ?? "harnesses");
+  const sourceCoverage = buildSourceCoverage(sources);
+  const corpus = buildCorpus(sources);
+  const sourceProfile = buildSourceProfile(sources, corpus, goal);
+  const packs = listHarnessPacks(source);
+  const autoMatch = autoMatchHarness(packs, sourceProfile, corpus, goal, args);
+  return {
+    schema: DETECT_SCHEMA,
+    status: "READY",
+    sourceRoot: source,
+    sourceCoverage,
+    sourceProfile,
+    autoMatch,
+    nextAction: autoMatch.decision === "REVIEW_REQUIRED" ? "review-candidate-match" : "run-evolve-or-review-draft",
+    corpus,
+    packs
+  };
+}
+
+function publicDetectResult(result) {
+  return {
+    schema: result.schema,
+    status: result.status,
+    sourceRoot: result.sourceRoot,
+    sourceCoverage: result.sourceCoverage,
+    sourceProfile: result.sourceProfile,
+    autoMatch: result.autoMatch,
+    nextAction: result.nextAction
+  };
 }
 
 function approveRun(args, run) {
@@ -886,6 +1014,11 @@ function sourceProjectSource(projectPath) {
   const absolute = path.resolve(projectPath);
   if (!fs.existsSync(absolute)) throw usage(`source-project not found: ${projectPath}`);
   const scan = scanSourceProject(absolute);
+  const rawText = scan.extractedText;
+  const redactedText = redactSensitiveText(scan.extractedText);
+  const sensitiveMaterialFindings = detectSensitiveMaterial(scan.extractedText);
+  scan.extractedText = redactedText;
+  scan.sensitiveMaterialFindings = sensitiveMaterialFindings;
   return {
     id: `source-${safeId(path.basename(absolute))}-${digestText(absolute).slice(7, 15)}`,
     type: "source-project",
@@ -893,6 +1026,7 @@ function sourceProjectSource(projectPath) {
     uri: absolute,
     digest: digestText(JSON.stringify(scan)),
     scan,
+    redactionApplied: redactedText !== rawText || sensitiveMaterialFindings.length > 0,
     contentText: scan.extractedText
   };
 }
@@ -950,6 +1084,7 @@ function scanSourceProject(root) {
     fileCount: files.length,
     selectedFileCount: selected.length,
     topExtensions: Object.entries(extensions).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([extension, count]) => ({ extension, count })),
+    files: files.map((file) => path.relative(root, file)).slice(0, 260),
     selectedFiles: selected.map((file) => path.relative(root, file)),
     extractedText: excerpts.join("\n\n").slice(0, 120_000)
   };
@@ -959,7 +1094,7 @@ function walk(dir, files, limit) {
   if (files.length >= limit) return;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (files.length >= limit) return;
-    if ([".git", "node_modules", "dist", "build", "target", ".next", "coverage", ".evopilot-harness"].includes(entry.name)) continue;
+    if ([".git", ".svn", ".hg", ".idea", ".settings", "node_modules", "dist", "build", "target", ".next", "coverage", ".evopilot-harness"].includes(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full, files, limit);
     else if (entry.isFile()) files.push(full);
@@ -984,8 +1119,15 @@ function buildSourceCoverage(sources) {
       name: source.name,
       digest: source.digest,
       redactionApplied: Boolean(source.redactionApplied),
+      sensitiveMaterialFindings: source.scan?.sensitiveMaterialFindings ?? detectSensitiveMaterial(source.contentText ?? ""),
       knowledgeCategory: source.type === "production-log" ? "runtime-operations" : source.type === "source-project" ? "source-architecture" : "supporting-material",
-      projectActions: projectActionsForSource(source)
+      projectActions: projectActionsForSource(source),
+      scan: source.scan ? {
+        fileCount: source.scan.fileCount,
+        selectedFileCount: source.scan.selectedFileCount,
+        topExtensions: source.scan.topExtensions,
+        selectedFiles: source.scan.selectedFiles?.slice(0, 80)
+      } : undefined
     }))
   };
 }
@@ -1006,45 +1148,1123 @@ function buildCorpus(sources) {
   };
 }
 
-function autoMatchHarness(packs, corpus, goal, args) {
+function buildSourceProfile(sources, corpus, goal) {
+  const allFiles = uniqueStrings(sources.flatMap((source) => source.scan?.files ?? source.scan?.selectedFiles ?? []));
+  const selectedFiles = uniqueStrings(sources.flatMap((source) => source.scan?.selectedFiles ?? []));
+  const dependencies = extractDependencies(corpus.text, allFiles);
+  const imports = extractJavaImports(corpus.text);
+  const symbols = extractSymbols(corpus.text);
+  const languages = detectLanguages(sources, allFiles, corpus.text);
+  const buildTools = detectBuildTools(allFiles, corpus.text);
+  const frameworks = detectFrameworks(dependencies, imports, symbols, corpus.text);
+  const architectureSignals = inferArchitectureSignals({ dependencies, imports, symbols, selectedFiles, allFiles, text: corpus.text, goal });
+  const roles = inferSourceRoles({ dependencies, imports, symbols, selectedFiles, allFiles, architectureSignals, text: corpus.text, goal });
+  const primaryRole = roles[0]?.id ?? "unknown";
+  const recommendedHarness = recommendHarnessForRole(primaryRole, { dependencies, imports, symbols, architectureSignals, text: corpus.text, goal });
+  const negativeSignals = inferNegativeSignals({ roles, dependencies, imports, symbols, architectureSignals, text: corpus.text });
+  const positiveSignals = uniqueStrings([
+    ...dependencies.slice(0, 20),
+    ...frameworks,
+    ...symbols.slice(0, 20),
+    ...architectureSignals,
+    primaryRole
+  ]);
+  return {
+    schema: SOURCE_PROFILE_SCHEMA,
+    digest: corpus.digest,
+    sourceCount: sources.length,
+    sourceTypes: uniqueStrings(sources.map((source) => source.type)),
+    projectRoots: sources.filter((source) => source.type === "source-project").map((source) => source.uri),
+    languages,
+    buildTools,
+    frameworks,
+    dependencies,
+    imports: imports.slice(0, 80),
+    symbols: symbols.slice(0, 80),
+    selectedFiles: selectedFiles.slice(0, 120),
+    architectureSignals,
+    roles,
+    primaryRole,
+    recommendedHarness,
+    positiveSignals,
+    negativeSignals,
+    sensitiveMaterialFindings: uniqueStrings(sources.flatMap((source) => source.scan?.sensitiveMaterialFindings ?? detectSensitiveMaterial(source.contentText ?? ""))),
+    goalDigest: digestText(goal)
+  };
+}
+
+function autoMatchHarness(packs, sourceProfile, corpus, goal, args) {
   const explicitTarget = stringOption(args, "target-id");
-  const goalText = goal.toLowerCase();
-  const candidates = packs.map((pack) => {
-    const signals = harnessSignals(pack);
-    const matched = signals.filter((signal) => corpus.normalizedText.includes(signal.toLowerCase()) || goalText.includes(signal.toLowerCase()));
-    const score = signals.length === 0 ? 0 : matched.length / Math.min(signals.length, 24);
-    return {
-      harnessId: pack.id,
-      version: pack.version,
-      domain: pack.template.domain ?? pack.template.runtimePatterns?.domain,
-      score: Number(score.toFixed(3)),
-      matchedSignals: matched.slice(0, 20),
-      templatePath: pack.templatePath,
-      basePack: pack
-    };
-  }).sort((left, right) => right.score - left.score);
+  const recommended = sourceProfile.recommendedHarness;
+  const candidates = packs.map((pack) => scoreHarnessCandidate(pack, sourceProfile, corpus, goal)).sort((left, right) => {
+    if (right.score !== left.score) return right.score - left.score;
+    return right.priority - left.priority;
+  });
   const best = candidates[0];
-  const matched = best && best.score >= Number(stringOption(args, "match-threshold") ?? 0.08);
-  const targetHarnessId = safeId(explicitTarget ?? (matched ? best.harnessId : inferHarnessId(goal, corpus)));
-  const decision = matched && targetHarnessId === best.harnessId ? "EVOLVE_EXISTING" : matched ? "FORK_FROM_MATCH" : "CREATE_NEW";
+  const second = candidates[1];
+  const matchThreshold = numberOption(args, "match-threshold", DEFAULT_MATCH_THRESHOLD);
+  const ambiguous = Boolean(best && second && best.score >= 0.25 && Math.abs(best.score - second.score) < AMBIGUOUS_MATCH_DELTA);
+  const existingRecommended = recommended?.id ? packs.find((pack) => pack.id === recommended.id) : undefined;
+  const recommendedCandidate = existingRecommended ? candidates.find((candidate) => candidate.harnessId === existingRecommended.id) : undefined;
+  const parentCandidates = parentCandidateRefs(packs, candidates, recommended);
+  let targetHarnessId = safeId(explicitTarget ?? recommended?.id ?? (best && best.score >= matchThreshold ? best.harnessId : inferHarnessId(goal, corpus)));
+  let decision = "CREATE_NEW";
+  let confidence = best?.score ?? 0;
+  let basePack;
+  let targetVersion = "0.1.0";
+  let reasons = [];
+
+  if (explicitTarget) {
+    const explicitPack = packs.find((pack) => pack.id === targetHarnessId);
+    const explicitCandidate = candidates.find((candidate) => candidate.harnessId === targetHarnessId);
+    const matched = explicitCandidate && explicitCandidate.score >= matchThreshold && explicitCandidate.boundaryFit !== "mismatch";
+    decision = explicitPack && matched ? "EVOLVE_EXISTING" : best && best.score >= 0.25 ? "FORK_FROM_MATCH" : "CREATE_NEW";
+    basePack = decision === "EVOLVE_EXISTING" ? explicitPack : decision === "FORK_FROM_MATCH" ? best?.basePack : undefined;
+    targetVersion = basePack ? bumpPatch(basePack.version) : "0.1.0";
+    confidence = Number((explicitCandidate?.score ?? best?.score ?? 0).toFixed(3));
+    reasons = [`explicit-target=${targetHarnessId}`, ...(explicitCandidate?.matchedEvidence ?? best?.matchedEvidence ?? [])];
+  } else if (existingRecommended && recommendedCandidate && recommendedCandidate.boundaryFit !== "mismatch" && (
+    recommendedCandidate.score >= matchThreshold
+    || (recommendedCandidate.roleFit === "strong" && Number(recommended?.confidence ?? 0) >= 0.75 && recommendedCandidate.score >= 0.25)
+  )) {
+    decision = ambiguous && recommendedCandidate.harnessId !== best?.harnessId ? "REVIEW_REQUIRED" : "EVOLVE_EXISTING";
+    targetHarnessId = existingRecommended.id;
+    basePack = existingRecommended;
+    targetVersion = bumpPatch(existingRecommended.version);
+    confidence = Math.max(recommendedCandidate.score, Number(recommended?.confidence ?? 0));
+    reasons = [`source-role=${sourceProfile.primaryRole}`, ...(recommendedCandidate.matchedEvidence ?? [])];
+  } else if (recommended?.id && !existingRecommended && parentCandidates.length > 0) {
+    decision = "CREATE_NEW_WITH_PARENT_REFERENCE";
+    targetHarnessId = safeId(recommended.id);
+    targetVersion = "0.1.0";
+    confidence = Number(Math.max(recommended.confidence ?? 0, best?.score ?? 0).toFixed(3));
+    reasons = uniqueStrings([`source-role=${sourceProfile.primaryRole}`, ...(recommended.evidence ?? []), `parent=${parentCandidates[0].id}`]).slice(0, 12);
+  } else if (ambiguous) {
+    decision = "REVIEW_REQUIRED";
+    targetHarnessId = safeId(recommended?.id ?? best?.harnessId ?? inferHarnessId(goal, corpus));
+    targetVersion = existingRecommended ? bumpPatch(existingRecommended.version) : "0.1.0";
+    confidence = Number((best?.score ?? 0).toFixed(3));
+    reasons = [`ambiguous-candidates-delta<${AMBIGUOUS_MATCH_DELTA}`, ...(best?.matchedEvidence ?? [])];
+  } else if (best && best.score >= matchThreshold && best.boundaryFit !== "mismatch" && best.roleFit !== "mismatch") {
+    decision = "EVOLVE_EXISTING";
+    targetHarnessId = best.harnessId;
+    basePack = best.basePack;
+    targetVersion = bumpPatch(best.version);
+    confidence = best.score;
+    reasons = best.matchedEvidence.slice(0, 12);
+  } else {
+    decision = "CREATE_NEW";
+    targetHarnessId = safeId(recommended?.id ?? inferHarnessId(goal, corpus));
+    targetVersion = "0.1.0";
+    confidence = Number((recommended?.confidence ?? 0).toFixed(3));
+    reasons = uniqueStrings([`source-role=${sourceProfile.primaryRole}`, ...(recommended?.evidence ?? []), "no-confident-existing-harness-match"]).slice(0, 12);
+  }
+
   return {
     schema: "evopilot-harness-auto-match/v1",
     decision,
-    confidence: matched ? best.score : 0,
+    confidence: Number(confidence.toFixed(3)),
+    matchThreshold,
     targetHarnessId,
-    targetVersion: matched ? bumpPatch(best.version) : "0.1.0",
-    targetDomain: inferDomain(targetHarnessId, goal, corpus),
-    baseHarnessRef: matched ? { id: best.harnessId, version: best.version, digest: digestText(best.basePack.templateText) } : undefined,
+    targetVersion,
+    targetDomain: safeId(recommended?.domain ?? inferDomain(targetHarnessId, goal, corpus)),
+    sourceProfileDigest: sourceProfile.digest,
+    primaryRole: sourceProfile.primaryRole,
+    recommendedHarness: recommended,
+    baseHarnessRef: basePack ? { id: basePack.id, version: basePack.version, digest: digestText(basePack.templateText) } : undefined,
+    parentCandidates,
     candidates: candidates.map(({ basePack, ...candidate }) => candidate).slice(0, 8),
-    reasons: matched ? best.matchedSignals.slice(0, 8) : ["no-confident-existing-harness-match"],
+    reasons,
     nextAction: "review-generated-draft"
   };
 }
 
-function createDraftPack(run, match, corpus, args) {
+function scoreHarnessCandidate(pack, sourceProfile, corpus, goal) {
+  const policy = templateMatchPolicy(pack.template);
+  const requiredMatches = matchEvidenceTerms(sourceProfile, corpus, goal, policy.requiredAny);
+  const dependencyMatches = matchValueTerms(sourceProfile.dependencies, policy.positive.dependencies);
+  const importMatches = matchValueTerms(sourceProfile.imports, policy.positive.imports);
+  const fileMatches = matchValueTerms(sourceProfile.selectedFiles, policy.positive.files);
+  const symbolMatches = matchValueTerms(sourceProfile.symbols, policy.positive.symbols);
+  const architectureMatches = matchValueTerms(
+    [...sourceProfile.architectureSignals, ...sourceProfile.roles.map((role) => role.id), ...sourceProfile.frameworks],
+    policy.positive.architectureSignals
+  );
+  const signalMatches = matchEvidenceTerms(sourceProfile, corpus, goal, harnessSignals(pack).filter(isStrongMatchSignal));
+  const goalMatches = matchEvidenceTerms(sourceProfile, { ...corpus, text: goal, normalizedText: goal.toLowerCase() }, goal, [
+    pack.id,
+    pack.template.domain,
+    pack.template.runtimePatterns?.domain,
+    pack.template.description
+  ].filter(Boolean));
+  const negativeTerms = uniqueStrings([
+    ...policy.negative.productBoundaryExcludes,
+    ...policy.negative.signals,
+    ...(Array.isArray(pack.template.matchSignals?.exclude) ? pack.template.matchSignals.exclude : []),
+    ...(Array.isArray(pack.template.productBoundary?.excludes) ? pack.template.productBoundary.excludes : [])
+  ]);
+  const negativeMatches = matchEvidenceTerms(sourceProfile, corpus, goal, negativeTerms);
+  const roleFit = roleFitForHarness(pack, sourceProfile);
+  const boundaryFit = boundaryFitForHarness(pack, sourceProfile, negativeMatches);
+  const componentScores = {
+    dependency: ratioScore(dependencyMatches.length, policy.positive.dependencies.length),
+    import: ratioScore(importMatches.length, policy.positive.imports.length),
+    file: ratioScore(fileMatches.length, policy.positive.files.length),
+    symbol: ratioScore(symbolMatches.length, policy.positive.symbols.length),
+    architecture: ratioScore(architectureMatches.length, policy.positive.architectureSignals.length),
+    matchSignal: ratioScore(signalMatches.length, Math.min(harnessSignals(pack).filter(isStrongMatchSignal).length, 18)),
+    goal: ratioScore(goalMatches.length, 4),
+    required: policy.requiredAny.length === 0 ? 1 : ratioScore(requiredMatches.length, policy.requiredAny.length)
+  };
+  let score =
+    componentScores.dependency * 0.18 +
+    componentScores.import * 0.14 +
+    componentScores.file * 0.08 +
+    componentScores.symbol * 0.14 +
+    componentScores.architecture * 0.18 +
+    componentScores.matchSignal * 0.18 +
+    componentScores.goal * 0.05 +
+    componentScores.required * 0.05;
+  if (roleFit === "strong") score += 0.18;
+  else if (roleFit === "partial") score += 0.08;
+  else if (roleFit === "mismatch") score -= 0.35;
+  if (boundaryFit === "strong") score += 0.08;
+  else if (boundaryFit === "partial") score -= 0.08;
+  else if (boundaryFit === "mismatch") score -= 0.35;
+  if (policy.requiredAny.length > 0 && requiredMatches.length === 0) score *= 0.55;
+  score -= Math.min(0.45, negativeMatches.length * 0.08);
+  const matchedEvidence = uniqueStrings([
+    ...dependencyMatches.map((term) => `dependency:${term}`),
+    ...importMatches.map((term) => `import:${term}`),
+    ...fileMatches.map((term) => `file:${term}`),
+    ...symbolMatches.map((term) => `symbol:${term}`),
+    ...architectureMatches.map((term) => `architecture:${term}`),
+    ...signalMatches.slice(0, 8).map((term) => `signal:${term}`),
+    roleFit !== "none" ? `roleFit:${roleFit}` : "",
+    boundaryFit !== "unknown" ? `boundaryFit:${boundaryFit}` : ""
+  ].filter(Boolean));
+  return {
+    harnessId: pack.id,
+    version: pack.version,
+    domain: pack.template.domain ?? pack.template.runtimePatterns?.domain,
+    score: Number(clamp(score, 0, 1).toFixed(3)),
+    componentScores: Object.fromEntries(Object.entries(componentScores).map(([key, value]) => [key, Number(value.toFixed(3))])),
+    roleFit,
+    boundaryFit,
+    matchedEvidence: matchedEvidence.slice(0, 20),
+    negativeEvidence: negativeMatches.slice(0, 20),
+    templatePath: pack.templatePath,
+    priority: harnessSelectionPriority(pack, sourceProfile),
+    basePack: pack
+  };
+}
+
+function templateMatchPolicy(template) {
+  const policy = isRecord(template.matchPolicy) ? template.matchPolicy : {};
+  const positive = isRecord(policy.positive) ? policy.positive : {};
+  const negative = isRecord(policy.negative) ? policy.negative : {};
+  return {
+    requiredAny: normalizeStrings(policy.requiredAny),
+    positive: {
+      dependencies: normalizeStrings(positive.dependencies),
+      imports: normalizeStrings(positive.imports),
+      files: normalizeStrings(positive.files),
+      symbols: normalizeStrings(positive.symbols),
+      architectureSignals: normalizeStrings(positive.architectureSignals)
+    },
+    negative: {
+      productBoundaryExcludes: normalizeStrings(negative.productBoundaryExcludes),
+      signals: normalizeStrings(negative.signals)
+    }
+  };
+}
+
+function roleFitForHarness(pack, sourceProfile) {
+  const recommendation = sourceProfile.recommendedHarness;
+  if (recommendation?.id === pack.id) return "strong";
+  if (Array.isArray(recommendation?.parentHarnessIds) && recommendation.parentHarnessIds.includes(pack.id)) return "partial";
+  const id = pack.id;
+  const role = sourceProfile.primaryRole;
+  if (role === "enterprise-admin-software" && id === "generic-management-software-harness") return "strong";
+  if (role === "java-service" && id === "java-ddd-service-harness") return "strong";
+  if (role === "node-saas-control-plane" && id === "node-saas-control-plane-harness") return "strong";
+  if (role === "distributed-cache-product" && id === "distributed-cache-harness") return "strong";
+  if (role === "database-product" && id === "database-product-harness") return "strong";
+  if (role === "api-gateway-product" && id === "api-gateway-harness") return "strong";
+  if (role === "redis-client-library" && ["api-gateway-harness", "database-product-harness"].includes(id)) return "mismatch";
+  if (role === "cache-proxy-monitor" && ["api-gateway-harness", "database-product-harness"].includes(id)) return "mismatch";
+  if (role === "logging-sdk" && ["api-gateway-harness", "database-product-harness", "distributed-cache-harness"].includes(id)) return "mismatch";
+  if (role === "rpc-framework" && ["api-gateway-harness", "database-product-harness", "distributed-cache-harness"].includes(id)) return "mismatch";
+  if (role === "frontend-admin-app" && ["api-gateway-harness", "database-product-harness", "distributed-cache-harness"].includes(id)) return "mismatch";
+  return "none";
+}
+
+function boundaryFitForHarness(pack, sourceProfile, negativeMatches) {
+  if (roleFitForHarness(pack, sourceProfile) === "mismatch") return "mismatch";
+  const boundary = isRecord(pack.template.productBoundary) ? pack.template.productBoundary : {};
+  const includeMatches = matchValueTerms(
+    [...sourceProfile.positiveSignals, ...sourceProfile.architectureSignals, ...sourceProfile.roles.map((role) => role.id)],
+    normalizeStrings(boundary.includes)
+  );
+  const excludeMatches = uniqueStrings([...negativeMatches, ...matchValueTerms(sourceProfile.negativeSignals, normalizeStrings(boundary.excludes))]);
+  if (excludeMatches.length > 0 && includeMatches.length === 0) return "mismatch";
+  if (includeMatches.length > 0 && excludeMatches.length === 0) return "strong";
+  if (includeMatches.length > 0 && excludeMatches.length > 0) return "partial";
+  return "unknown";
+}
+
+function parentCandidateRefs(packs, candidates, recommendation) {
+  const parentIds = Array.isArray(recommendation?.parentHarnessIds) ? recommendation.parentHarnessIds : [];
+  const refs = [];
+  for (const parentId of parentIds) {
+    const pack = packs.find((item) => item.id === parentId);
+    const candidate = candidates.find((item) => item.harnessId === parentId);
+    if (pack) refs.push({ id: pack.id, version: pack.version, score: candidate?.score ?? 0, reason: `parent-for-${recommendation.id}` });
+  }
+  if (refs.length > 0) return refs;
+  return candidates
+    .filter((candidate) => candidate.score >= 0.25 && candidate.boundaryFit !== "mismatch")
+    .slice(0, 2)
+    .map((candidate) => ({ id: candidate.harnessId, version: candidate.version, score: candidate.score, reason: "closest-existing-candidate" }));
+}
+
+function harnessSelectionPriority(pack, sourceProfile) {
+  if (sourceProfile.recommendedHarness?.id === pack.id) return 100;
+  if (sourceProfile.recommendedHarness?.parentHarnessIds?.includes(pack.id)) return 50;
+  if ((pack.template.harnessLayer ?? pack.template.runtimePatterns?.harnessLayer) === "domain") return 20;
+  return 0;
+}
+
+function matchEvidenceTerms(sourceProfile, corpus, goal, terms) {
+  const evidenceText = [
+    corpus.text,
+    goal,
+    ...sourceProfile.dependencies,
+    ...sourceProfile.imports,
+    ...sourceProfile.symbols,
+    ...sourceProfile.selectedFiles,
+    ...sourceProfile.architectureSignals,
+    ...sourceProfile.roles.map((role) => role.id),
+    ...sourceProfile.positiveSignals
+  ].join("\n");
+  return normalizeStrings(terms)
+    .filter(isStrongMatchSignal)
+    .filter((term) => normalizedIncludes(evidenceText, stripSignalPrefix(term)));
+}
+
+function matchValueTerms(values, terms) {
+  const normalizedValues = normalizeStrings(values);
+  return normalizeStrings(terms).filter((term) => {
+    const needle = stripSignalPrefix(term);
+    return normalizedValues.some((value) => normalizedTermMatch(value, needle));
+  });
+}
+
+function ratioScore(matches, possible) {
+  if (possible <= 0) return 0;
+  return clamp(matches / Math.min(possible, 10), 0, 1);
+}
+
+function stripSignalPrefix(term) {
+  return String(term).replace(/^(dependency|import|file|symbol|architecture|signal):/i, "").trim();
+}
+
+function normalizedTermMatch(value, term) {
+  const left = normalizeForMatch(value);
+  const right = normalizeForMatch(term);
+  if (!left || !right) return false;
+  return left.includes(right) || right.includes(left);
+}
+
+function normalizedIncludes(text, term) {
+  const normalizedText = normalizeForMatch(text);
+  const normalizedTerm = normalizeForMatch(term);
+  return Boolean(normalizedTerm) && normalizedText.includes(normalizedTerm);
+}
+
+function normalizeForMatch(value) {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function isStrongMatchSignal(signal) {
+  const normalized = normalizeForMatch(signal);
+  if (normalized.length < 4) return false;
+  return !new Set(["java", "node", "go", "rust", "generic", "domain", "runtime", "project", "service", "source", "platform", "product", "system"]).has(normalized);
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, Number(value) || 0));
+}
+
+function extractDependencies(text, files) {
+  const dependencies = new Set();
+  for (const block of String(text).matchAll(/<dependency\b[\s\S]*?<\/dependency>/gi)) {
+    const groupId = block[0].match(/<groupId>\s*([^<]+?)\s*<\/groupId>/i)?.[1]?.trim();
+    const artifactId = block[0].match(/<artifactId>\s*([^<]+?)\s*<\/artifactId>/i)?.[1]?.trim();
+    if (artifactId) dependencies.add(artifactId);
+    if (groupId && artifactId) dependencies.add(`${groupId}:${artifactId}`);
+  }
+  for (const file of files) {
+    const base = path.basename(file).toLowerCase();
+    if (base.endsWith(".jar")) dependencies.add(base.replace(/-\d[\w.-]*\.jar$/, "").replace(/\.jar$/, ""));
+    if (base === "package.json" || base.endsWith("package-lock.json")) {
+      for (const match of String(text).matchAll(/"(@?[\w./-]+)"\s*:\s*"[~^<>=*\w .-]+"/g)) dependencies.add(match[1]);
+    }
+  }
+  return uniqueStrings([...dependencies]).sort();
+}
+
+function extractJavaImports(text) {
+  return uniqueStrings([...String(text).matchAll(/^\s*import\s+([a-zA-Z0-9_.*]+)\s*;/gm)].map((match) => match[1])).sort();
+}
+
+function extractSymbols(text) {
+  const symbols = [
+    "RedisTemplate",
+    "JedisConnectionFactory",
+    "JedisShardInfo",
+    "RedisSerializer",
+    "RedisAtomicInteger",
+    "RedisAtomicLong",
+    "RedisOps",
+    "DruidDataSource",
+    "SqlSessionFactory",
+    "RestController",
+    "Controller",
+    "ServiceDiscovery",
+    "ScheduledExecutorService",
+    "RpcContext",
+    "Invoker",
+    "Invocation",
+    "Filter",
+    "LoggerFactory",
+    "ClassicConverter",
+    "ILoggingEvent",
+    "Vue",
+    "VueRouter",
+    "iView",
+    "Workflow",
+    "TaskStatus",
+    "TaskSerialStatus",
+    "Plugin",
+    "Flow"
+  ];
+  return symbols.filter((symbol) => new RegExp(`\\b${escapeRegExp(symbol)}\\b`, "i").test(text));
+}
+
+function detectLanguages(sources, files, text) {
+  const languages = new Set();
+  const extensions = files.map((file) => path.extname(file).toLowerCase());
+  if (extensions.includes(".java") || /pom\.xml|<artifactId>|<groupId>/.test(text)) languages.add("java");
+  if (extensions.includes(".go") || files.some((file) => path.basename(file) === "go.mod")) languages.add("go");
+  if (extensions.includes(".py") || files.some((file) => ["pyproject.toml", "requirements.txt"].includes(path.basename(file)))) languages.add("python");
+  if (extensions.includes(".rs") || files.some((file) => path.basename(file) === "Cargo.toml")) languages.add("rust");
+  if (extensions.includes(".vue") || extensions.includes(".ts") || extensions.includes(".js") || files.some((file) => path.basename(file) === "package.json")) languages.add("node");
+  if (sources.some((source) => source.type === "production-log")) languages.add("runtime-log");
+  return [...languages].sort();
+}
+
+function detectBuildTools(files, text) {
+  const tools = new Set();
+  if (files.some((file) => path.basename(file) === "pom.xml") || /<project\b[^>]*xmlns=.*maven/i.test(text)) tools.add("maven");
+  if (files.some((file) => ["build.gradle", "settings.gradle"].includes(path.basename(file)))) tools.add("gradle");
+  if (files.some((file) => path.basename(file) === "package.json")) tools.add("npm");
+  if (files.some((file) => path.basename(file) === "go.mod")) tools.add("go-modules");
+  if (files.some((file) => path.basename(file) === "pyproject.toml")) tools.add("pyproject");
+  return [...tools].sort();
+}
+
+function detectFrameworks(dependencies, imports, symbols, text) {
+  const combined = normalizeForMatch([...dependencies, ...imports, ...symbols, text].join("\n"));
+  const frameworks = [];
+  if (combined.includes("spring data redis")) frameworks.push("spring-data-redis");
+  if (combined.includes("jedis")) frameworks.push("jedis");
+  if (combined.includes("lettuce")) frameworks.push("lettuce");
+  if (combined.includes("spring boot")) frameworks.push("spring-boot");
+  if (combined.includes("spring framework") || combined.includes("spring context")) frameworks.push("spring-framework");
+  if (combined.includes("mybatis")) frameworks.push("mybatis");
+  if (combined.includes("mysql connector")) frameworks.push("mysql-jdbc");
+  if (combined.includes("druid")) frameworks.push("druid");
+  if (combined.includes("dubbo")) frameworks.push("dubbo");
+  if (combined.includes("logback")) frameworks.push("logback");
+  if (combined.includes("slf4j")) frameworks.push("slf4j");
+  if (combined.includes("quartz")) frameworks.push("quartz");
+  if (combined.includes("vue")) frameworks.push("vue");
+  if (combined.includes("iview")) frameworks.push("iview");
+  return uniqueStrings(frameworks);
+}
+
+function inferArchitectureSignals(context) {
+  const text = normalizeForMatch([context.text, context.goal, ...context.dependencies, ...context.imports, ...context.symbols, ...context.selectedFiles].join("\n"));
+  const signals = [];
+  if (/spring data redis|jedis|redis template|redisserializer|jedisconnectionfactory/.test(text)) signals.push("redis-client-library", "cache-client-library", "connection-factory", "serializer");
+  if (/proxycheck|proxy check|redisops/.test(text)) signals.push("cache-proxy-monitor", "runtime-health-check", "service-discovery");
+  if (/replica|failover|slot migration|hash slot|eviction|storage engine|protocol engine|cluster membership|key value store|kv store/.test(text)) signals.push("distributed-cache-product");
+  if (/sql engine|query optimizer|transaction engine|storage engine|dbms|database kernel|数据库内核|查询优化器|事务引擎/.test(text)) signals.push("database-product");
+  if (/api gateway|ingress controller|upstream selection|route matching|filter chain|service mesh gateway|envoy|kong|apisix/.test(text)) signals.push("api-gateway-product");
+  if (/dubbo|rpccontext|remoting|registry zookeeper|hessian|protocol|consumer|provider/.test(text)) signals.push("rpc-framework", "middleware-framework");
+  if (/\bworkflow\b|\bflow\b|taskstatus|taskserialstatus|noodel|orchestration|调度/.test(text)) signals.push("workflow-engine", "orchestration-engine");
+  if (/logback|slf4j|loggerfactory|iloggingevent|classicconverter|mdc|traceid|requestid|logging filter/.test(text)) signals.push("logging-sdk", "observability-adapter");
+  if (/spring boot|starter web|mybatis|swagger|admin|housekeeper|butler|rbac|permission|workflow|report/.test(text)) signals.push("enterprise-admin-software");
+  if (/vue|iview|vue router|vuex|webpack|wangeditor|echarts|admin frontend/.test(text)) signals.push("frontend-admin-app");
+  if (/facade|sdk|client api|resource api/.test(text)) signals.push("api-facade-library");
+  if (/jdbc|datasource|mysql connector|druiddatasource/.test(text)) signals.push("database-client");
+  return uniqueStrings(signals);
+}
+
+function inferSourceRoles(context) {
+  const text = normalizeForMatch([context.text, context.goal, ...context.dependencies, ...context.imports, ...context.symbols, ...context.architectureSignals, ...context.allFiles].join("\n"));
+  const roles = [];
+  const add = (id, confidence, evidence) => roles.push({ id, confidence: Number(confidence.toFixed(2)), evidence: uniqueStrings(evidence).slice(0, 8) });
+  if (/spring data redis|jedis|redis template|jedisconnectionfactory|redisserializer/.test(text)) {
+    add("redis-client-library", 0.92, ["spring-data-redis-or-jedis", "redis-template-wrapper", "client-library-boundary"]);
+  }
+  if (/proxycheck|proxy check|redisops/.test(text)) {
+    add("cache-proxy-monitor", 0.94, ["proxy-check-runtime", "cache-health-probe", "service-discovery"]);
+  }
+  if (/replica|failover|slot migration|hash slot|eviction|storage engine|protocol engine|cluster membership/.test(text) && !/redis template|jedisconnectionfactory/.test(text)) {
+    add("distributed-cache-product", 0.84, ["cluster-or-replication-signals", "cache-product-kernel-signals"]);
+  }
+  if (/sql engine|query optimizer|transaction engine|database kernel|dbms|查询优化器|事务引擎/.test(text)) {
+    add("database-product", 0.84, ["database-kernel-signals"]);
+  }
+  if (/api gateway|ingress controller|upstream selection|route matching|filter chain|service mesh gateway|envoy|kong|apisix/.test(text)) {
+    add("api-gateway-product", 0.84, ["gateway-routing-policy-signals"]);
+  }
+  if (/dubbo|rpccontext|hessian|remoting|rpc protocol|registry zookeeper|consumer|provider/.test(text)) {
+    add("rpc-framework", 0.95, ["rpc-framework-modules", "registry-remoting-protocol"]);
+  }
+  if (/\bworkflow\b|\bflow\b|taskstatus|taskserialstatus|orchestration|noodel/.test(text)) {
+    const workflowConfidence = /noodel|taskstatus|taskserialstatus|workflow engine|orchestration engine/.test(text) ? 0.97 : 0.76;
+    add("workflow-engine", workflowConfidence, ["workflow-orchestration-signals", "task-state-signals"]);
+  }
+  if (/logback|slf4j|loggerfactory|iloggingevent|classicconverter|requestid|traceid/.test(text)) {
+    const logConfidence = /logunified|unified logger|unifiedlog|logger adapter|classicconverter/.test(text) ? 0.96 : 0.9;
+    add("logging-sdk", logConfidence, ["logging-framework-adapter", "correlation-context"]);
+  }
+  if (/spring boot|starter web|mybatis|swagger|housekeeper|butler|admin/.test(text)) {
+    add("enterprise-admin-software", 0.94, ["spring-web-admin", "database-backed-management"]);
+  }
+  if (/vue|iview|vue router|vuex|webpack|admin frontend/.test(text)) {
+    add("frontend-admin-app", 0.98, ["vue-admin-frontend"]);
+  }
+  if (/facade|resource api|client sdk|api wrapper/.test(text)) {
+    add("api-facade-library", 0.74, ["api-facade-or-sdk"]);
+  }
+  if (roles.length === 0 && /pom xml|spring|java/.test(text)) add("java-service", 0.55, ["java-maven-source"]);
+  if (roles.length === 0 && /package json|node|vue/.test(text)) add("node-saas-control-plane", 0.5, ["node-package-source"]);
+  return roles.sort((left, right) => right.confidence - left.confidence);
+}
+
+function recommendHarnessForRole(role, context) {
+  const map = {
+    "redis-client-library": {
+      id: "redis-client-harness",
+      domain: "redis-client",
+      confidence: 0.92,
+      parentHarnessIds: ["distributed-cache-harness"],
+      evidence: ["redis-client-library", "narrower-than-distributed-cache-product"]
+    },
+    "cache-proxy-monitor": {
+      id: "cache-proxy-monitor-harness",
+      domain: "cache-proxy-monitor",
+      confidence: 0.94,
+      parentHarnessIds: ["distributed-cache-harness", "observability-apm-harness"],
+      evidence: ["cache-proxy-monitor", "runtime-health-check"]
+    },
+    "distributed-cache-product": {
+      id: "distributed-cache-harness",
+      domain: "distributed-cache",
+      confidence: 0.84,
+      parentHarnessIds: [],
+      evidence: ["cache-product-kernel"]
+    },
+    "database-product": {
+      id: "database-product-harness",
+      domain: "database-product",
+      confidence: 0.84,
+      parentHarnessIds: [],
+      evidence: ["database-product-kernel"]
+    },
+    "api-gateway-product": {
+      id: "api-gateway-harness",
+      domain: "api-gateway",
+      confidence: 0.84,
+      parentHarnessIds: [],
+      evidence: ["gateway-routing-policy"]
+    },
+    "rpc-framework": {
+      id: "rpc-framework-harness",
+      domain: "rpc-framework",
+      confidence: 0.95,
+      parentHarnessIds: ["go-middleware-harness", "java-ddd-service-harness"],
+      evidence: ["rpc-framework", "registry-remoting-protocol"]
+    },
+    "workflow-engine": {
+      id: "workflow-engine-harness",
+      domain: "workflow-engine",
+      confidence: 0.97,
+      parentHarnessIds: ["generic-management-software-harness"],
+      evidence: ["workflow-orchestration-engine"]
+    },
+    "logging-sdk": {
+      id: "logging-sdk-harness",
+      domain: "logging-sdk",
+      confidence: 0.9,
+      parentHarnessIds: ["observability-apm-harness"],
+      evidence: ["logging-sdk", "observability-adapter"]
+    },
+    "enterprise-admin-software": {
+      id: "generic-management-software-harness",
+      domain: "management-software",
+      confidence: 0.94,
+      parentHarnessIds: [],
+      evidence: ["management-admin-software"]
+    },
+    "frontend-admin-app": {
+      id: "frontend-admin-app-harness",
+      domain: "frontend-admin-app",
+      confidence: 0.98,
+      parentHarnessIds: ["node-saas-control-plane-harness"],
+      evidence: ["vue-admin-frontend"]
+    },
+    "api-facade-library": {
+      id: "api-facade-harness",
+      domain: "api-facade",
+      confidence: 0.74,
+      parentHarnessIds: ["java-ddd-service-harness"],
+      evidence: ["api-facade-library"]
+    },
+    "java-service": {
+      id: "java-ddd-service-harness",
+      domain: "java-service",
+      confidence: 0.55,
+      parentHarnessIds: [],
+      evidence: ["java-maven-source"]
+    },
+    "node-saas-control-plane": {
+      id: "node-saas-control-plane-harness",
+      domain: "node-saas-control-plane",
+      confidence: 0.5,
+      parentHarnessIds: [],
+      evidence: ["node-package-source"]
+    }
+  };
+  return map[role] ?? {
+    id: inferHarnessId(context.goal ?? "", { normalizedText: normalizeForMatch(context.text ?? ""), keywords: topKeywords(context.text ?? "") }),
+    domain: "domain",
+    confidence: 0.4,
+    parentHarnessIds: [],
+    evidence: ["fallback-keyword-inference"]
+  };
+}
+
+function inferNegativeSignals(context) {
+  const text = normalizeForMatch([context.text, ...context.dependencies, ...context.imports, ...context.symbols, ...context.architectureSignals].join("\n"));
+  const roleIds = context.roles.map((role) => role.id);
+  const signals = [];
+  if (roleIds.includes("redis-client-library") && !roleIds.includes("distributed-cache-product")) {
+    signals.push("no-cache-product-kernel", "client-library-not-cache-engine", "no-replication-or-failover-controller");
+  }
+  if (roleIds.includes("cache-proxy-monitor")) signals.push("operational-monitor-not-cache-kernel", "not-api-gateway-product");
+  if (roleIds.includes("logging-sdk")) signals.push("library-not-observability-platform", "not-api-gateway-product");
+  if (roleIds.includes("rpc-framework")) signals.push("rpc-framework-not-api-gateway-product");
+  if (roleIds.includes("frontend-admin-app")) signals.push("frontend-app-not-gateway-product");
+  if (/jdbc|mysql connector|datasource|druiddatasource/.test(text) && !roleIds.includes("database-product")) {
+    signals.push("database-client-not-database-product");
+  }
+  if (/proxy|client wrapper|sdk|adapter/.test(text) && !roleIds.includes("api-gateway-product")) {
+    signals.push("client-or-adapter-not-gateway-product");
+  }
+  return uniqueStrings(signals);
+}
+
+function detectSensitiveMaterial(text) {
+  const findings = [];
+  const value = String(text ?? "");
+  if (/(password|passwd|pwd)\s*[:=]\s*["']?[^"'\s<&]+/i.test(value) || /\.setPassword\s*\(\s*["'][^"']+["']\s*\)/i.test(value)) findings.push("credential-like-value");
+  if (/(api[_-]?key|token|authorization)\s*[:=]\s*["']?[^"'\s<&]+/i.test(value)) findings.push("api-key-or-token-like-value");
+  if (/\b(?:10|172\.(?:1[6-9]|2\d|3[0-1])|192\.168)\.\d{1,3}\.\d{1,3}(?::\d{2,5})?\b/.test(value)) findings.push("internal-endpoint");
+  if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(value)) findings.push("email-address");
+  return uniqueStrings(findings);
+}
+
+function discoverSourceProjects(root, options = {}) {
+  const maxDepth = Number.isFinite(options.maxDepth) ? options.maxDepth : 5;
+  const includeModules = Boolean(options.includeModules);
+  const limit = Number.isFinite(options.limit) ? options.limit : 50;
+  const results = [];
+  const visit = (dir, depth) => {
+    if (results.length >= limit || depth > maxDepth) return;
+    const marker = sourceProjectMarker(dir);
+    if (marker) {
+      results.push({ path: dir, ...marker });
+      if (!includeModules) return;
+    }
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if ([".git", ".svn", ".hg", ".idea", ".settings", "node_modules", "target", "dist", "build", ".next", "coverage"].includes(entry.name)) continue;
+      visit(path.join(dir, entry.name), depth + 1);
+    }
+  };
+  visit(root, 0);
+  return results.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function sourceProjectMarker(dir) {
+  const markers = [];
+  const has = (name) => fs.existsSync(path.join(dir, name));
+  if (has("pom.xml")) markers.push("pom.xml");
+  if (has("package.json")) markers.push("package.json");
+  if (has("go.mod")) markers.push("go.mod");
+  if (has("pyproject.toml")) markers.push("pyproject.toml");
+  if (has("Cargo.toml")) markers.push("Cargo.toml");
+  const hasSrc = fs.existsSync(path.join(dir, "src")) && fs.statSync(path.join(dir, "src")).isDirectory();
+  const hasLib = fs.existsSync(path.join(dir, "lib")) && fs.statSync(path.join(dir, "lib")).isDirectory();
+  if (hasSrc && hasLib) markers.push("legacy-java-lib");
+  if (markers.length === 0) return undefined;
+  const pomText = has("pom.xml") ? safeReadText(path.join(dir, "pom.xml"), 80_000) : "";
+  const rootType = /<modules>[\s\S]*?<\/modules>/i.test(pomText)
+    ? "maven-multi-module-root"
+    : markers.includes("package.json")
+      ? "node-package-root"
+      : markers.includes("legacy-java-lib")
+        ? "legacy-java-lib-root"
+        : "manifest-root";
+  return { rootType, markers };
+}
+
+async function adviseHarnessEvolution(args, context) {
+  const control = llmAdvisorControl(args);
+  if (control.mode === "disabled") {
+    return {
+      schema: LLM_ADVISOR_SCHEMA,
+      status: "DISABLED",
+      mode: control.mode,
+      nextAction: "continue-deterministic-auto-match"
+    };
+  }
+  const config = llmAdvisorConfig(args);
+  if (!config.ready) {
+    return {
+      schema: LLM_ADVISOR_SCHEMA,
+      status: control.mode === "required" ? "FAILED" : "SKIPPED",
+      mode: control.mode,
+      errorCode: "LLM_ADVISOR_CONFIG_MISSING",
+      errorMessage: config.missing.join(", "),
+      provider: config.providerName,
+      model: config.modelName,
+      apiKeyConfigured: config.apiKeyConfigured,
+      nextAction: control.mode === "required" ? "repair-llm-advisor-config" : "continue-deterministic-auto-match"
+    };
+  }
+  const prompt = harnessAdvisorPrompt(context);
+  const requestId = `llm-advisor-${context.run.evolutionId}-${Date.now()}`;
+  const startedAt = Date.now();
+  try {
+    const response = await callOpenAiCompatibleJson({
+      requestId,
+      config,
+      prompt,
+      caller: "evopilot-harness-llm-advisor",
+      intent: "harness.evolution.advice"
+    });
+    const parsed = parseJsonObject(response.text);
+    return normalizeLlmAdvisorResult({
+      control,
+      config,
+      response,
+      parsed,
+      durationMs: Date.now() - startedAt,
+      prompt,
+      context
+    });
+  } catch (error) {
+    return {
+      schema: LLM_ADVISOR_SCHEMA,
+      status: "FAILED",
+      mode: control.mode,
+      requestId,
+      provider: config.providerName,
+      model: config.modelName,
+      apiKeyConfigured: config.apiKeyConfigured,
+      durationMs: Date.now() - startedAt,
+      errorCode: error.code ?? "LLM_ADVISOR_FAILED",
+      errorMessage: error instanceof Error ? maskSecretText(error.message) : maskSecretText(String(error)),
+      nextAction: control.mode === "required" ? "repair-llm-advisor" : "continue-deterministic-auto-match"
+    };
+  }
+}
+
+function llmAdvisorControl(args) {
+  if (args.options["no-llm-advisor"]) return { mode: "disabled" };
+  if (args.options["require-llm-advisor"]) return { mode: "required" };
+  const value = stringOption(args, "llm-advisor") ?? process.env.EVOPILOT_HARNESS_LLM_ADVISOR;
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) return { mode: "disabled" };
+  if (["0", "false", "off", "no", "disabled"].includes(normalized)) return { mode: "disabled" };
+  if (["required", "require", "strict"].includes(normalized)) return { mode: "required" };
+  return { mode: "optional" };
+}
+
+function llmAdvisorConfig(args) {
+  const preset = (stringOption(args, "llm-provider-preset") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_PRESET ?? "openai-compatible").toLowerCase();
+  const providerName = stringOption(args, "llm-provider-name") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_NAME ?? (preset === "glm" ? "zhipu" : "openai-compatible");
+  const baseUrl = stringOption(args, "llm-base-url") ?? process.env.EVOPILOT_HARNESS_LLM_BASE_URL ?? process.env.EVOPILOT_LLM_BASE_URL ?? (preset === "glm" ? DEFAULT_GLM_BASE_URL : "");
+  const modelName = stringOption(args, "llm-model") ?? stringOption(args, "llm-model-name") ?? process.env.EVOPILOT_HARNESS_LLM_MODEL_NAME ?? process.env.EVOPILOT_LLM_MODEL_NAME ?? (preset === "glm" ? DEFAULT_GLM_MODEL : "");
+  const apiKeyEnv = stringOption(args, "llm-api-key-env") ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY_ENV ?? "EVOPILOT_HARNESS_LLM_API_KEY";
+  const apiKey = process.env[apiKeyEnv] ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY ?? process.env.EVOPILOT_LLM_API_KEY ?? "";
+  const missing = [];
+  if (!baseUrl) missing.push("llm-base-url");
+  if (!modelName) missing.push("llm-model");
+  if (!apiKey) missing.push(`env:${apiKeyEnv}`);
+  return {
+    preset,
+    providerName,
+    baseUrl,
+    modelName,
+    apiKey,
+    apiKeyEnv,
+    apiKeyConfigured: Boolean(apiKey),
+    timeoutSeconds: numberOption(args, "llm-timeout-seconds", Number(process.env.EVOPILOT_HARNESS_LLM_TIMEOUT_SECONDS ?? 90)),
+    maxRetries: numberOption(args, "llm-max-retries", Number(process.env.EVOPILOT_HARNESS_LLM_MAX_RETRIES ?? 1)),
+    maxOutputTokens: numberOption(args, "llm-max-output-tokens", Number(process.env.EVOPILOT_HARNESS_LLM_MAX_OUTPUT_TOKENS ?? 2048)),
+    temperature: numberOption(args, "llm-temperature", Number(process.env.EVOPILOT_HARNESS_LLM_TEMPERATURE ?? 0.1)),
+    ready: missing.length === 0,
+    missing
+  };
+}
+
+function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, packs, autoMatch }) {
+  const catalog = packs.map((pack) => ({
+    id: pack.id,
+    version: pack.version,
+    name: pack.template.name,
+    domain: pack.template.domain ?? pack.template.runtimePatterns?.domain,
+    layer: pack.template.harnessLayer ?? pack.template.runtimePatterns?.harnessLayer,
+    description: pack.template.description,
+    matchSignals: Array.isArray(pack.template.matchSignals?.include) ? pack.template.matchSignals.include.slice(0, 20) : []
+  }));
+  const sourceSummary = sourceCoverage.sources.map((source) => ({
+    name: source.name,
+    type: source.type,
+    digest: source.digest,
+    redactionApplied: source.redactionApplied,
+    knowledgeCategory: source.knowledgeCategory,
+    projectActions: source.projectActions,
+    scan: source.scan ? {
+      fileCount: source.scan.fileCount,
+      selectedFileCount: source.scan.selectedFileCount,
+      topExtensions: source.scan.topExtensions,
+      selectedFiles: source.scan.selectedFiles?.slice(0, 60)
+    } : undefined
+  }));
+  const redactedCorpus = redactSensitiveText(corpus.text).slice(0, 20_000);
+  return [
+    "You are the EvoPilot Harness LLM Advisor. Return one JSON object only. Do not return Markdown.",
+    "Your job is to review deterministic Harness auto-match results before a Harness draft is approved.",
+    "Do not approve or publish. Give advice for a human administrator.",
+    "Prefer a narrower domain Harness when the source is a client SDK, integration library, adapter, plugin, or operational tool rather than a full product kernel.",
+    "For Redis examples: if the source is a Java Redis client wrapper, cache client library, Spring Data Redis/Jedis adapter, serializer, server selection helper, or health-probe wrapper, recommend redis-client-harness or cache-client-library-harness. Only recommend distributed-cache-harness when the source is the owner's cache product runtime/kernel, cluster, protocol engine, eviction, replication, failover, or storage implementation.",
+    "Return JSON fields exactly compatible with this schema:",
+    JSON.stringify({
+      sourceClassification: "redis-client-library | distributed-cache-product | database-product | api-gateway | runtime-library | unknown",
+      rationale: "short reason",
+      domainFit: [{ harnessId: "distributed-cache-harness", fit: "strong|partial|weak|none", reason: "short reason" }],
+      recommendation: {
+        action: "KEEP_AUTO_MATCH | EVOLVE_EXISTING | CREATE_NEW | CREATE_NEW_WITH_PARENT_REFERENCE | FORK_FROM_MATCH",
+        targetHarnessId: "redis-client-harness",
+        targetDomain: "redis-client",
+        confidence: 0.9,
+        reason: "short reason"
+      },
+      alternatives: [{ action: "EVOLVE_EXISTING", targetHarnessId: "distributed-cache-harness", condition: "when this source is part of the cache product boundary" }],
+      reviewWarnings: ["check hardcoded credentials before publication"],
+      sensitiveMaterialFindings: ["hardcoded credential or internal endpoint suspected"],
+      commandRecommendations: [
+        "node src/index.mjs evolve --source-project <path> --target-id redis-client-harness --match-threshold 1.1 --goal \"...\" --json"
+      ]
+    }, null, 2),
+    "",
+    "Evolution goal:",
+    run.goal,
+    "",
+    "Source coverage:",
+    JSON.stringify(sourceSummary, null, 2),
+    "",
+    "Deterministic source profile:",
+    JSON.stringify({
+      primaryRole: sourceProfile?.primaryRole,
+      roles: sourceProfile?.roles,
+      recommendedHarness: sourceProfile?.recommendedHarness,
+      languages: sourceProfile?.languages,
+      buildTools: sourceProfile?.buildTools,
+      frameworks: sourceProfile?.frameworks,
+      dependencies: sourceProfile?.dependencies?.slice(0, 60),
+      symbols: sourceProfile?.symbols?.slice(0, 60),
+      architectureSignals: sourceProfile?.architectureSignals,
+      negativeSignals: sourceProfile?.negativeSignals,
+      sensitiveMaterialFindings: sourceProfile?.sensitiveMaterialFindings
+    }, null, 2),
+    "",
+    "Deterministic auto-match:",
+    JSON.stringify(autoMatch, null, 2),
+    "",
+    "Available Harness catalog:",
+    JSON.stringify(catalog, null, 2),
+    "",
+    "Top keywords:",
+    JSON.stringify(corpus.keywords.slice(0, 40)),
+    "",
+    "Redacted source excerpts:",
+    redactedCorpus
+  ].join("\n");
+}
+
+async function callOpenAiCompatibleJson({ requestId, config, prompt, caller, intent }) {
+  let lastError;
+  const attempts = Math.max(1, Number(config.maxRetries ?? 1));
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await callOpenAiCompatibleJsonOnce({ requestId, config, prompt, caller, intent });
+    } catch (error) {
+      lastError = error;
+      if (!isAdvisorRetryable(error) || attempt >= attempts) break;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("LLM Advisor provider call failed.");
+}
+
+async function callOpenAiCompatibleJsonOnce({ requestId, config, prompt, caller, intent }) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), Math.max(1, Number(config.timeoutSeconds ?? 90)) * 1000);
+  const startedAt = Date.now();
+  try {
+    const response = await fetch(openAiCompatibleEndpoint(config.baseUrl), {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        authorization: `Bearer ${config.apiKey}`,
+        "content-type": "application/json; charset=utf-8"
+      },
+      body: JSON.stringify({
+        model: config.modelName,
+        temperature: Number(config.temperature ?? 0.1),
+        max_tokens: Number(config.maxOutputTokens ?? 2048),
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        metadata: {
+          caller,
+          intent,
+          requestId
+        }
+      }),
+      signal: controller.signal
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      const error = new Error(`LLM Advisor provider call failed: status=${response.status}, body=${maskSecretText(text)}`);
+      error.code = response.status === 429 ? "LLM_ADVISOR_RATE_LIMITED" : response.status >= 500 ? "LLM_ADVISOR_PROVIDER_UNAVAILABLE" : `LLM_ADVISOR_HTTP_${response.status}`;
+      throw error;
+    }
+    const root = JSON.parse(text || "{}");
+    const choice = Array.isArray(root.choices) ? root.choices[0] ?? {} : {};
+    return {
+      requestId,
+      text: providerMessageContent(choice.message?.content),
+      provider: config.providerName,
+      model: config.modelName,
+      durationMs: Date.now() - startedAt,
+      finishReason: String(choice.finish_reason ?? ""),
+      usage: providerUsage(root.usage)
+    };
+  } catch (error) {
+    if (error.name === "AbortError") {
+      const timeoutError = new Error("LLM Advisor provider call timed out.");
+      timeoutError.code = "LLM_ADVISOR_TIMEOUT";
+      throw timeoutError;
+    }
+    if (error instanceof SyntaxError) {
+      const parseError = new Error("LLM Advisor provider response was not valid JSON.");
+      parseError.code = "LLM_ADVISOR_RESPONSE_INVALID";
+      throw parseError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function normalizeLlmAdvisorResult({ control, config, response, parsed, durationMs, prompt, context }) {
+  const recommendationRecord = isRecord(parsed.recommendation) ? parsed.recommendation : {};
+  const action = normalizeAdvisorAction(recommendationRecord.action);
+  const targetHarnessId = optionalSafeId(recommendationRecord.targetHarnessId) ?? context.autoMatch.targetHarnessId;
+  const targetDomain = safeId(String(recommendationRecord.targetDomain ?? targetHarnessId.replace(/-harness$/, "")));
+  return {
+    schema: LLM_ADVISOR_SCHEMA,
+    status: "SUCCEEDED",
+    mode: control.mode,
+    requestId: response.requestId,
+    provider: response.provider,
+    model: response.model,
+    durationMs,
+    finishReason: response.finishReason,
+    usage: response.usage,
+    promptDigest: digestText(prompt),
+    sourceDigest: context.corpus.digest,
+    sourceClassification: stringValue(parsed.sourceClassification, "unknown"),
+    rationale: stringValue(parsed.rationale, ""),
+    domainFit: normalizeDomainFit(parsed.domainFit),
+    recommendation: {
+      action,
+      targetHarnessId,
+      targetDomain,
+      confidence: normalizedConfidence(recommendationRecord.confidence),
+      reason: stringValue(recommendationRecord.reason, "")
+    },
+    alternatives: normalizeAdvisorAlternatives(parsed.alternatives),
+    reviewWarnings: normalizeStrings(parsed.reviewWarnings).slice(0, 12),
+    sensitiveMaterialFindings: normalizeStrings(parsed.sensitiveMaterialFindings).slice(0, 12),
+    commandRecommendations: normalizeStrings(parsed.commandRecommendations).slice(0, 6).map(maskSecretText),
+    nextAction: "review-llm-advisor-and-draft"
+  };
+}
+
+function applyLlmAdvisorToMatch(autoMatch, llmAdvisor, packs, args) {
+  if (!args.options["apply-llm-advisor"]) return autoMatch;
+  if (stringOption(args, "target-id")) {
+    return { ...autoMatch, llmAdvisorApplied: false, llmAdvisorApplyReason: "explicit-target-id-wins" };
+  }
+  if (!llmAdvisor || llmAdvisor.status !== "SUCCEEDED") {
+    return { ...autoMatch, llmAdvisorApplied: false, llmAdvisorApplyReason: `advisor-status=${llmAdvisor?.status ?? "missing"}` };
+  }
+  const recommendation = llmAdvisor.recommendation ?? {};
+  if (recommendation.action === "KEEP_AUTO_MATCH") {
+    return { ...autoMatch, llmAdvisorApplied: false, llmAdvisorApplyReason: "advisor-kept-auto-match" };
+  }
+  const threshold = numberOption(args, "llm-advisor-apply-threshold", Number(process.env.EVOPILOT_HARNESS_LLM_ADVISOR_APPLY_THRESHOLD ?? 0.7));
+  if (Number(recommendation.confidence ?? 0) < threshold) {
+    return { ...autoMatch, llmAdvisorApplied: false, llmAdvisorApplyReason: `advisor-confidence<${threshold}` };
+  }
+  const targetHarnessId = safeId(recommendation.targetHarnessId ?? autoMatch.targetHarnessId);
+  const pack = packs.find((item) => item.id === targetHarnessId);
+  const action = normalizeAdvisorAction(recommendation.action);
+  const shouldUseExisting = ["EVOLVE_EXISTING", "FORK_FROM_MATCH"].includes(action) && Boolean(pack);
+  return {
+    ...autoMatch,
+    decision: shouldUseExisting ? "EVOLVE_EXISTING" : action === "CREATE_NEW_WITH_PARENT_REFERENCE" ? "CREATE_NEW_WITH_PARENT_REFERENCE" : "CREATE_NEW",
+    confidence: Number(recommendation.confidence ?? autoMatch.confidence ?? 0),
+    targetHarnessId,
+    targetVersion: shouldUseExisting ? bumpPatch(pack.version) : String(recommendation.targetVersion ?? "0.1.0"),
+    targetDomain: safeId(recommendation.targetDomain ?? targetHarnessId.replace(/-harness$/, "")),
+    baseHarnessRef: shouldUseExisting ? { id: pack.id, version: pack.version, digest: digestText(pack.templateText) } : undefined,
+    reasons: uniqueStrings([
+      `llmAdvisor=${llmAdvisor.sourceClassification}`,
+      `llmAdvisorAction=${action}`,
+      recommendation.reason,
+      ...autoMatch.reasons
+    ]).slice(0, 12),
+    deterministicAutoMatch: {
+      decision: autoMatch.decision,
+      targetHarnessId: autoMatch.targetHarnessId,
+      targetVersion: autoMatch.targetVersion,
+      confidence: autoMatch.confidence,
+      reasons: autoMatch.reasons
+    },
+    llmAdvisorApplied: true,
+    llmAdvisorRequestId: llmAdvisor.requestId,
+    nextAction: "review-generated-draft"
+  };
+}
+
+function isLlmAdvisorBlocking(llmAdvisor) {
+  return llmAdvisor?.mode === "required" && llmAdvisor.status !== "SUCCEEDED";
+}
+
+function advisorWorkflowStatus(llmAdvisor) {
+  if (!llmAdvisor || llmAdvisor.status === "DISABLED" || llmAdvisor.status === "SKIPPED") return "SKIPPED";
+  if (llmAdvisor.status === "SUCCEEDED") return "COMPLETED";
+  return "BLOCKED";
+}
+
+function normalizeAdvisorAction(value) {
+  const action = String(value ?? "").trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if (["KEEP_AUTO_MATCH", "EVOLVE_EXISTING", "CREATE_NEW", "CREATE_NEW_WITH_PARENT_REFERENCE", "FORK_FROM_MATCH"].includes(action)) return action;
+  return "KEEP_AUTO_MATCH";
+}
+
+function normalizeDomainFit(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord).map((item) => ({
+    harnessId: safeId(item.harnessId ?? item.id ?? "harness"),
+    fit: stringValue(item.fit, "unknown"),
+    reason: stringValue(item.reason, "")
+  })).slice(0, 12);
+}
+
+function normalizeAdvisorAlternatives(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord).map((item) => ({
+    action: normalizeAdvisorAction(item.action),
+    targetHarnessId: optionalSafeId(item.targetHarnessId),
+    condition: stringValue(item.condition, "")
+  })).slice(0, 8);
+}
+
+function openAiCompatibleEndpoint(baseUrl) {
+  let normalized = String(baseUrl ?? "").trim();
+  while (normalized.endsWith("/")) normalized = normalized.slice(0, -1);
+  return normalized.endsWith("/chat/completions") ? normalized : `${normalized}/chat/completions`;
+}
+
+function providerMessageContent(value) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value.map((part) => typeof part === "string" ? part : isRecord(part) ? String(part.text ?? part.content ?? "") : "").join("");
+  }
+  return value == null ? "" : String(value);
+}
+
+function providerUsage(value) {
+  const inputTokens = Number(value?.prompt_tokens ?? value?.input_tokens ?? 0);
+  const outputTokens = Number(value?.completion_tokens ?? value?.output_tokens ?? 0);
+  const totalTokens = Number(value?.total_tokens ?? inputTokens + outputTokens);
+  return {
+    inputTokens,
+    outputTokens,
+    totalTokens,
+    creditsConsumed: totalTokens,
+    creditUnit: "token"
+  };
+}
+
+function parseJsonObject(text) {
+  const value = String(text ?? "").trim();
+  const start = value.indexOf("{");
+  const end = value.lastIndexOf("}");
+  const json = start >= 0 && end > start ? value.slice(start, end + 1) : value;
+  return JSON.parse(json);
+}
+
+function isAdvisorRetryable(error) {
+  return error?.code === "LLM_ADVISOR_RATE_LIMITED" || error?.code === "LLM_ADVISOR_PROVIDER_UNAVAILABLE" || error?.code === "LLM_ADVISOR_TIMEOUT";
+}
+
+function createDraftPack(run, match, corpus, args, sourceProfile) {
   const source = path.resolve(stringOption(args, "source") ?? "harnesses");
   const basePack = match.baseHarnessRef ? findHarnessPack(source, match.baseHarnessRef.id) : undefined;
-  const template = basePack ? structuredCloneJson(basePack.template) : createGenericDomainTemplate(match.targetHarnessId, match.targetDomain);
+  const template = basePack ? structuredCloneJson(basePack.template) : createGenericDomainTemplate(match.targetHarnessId, match.targetDomain, sourceProfile, match);
   template.id = match.targetHarnessId;
   template.version = match.targetVersion;
   template.name = humanName(match.targetHarnessId);
@@ -1053,7 +2273,8 @@ function createDraftPack(run, match, corpus, args) {
   template.domain = match.targetDomain;
   template.matchSignals = {
     ...(isRecord(template.matchSignals) ? template.matchSignals : {}),
-    include: uniqueStrings([...(Array.isArray(template.matchSignals?.include) ? template.matchSignals.include : []), ...corpus.keywords.slice(0, 20), match.targetDomain, match.targetHarnessId])
+    include: uniqueStrings([...(Array.isArray(template.matchSignals?.include) ? template.matchSignals.include : []), ...corpus.keywords.slice(0, 20), ...(sourceProfile?.positiveSignals ?? []).slice(0, 20), match.targetDomain, match.targetHarnessId]),
+    exclude: uniqueStrings([...(Array.isArray(template.matchSignals?.exclude) ? template.matchSignals.exclude : []), ...(sourceProfile?.negativeSignals ?? []).slice(0, 12)])
   };
   template.sourceReferences = [
     ...(Array.isArray(template.sourceReferences) ? template.sourceReferences : []),
@@ -1074,6 +2295,7 @@ function createDraftPack(run, match, corpus, args) {
     }
   ];
   ensureDomainExecution(template, match.targetDomain);
+  ensureTemplateQualityModel(template, match, sourceProfile);
   const templateYaml = stringifyYaml(template);
   const readme = renderDraftReadme(run, template, match);
   const changelog = renderDraftChangelog(run, template, match);
@@ -1096,7 +2318,9 @@ function createDraftPack(run, match, corpus, args) {
   };
 }
 
-function createGenericDomainTemplate(id, domain) {
+function createGenericDomainTemplate(id, domain, sourceProfile, match) {
+  const boundary = defaultProductBoundary(id, domain, sourceProfile);
+  const policy = defaultMatchPolicy(id, domain, sourceProfile, boundary);
   return {
     schema: "evopilot-harness-template/v1",
     id,
@@ -1107,6 +2331,8 @@ function createGenericDomainTemplate(id, domain) {
     languageFamily: "generic",
     harnessLayer: "domain",
     domain,
+    productBoundary: boundary,
+    matchPolicy: policy,
     capabilities: [
       { id: "source-boundary", name: "Source boundary", boundary: "Project source and ownership are explicit.", requiredEvidence: ["source-readiness"] },
       { id: "domain-runtime", name: "Domain runtime", boundary: "Domain-specific runtime commands and checks are declared.", requiredEvidence: ["runtime-output"] },
@@ -1128,12 +2354,14 @@ function createGenericDomainTemplate(id, domain) {
         releaseBlockers: ["missing domain boundary evidence", "missing runtime evidence"]
       }
     },
+    executionModel: defaultExecutionModel(sourceProfile),
     validationBaseline: { requiredCommandGroups: ["install", "test", "smoke"], commandEvidenceRequired: true, realBoundaryEvidenceRequired: true, noMockEvidenceForReleaseClaims: true },
     evidenceContract: { format: "json", requiredArtifacts: ["runtime-log", "test-report"], correlationFields: ["requestId", "traceId"] },
     failureTaxonomy: { categories: ["runtime", "dependency", "data", "observability", "governance"] },
     diagnosticsBaseline: { requiredSignals: ["command", "log-excerpt", "root-cause", "next-action"] },
     observabilityBaseline: { requiredSignals: ["health", "readiness", "logs", "metrics"] },
     governanceRules: { noSilentProfileMutation: true, promotionRequiresReleaseDecision: true },
+    qualityGate: defaultQualityGate(),
     phaseMapping: { alpha: ["source-boundary"], beta: ["test-and-quality"], rc: ["observability"], ga: ["release-governance"] },
     llmDraftPolicy: { enabled: true, requireUserReview: true }
   };
@@ -1156,11 +2384,121 @@ function ensureDomainExecution(template, domain) {
   }
 }
 
+function ensureTemplateQualityModel(template, match, sourceProfile) {
+  template.productBoundary = isRecord(template.productBoundary) ? template.productBoundary : defaultProductBoundary(match.targetHarnessId, match.targetDomain, sourceProfile);
+  template.productBoundary.includes = normalizeStrings(template.productBoundary.includes).length > 0 ? normalizeStrings(template.productBoundary.includes) : defaultProductBoundary(match.targetHarnessId, match.targetDomain, sourceProfile).includes;
+  template.productBoundary.excludes = normalizeStrings(template.productBoundary.excludes).length > 0 ? normalizeStrings(template.productBoundary.excludes) : defaultProductBoundary(match.targetHarnessId, match.targetDomain, sourceProfile).excludes;
+  template.matchPolicy = isRecord(template.matchPolicy) ? template.matchPolicy : defaultMatchPolicy(match.targetHarnessId, match.targetDomain, sourceProfile, template.productBoundary);
+  template.matchPolicy.requiredAny = normalizeStrings(template.matchPolicy.requiredAny).length > 0 ? normalizeStrings(template.matchPolicy.requiredAny) : defaultMatchPolicy(match.targetHarnessId, match.targetDomain, sourceProfile, template.productBoundary).requiredAny;
+  template.matchPolicy.positive = isRecord(template.matchPolicy.positive) ? template.matchPolicy.positive : {};
+  const defaultPolicy = defaultMatchPolicy(match.targetHarnessId, match.targetDomain, sourceProfile, template.productBoundary);
+  for (const key of ["dependencies", "imports", "files", "symbols", "architectureSignals"]) {
+    template.matchPolicy.positive[key] = normalizeStrings(template.matchPolicy.positive[key]).length > 0 ? normalizeStrings(template.matchPolicy.positive[key]) : defaultPolicy.positive[key];
+  }
+  template.matchPolicy.negative = isRecord(template.matchPolicy.negative) ? template.matchPolicy.negative : {};
+  template.matchPolicy.negative.productBoundaryExcludes = normalizeStrings(template.matchPolicy.negative.productBoundaryExcludes).length > 0 ? normalizeStrings(template.matchPolicy.negative.productBoundaryExcludes) : defaultPolicy.negative.productBoundaryExcludes;
+  template.matchPolicy.negative.signals = normalizeStrings(template.matchPolicy.negative.signals).length > 0 ? normalizeStrings(template.matchPolicy.negative.signals) : defaultPolicy.negative.signals;
+  template.executionModel = isRecord(template.executionModel) ? template.executionModel : defaultExecutionModel(sourceProfile);
+  template.executionModel.phases = normalizeStrings(template.executionModel.phases).length > 0 ? normalizeStrings(template.executionModel.phases) : defaultExecutionModel(sourceProfile).phases;
+  template.executionModel.requiredCommands = isRecord(template.executionModel.requiredCommands) ? template.executionModel.requiredCommands : defaultExecutionModel(sourceProfile).requiredCommands;
+  template.qualityGate = isRecord(template.qualityGate) ? template.qualityGate : defaultQualityGate();
+}
+
+function defaultProductBoundary(id, domain, sourceProfile) {
+  const role = sourceProfile?.primaryRole ?? "domain";
+  const includesByRole = {
+    "redis-client-library": ["Redis client wrapper", "cache client SDK", "RedisTemplate/Jedis adapter", "serializer and connection factory", "read/write routing helper"],
+    "cache-proxy-monitor": ["cache proxy health check", "Redis operation probe", "service discovery monitor", "runtime diagnostic command"],
+    "distributed-cache-product": ["self-developed distributed cache runtime", "Redis-compatible or Memcached-compatible protocol", "replication/failover/slot migration", "eviction and TTL engine"],
+    "database-product": ["self-developed database product", "SQL or storage engine", "query optimizer", "transaction/recovery engine"],
+    "api-gateway-product": ["API gateway runtime", "listener/route/upstream/policy control", "plugin/filter lifecycle", "protocol and load evidence"],
+    "rpc-framework": ["RPC framework runtime", "registry/remoting/protocol modules", "consumer/provider compatibility", "transport failure handling"],
+    "workflow-engine": ["workflow/orchestration engine", "task state model", "agent/plugin execution", "metadata and runtime control"],
+    "logging-sdk": ["logging SDK", "logback/slf4j adapter", "correlation context propagation", "request/trace field enrichment"],
+    "enterprise-admin-software": ["enterprise admin product", "business workflow", "RBAC/audit/reporting", "database-backed service"],
+    "frontend-admin-app": ["admin frontend application", "Vue/route/state management", "browser build and smoke", "API integration surface"],
+    "api-facade-library": ["API facade or SDK", "typed contract wrapper", "client integration boundary"],
+    "java-service": ["Java service", "Maven/Gradle build", "service runtime and tests"]
+  };
+  const excludesByRole = {
+    "redis-client-library": ["distributed cache server kernel", "cluster membership", "failover controller", "eviction engine", "storage engine"],
+    "cache-proxy-monitor": ["API gateway product", "distributed cache server kernel", "database product"],
+    "logging-sdk": ["observability platform backend", "API gateway product", "distributed cache product"],
+    "rpc-framework": ["API gateway product", "business management app", "distributed cache product"],
+    "frontend-admin-app": ["backend control plane", "API gateway runtime", "database product"],
+    "enterprise-admin-software": ["database product kernel", "API gateway runtime", "distributed cache engine"]
+  };
+  return {
+    includes: uniqueStrings(includesByRole[role] ?? [`${domain} owned domain boundary`, `${id} reusable Harness target`, "source-driven execution evidence"]),
+    excludes: uniqueStrings(excludesByRole[role] ?? ["unrelated framework sample", "external product fork", "mock-only evidence"])
+  };
+}
+
+function defaultMatchPolicy(id, domain, sourceProfile, boundary) {
+  const dependencies = sourceProfile?.dependencies?.slice(0, 16) ?? [];
+  const imports = sourceProfile?.imports?.slice(0, 16) ?? [];
+  const symbols = sourceProfile?.symbols?.slice(0, 16) ?? [];
+  const files = sourceProfile?.selectedFiles?.filter((file) => /(^|\/)(pom\.xml|package\.json|go\.mod|pyproject\.toml|Cargo\.toml|README|src\/)/i.test(file)).slice(0, 16) ?? [];
+  const architectureSignals = uniqueStrings([...(sourceProfile?.architectureSignals ?? []), sourceProfile?.primaryRole, domain, id].filter(Boolean)).slice(0, 18);
+  return {
+    requiredAny: uniqueStrings([
+      ...dependencies.slice(0, 4).map((item) => `dependency:${item}`),
+      ...imports.slice(0, 4).map((item) => `import:${item}`),
+      ...symbols.slice(0, 4).map((item) => `symbol:${item}`),
+      ...architectureSignals.slice(0, 4).map((item) => `architecture:${item}`)
+    ]).slice(0, 10),
+    positive: {
+      dependencies,
+      imports,
+      files,
+      symbols,
+      architectureSignals
+    },
+    negative: {
+      productBoundaryExcludes: normalizeStrings(boundary?.excludes),
+      signals: sourceProfile?.negativeSignals?.slice(0, 12) ?? []
+    }
+  };
+}
+
+function defaultExecutionModel(sourceProfile) {
+  const primaryLanguage = sourceProfile?.languages?.[0] ?? "generic";
+  const requiredCommands = primaryLanguage === "node"
+    ? { install: ["npm ci"], test: ["npm test"], smoke: ["npm run build --if-present"] }
+    : primaryLanguage === "go"
+      ? { install: ["go mod download"], test: ["go test ./..."], smoke: ["go test ./... -run TestNonExistent"] }
+      : primaryLanguage === "python"
+        ? { install: ["uv sync || pip install -e ."], test: ["pytest"], smoke: ["pytest -q"] }
+        : primaryLanguage === "java"
+          ? { install: ["mvn -q -DskipTests package"], test: ["mvn test"], smoke: ["mvn -q -DskipTests verify"] }
+          : { install: ["make deps"], test: ["make test"], smoke: ["make smoke"] };
+  return {
+    phases: ["scan", "build", "unit", "integration", "diagnostics", "release-review"],
+    requiredCommands,
+    optionalCommands: {
+      profile: ["evopilot-harness detect --source-project <path> --json"],
+      strictValidate: ["evopilot-harness harness validate <harness-id> --strict --json"]
+    }
+  };
+}
+
+function defaultQualityGate() {
+  return {
+    minTemplateScore: 0.8,
+    requireProductBoundary: true,
+    requireMatchPolicy: true,
+    requireExecutionModel: true,
+    requireEvidenceContract: true,
+    requireExamples: true,
+    requireHumanApproval: true
+  };
+}
+
 function validateDraftPack(draft) {
   const checks = [
     { id: "draft-template", status: draft.templateYaml ? "PASS" : "FAIL", evidence: [`digest=${draft.digest}`] },
     { id: "draft-readme", status: draft.readme ? "PASS" : "FAIL", evidence: [`bytes=${draft.readme?.length ?? 0}`] },
-    ...validateHarnessTemplateContract(draft.template, { name: draft.harnessId, version: draft.version, layer: "domain", domain: draft.domain })
+    ...validateHarnessTemplateContract(draft.template, { name: draft.harnessId, version: draft.version, layer: "domain", domain: draft.domain }, { strict: true })
   ];
   return {
     schema: "evopilot-harness-draft-validation/v1",
@@ -1248,7 +2586,7 @@ function publishPack(pack, out) {
   };
 }
 
-function validateHarnessTemplateContract(template, entry) {
+function validateHarnessTemplateContract(template, entry, options = {}) {
   const runtimePatterns = isRecord(template.runtimePatterns) ? template.runtimePatterns : {};
   const domainExecution = isRecord(runtimePatterns.domainExecution) ? runtimePatterns.domainExecution : {};
   const harnessLayer = String(template.harnessLayer ?? runtimePatterns.harnessLayer ?? entry.layer ?? "").trim();
@@ -1256,6 +2594,7 @@ function validateHarnessTemplateContract(template, entry) {
   const checks = [];
   if (!template.id) checks.push({ id: `template:${entry.name}:id`, status: "FAIL", evidence: ["missing id"] });
   if (!template.version) checks.push({ id: `template:${entry.name}:version`, status: "FAIL", evidence: ["missing version"] });
+  if (options.strict) checks.push(...validateTemplateQualityContract(template, entry, options));
   if (harnessLayer !== "domain" && !domain) return checks.length ? checks : [];
   const requiredActions = Array.isArray(domainExecution.requiredActions) ? domainExecution.requiredActions : [];
   const evidenceAdapters = Array.isArray(domainExecution.evidenceAdapters) ? domainExecution.evidenceAdapters : [];
@@ -1276,6 +2615,81 @@ function validateHarnessTemplateContract(template, entry) {
     evidence: [`count=${releaseBlockers.length}`]
   });
   return checks;
+}
+
+function validateTemplateQualityContract(template, entry, options = {}) {
+  const strict = Boolean(options.strict);
+  const summary = templateQualitySummary(template, entry.name);
+  const minScore = Number(template.qualityGate?.minTemplateScore ?? 0.8);
+  const checks = [{
+    id: `quality:${entry.name}@${entry.version}:score`,
+    status: summary.score >= minScore ? "PASS" : strict ? "FAIL" : "WARN",
+    evidence: [`score=${summary.score}`, `min=${minScore}`, `missing=${summary.missing.join("|") || "none"}`]
+  }];
+  for (const section of ["productBoundary", "matchPolicy", "executionModel", "evidenceContract", "qualityGate"]) {
+    const ok = summary.present.includes(section);
+    checks.push({
+      id: `quality:${entry.name}@${entry.version}:${section}`,
+      status: ok ? "PASS" : strict ? "FAIL" : "WARN",
+      evidence: [ok ? "present" : "missing"]
+    });
+  }
+  return checks;
+}
+
+function templateQualitySummary(template, harnessId = String(template.id ?? "harness")) {
+  const sections = [
+    ["productBoundary", hasProductBoundary(template)],
+    ["matchPolicy", hasMatchPolicy(template)],
+    ["executionModel", hasExecutionModel(template)],
+    ["evidenceContract", hasEvidenceContract(template)],
+    ["qualityGate", hasQualityGate(template)],
+    ["domainExecution", hasDomainExecution(template)],
+    ["validationBaseline", isRecord(template.validationBaseline)],
+    ["failureTaxonomy", isRecord(template.failureTaxonomy)],
+    ["observabilityBaseline", isRecord(template.observabilityBaseline)],
+    ["governanceRules", isRecord(template.governanceRules)]
+  ];
+  const present = sections.filter(([, ok]) => ok).map(([name]) => name);
+  const missing = sections.filter(([, ok]) => !ok).map(([name]) => name);
+  return {
+    harnessId,
+    schema: "evopilot-harness-template-quality/v1",
+    score: Number((present.length / sections.length).toFixed(2)),
+    present,
+    missing
+  };
+}
+
+function hasProductBoundary(template) {
+  return normalizeStrings(template.productBoundary?.includes).length > 0 && normalizeStrings(template.productBoundary?.excludes).length > 0;
+}
+
+function hasMatchPolicy(template) {
+  const policy = templateMatchPolicy(template);
+  return policy.requiredAny.length > 0
+    && (policy.positive.dependencies.length + policy.positive.imports.length + policy.positive.files.length + policy.positive.symbols.length + policy.positive.architectureSignals.length) > 0
+    && (policy.negative.productBoundaryExcludes.length + policy.negative.signals.length) > 0;
+}
+
+function hasExecutionModel(template) {
+  return normalizeStrings(template.executionModel?.phases).length > 0 && isRecord(template.executionModel?.requiredCommands);
+}
+
+function hasEvidenceContract(template) {
+  return isRecord(template.evidenceContract) && normalizeStrings(template.evidenceContract.requiredArtifacts).length > 0 && normalizeStrings(template.evidenceContract.correlationFields).length > 0;
+}
+
+function hasQualityGate(template) {
+  return isRecord(template.qualityGate) && Number(template.qualityGate.minTemplateScore) > 0;
+}
+
+function hasDomainExecution(template) {
+  const execution = template.runtimePatterns?.domainExecution;
+  return isRecord(execution)
+    && Array.isArray(execution.requiredActions) && execution.requiredActions.length > 0
+    && Array.isArray(execution.evidenceAdapters) && execution.evidenceAdapters.length > 0
+    && Array.isArray(execution.releaseBlockers) && execution.releaseBlockers.length > 0;
 }
 
 function renderCatalogMarkdown(catalog, entries) {
@@ -1468,8 +2882,11 @@ function evolutionSummary(run) {
     status: run.status,
     goal: run.goal,
     sourceCount: run.sources?.length ?? 0,
+    primaryRole: run.sourceProfile?.primaryRole,
     targetHarnessId: run.autoMatch?.targetHarnessId,
     targetVersion: run.autoMatch?.targetVersion,
+    llmAdvisorStatus: run.llmAdvisor?.status,
+    llmAdvisorRecommendation: run.llmAdvisor?.recommendation,
     nextAction: run.nextAction
   };
 }
@@ -1484,7 +2901,9 @@ function evolveResult(run) {
     evolutionId: run.evolutionId,
     status: run.status,
     autoMatch: run.autoMatch,
+    llmAdvisor: run.llmAdvisor,
     sourceCoverage: run.sourceCoverage,
+    sourceProfile: run.sourceProfile,
     validation: run.validation,
     draft: run.draft,
     publication: run.publication,
@@ -1499,6 +2918,12 @@ function impactReport(run) {
     version: run.draft?.version,
     impactedConsumers: ["EvoPilot servers configured with the published Catalog directory"],
     projectAction: "Regenerate goal plans to bind the new selectedHarness digest.",
+    llmAdvisor: run.llmAdvisor ? {
+      status: run.llmAdvisor.status,
+      sourceClassification: run.llmAdvisor.sourceClassification,
+      recommendation: run.llmAdvisor.recommendation,
+      reviewWarnings: run.llmAdvisor.reviewWarnings
+    } : undefined,
     staleActiveProfiles: []
   };
 }
@@ -1586,13 +3011,27 @@ Usage:
   evopilot-harness catalog validate --source published [--json]
   evopilot-harness registry publish --catalog published --registry harness-registry.yaml [--id <catalog-id>] [--priority 100] [--json]
   evopilot-harness registry validate --registry harness-registry.yaml [--json]
-  evopilot-harness harness list|inspect|validate|publish|deprecate [harness-id] [--json]
+  evopilot-harness harness list|inspect|validate|publish|deprecate [harness-id] [--strict] [--json]
+  evopilot-harness detect --source-project <path> --goal <text> [--json]
+  evopilot-harness detect batch --source-root <path> [--include-modules] [--limit 50] [--json]
   evopilot-harness evolution create --source-project <path> --goal <text> [--json]
   evopilot-harness evolution sources <evolution-id> --source-project <path> [--json]
   evopilot-harness evolution advance|review|approve|publish|impact <evolution-id> [--json]
-  evopilot-harness evolve --source-project <path> --goal <text> [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
+  evopilot-harness evolve --source-project <path> --goal <text> [--llm-advisor optional|required] [--apply-llm-advisor] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
   evopilot-harness hub snapshot [--catalog published] [--registry harness-registry.yaml] [--source harnesses] [--out ui/harness-hub/catalog-snapshot.json] [--json]
   evopilot-harness hub serve [--host 127.0.0.1] [--port 4176] [--catalog published] [--registry harness-registry.yaml] [--source harnesses]
+
+LLM Advisor:
+  --llm-advisor [optional|required]      Run semantic review after deterministic auto-match.
+  --require-llm-advisor                 Require a successful Advisor call before review.
+  --apply-llm-advisor                   Use a high-confidence Advisor target for draft generation.
+  --llm-provider-preset glm             Default base URL/model for GLM-compatible deployments.
+  --llm-base-url <url> --llm-model <id>  OpenAI-compatible chat/completions endpoint and model.
+  --llm-api-key-env <env>               Environment variable containing the API key.
+
+Detect and quality:
+  --match-threshold <number>            Override deterministic detect threshold. Default: ${DEFAULT_MATCH_THRESHOLD}.
+  --strict                              Enforce Template Quality Standard v1 during validation/publish.
 `);
 }
 
@@ -1624,12 +3063,44 @@ function stringListRaw(args, name) {
   return [];
 }
 
+function safeReadText(file, limit = 120_000) {
+  try {
+    return fs.readFileSync(file, "utf8").slice(0, limit);
+  } catch {
+    return "";
+  }
+}
+
 function safeId(value) {
   return String(value).trim().replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "harness";
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function uniqueStrings(values) {
   return [...new Set(values.map((value) => String(value).trim()).filter(Boolean))];
+}
+
+function normalizeStrings(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+}
+
+function stringValue(value, fallback) {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+}
+
+function optionalSafeId(value) {
+  const text = value == null ? "" : String(value).trim();
+  return text ? safeId(text) : undefined;
+}
+
+function normalizedConfidence(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(1, parsed));
 }
 
 function isRecord(value) {
@@ -1646,10 +3117,20 @@ function digestText(value) {
 }
 
 function redactSensitiveText(text) {
-  return text
+  return maskSecretText(text)
     .replace(/(authorization|token|password|api[_-]?key|secret)([=:\s]+)([^\s"',}]+)/gi, "$1$2[REDACTED]")
+    .replace(/(setPassword\s*\(\s*["'])([^"']+)(["']\s*\))/gi, "$1[REDACTED]$3")
+    .replace(/\b(?:10|172\.(?:1[6-9]|2\d|3[0-1])|192\.168)\.\d{1,3}\.\d{1,3}:\d{2,5}\b/g, "[REDACTED_ENDPOINT]")
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]")
     .slice(0, 80_000);
+}
+
+function maskSecretText(text) {
+  return String(text ?? "")
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/g, "Bearer [REDACTED]")
+    .replace(/([A-Za-z0-9]{8,}\.[A-Za-z0-9._-]{8,})/g, "[REDACTED]")
+    .replace(/(api(?:[_-]?key|Key)[\"']?\s*[:=]\s*[\"']?)[^\"',}\s]+/g, "$1[REDACTED]")
+    .replace(/(authorization|token|password|secret)([=:\s]+)([^\s"',}]+)/gi, "$1$2[REDACTED]");
 }
 
 function usage(message) {
