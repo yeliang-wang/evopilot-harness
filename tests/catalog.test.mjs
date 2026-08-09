@@ -85,6 +85,29 @@ test("one-click evolve auto-matches, approves, publishes, and keeps JSON parseab
   assert.equal(validation.status, "VALIDATED");
 });
 
+test("Harness Hub snapshot exposes Catalog, lifecycle commands, source types, and evolution runs", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-hub-"));
+  const snapshotFile = path.join(tmp, "snapshot.json");
+  const result = runJson([
+    "hub",
+    "snapshot",
+    "--catalog", path.join(root, "published"),
+    "--source", path.join(root, "harnesses"),
+    "--data-root", path.join(tmp, "data"),
+    "--out", snapshotFile,
+    "--json"
+  ]);
+
+  assert.equal(result.schema, "evopilot-harness-hub-snapshot/v1");
+  assert.equal(result.status, "READY");
+  assert.ok(result.catalog.entryCount >= 2);
+  assert.ok(result.harnesses.some((harness) => harness.id === "database-product-harness" && harness.commands.evolve.includes("evopilot-harness evolve")));
+  assert.ok(result.sourceTypes.some((source) => source.id === "production-log"));
+  assert.ok(result.lifecycleCommands.some((command) => command.id === "publish"));
+  assert.ok(fs.existsSync(snapshotFile));
+  assert.equal(JSON.parse(fs.readFileSync(snapshotFile, "utf8")).schema, "evopilot-harness-hub-snapshot/v1");
+});
+
 function runJson(args) {
   const run = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8" });
   assert.equal(run.status, 0, run.stderr || run.stdout);

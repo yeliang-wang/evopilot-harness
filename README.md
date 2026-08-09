@@ -2,7 +2,7 @@
 
 `evopilot-harness` owns EvoPilot-compatible Harness lifecycle outside the EvoPilot runtime. It manages source Harness packs, scans projects or supplied materials, evolves Harness definitions, reviews drafts, and publishes a usable Harness Catalog directory.
 
-Current release: `1.0.0`, compatible with EvoPilot `>=3.0.0`.
+Current release: `1.1.0`, compatible with EvoPilot `>=3.0.0`.
 
 ## Quick Start
 
@@ -10,6 +10,7 @@ Current release: `1.0.0`, compatible with EvoPilot `>=3.0.0`.
 npm install
 npm run catalog:publish
 npm run catalog:validate
+npm run hub:serve
 ```
 
 One-command Harness evolution from a source project:
@@ -27,9 +28,10 @@ evopilot-harness evolve \
 ## Boundary
 
 - `evopilot-harness` owns Harness lifecycle management, source collection, matching, draft generation, review, approval, versioning, and publication.
+- `evopilot-harness` owns its browser UI. The Harness Hub can run by itself and does not require EvoPilot or Dashboard.
 - EvoPilot owns project registration, RBAC, goal planning, selected Harness binding, loop execution, evidence, and release decisions.
 - EvoPilot does not import, mount, publish, or evolve Harness definitions. It reads configured Catalog directories at use time.
-- Dashboard reads EvoPilot APIs and shows the Harness Hub as a read-only marketplace. It does not read this repository or local files directly.
+- Dashboard may embed the independent Harness Hub in an iframe, but it does not own Harness UI state and does not read this repository or local files directly.
 - Harness definitions are EvoPilot-compatible contracts. They are intentionally not a universal harness format for every control plane.
 
 ## Catalog Contract
@@ -69,6 +71,16 @@ evopilot-harness evolution publish <evolution-id> --json
 ```
 
 The user-facing shortcut is `evopilot-harness evolve`, which runs source scan, auto-match or new Harness creation, draft generation, validation, optional approval, and publication.
+
+## Harness Hub UI
+
+Run the independent Harness Hub:
+
+```bash
+evopilot-harness hub serve --catalog published --source harnesses
+```
+
+Open `http://127.0.0.1:4176`. The UI displays the published Catalog, Harness contracts, lifecycle commands, source types, local evolution runs, and a one-command evolve builder. It reads local state from `evopilot-harness` through `/api/hub/snapshot`; it does not call EvoPilot or Dashboard.
 
 ## Source Inputs
 

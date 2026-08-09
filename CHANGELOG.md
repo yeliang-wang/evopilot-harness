@@ -2,6 +2,26 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 1.1.0 - 2026-08-09
+
+### Added
+
+- Added the independent Harness Hub / 专家市场 UI owned by `evopilot-harness`.
+- Added `hub serve` and `hub snapshot` commands for browser operation and AI Agent-readable state.
+- Added Docker, Compose, GitHub Actions CI, release artifacts, SBOM, provenance, checksum, and GHCR image metadata support.
+
+### Changed
+
+- Kept Harness lifecycle, evolution, approval, versioning, publication, CLI, and UI fully independent from EvoPilot and Dashboard.
+- Preserved the published `CATALOG.md` directory contract consumed by EvoPilot `>=3.0.0`.
+
+### Validation
+
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 1.0.0 - 2026-08-09
 
 ### Changed

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import crypto from "node:crypto";
 import fs from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
@@ -8,6 +9,7 @@ const CATALOG_BLOCK = "evopilot-harness-catalog";
 const DEFAULT_COMPATIBLE_EVOPILOT = ">=3.0.0";
 const DEFAULT_DATA_ROOT = ".evopilot-harness";
 const EVOLUTION_STATUSES = ["CREATED", "SOURCES_COLLECTED", "ANALYZED", "REVIEW_REQUIRED", "APPROVED", "PUBLISHED", "BLOCKED"];
+const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
 
 async function main(argv) {
   const args = parseArgs(argv);
@@ -32,6 +34,8 @@ async function main(argv) {
   if (group === "evolution" && action === "publish") return publishEvolution(args, idArg);
   if (group === "evolution" && action === "impact") return evolutionImpact(args, idArg);
   if (group === "evolve") return oneClickEvolve(args);
+  if (group === "hub" && action === "snapshot") return hubSnapshot(args);
+  if (group === "hub" && action === "serve") return serveHub(args);
   throw usage("Use: evopilot-harness <catalog|harness|evolution|evolve> --help.");
 }
 
@@ -47,7 +51,7 @@ function publishCatalog(args) {
   const catalog = {
     catalogVersion: 1,
     catalogId,
-    generatedAt: new Date().toISOString(),
+    generatedAt: generatedTimestamp(args),
     compatibleEvopilot: stringOption(args, "compatible-evopilot") ?? DEFAULT_COMPATIBLE_EVOPILOT,
     entries
   };
@@ -285,6 +289,241 @@ function evolutionImpact(args, idArg) {
   writeEvolutionRun(args, next);
   printResult(args, { schema: "evopilot-harness-evolution-impact/v1", ...report }, `evolution=${run.evolutionId} impacted=${report.impactedConsumers.length}`);
   return 0;
+}
+
+function hubSnapshot(args) {
+  const snapshot = buildHubSnapshot(args);
+  const out = stringOption(args, "out");
+  if (out) {
+    const file = path.resolve(out);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
+  }
+  printResult(args, snapshot, `hub snapshot entries=${snapshot.catalog.entryCount} evolutions=${snapshot.evolutions.length}${out ? ` out=${path.resolve(out)}` : ""}`);
+  return snapshot.status === "READY" ? 0 : 2;
+}
+
+function serveHub(args) {
+  const host = stringOption(args, "host") ?? process.env.EVOPILOT_HARNESS_HUB_HOST ?? "127.0.0.1";
+  const port = Number(stringOption(args, "port") ?? process.env.EVOPILOT_HARNESS_HUB_PORT ?? 4176);
+  const uiRoot = path.resolve(stringOption(args, "ui-root") ?? path.join(PACKAGE_ROOT, "ui", "harness-hub"));
+  const server = http.createServer((request, response) => {
+    const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host ?? "127.0.0.1"}`);
+    if (requestUrl.pathname === "/api/hub/snapshot") {
+      writeJson(response, buildHubSnapshot(args));
+      return;
+    }
+    serveStaticFile(response, uiRoot, requestUrl.pathname);
+  });
+
+  return new Promise((resolve) => {
+    server.listen(port, host, () => {
+      const address = server.address();
+      const actualPort = typeof address === "object" && address ? address.port : port;
+      printResult(args, {
+        schema: "evopilot-harness-hub-serve-result/v1",
+        status: "READY",
+        url: `http://${host}:${actualPort}`,
+        uiRoot,
+        catalogRoot: hubCatalogRoot(args),
+        sourceRoot: hubSourceRoot(args)
+      }, `Harness Hub listening on http://${host}:${actualPort}`);
+    });
+    const shutdown = () => server.close(() => resolve(0));
+    process.once("SIGINT", shutdown);
+    process.once("SIGTERM", shutdown);
+  });
+}
+
+function buildHubSnapshot(args) {
+  const catalogRoot = hubCatalogRoot(args);
+  const sourceRoot = hubSourceRoot(args);
+  const dataRoot = evolutionDataRoot(args);
+  const catalog = readHubCatalog(catalogRoot);
+  const harnesses = listHarnessPacks(sourceRoot).map((pack) => ({
+    ...packSummary(pack),
+    sourcePath: path.relative(process.cwd(), pack.root),
+    templatePath: path.relative(process.cwd(), pack.templatePath),
+    lifecycleStatus: pack.template.lifecycle?.status ?? "active",
+    contract: templateContractSummary(pack.template),
+    commands: lifecycleCommands(pack.id)
+  }));
+  const evolutions = listEvolutionRuns(dataRoot).slice(0, 20).map((run) => ({
+    ...evolutionSummary(run),
+    updatedAt: run.updatedAt,
+    autoMatchDecision: run.autoMatch?.decision,
+    validationStatus: run.validation?.status,
+    publication: run.publication
+  }));
+  return {
+    schema: "evopilot-harness-hub-snapshot/v1",
+    status: catalog.status === "READY" ? "READY" : "ATTENTION",
+    generatedAt: new Date().toISOString(),
+    project: {
+      name: "evopilot-harness",
+      version: readPackageVersion(),
+      compatibleEvopilot: DEFAULT_COMPATIBLE_EVOPILOT,
+      boundary: "Harness lifecycle is managed here; EvoPilot reads published Catalog directories at goal-plan time."
+    },
+    catalog,
+    harnesses,
+    evolutions,
+    sourceTypes: hubSourceTypes(),
+    lifecycleCommands: lifecycleCommandModel(),
+    nextAction: catalog.status === "READY" ? "use-hub-review-evolve-or-publish" : "run-catalog-publish-and-validate"
+  };
+}
+
+function readHubCatalog(catalogRoot) {
+  const catalogPath = path.join(catalogRoot, "CATALOG.md");
+  if (!fs.existsSync(catalogPath)) {
+    return {
+      status: "MISSING",
+      catalogRoot,
+      catalogPath,
+      catalogId: "missing",
+      entryCount: 0,
+      catalogDigest: undefined,
+      entries: [],
+      blockers: [`missing=${catalogPath}`]
+    };
+  }
+  const markdown = fs.readFileSync(catalogPath, "utf8");
+  const block = extractCatalogBlock(markdown);
+  if (!block) {
+    return {
+      status: "FAILED",
+      catalogRoot,
+      catalogPath,
+      catalogId: "unreadable",
+      entryCount: 0,
+      catalogDigest: digestText(markdown),
+      entries: [],
+      blockers: [`missing fenced block=${CATALOG_BLOCK}`]
+    };
+  }
+  const parsed = parseYaml(block);
+  const entries = Array.isArray(parsed?.entries) ? parsed.entries.map((entry) => hubCatalogEntry(catalogRoot, entry)) : [];
+  return {
+    status: "READY",
+    catalogRoot,
+    catalogPath,
+    catalogId: String(parsed.catalogId ?? "catalog"),
+    catalogVersion: parsed.catalogVersion,
+    compatibleEvopilot: parsed.compatibleEvopilot ?? DEFAULT_COMPATIBLE_EVOPILOT,
+    generatedAt: parsed.generatedAt,
+    entryCount: entries.length,
+    catalogDigest: digestText(markdown),
+    entries,
+    blockers: entries.filter((entry) => entry.status !== "published").map((entry) => `${entry.name}@${entry.version}:${entry.status}`)
+  };
+}
+
+function hubCatalogEntry(catalogRoot, entry) {
+  const entryPath = String(entry.path ?? "");
+  const absolute = path.resolve(catalogRoot, entryPath);
+  const insideCatalog = absolute.startsWith(catalogRoot + path.sep);
+  const exists = insideCatalog && fs.existsSync(absolute);
+  let contract;
+  let templateDigest = entry.digest;
+  if (exists) {
+    const text = fs.readFileSync(absolute, "utf8");
+    templateDigest = digestText(text);
+    contract = templateContractSummary(parseYaml(text));
+  }
+  return {
+    name: String(entry.name ?? "harness"),
+    version: String(entry.version ?? "0.1.0"),
+    layer: entry.layer,
+    domain: entry.domain,
+    status: exists ? String(entry.status ?? "published") : "missing-template",
+    path: entryPath,
+    digest: templateDigest,
+    tags: Array.isArray(entry.tags) ? entry.tags : [],
+    matchSummary: entry.matchSummary,
+    contract
+  };
+}
+
+function templateContractSummary(template) {
+  const domainExecution = isRecord(template.runtimePatterns?.domainExecution) ? template.runtimePatterns.domainExecution : {};
+  return {
+    requiredActionCount: Array.isArray(domainExecution.requiredActions) ? domainExecution.requiredActions.length : 0,
+    evidenceAdapterCount: Array.isArray(domainExecution.evidenceAdapters) ? domainExecution.evidenceAdapters.length : 0,
+    releaseBlockerCount: Array.isArray(domainExecution.releaseBlockers) ? domainExecution.releaseBlockers.length : 0,
+    requiredActions: labels(domainExecution.requiredActions, "id").slice(0, 6),
+    evidenceAdapters: labels(domainExecution.evidenceAdapters, "id").slice(0, 6),
+    releaseBlockers: Array.isArray(domainExecution.releaseBlockers) ? domainExecution.releaseBlockers.slice(0, 6).map(String) : []
+  };
+}
+
+function lifecycleCommands(harnessId) {
+  return {
+    inspect: `evopilot-harness harness inspect ${harnessId} --json`,
+    validate: `evopilot-harness harness validate ${harnessId} --json`,
+    publish: `evopilot-harness harness publish ${harnessId} --source harnesses --out published --json`,
+    evolve: `evopilot-harness evolve --source-project /path/to/source-project --goal "Evolve ${harnessId}" --json`
+  };
+}
+
+function lifecycleCommandModel() {
+  return [
+    { id: "scan-auto-match", label: "Scan and auto-match", command: "evopilot-harness evolve --source-project /path/to/source-project --goal \"...\" --json" },
+    { id: "review-draft", label: "Review draft", command: "evopilot-harness evolution review <evolution-id> --json" },
+    { id: "approve", label: "Approve", command: "evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json" },
+    { id: "publish", label: "Publish usable Harness", command: "evopilot-harness evolution publish <evolution-id> --json" },
+    { id: "validate-catalog", label: "Validate Catalog", command: "evopilot-harness catalog validate --source published --json" }
+  ];
+}
+
+function hubSourceTypes() {
+  return [
+    { id: "source-project", label: "Source Project", description: "Local code, architecture docs, tests, manifests, and runbooks." },
+    { id: "source-corpus", label: "Source Corpus", description: "Multiple historical projects used as domain knowledge." },
+    { id: "attachment", label: "Attachment", description: "PPT, PDF, Word, spreadsheet, Markdown, or text material." },
+    { id: "production-log", label: "Production Log", description: "Redacted runtime logs and incident diagnostics." },
+    { id: "evopilot-history", label: "EvoPilot History", description: "Goal loop history and evidence exported from EvoPilot." },
+    { id: "runtime-evidence", label: "Runtime Evidence", description: "Evidence bundles, smoke output, traces, and metrics." }
+  ];
+}
+
+function writeJson(response, payload) {
+  const text = `${JSON.stringify(payload, null, 2)}\n`;
+  response.writeHead(payload.status === "READY" ? 200 : 207, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store"
+  });
+  response.end(text);
+}
+
+function serveStaticFile(response, uiRoot, requestPath) {
+  const pathname = decodeURIComponent(requestPath);
+  const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+  const filePath = path.resolve(uiRoot, relative);
+  if (!(filePath === uiRoot || filePath.startsWith(uiRoot + path.sep)) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    response.end("not found\n");
+    return;
+  }
+  response.writeHead(200, { "content-type": contentType(filePath), "cache-control": "no-store" });
+  fs.createReadStream(filePath).pipe(response);
+}
+
+function contentType(filePath) {
+  const ext = path.extname(filePath);
+  if (ext === ".html") return "text/html; charset=utf-8";
+  if (ext === ".css") return "text/css; charset=utf-8";
+  if (ext === ".js") return "text/javascript; charset=utf-8";
+  if (ext === ".json") return "application/json; charset=utf-8";
+  return "application/octet-stream";
+}
+
+function hubCatalogRoot(args) {
+  return path.resolve(stringOption(args, "catalog") ?? stringOption(args, "catalog-root") ?? process.env.EVOPILOT_HARNESS_CATALOG_ROOT ?? "published");
+}
+
+function hubSourceRoot(args) {
+  return path.resolve(stringOption(args, "source") ?? process.env.EVOPILOT_HARNESS_SOURCE_ROOT ?? "harnesses");
 }
 
 function createEvolutionRunFromArgs(args) {
@@ -906,6 +1145,26 @@ function renderExampleProfile(template) {
   });
 }
 
+function labels(value, key) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => isRecord(item) ? item[key] ?? item.name ?? item.artifact : item)
+    .filter(Boolean)
+    .map(String);
+}
+
+function readPackageVersion() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "package.json"), "utf8")).version;
+  } catch {
+    return "unknown";
+  }
+}
+
+function generatedTimestamp(args) {
+  return stringOption(args, "generated-at") ?? process.env.EVOPILOT_HARNESS_GENERATED_AT ?? new Date().toISOString();
+}
+
 function evolutionDataRoot(args) {
   return path.resolve(stringOption(args, "data-root") ?? DEFAULT_DATA_ROOT);
 }
@@ -1071,6 +1330,8 @@ Usage:
   evopilot-harness evolution sources <evolution-id> --source-project <path> [--json]
   evopilot-harness evolution advance|review|approve|publish|impact <evolution-id> [--json]
   evopilot-harness evolve --source-project <path> --goal <text> [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
+  evopilot-harness hub snapshot [--catalog published] [--source harnesses] [--out ui/harness-hub/catalog-snapshot.json] [--json]
+  evopilot-harness hub serve [--host 127.0.0.1] [--port 4176] [--catalog published] [--source harnesses]
 `);
 }
 

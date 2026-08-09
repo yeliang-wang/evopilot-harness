@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EvoPilot Harness Hub</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Harness Hub navigation">
+        <div class="brand">
+          <span class="mark">EH</span>
+          <div>
+            <strong>EvoPilot Harness</strong>
+            <small>Hub / 专家市场</small>
+          </div>
+        </div>
+        <nav>
+          <a href="#catalog">Catalog</a>
+          <a href="#harnesses">Harnesses</a>
+          <a href="#evolution">Evolution</a>
+          <a href="#sources">Sources</a>
+        </nav>
+      </aside>
+      <main>
+        <header class="topbar">
+          <div>
+            <h1>Harness Hub</h1>
+            <p>管理、进化、审批并发布 EvoPilot 可读取的 Harness Catalog。</p>
+          </div>
+          <button id="refresh" type="button">Refresh</button>
+        </header>
+
+        <section class="metrics" aria-label="Harness Hub summary">
+          <article>
+            <span>Catalog</span>
+            <strong id="catalog-id">loading</strong>
+            <small id="catalog-status">waiting</small>
+          </article>
+          <article>
+            <span>Published Harness</span>
+            <strong id="entry-count">0</strong>
+            <small id="compatible-evopilot">compatible</small>
+          </article>
+          <article>
+            <span>Evolution Runs</span>
+            <strong id="evolution-count">0</strong>
+            <small id="next-action">nextAction</small>
+          </article>
+        </section>
+
+        <section id="catalog" class="panel">
+          <div class="panel-head">
+            <div>
+              <span>Published Catalog</span>
+              <h2>可交付 Harness Catalog</h2>
+            </div>
+            <code id="catalog-path">published/CATALOG.md</code>
+          </div>
+          <div class="table" id="catalog-table"></div>
+        </section>
+
+        <section id="harnesses" class="panel">
+          <div class="panel-head">
+            <div>
+              <span>Lifecycle</span>
+              <h2>Harness 管理</h2>
+            </div>
+            <code>harnesses/*/template.yaml</code>
+          </div>
+          <div class="cards" id="harness-cards"></div>
+        </section>
+
+        <section id="evolution" class="panel split">
+          <div>
+            <div class="panel-head">
+              <div>
+                <span>Evolution</span>
+                <h2>进化运行</h2>
+              </div>
+            </div>
+            <div class="timeline" id="evolution-list"></div>
+          </div>
+          <div>
+            <div class="panel-head">
+              <div>
+                <span>Command Builder</span>
+                <h2>一键进化命令</h2>
+              </div>
+            </div>
+            <label>
+              <span>Source Project</span>
+              <input id="source-project" value="/path/to/source-project" />
+            </label>
+            <label>
+              <span>Goal</span>
+              <textarea id="goal">Create or evolve a domain Harness from this project.</textarea>
+            </label>
+            <label>
+              <span>Confirm Actor</span>
+              <input id="confirmed-by" value="admin@example.com" />
+            </label>
+            <pre id="command-preview"></pre>
+          </div>
+        </section>
+
+        <section id="sources" class="panel">
+          <div class="panel-head">
+            <div>
+              <span>Knowledge Inputs</span>
+              <h2>可用于进化的素材来源</h2>
+            </div>
+          </div>
+          <div class="source-grid" id="source-types"></div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

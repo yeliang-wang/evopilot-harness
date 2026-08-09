@@ -1,6 +1,6 @@
 {
   "name": "evopilot-harness",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "EvoPilot-compatible Harness Factory and Published Harness Catalog.",
   "license": "Apache-2.0",
@@ -9,8 +9,13 @@
     "evopilot-harness": "src/index.mjs"
   },
   "scripts": {
-    "catalog:publish": "node src/index.mjs catalog publish --source harnesses --out published --json",
+    "catalog:publish": "node src/index.mjs catalog publish --source harnesses --out published --generated-at 2026-08-09T05:24:19.115Z --json",
     "catalog:validate": "node src/index.mjs catalog validate --source published --json",
+    "hub:snapshot": "node src/index.mjs hub snapshot --catalog published --source harnesses --out ui/harness-hub/catalog-snapshot.json --json",
+    "hub:serve": "node src/index.mjs hub serve --catalog published --source harnesses",
+    "check": "npm run catalog:publish && npm run catalog:validate && npm run hub:snapshot && npm test",
+    "release:artifact": "node scripts/build-release-artifacts.mjs",
+    "verify:release-artifact": "node scripts/verify-release-artifacts.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
