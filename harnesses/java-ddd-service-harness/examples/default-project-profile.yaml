@@ -1,0 +1,22 @@
+schema: evopilot-project-harness-profile/v1
+profileId: default
+projectId: example-java-service
+name: Example Java DDD Service Harness Profile
+template:
+  templateId: java-ddd-service-harness
+  version: 1.1.0
+runtime:
+  commands:
+    install: [./mvnw -q -DskipTests package]
+    lint: [./mvnw -q checkstyle:check]
+    typecheck: [./mvnw -q -DskipTests compile]
+    unit: [./mvnw test]
+    smoke: [./mvnw verify]
+observability:
+  structuredLogs:
+    requiredFields: [requestId, traceId, tenantId, workspaceId, projectId, aggregateId, errorCode]
+failureHandling:
+  requiredFields: [errorCode, requestId, traceId, retryable, domainAggregate, nextAction]
+governance:
+  profileActivationRequiresApproval: true
+  noSilentProfileMutation: true

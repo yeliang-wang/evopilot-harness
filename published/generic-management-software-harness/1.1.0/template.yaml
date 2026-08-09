@@ -1,0 +1,107 @@
+schema: evopilot-harness-template/v1
+id: generic-management-software-harness
+version: 1.1.0
+name: Generic Management Software Harness
+description: Enterprise baseline for management software, workflow systems, admin products, reports, imports, exports, and integrations.
+scope: platform
+languageFamily: generic
+capabilities:
+  - { id: source-boundary, name: Source and workspace boundary, boundary: Tenant/workspace/repository/branch/writeback boundaries are explicit., requiredEvidence: [project-registration, source-readiness-preflight] }
+  - { id: management-runtime, name: Management software runtime harness, boundary: API/UI/backend job/runtime commands include workflow, audit, report, import/export, and integration evidence., requiredEvidence: [api-output, workflow-proof, audit-proof, report-proof, integration-proof] }
+  - { id: business-workflow-boundary, name: Business workflow boundary, boundary: Core workflows, RBAC, approval, data movement, reports, and external integrations are explicit., requiredEvidence: [workflow-case, rbac-case, approval-case, import-export-case, integration-case] }
+  - { id: exception-tracking, name: Exception and error tracking, boundary: Business, permission, workflow, import/export, report, integration, and user-action errors are mapped and correlated., requiredEvidence: [error-code-contract, exception-sample, trace-link, repair-verification] }
+  - { id: test-and-quality, name: Test and quality gates, boundary: Workflow, RBAC, approval, import/export, report, integration, and regression tests produce evidence., requiredEvidence: [test-report, rbac-matrix, workflow-state-machine, report-reconciliation] }
+  - { id: failure-diagnostics, name: Failure diagnostics, boundary: Failures include business object, record id, actor, state, root cause, owner, next action, and verification., requiredEvidence: [failure-classification, business-context-proof, repair-verification] }
+  - { id: observability, name: Observability, boundary: Audit logs, business event logs, service telemetry, report metrics, workflow metrics, and alert routes are bound before Beta/RC/GA., requiredEvidence: [audit-log, business-event-log, metric-or-trace-proof, alert-route] }
+  - { id: slo-monitoring, name: SLO monitoring and alert routing, boundary: Workflow, approval, import/export, reporting, integration, and audit gap SLOs are explicit before RC/GA., requiredEvidence: [sli-definition, slo-dashboard, alert-rule, runbook-link, error-budget-status] }
+  - { id: operational-runbooks, name: Operational runbooks, boundary: Critical workflow/audit/report/import/export/integration failures have triage, mitigation, rollback, owner, and verification., requiredEvidence: [runbook, triage-query, rollback-or-mitigation, oncall-owner] }
+  - { id: release-governance, name: Release governance, boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence, and ReleaseDecision are required before GA., requiredEvidence: [target-evidence-package, phase-package, source-closure, release-decision] }
+runtimePatterns:
+  language: generic
+  architectureStyles: [management-software, workflow-system, enterprise-admin]
+  defaultCommands:
+    install: [make install, npm ci, uv sync]
+    lint: [make lint]
+    typecheck: [make build]
+    unit: [make test]
+    smoke: [make smoke]
+    functional: [make test:functional]
+  businessControls:
+    permissionModel: [role permission matrix, record-level rules, field-level permission, segregation of duties, maker-checker]
+    workflowModel: [state machine, approval transition, cancel/amend, reopen, delegation]
+    dataMovement: [import validation, export authorization, bulk operation audit, report reconciliation]
+    auditModel: [who, what, when, where, before, after, reason, approvalReference]
+  exceptionTracking:
+    handlers: [business rule violation, permission denial, workflow transition denial, import row failure, report reconciliation failure]
+    requiredErrorEnvelope: [errorCode, businessObject, recordId, actorId, tenantId, traceId, userAction, supportReference]
+    exceptionAttributes: [exception.type, exception.message, business.workflow.state, permission.rule, record.id, tenant.id]
+  observability:
+    instrumentation: [structured audit log, business event log, OpenTelemetry service telemetry, report reconciliation metrics]
+    logs: [tenantId, workspaceId, actorId, role, businessObject, recordId, workflowState, errorCode]
+    metrics: [workflow_transition_count, approval_latency, import_failure_rate, report_reconciliation_delta, permission_denial_count]
+    traces: [API request, permission check, workflow transition, report query, import/export job]
+validationBaseline:
+  requiredCommandGroups: [install, lint, typecheck, unit, smoke]
+  requiredBoundaries: [rbac, workflow, audit, reporting, integration, data-import-export]
+  contractChecks: [api-contract, rbac-matrix, workflow-state-machine, audit-trail, report-reconciliation]
+  commandEvidenceRequired: true
+  realBoundaryEvidenceRequired: true
+  noMockEvidenceForReleaseClaims: true
+evidenceContract:
+  format: json
+  requiredArtifacts: [target-evidence-package, phase-package, goal-completion-report, incident-or-failure-report, observability-snapshot]
+  requiredEvidence: [command, exit-code, stdout-or-log, changed-files, ci-status-or-local-proof, api-or-interface-contract, observability-signal, error-code-contract, trace-or-correlation-link, runbook-or-repair-note]
+  correlationFields: [requestId, traceId, spanId, tenantId, workspaceId, projectId, actor, environment, release, commitSha]
+failureTaxonomy:
+  categories: [business, validation, permission, dependency, environment, syntax, type, test, contract, security, performance, deploy, observability, governance, data, database, queue, external-api, concurrency, resource-saturation, unknown]
+  severityLevels: [debug, info, warn, error, critical]
+  exceptionTracking:
+    requiredAttributes: [exception.type, exception.message, exception.stacktrace, errorCode, requestId, traceId, spanId, tenantId, workspaceId, projectId, actor, release, commitSha, retryable]
+diagnosticsBaseline:
+  requiredSignals: [failing-command, exit-code, stack-trace-or-log, changed-files, runtime-env, dependency-lock, request-id, trace-id, release-or-commit, recent-deploy, ci-job-url, health-status, alert-name]
+  rootCauseFields: [symptom, hypothesis, evidence, fix, verification, owner, risk, rollbackOrMitigation]
+observabilityBaseline:
+  requiredSignals: [health, readiness, logs, metrics, traces, apm, alerts, dashboards, slo, runbooks]
+  logLevels: [debug, info, warn, error]
+  structuredLogs:
+    format: json
+    requiredFields: [timestamp, level, service, environment, requestId, traceId, spanId, tenantId, workspaceId, projectId, actor, event, errorCode, exceptionClass, rootCauseHint, release, commitSha]
+    redactionRequired: true
+  metrics:
+    red: [request_rate, error_rate, duration_p50_p95_p99]
+    business: [workflow_success_count, approval_latency, import_failure_rate, report_reconciliation_delta, permission_denial_count]
+  traces:
+    requiredSpans: [API request, permission check, workflow transition, report query, import/export job, external integration]
+    samplingPolicyMustBeDeclared: true
+governanceRules:
+  tenantWorkspaceScopeRequired: true
+  targetPlanRequiresApproval: true
+  profileActivationRequiresApproval: true
+  promotionRequiresReleaseDecision: true
+  sourceClosureRequired: true
+  noSilentProfileMutation: true
+  mandatoryGates: [project-harness-profile-active, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
+phaseMapping:
+  alpha: [source-boundary, management-runtime, business-workflow-boundary, exception-tracking, failure-diagnostics]
+  beta: [test-and-quality, business-workflow-boundary, observability, exception-tracking, slo-monitoring]
+  rc: [observability, slo-monitoring, operational-runbooks, release-governance, test-and-quality]
+  ga: [release-governance, observability, slo-monitoring, operational-runbooks, source-boundary]
+llmDraftPolicy:
+  enabled: true
+  generatedStatus: DRAFT
+  requireUserReview: true
+  activationRequiresAdmin: true
+  reonboardingUsesPreviousActiveProfile: true
+  allowedToSilentlyModifyActiveProfile: false
+  mustExplainTemplateSelection: true
+  mustNotInventEvidence: true
+sourceReferences:
+  - { name: Microsoft tactical DDD guidance, url: "https://learn.microsoft.com/en-us/azure/architecture/microservices/model/tactical-domain-driven-design", category: official-doc, rationale: Domain modeling, aggregate boundaries, repositories, and business invariant framing. }
+  - { name: ERPNext role-based permissions, url: "https://docs.frappe.io/erpnext/role-based-permissions", category: official-doc, rationale: Role, document, field, workflow, and permission-level controls for enterprise management software. }
+  - { name: OpenTelemetry Specification, url: "https://github.com/open-telemetry/opentelemetry-specification", category: github, rationale: Logs, metrics, traces, and context fields for operator troubleshooting. }
+changelog:
+  - version: 1.1.0
+    changedAt: 2026-07-31T06:00:00.000Z
+    changedBy: evopilot
+    summary: Upgrade management software template to enterprise harness knowledge baseline.
+    changes: [Add workflow, RBAC, audit, import/export, reporting, integration diagnostics, business observability, SLO gates, and release evidence.]

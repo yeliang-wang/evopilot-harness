@@ -1,0 +1,22 @@
+schema: evopilot-project-harness-profile/v1
+profileId: default
+projectId: example-node-control-plane
+name: Example Node SaaS Control Plane Harness Profile
+template:
+  templateId: node-saas-control-plane-harness
+  version: 1.1.0
+runtime:
+  commands:
+    install: [npm ci]
+    lint: [npm run lint --if-present]
+    typecheck: [npm run build --if-present]
+    unit: [npm test]
+    smoke: [npm run test:functional --if-present]
+observability:
+  structuredLogs:
+    requiredFields: [requestId, traceId, tenantId, workspaceId, projectId, actorId, errorCode, workerId]
+failureHandling:
+  requiredFields: [errorCode, requestId, traceId, tenantId, retryable, nextAction]
+governance:
+  profileActivationRequiresApproval: true
+  noSilentProfileMutation: true

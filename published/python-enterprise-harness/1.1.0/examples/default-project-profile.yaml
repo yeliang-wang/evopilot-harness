@@ -1,0 +1,24 @@
+schema: evopilot-project-harness-profile/v1
+profileId: default
+projectId: example-python-service
+name: Example Python Service Harness Profile
+template:
+  templateId: python-enterprise-harness
+  version: 1.1.0
+runtime:
+  commands:
+    install: [uv sync]
+    lint: [ruff check .]
+    typecheck: [mypy .]
+    unit: [pytest]
+    smoke: [pytest -q tests]
+observability:
+  structuredLogs:
+    requiredFields: [requestId, traceId, tenantId, workspaceId, projectId, errorCode]
+  traces:
+    requiredSpans: [ASGI inbound request, application service, database query]
+failureHandling:
+  requiredFields: [errorCode, requestId, traceId, retryable, nextAction]
+governance:
+  profileActivationRequiresApproval: true
+  noSilentProfileMutation: true

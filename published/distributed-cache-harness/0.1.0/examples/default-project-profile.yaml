@@ -1,0 +1,16 @@
+projectHarnessProfile:
+  inherits:
+    templateId: distributed-cache-harness
+    version: 0.1.0
+  scope:
+    domain: distributed-cache
+  controls:
+    requiredActions:
+      - declare-cache-semantics
+      - prove-cluster-failover
+      - prove-performance-envelope
+  evidence:
+    requiredArtifacts:
+      - protocol-report
+      - failover-report
+      - benchmark-summary

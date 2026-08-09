@@ -1,0 +1,102 @@
+schema: evopilot-harness-template/v1
+id: node-saas-control-plane-harness
+version: 1.1.0
+name: Node SaaS Control Plane Harness
+description: Enterprise Node.js baseline for SaaS control planes, API platforms, tenant/workspace services, and workers.
+scope: platform
+languageFamily: node
+capabilities:
+  - { id: source-boundary, name: Source and workspace boundary, boundary: Tenant/workspace/repository/branch/writeback boundaries are explicit., requiredEvidence: [project-registration, source-readiness-preflight] }
+  - { id: node-runtime, name: Node runtime harness, boundary: Install, build, lint, typecheck, test, smoke, worker, and readiness commands are explicit., requiredEvidence: [install-output, build-output, unit-output, worker-output] }
+  - { id: saas-control-plane, name: SaaS control-plane boundary, boundary: Tenant, workspace, RBAC, audit, API, queue, worker, and billing or quota boundaries are explicit., requiredEvidence: [tenant-isolation-proof, rbac-matrix, audit-event-sample, worker-proof] }
+  - { id: exception-tracking, name: Exception and error tracking, boundary: Framework errors, domain errors, RBAC denial, tenant violations, dependency failures, and queue failures are mapped and correlated., requiredEvidence: [error-code-contract, exception-sample, trace-link, repair-verification] }
+  - { id: test-and-quality, name: Test and quality gates, boundary: Unit, integration, API, RBAC, tenant isolation, idempotency, and worker tests produce command evidence., requiredEvidence: [test-report, api-contract, rbac-test, worker-test] }
+  - { id: failure-diagnostics, name: Failure diagnostics, boundary: Failures include command, stack/log excerpt, root cause, owner, next action, verification, and tenant impact., requiredEvidence: [failure-classification, root-cause-note, repair-verification] }
+  - { id: observability, name: Observability, boundary: Logs, metrics, traces, APM, health, queue/worker metrics, and alert routes are bound before Beta/RC/GA., requiredEvidence: [health-check, runtime-log, metric-or-trace-proof, alert-route] }
+  - { id: slo-monitoring, name: SLO monitoring and alert routing, boundary: Tenant SLOs, queue SLOs, dashboards, alerts, runbooks, and error budgets are explicit before RC/GA., requiredEvidence: [sli-definition, slo-dashboard, alert-rule, runbook-link, error-budget-status] }
+  - { id: operational-runbooks, name: Operational runbooks, boundary: Critical tenant/API/worker failure modes have triage, mitigation, rollback, owner, and verification., requiredEvidence: [runbook, triage-query, rollback-or-mitigation, oncall-owner] }
+  - { id: release-governance, name: Release governance, boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence, and ReleaseDecision are required before GA., requiredEvidence: [target-evidence-package, phase-package, source-closure, release-decision] }
+runtimePatterns:
+  language: node
+  packageManagers: [npm, pnpm, yarn]
+  architectureStyles: [saas-control-plane, api-service, worker-platform]
+  defaultCommands:
+    install: [npm ci]
+    lint: [npm run lint --if-present]
+    typecheck: [npm run typecheck --if-present, npm run build --if-present]
+    unit: [npm test]
+    smoke: [npm run test:functional --if-present]
+  exceptionTracking:
+    handlers: [NestJS global exception filter, Express error middleware, domain exception mapper, worker failure handler]
+    requiredErrorEnvelope: [errorCode, message, requestId, traceId, retryable, tenantId, supportReference]
+    exceptionAttributes: [exception.type, exception.message, exception.stacktrace, http.route, messaging.destination, tenant.id]
+  observability:
+    instrumentation: [OpenTelemetry JS, NestJS or Express instrumentation, pino-or-winston JSON logs, Prometheus metrics]
+    logs: [requestId, traceId, spanId, tenantId, workspaceId, actorId, errorCode, workerId]
+    metrics: [http.server.duration, nodejs.eventloop.lag, queue.lag, worker.job.duration, db.client.duration]
+    traces: [controller, guard, service, repository, queue publish, queue consume, outbound HTTP]
+validationBaseline:
+  requiredCommandGroups: [install, lint, typecheck, unit, smoke]
+  requiredBoundaries: [tenant, workspace, rbac, audit, api, worker]
+  contractChecks: [openapi, rbac-matrix, tenant-isolation, idempotency]
+  commandEvidenceRequired: true
+  realBoundaryEvidenceRequired: true
+  noMockEvidenceForReleaseClaims: true
+evidenceContract:
+  format: json
+  requiredArtifacts: [target-evidence-package, phase-package, goal-completion-report, incident-or-failure-report, observability-snapshot]
+  requiredEvidence: [command, exit-code, stdout-or-log, changed-files, ci-status-or-local-proof, api-or-interface-contract, observability-signal, error-code-contract, trace-or-correlation-link, runbook-or-repair-note]
+  correlationFields: [requestId, traceId, spanId, tenantId, workspaceId, projectId, actor, environment, release, commitSha]
+failureTaxonomy:
+  categories: [business, validation, permission, dependency, environment, syntax, type, test, contract, security, performance, deploy, observability, governance, data, database, queue, external-api, concurrency, resource-saturation, unknown]
+  severityLevels: [debug, info, warn, error, critical]
+  exceptionTracking:
+    requiredAttributes: [exception.type, exception.message, exception.stacktrace, errorCode, requestId, traceId, spanId, tenantId, workspaceId, projectId, actor, release, commitSha, retryable]
+diagnosticsBaseline:
+  requiredSignals: [failing-command, exit-code, stack-trace-or-log, changed-files, runtime-env, dependency-lock, request-id, trace-id, release-or-commit, recent-deploy, ci-job-url, health-status, alert-name]
+  rootCauseFields: [symptom, hypothesis, evidence, fix, verification, owner, risk, rollbackOrMitigation]
+observabilityBaseline:
+  requiredSignals: [health, readiness, logs, metrics, traces, apm, alerts, dashboards, slo, runbooks]
+  logLevels: [debug, info, warn, error]
+  structuredLogs:
+    format: json
+    requiredFields: [timestamp, level, service, environment, requestId, traceId, spanId, tenantId, workspaceId, projectId, actor, event, errorCode, exceptionClass, rootCauseHint, release, commitSha]
+    redactionRequired: true
+  metrics:
+    red: [request_rate, error_rate, duration_p50_p95_p99]
+    dependency: [db_client_duration, queue_lag, worker_failure_rate, outbound_http_error_rate]
+  traces:
+    requiredSpans: [inbound request, authorization, service, repository, queue publish, queue consume, outbound dependency]
+    samplingPolicyMustBeDeclared: true
+governanceRules:
+  tenantWorkspaceScopeRequired: true
+  targetPlanRequiresApproval: true
+  profileActivationRequiresApproval: true
+  promotionRequiresReleaseDecision: true
+  sourceClosureRequired: true
+  noSilentProfileMutation: true
+  mandatoryGates: [project-harness-profile-active, target-plan-user-confirmed, target-evidence-package, phase-package, observability-evidence, slo-or-risk-acceptance, source-closure, release-decision]
+phaseMapping:
+  alpha: [source-boundary, node-runtime, saas-control-plane, exception-tracking, failure-diagnostics]
+  beta: [test-and-quality, observability, saas-control-plane, exception-tracking, slo-monitoring]
+  rc: [observability, slo-monitoring, operational-runbooks, release-governance, test-and-quality]
+  ga: [release-governance, observability, slo-monitoring, operational-runbooks, source-boundary]
+llmDraftPolicy:
+  enabled: true
+  generatedStatus: DRAFT
+  requireUserReview: true
+  activationRequiresAdmin: true
+  reonboardingUsesPreviousActiveProfile: true
+  allowedToSilentlyModifyActiveProfile: false
+  mustExplainTemplateSelection: true
+  mustNotInventEvidence: true
+sourceReferences:
+  - { name: NestJS exception filters, url: "https://docs.nestjs.com/exception-filters", category: official-doc, rationale: Global exception filtering and user-facing error response contracts for Node services. }
+  - { name: OpenTelemetry JS Contrib, url: "https://github.com/open-telemetry/opentelemetry-js-contrib", category: github, rationale: Node.js framework instrumentation for HTTP, Express, NestJS, database, and messaging telemetry. }
+  - { name: Sentry JavaScript, url: "https://github.com/getsentry/sentry-javascript", category: github, rationale: JavaScript error tracking, performance tracing, release health, breadcrumbs, and source-map backed diagnostics. }
+changelog:
+  - version: 1.1.0
+    changedAt: 2026-07-31T06:00:00.000Z
+    changedBy: evopilot
+    summary: Upgrade Node SaaS template to enterprise harness knowledge baseline.
+    changes: [Add tenant/RBAC/audit/worker boundaries, exception filters, OpenTelemetry JS, queue metrics, SLO gates, and release evidence.]
