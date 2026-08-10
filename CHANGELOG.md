@@ -2,6 +2,22 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.0.1 - 2026-08-10
+
+### Fixed
+
+- Made v2-to-v3 migration journal ids and rollback lookup consistent on case-sensitive Linux filesystems.
+- Preserved exact legacy journal ids during rollback while rejecting path traversal input.
+
+### Validation
+
+- `npm test`
+- `npm run v3:check`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 3.0.0 - 2026-08-10
 
 ### Added

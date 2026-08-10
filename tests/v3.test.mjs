@@ -65,11 +65,15 @@ test("v2 migration is non-mutating, validates 9 templates, and rolls back from i
   const applied = runJson(["migrate", "v2-to-v3", "--workspace", home, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
   assert.equal(applied.status, "MIGRATED");
   assert.equal(applied.createdAssetCount, 18);
+  assert.match(applied.migrationId, /^v2-to-v3-[a-z0-9-]+$/);
+  assert.equal(path.basename(applied.journalFile), `${applied.migrationId}.json`);
   assert.equal(treeDigest(path.join(root, "harnesses")), sourceBefore);
   const rollback = runJson(["migrate", "rollback", applied.migrationId, "--workspace", home, "--json"]);
   assert.equal(rollback.status, "ROLLED_BACK");
   assert.ok(rollback.removedCount >= 18);
   assert.equal(treeDigest(path.join(root, "harnesses")), sourceBefore);
+  const escaped = runJsonFailure(["migrate", "rollback", "../outside", "--workspace", home, "--json"]);
+  assert.match(escaped.error, /journal id .* invalid/i);
 });
 
 test("Redis client evidence proposes a new Profile instead of evolving a distributed-cache product", () => {

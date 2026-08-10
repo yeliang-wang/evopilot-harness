@@ -24,7 +24,7 @@ export function planV2Migration(sourceRoot, home) {
 export function applyV2Migration(sourceRoot, home) {
   const plan = planV2Migration(sourceRoot, home);
   if (plan.status !== "READY") return { ...plan, status: "FAILED" };
-  const migrationId = `v2-to-v3-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  const migrationId = safeId(`v2-to-v3-${new Date().toISOString().replace(/[:.]/g, "-")}`);
   const records = [];
   const component = readYaml(path.join(home, "catalogs/builtin/assets/components/engineering-validation/asset.yaml"));
   const componentDigest = digest(component);
@@ -63,7 +63,11 @@ export function applyV2Migration(sourceRoot, home) {
 }
 
 export function rollbackMigration(home, migrationId) {
-  const journalFile = path.join(home, "migrations", `${safeId(migrationId)}.json`);
+  const journalId = String(migrationId ?? "").trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(journalId) || journalId.includes("..")) {
+    throw new Error(`Migration journal id ${migrationId} is invalid.`);
+  }
+  const journalFile = path.join(home, "migrations", `${journalId}.json`);
   if (!fs.existsSync(journalFile)) throw new Error(`Migration journal ${migrationId} was not found.`);
   const journal = JSON.parse(fs.readFileSync(journalFile, "utf8"));
   const removed = [];

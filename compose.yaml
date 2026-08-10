@@ -2,7 +2,7 @@ name: evopilot-harness
 
 services:
   evopilot-harness-hub:
-    image: ${EVOPILOT_HARNESS_IMAGE:-ghcr.io/yeliang-wang/evopilot-harness:3.0.0}
+    image: ${EVOPILOT_HARNESS_IMAGE:-ghcr.io/yeliang-wang/evopilot-harness:3.0.1}
     read_only: true
     ports:
       - "${EVOPILOT_HARNESS_HUB_PORT:-4176}:4176"

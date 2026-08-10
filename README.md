@@ -2,9 +2,9 @@
 
 > A user-owned Harness asset factory for turning model-external execution environments, actions, constraints, evidence, and validators into reusable production assets.
 
-Current version: `3.0.0` | Runtime: Node.js `>=22` | License: Apache-2.0
+Current version: `3.0.1` | Runtime: Node.js `>=22` | License: Apache-2.0
 
-[Documentation](docs/README.md) | [Quickstart](docs/cli/quickstart.md) | [Asset Model](docs/architecture/v3-asset-model.md) | [Reasoning Contract](docs/reference/v3-reasoning-contract.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [v3 Release](docs/releases/3.0.0.md)
+[Documentation](docs/README.md) | [Quickstart](docs/cli/quickstart.md) | [Asset Model](docs/architecture/v3-asset-model.md) | [Reasoning Contract](docs/reference/v3-reasoning-contract.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [v3 Release](docs/releases/3.0.1.md)
 
 `evopilot-harness` is an independent Harness producer. It owns source ingestion, Evidence Graphs, eligibility and matching, GLM Advisor review, asset drafting, human approval, signing, evaluation, and Catalog publication. It does not onboard third-party projects into EvoPilot and does not run EvoPilot goal loops.
 
@@ -115,7 +115,7 @@ flowchart LR
   Catalog --> Registry["Registry lists Catalog roots"]
 ```
 
-The Engine installation is treated as read-only. Mutable user assets, evidence, policies, runs, evaluations, keys, and Catalogs live under `EVOPILOT_HARNESS_HOME`. Engine release `3.0.0` and user asset versions are independent.
+The Engine installation is treated as read-only. Mutable user assets, evidence, policies, runs, evaluations, keys, and Catalogs live under `EVOPILOT_HARNESS_HOME`. Engine release `3.0.1` and user asset versions are independent.
 
 The canonical v3 asset is product-neutral. A Bundle may contain an optional `exports/evopilot/template.yaml` projection, but the canonical asset is not defined by EvoPilot's legacy template format.
 
