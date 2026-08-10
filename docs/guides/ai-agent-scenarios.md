@@ -8,6 +8,7 @@ This matrix is for third-party AI agents that simulate human operation through `
 |---|---|---|---|---|
 | Publish existing Harness Catalog and Registry | Agent or admin | `harness list`, `harness validate --strict`, `catalog publish --strict`, `catalog validate`, `registry publish`, `registry validate` | Stop on validation blockers | `status=VALIDATED`, template quality scores, Registry digest, Catalog digest, entry digests |
 | Single-source detection | Agent and admin | `detect --source-project ... --json` | Stop when `autoMatch.decision=REVIEW_REQUIRED` or a new target needs review | `sourceProfile`, `autoMatch`, parent candidates |
+| GitHub repository detection and evolution | Agent and admin | `detect --github-repo ... --json`, then `evolve --github-repo ... --json` | Stop at `REVIEW_REQUIRED`; do not pass raw GitHub tokens | GitHub repository/ref/commit/cache metadata, source profile, auto-match decision, `draft.template.definitionQuality` |
 | Batch source detection | Agent and admin | `detect batch --source-root ... --include-modules --json` | Stop after presenting detections; do not publish automatically | detected roles, targets, decisions, confidence |
 | Corpus source-root evolution | Agent and admin | `corpus scan`, `corpus plan`, `corpus review`, `corpus approve`, `corpus publish` | Stop before corpus approval | group targets, selected projects, duplicate projects, group validation, publication groups |
 | One-command corpus evolution | Agent and admin | `evolve corpus --source-root ... --include-modules --json` | Stop at `REVIEW_REQUIRED` unless explicit approval metadata is supplied | `corpusId`, discovered/evaluated count, duplicate count, group draft digests |
@@ -27,11 +28,13 @@ Every completed scenario summary must include:
 - JSON schema and status
 - `nextAction`
 - source count and source digests when sources were used
+- GitHub source repository, ref, resolved commit, and cache path when `--github-repo` is used
 - source profile primary role, recommended Harness, architecture signals, negative signals, and sensitive material findings
 - auto-match target Harness, version, confidence, parent candidates, candidate scores, and reasons
 - validation blockers
 - strict template quality scores when applicable
 - draft digest and draft directory
+- definition quality objective, focus areas, and non-goals
 - for corpus runs: `corpusId`, discovered/evaluated count, duplicate count, every target Harness id, selected projects, duplicate projects, group validation, and group draft digest
 - approval actor and confirmation when approval occurred
 - publication Harness root, Catalog root, and Registry path when publication occurred

@@ -55,7 +55,29 @@ The command performs:
 8. Harness Asset v2 validation
 9. review stop
 
+Generated drafts also include `template.definitionQuality`. The default evolution target is a more accurate, professional, and fine-grained Harness definition. The target is not large-scale performance optimization, throughput expansion, or runtime performance tuning unless the operator explicitly asks for those goals with source evidence.
+
 If `--approve-and-publish` is supplied, the command also performs approval and publication. Use that only when real administrator approval has already happened.
+
+## GitHub Repository Source Flow
+
+Use `--github-repo` when the project source lives in GitHub or another Git remote reachable by local `git`:
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+The repository is cloned or fetched into `.evopilot-harness/github-sources/` by default, then scanned as project source. Review `sourceCoverage.sources[].github.repository`, `ref`, `resolvedCommit`, and `cachePath` before approval. Do not put GitHub tokens in the URL; use public HTTPS, local Git credentials, or SSH.
 
 ## LLM Advisor Review
 
@@ -114,6 +136,7 @@ llmAdvisor.sourceClassification
 llmAdvisor.recommendation
 llmAdvisor.alternatives
 llmAdvisor.reviewWarnings
+llmAdvisor.definitionQualityAdvice
 llmAdvisor.sensitiveMaterialFindings
 llmAdvisor.provider
 llmAdvisor.model
@@ -180,6 +203,7 @@ Before approval, verify:
 - LLM Advisor classification, recommendation, alternatives, warnings, and token usage are understood when enabled
 - for corpus runs, `groups[].selectedProjects`, `groups[].duplicateProjects`, and every group draft are reasonable
 - target Harness id and version are correct
+- `draft/template.yaml` includes `definitionQuality` with the expected objective, focus areas, and non-goals
 - `draft/template.yaml` has clear `productBoundary`, `matchPolicy`, `executionModel`, `evidenceContract`, `qualityGate`, domain actions, evidence adapters, and release blockers
 - `validation.status=VALIDATED`
 - `draft/asset.yaml` validates as Harness Asset v2

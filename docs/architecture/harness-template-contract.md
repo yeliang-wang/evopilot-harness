@@ -55,6 +55,13 @@ executionModel:
       - evopilot-harness harness validate <harness-id> --strict --json
 qualityGate:
   minTemplateScore: 0.8
+definitionQuality:
+  schema: evopilot-harness-definition-quality/v1
+  objective: more accurate, professional, and fine-grained Harness definition
+  nonGoals:
+    - large-scale performance optimization
+    - throughput expansion
+    - runtime performance tuning
 ```
 
 Domain templates must also define domain execution controls:
@@ -162,6 +169,7 @@ Strict validation checks that templates have enough structure for human review, 
 | `executionModel` | Non-empty `phases[]` and command groups under `requiredCommands`. |
 | `evidenceContract` | Required artifacts and correlation fields. |
 | `qualityGate` | `minTemplateScore`, defaulting to `0.8` in generated drafts. |
+| `definitionQuality` | Objective, focus areas, required improvements, review questions, and non-goals for generated draft quality. |
 | `runtimePatterns.domainExecution` | Required for domain Harnesses. |
 
 ```bash
@@ -171,7 +179,7 @@ node src/index.mjs catalog publish --source harnesses --out published --strict -
 
 ## Source References
 
-Evolution adds `sourceReferences` entries with source name, type, URI, digest, and description. These references let reviewers trace why a Harness changed.
+Evolution adds `sourceReferences` entries with source name, type, URI, digest, and description. GitHub repository sources also carry repository, ref, resolved commit, and local cache path metadata. These references let reviewers trace why a Harness changed.
 
 ## Lifecycle State
 

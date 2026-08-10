@@ -4,6 +4,7 @@
 
 ## New Users
 
+- [How Harness Works](guides/how-harness-works.md) - OpenHands-style overview of management, evolution, matching, source inputs, publication, and control-plane consumption.
 - [CLI Quickstart](cli/quickstart.md) - shortest local path to publish a Catalog, validate it, and run the Harness Hub.
 - [Harness Hub Integration](guides/harness-hub-integration.md) - run the standalone browser UI and embed it from another dashboard.
 - [Source Harness Packs](../harnesses/README.md) - current source pack model and publish commands.
@@ -19,6 +20,7 @@
 
 ## Harness Administrators
 
+- [How Harness Works](guides/how-harness-works.md) - plain-language technical model for humans and AI agents.
 - [Source To Harness](guides/source-to-harness.md) - convert source projects, attachments, logs, and notes into a Harness draft.
 - [Harness Evolution](guides/harness-evolution.md) - lifecycle from source collection through approval and publication.
 - [Template Schema](reference/template-schema.md) - template v2, Harness Asset v2 envelope, Template Quality Standard v1 fields, and strict validation.
@@ -42,6 +44,7 @@
 
 ## Releases
 
+- [2.1.0](releases/2.1.0.md)
 - [2.0.0](releases/2.0.0.md)
 - [1.4.0](releases/1.4.0.md)
 - [1.3.0](releases/1.3.0.md)

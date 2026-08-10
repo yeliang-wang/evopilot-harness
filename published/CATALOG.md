@@ -21,7 +21,7 @@ catalogVersion: 2
 catalogId: evopilot-public-harness-catalog
 generatedAt: 2026-08-09T05:24:19.115Z
 generatedBy: evopilot-harness
-release: v2.0.0
+release: v2.1.0
 assetApiVersion: evopilot.dev/v2
 assetKind: HarnessAsset
 compatibleEvopilot: ">=3.0.0"

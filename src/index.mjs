@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
@@ -30,6 +31,22 @@ const DEFAULT_LLM_MODELS_FILE = path.join(PACKAGE_ROOT, "models.json");
 const DEFAULT_MATCH_THRESHOLD = 0.45;
 const AMBIGUOUS_MATCH_DELTA = 0.1;
 const DEFAULT_CORPUS_GROUP_LIMIT = 5;
+const DEFAULT_GITHUB_CLONE_DEPTH = 1;
+const DEFINITION_QUALITY_TARGET = {
+  objective: "more accurate, professional, and fine-grained Harness definition",
+  focusAreas: [
+    "product boundary precision",
+    "match policy specificity",
+    "evidence contract completeness",
+    "domain execution action granularity",
+    "review warnings and negative signal coverage"
+  ],
+  nonGoals: [
+    "large-scale performance optimization",
+    "throughput expansion",
+    "runtime performance tuning"
+  ]
+};
 
 async function main(argv) {
   const args = parseArgs(argv);
@@ -523,7 +540,7 @@ function deprecateHarness(args, idArg) {
 
 function detectSources(args) {
   const sources = collectSourceInputs(args);
-  if (sources.length === 0) throw usage("Supply at least one source with --source-project, --file, --attachment, --production-log, or --note.");
+  if (sources.length === 0) throw usage("Supply at least one source with --source-project, --github-repo, --file, --attachment, --production-log, or --note.");
   const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Detect the best Harness target for this source.";
   const result = detectHarnessForSources(args, sources, goal);
   printResult(args, publicDetectResult(result), `detect=${result.autoMatch.targetHarnessId} decision=${result.autoMatch.decision} confidence=${result.autoMatch.confidence}`);
@@ -1296,16 +1313,19 @@ function templateContractSummary(template) {
 function lifecycleCommands(harnessId) {
   return {
     detect: `evopilot-harness detect --source-project /path/to/source-project --goal "Match ${harnessId}" --json`,
+    detectGithub: `evopilot-harness detect --github-repo owner/repo --goal "Match ${harnessId}" --json`,
     inspect: `evopilot-harness harness inspect ${harnessId} --json`,
     validate: `evopilot-harness harness validate ${harnessId} --strict --json`,
     publish: `evopilot-harness harness publish ${harnessId} --source harnesses --out published --json`,
-    evolve: `evopilot-harness evolve --source-project /path/to/source-project --goal "Evolve ${harnessId}" --json`
+    evolve: `evopilot-harness evolve --source-project /path/to/source-project --goal "Evolve ${harnessId}" --json`,
+    evolveGithub: `evopilot-harness evolve --github-repo owner/repo --goal "Evolve ${harnessId}" --json`
   };
 }
 
 function lifecycleCommandModel() {
   return [
     { id: "detect", label: "Detect source profile and Harness target", command: "evopilot-harness detect --source-project /path/to/source-project --goal \"...\" --json" },
+    { id: "detect-github", label: "Detect a GitHub repository Harness target", command: "evopilot-harness detect --github-repo owner/repo --goal \"...\" --json" },
     { id: "corpus-scan", label: "Scan and group a source corpus", command: "evopilot-harness corpus scan --source-root /path/to/project-root --json" },
     { id: "corpus-plan", label: "Generate reviewable corpus Harness drafts", command: "evopilot-harness corpus plan --source-root /path/to/project-root --include-modules --json" },
     { id: "corpus-evolve", label: "One-command corpus evolution", command: "evopilot-harness evolve corpus --source-root /path/to/project-root --json" },
@@ -1314,6 +1334,7 @@ function lifecycleCommandModel() {
     { id: "unknown-source-eval", label: "Run unknown-source matching evals", command: "evopilot-harness eval run --json" },
     { id: "llm-replay", label: "Replay LLM Advisor fixtures", command: "evopilot-harness llm replay --json" },
     { id: "scan-auto-match", label: "Scan and auto-match", command: "evopilot-harness evolve --source-project /path/to/source-project --goal \"...\" --json" },
+    { id: "github-evolve", label: "One-command GitHub repository evolution", command: "evopilot-harness evolve --github-repo owner/repo --github-ref main --goal \"...\" --json" },
     { id: "review-draft", label: "Review draft", command: "evopilot-harness evolution review <evolution-id> --json" },
     { id: "approve", label: "Approve", command: "evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json" },
     { id: "publish", label: "Publish usable Harness", command: "evopilot-harness evolution publish <evolution-id> --json" },
@@ -1327,6 +1348,7 @@ function lifecycleCommandModel() {
 function hubSourceTypes() {
   return [
     { id: "source-project", label: "Source Project", description: "Local code, architecture docs, tests, manifests, and runbooks." },
+    { id: "github-repository", label: "GitHub Repository", description: "GitHub URL, SSH remote, owner/repo shorthand, or git URL cloned into the local source cache." },
     { id: "source-corpus", label: "Source Corpus", description: "Multiple historical projects used as domain knowledge." },
     { id: "attachment", label: "Attachment", description: "PPT, PDF, Word, spreadsheet, Markdown, or text material." },
     { id: "production-log", label: "Production Log", description: "Redacted runtime logs and incident diagnostics." },
@@ -1383,7 +1405,7 @@ function hubSourceRoot(args) {
 
 function createEvolutionRunFromArgs(args) {
   const sources = collectSourceInputs(args);
-  if (sources.length === 0) throw usage("Supply at least one source with --source-project, --file, --production-log, or --note.");
+  if (sources.length === 0) throw usage("Supply at least one source with --source-project, --github-repo, --file, --production-log, or --note.");
   const now = new Date().toISOString();
   const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Create or evolve a reusable Harness definition.";
   const evolutionId = safeId(stringOption(args, "id") ?? `evoh-${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${digestText(JSON.stringify({ goal, sources })).slice(7, 15)}`);
@@ -1542,6 +1564,8 @@ function collectSourceInputs(args) {
   const sources = [];
   const sourceProjects = stringListRaw(args, "source-project");
   for (const sourceProject of sourceProjects) sources.push(sourceProjectSource(sourceProject));
+  const githubRepos = stringListRaw(args, "github-repo");
+  for (let index = 0; index < githubRepos.length; index += 1) sources.push(githubRepositorySource(args, githubRepos[index], index));
   const files = [...stringListRaw(args, "file"), ...stringListRaw(args, "attachment")];
   for (const file of files) sources.push(fileSource(file, "attachment"));
   for (const file of stringListRaw(args, "production-log")) sources.push(fileSource(file, "production-log"));
@@ -1552,22 +1576,221 @@ function collectSourceInputs(args) {
 function sourceProjectSource(projectPath) {
   const absolute = path.resolve(projectPath);
   if (!fs.existsSync(absolute)) throw usage(`source-project not found: ${projectPath}`);
-  const scan = scanSourceProject(absolute);
+  return scannedProjectSource({
+    root: absolute,
+    type: "source-project",
+    name: path.basename(absolute),
+    uri: absolute,
+    idPrefix: "source"
+  });
+}
+
+function githubRepositorySource(args, repoInput, index) {
+  const repo = normalizeGithubRepositoryInput(repoInput);
+  const ref = stringOption(args, "github-ref");
+  const cacheRoot = path.resolve(stringOption(args, "github-cache-root") ?? path.join(evolutionDataRoot(args), "github-sources"));
+  const cacheId = `${safeId(repo.repository)}-${digestText(`${repo.cloneUrl}\n${ref ?? ""}\n${index}`).slice(7, 15)}`;
+  const repoPath = path.join(cacheRoot, cacheId, "repo");
+  const checkout = checkoutGitRepository(repo.cloneUrl, repoPath, ref, numberOption(args, "github-depth", DEFAULT_GITHUB_CLONE_DEPTH));
+  return scannedProjectSource({
+    root: repoPath,
+    type: "github-repository",
+    name: repo.repository,
+    uri: repo.displayUrl,
+    idPrefix: "github",
+    metadata: {
+      github: {
+        repository: repo.repository,
+        input: maskSecretText(repoInput),
+        upstreamUrl: repo.displayUrl,
+        ref: ref ?? checkout.ref,
+        resolvedCommit: checkout.resolvedCommit,
+        cachePath: repoPath
+      }
+    }
+  });
+}
+
+function scannedProjectSource({ root, type, name, uri, idPrefix, metadata = {} }) {
+  const scan = scanSourceProject(root);
   const rawText = scan.extractedText;
   const redactedText = redactSensitiveText(scan.extractedText);
   const sensitiveMaterialFindings = detectSensitiveMaterial(scan.extractedText);
   scan.extractedText = redactedText;
   scan.sensitiveMaterialFindings = sensitiveMaterialFindings;
   return {
-    id: `source-${safeId(path.basename(absolute))}-${digestText(absolute).slice(7, 15)}`,
-    type: "source-project",
-    name: path.basename(absolute),
-    uri: absolute,
-    digest: digestText(JSON.stringify(scan)),
+    id: `${idPrefix}-${safeId(name)}-${digestText(`${uri}\n${root}`).slice(7, 15)}`,
+    type,
+    name,
+    uri: maskSecretText(uri),
+    digest: digestText(JSON.stringify({ scan, metadata })),
     scan,
     redactionApplied: redactedText !== rawText || sensitiveMaterialFindings.length > 0,
-    contentText: scan.extractedText
+    contentText: scan.extractedText,
+    ...metadata
   };
+}
+
+function normalizeGithubRepositoryInput(repoInput) {
+  const input = String(repoInput ?? "").trim();
+  if (!input) throw usage("Missing --github-repo value.");
+  const shorthand = input.match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
+  if (shorthand) {
+    const repository = `${shorthand[1]}/${shorthand[2].replace(/\.git$/i, "")}`;
+    return {
+      repository,
+      cloneUrl: `https://github.com/${repository}.git`,
+      displayUrl: `https://github.com/${repository}`
+    };
+  }
+  const sshGithub = input.match(/^git@github\.com:([^/\s]+)\/(.+?)(?:\.git)?$/i);
+  if (sshGithub) {
+    const repository = `${sshGithub[1]}/${sshGithub[2].replace(/\.git$/i, "")}`;
+    return {
+      repository,
+      cloneUrl: input,
+      displayUrl: `git@github.com:${repository}.git`
+    };
+  }
+  if (/^https?:\/\/github\.com\//i.test(input)) {
+    try {
+      const url = new URL(input);
+      if (url.username || url.password) throw usage("Do not include credentials in --github-repo. Use local Git credentials or SSH.");
+      const [owner, repoName] = url.pathname.split("/").filter(Boolean);
+      if (owner && repoName) {
+        const repository = `${owner}/${repoName.replace(/\.git$/i, "")}`;
+        return {
+          repository,
+          cloneUrl: `https://github.com/${repository}.git`,
+          displayUrl: `https://github.com/${repository}`
+        };
+      }
+    } catch (error) {
+      if (error?.name === "UsageError") throw error;
+      throw usage(`Invalid --github-repo URL: ${maskSecretText(input)}`);
+    }
+  }
+  if (input.startsWith("file://")) {
+    const fileUrl = new URL(input);
+    const repository = `local/${path.basename(fileUrl.pathname).replace(/\.git$/i, "") || "repository"}`;
+    return {
+      repository,
+      cloneUrl: input,
+      displayUrl: maskSecretText(input)
+    };
+  }
+  if (fs.existsSync(input)) {
+    const absolute = path.resolve(input);
+    return {
+      repository: `local/${path.basename(absolute).replace(/\.git$/i, "") || "repository"}`,
+      cloneUrl: absolute,
+      displayUrl: absolute
+    };
+  }
+  if (/^(ssh|git|https?):\/\//i.test(input)) {
+    try {
+      const url = new URL(input);
+      if (["http:", "https:"].includes(url.protocol) && (url.username || url.password)) {
+        throw usage("Do not include credentials in --github-repo. Use local Git credentials or SSH.");
+      }
+    } catch (error) {
+      if (error?.name === "UsageError") throw error;
+    }
+    return {
+      repository: inferRepositoryName(input),
+      cloneUrl: input,
+      displayUrl: maskSecretText(input)
+    };
+  }
+  throw usage("github-repo must be a GitHub URL, git@github.com:owner/repo.git, owner/repo, or a git URL.");
+}
+
+function checkoutGitRepository(cloneUrl, repoPath, ref, depth) {
+  const cloneDepth = Math.max(0, Number(depth) || 0);
+  fs.mkdirSync(path.dirname(repoPath), { recursive: true });
+  const gitDir = path.join(repoPath, ".git");
+  try {
+    if (!fs.existsSync(gitDir)) {
+      fs.rmSync(repoPath, { recursive: true, force: true });
+      const cloneArgs = ["clone", "--no-tags"];
+      if (cloneDepth > 0) cloneArgs.push("--depth", String(cloneDepth));
+      if (ref && !looksLikeCommitSha(ref)) cloneArgs.push("--branch", ref);
+      cloneArgs.push(cloneUrl, repoPath);
+      try {
+        gitExec(cloneArgs);
+      } catch (error) {
+        if (!ref || looksLikeCommitSha(ref)) throw error;
+        fs.rmSync(repoPath, { recursive: true, force: true });
+        const fallbackArgs = ["clone", "--no-tags"];
+        if (cloneDepth > 0) fallbackArgs.push("--depth", String(cloneDepth));
+        fallbackArgs.push(cloneUrl, repoPath);
+        gitExec(fallbackArgs);
+      }
+    } else {
+      gitExec(["-C", repoPath, "remote", "set-url", "origin", cloneUrl]);
+      gitExec(["-C", repoPath, "fetch", "--prune", "--tags", "origin"]);
+    }
+    if (ref) checkoutGitRef(repoPath, ref, cloneDepth);
+    const resolvedCommit = gitExec(["-C", repoPath, "rev-parse", "HEAD"]).trim();
+    const branch = gitExec(["-C", repoPath, "branch", "--show-current"]).trim();
+    return {
+      ref: ref ?? (branch || "HEAD"),
+      resolvedCommit
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw usage(`GitHub repository checkout failed for ${maskSecretText(cloneUrl)}: ${maskSecretText(message)}`);
+  }
+}
+
+function checkoutGitRef(repoPath, ref, depth) {
+  const fetchDepth = Math.max(0, Number(depth) || 0);
+  const attempts = [
+    () => gitExec(["-C", repoPath, "checkout", "--detach", ref]),
+    () => gitExec(["-C", repoPath, "checkout", "--detach", `origin/${ref}`]),
+    () => {
+      const fetchArgs = ["-C", repoPath, "fetch", "origin"];
+      if (fetchDepth > 0) fetchArgs.push("--depth", String(fetchDepth));
+      fetchArgs.push(ref);
+      gitExec(fetchArgs);
+      return gitExec(["-C", repoPath, "checkout", "--detach", "FETCH_HEAD"]);
+    }
+  ];
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      return attempt();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(`Unable to checkout ref ${ref}.`);
+}
+
+function gitExec(args) {
+  try {
+    return execFileSync("git", args, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+  } catch (error) {
+    const stderr = error?.stderr ? String(error.stderr) : "";
+    const stdout = error?.stdout ? String(error.stdout) : "";
+    const message = [stderr, stdout, error instanceof Error ? error.message : ""].filter(Boolean).join("\n").trim();
+    throw new Error(maskSecretText(message || `git ${args.join(" ")} failed`));
+  }
+}
+
+function looksLikeCommitSha(value) {
+  return /^[0-9a-f]{7,40}$/i.test(String(value ?? "").trim());
+}
+
+function inferRepositoryName(input) {
+  const text = String(input ?? "").replace(/[#?].*$/, "").replace(/\.git$/i, "");
+  const parts = text.split(/[/:]/).filter(Boolean);
+  const repo = parts.pop() ?? "repository";
+  const owner = parts.pop() ?? "remote";
+  return `${safeId(owner)}/${safeId(repo)}`;
 }
 
 function fileSource(filePath, type) {
@@ -1657,9 +1880,11 @@ function buildSourceCoverage(sources) {
       type: source.type,
       name: source.name,
       digest: source.digest,
+      uri: source.uri,
+      github: source.github,
       redactionApplied: Boolean(source.redactionApplied),
       sensitiveMaterialFindings: source.scan?.sensitiveMaterialFindings ?? detectSensitiveMaterial(source.contentText ?? ""),
-      knowledgeCategory: source.type === "production-log" ? "runtime-operations" : source.type === "source-project" ? "source-architecture" : "supporting-material",
+      knowledgeCategory: source.type === "production-log" ? "runtime-operations" : isProjectCodeSource(source) ? "source-architecture" : "supporting-material",
       projectActions: projectActionsForSource(source),
       scan: source.scan ? {
         fileCount: source.scan.fileCount,
@@ -1673,8 +1898,12 @@ function buildSourceCoverage(sources) {
 
 function projectActionsForSource(source) {
   if (source.type === "production-log") return ["extract failure modes", "add diagnostics and observability evidence"];
-  if (source.type === "source-project") return ["extract domain capabilities", "match or create Harness", "generate draft pack"];
+  if (isProjectCodeSource(source)) return ["extract domain capabilities", "match or create Harness", "generate draft pack"];
   return ["review source material", "map reusable Harness guidance"];
+}
+
+function isProjectCodeSource(source) {
+  return ["source-project", "github-repository"].includes(source.type);
 }
 
 function buildCorpus(sources) {
@@ -1715,7 +1944,8 @@ function buildSourceProfile(sources, corpus, goal) {
     digest: corpus.digest,
     sourceCount: sources.length,
     sourceTypes: uniqueStrings(sources.map((source) => source.type)),
-    projectRoots: sources.filter((source) => source.type === "source-project").map((source) => source.uri),
+    projectRoots: sources.filter(isProjectCodeSource).map((source) => source.scan?.root ?? source.uri),
+    githubRepositories: sources.filter((source) => source.type === "github-repository").map((source) => source.github).filter(Boolean),
     languages,
     buildTools,
     frameworks,
@@ -1795,7 +2025,7 @@ function sourceProfileUncertainty({ roles, recommendedHarness, scannerEvidence, 
   if ((recommendedHarness?.confidence ?? 0) < 0.6) reasons.push("low-recommended-harness-confidence");
   if (scannerEvidence.filter((scanner) => scanner.status === "MATCHED").length < 3) reasons.push("low-scanner-coverage");
   if (negativeSignals.length > 0) reasons.push("negative-boundary-signals-present");
-  if (sources.some((source) => source.type !== "source-project")) reasons.push("non-code-source-material-present");
+  if (sources.some((source) => !isProjectCodeSource(source))) reasons.push("non-code-source-material-present");
   return {
     status: reasons.length > 0 ? "REVIEWABLE" : "LOW",
     reasons: uniqueStrings(reasons),
@@ -2999,6 +3229,7 @@ function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, pack
     name: source.name,
     type: source.type,
     digest: source.digest,
+    github: source.github,
     redactionApplied: source.redactionApplied,
     knowledgeCategory: source.knowledgeCategory,
     projectActions: source.projectActions,
@@ -3014,6 +3245,9 @@ function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, pack
     "You are the EvoPilot Harness LLM Advisor. Return one JSON object only. Do not return Markdown.",
     "Your job is to review deterministic Harness auto-match results before a Harness draft is approved.",
     "Do not approve or publish. Give advice for a human administrator.",
+    `The next evolution target is definition quality: ${DEFINITION_QUALITY_TARGET.objective}.`,
+    `Focus on: ${DEFINITION_QUALITY_TARGET.focusAreas.join(", ")}.`,
+    `Do not optimize for these non-goals unless the user explicitly supplies evidence and asks for them: ${DEFINITION_QUALITY_TARGET.nonGoals.join(", ")}.`,
     "Prefer a narrower domain Harness when the source is a client SDK, integration library, adapter, plugin, or operational tool rather than a full product kernel.",
     "For Redis examples: if the source is a Java Redis client wrapper, cache client library, Spring Data Redis/Jedis adapter, serializer, server selection helper, or health-probe wrapper, recommend redis-client-harness or cache-client-library-harness. Only recommend distributed-cache-harness when the source is the owner's cache product runtime/kernel, cluster, protocol engine, eviction, replication, failover, or storage implementation.",
     "Return JSON fields exactly compatible with this schema:",
@@ -3030,6 +3264,10 @@ function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, pack
       },
       alternatives: [{ action: "EVOLVE_EXISTING", targetHarnessId: "distributed-cache-harness", condition: "when this source is part of the cache product boundary" }],
       reviewWarnings: ["check hardcoded credentials before publication"],
+      definitionQualityAdvice: {
+        requiredImprovements: ["add negative signals that separate a Redis client wrapper from a cache product kernel"],
+        nonGoals: ["do not add large-scale performance optimization unless requested with source evidence"]
+      },
       sensitiveMaterialFindings: ["hardcoded credential or internal endpoint suspected"],
       commandRecommendations: [
         "node src/index.mjs evolve --source-project <path> --target-id redis-client-harness --match-threshold 1.1 --goal \"...\" --json"
@@ -3052,6 +3290,7 @@ function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, pack
       frameworks: sourceProfile?.frameworks,
       scannerSummary: sourceProfile?.scannerSummary,
       scanners: sourceProfile?.scanners,
+      githubRepositories: sourceProfile?.githubRepositories,
       dependencies: sourceProfile?.dependencies?.slice(0, 60),
       symbols: sourceProfile?.symbols?.slice(0, 60),
       architectureSignals: sourceProfile?.architectureSignals,
@@ -3171,17 +3410,18 @@ function normalizeLlmAdvisorResult({ control, config, response, parsed, duration
     sourceClassification: stringValue(parsed.sourceClassification, "unknown"),
     rationale: stringValue(parsed.rationale, ""),
     domainFit: normalizeDomainFit(parsed.domainFit),
-    recommendation: {
-      action,
-      targetHarnessId,
-      targetDomain,
-      confidence: normalizedConfidence(recommendationRecord.confidence),
-      reason: stringValue(recommendationRecord.reason, "")
-    },
-    alternatives: normalizeAdvisorAlternatives(parsed.alternatives),
-    reviewWarnings: normalizeStrings(parsed.reviewWarnings).slice(0, 12),
-    sensitiveMaterialFindings: normalizeStrings(parsed.sensitiveMaterialFindings).slice(0, 12),
-    commandRecommendations: normalizeStrings(parsed.commandRecommendations).slice(0, 6).map(maskSecretText),
+      recommendation: {
+        action,
+        targetHarnessId,
+        targetDomain,
+        confidence: normalizedConfidence(recommendationRecord.confidence),
+        reason: stringValue(recommendationRecord.reason, "")
+      },
+      alternatives: normalizeAdvisorAlternatives(parsed.alternatives),
+      reviewWarnings: normalizeStrings(parsed.reviewWarnings).slice(0, 12),
+      definitionQualityAdvice: normalizeDefinitionQualityAdvice(parsed.definitionQualityAdvice),
+      sensitiveMaterialFindings: normalizeStrings(parsed.sensitiveMaterialFindings).slice(0, 12),
+      commandRecommendations: normalizeStrings(parsed.commandRecommendations).slice(0, 6).map(maskSecretText),
     nextAction: "review-llm-advisor-and-draft"
   };
 }
@@ -3328,6 +3568,7 @@ function createDraftPack(run, match, corpus, args, sourceProfile) {
       name: source.name,
       type: source.type,
       uri: source.uri,
+      github: source.github,
       digest: source.digest,
       description: `Harness evolution source ${source.type}.`
     }))
@@ -3342,6 +3583,7 @@ function createDraftPack(run, match, corpus, args, sourceProfile) {
   ];
   ensureDomainExecution(template, match.targetDomain);
   ensureTemplateQualityModel(template, match, sourceProfile);
+  ensureDefinitionQualityTarget(template, match, sourceProfile);
   ensureHarnessTemplateV2Metadata(template, match, sourceProfile);
   const templateYaml = stringifyYaml(template);
   const readme = renderDraftReadme(run, template, match);
@@ -3359,13 +3601,22 @@ function createDraftPack(run, match, corpus, args, sourceProfile) {
     templateYaml,
     asset,
     assetYaml,
-    readme,
-    changelog,
-    exampleProfile,
-    diffFromBase: {
-      baseHarnessRef: match.baseHarnessRef,
-      changedSections: ["metadata", "matchSignals", "sourceReferences", "domainExecution", "changelog"]
-    }
+      readme,
+      changelog,
+      exampleProfile,
+      diffFromBase: {
+        baseHarnessRef: match.baseHarnessRef,
+        changedSections: ["metadata", "matchSignals", "sourceReferences", "domainExecution", "definitionQuality", "changelog"]
+      }
+    };
+  }
+
+function normalizeDefinitionQualityAdvice(value) {
+  const record = isRecord(value) ? value : {};
+  return {
+    objective: stringValue(record.objective, DEFINITION_QUALITY_TARGET.objective),
+    requiredImprovements: normalizeStrings(record.requiredImprovements).slice(0, 12),
+    nonGoals: uniqueStrings([...normalizeStrings(record.nonGoals), ...DEFINITION_QUALITY_TARGET.nonGoals]).slice(0, 12)
   };
 }
 
@@ -3412,13 +3663,14 @@ function createGenericDomainTemplate(id, domain, sourceProfile, match) {
     evidenceContract: { format: "json", requiredArtifacts: ["runtime-log", "test-report"], correlationFields: ["requestId", "traceId"] },
     failureTaxonomy: { categories: ["runtime", "dependency", "data", "observability", "governance"] },
     diagnosticsBaseline: { requiredSignals: ["command", "log-excerpt", "root-cause", "next-action"] },
-    observabilityBaseline: { requiredSignals: ["health", "readiness", "logs", "metrics"] },
-    governanceRules: { noSilentProfileMutation: true, promotionRequiresReleaseDecision: true },
-    qualityGate: defaultQualityGate(),
-    phaseMapping: { alpha: ["source-boundary"], beta: ["test-and-quality"], rc: ["observability"], ga: ["release-governance"] },
-    llmDraftPolicy: { enabled: true, requireUserReview: true }
-  };
-}
+      observabilityBaseline: { requiredSignals: ["health", "readiness", "logs", "metrics"] },
+      governanceRules: { noSilentProfileMutation: true, promotionRequiresReleaseDecision: true },
+      qualityGate: defaultQualityGate(),
+      definitionQuality: defaultDefinitionQualityTarget(match, sourceProfile),
+      phaseMapping: { alpha: ["source-boundary"], beta: ["test-and-quality"], rc: ["observability"], ga: ["release-governance"] },
+      llmDraftPolicy: { enabled: true, requireUserReview: true }
+    };
+  }
 
 function ensureDomainExecution(template, domain) {
   template.runtimePatterns = isRecord(template.runtimePatterns) ? template.runtimePatterns : {};
@@ -3455,6 +3707,39 @@ function ensureTemplateQualityModel(template, match, sourceProfile) {
   template.executionModel.phases = normalizeStrings(template.executionModel.phases).length > 0 ? normalizeStrings(template.executionModel.phases) : defaultExecutionModel(sourceProfile).phases;
   template.executionModel.requiredCommands = isRecord(template.executionModel.requiredCommands) ? template.executionModel.requiredCommands : defaultExecutionModel(sourceProfile).requiredCommands;
   template.qualityGate = isRecord(template.qualityGate) ? template.qualityGate : defaultQualityGate();
+}
+
+function ensureDefinitionQualityTarget(template, match, sourceProfile) {
+  const existing = isRecord(template.definitionQuality) ? template.definitionQuality : {};
+  const defaults = defaultDefinitionQualityTarget(match, sourceProfile);
+  template.definitionQuality = {
+    schema: "evopilot-harness-definition-quality/v1",
+    objective: stringValue(existing.objective, defaults.objective),
+    focusAreas: uniqueStrings([...normalizeStrings(existing.focusAreas), ...defaults.focusAreas]),
+    requiredImprovements: uniqueStrings([...normalizeStrings(existing.requiredImprovements), ...defaults.requiredImprovements]),
+    reviewQuestions: uniqueStrings([...normalizeStrings(existing.reviewQuestions), ...defaults.reviewQuestions]),
+    nonGoals: uniqueStrings([...normalizeStrings(existing.nonGoals), ...defaults.nonGoals])
+  };
+}
+
+function defaultDefinitionQualityTarget(match, sourceProfile) {
+  const role = sourceProfile?.primaryRole ?? "unknown-source";
+  const domain = match?.targetDomain ?? "domain";
+  return {
+    ...DEFINITION_QUALITY_TARGET,
+    requiredImprovements: [
+      `separate ${role} from adjacent product, framework, and runtime boundaries`,
+      `declare specific positive and negative match evidence for ${domain}`,
+      "make source evidence requirements concrete enough for administrator review",
+      "turn domain execution into checkable actions with named artifacts"
+    ],
+    reviewQuestions: [
+      "Does the Harness describe the project-owned domain rather than a third-party product clone?",
+      "Are client libraries, adapters, tools, and product kernels separated by negative signals?",
+      "Can an EvoPilot executor know which evidence to collect without reading hidden context?",
+      "Are review blockers tied to missing evidence rather than generic maturity claims?"
+    ]
+  };
 }
 
 function ensureHarnessTemplateV2Metadata(template, match, sourceProfile) {
@@ -4391,14 +4676,16 @@ Usage:
   evopilot-harness harness list|inspect|validate|publish|deprecate [harness-id] [--strict] [--json]
   evopilot-harness asset inspect|validate [harness-id] [--source harnesses] [--json]
   evopilot-harness detect --source-project <path> --goal <text> [--json]
+  evopilot-harness detect --github-repo <url-or-owner/repo> [--github-ref <ref>] --goal <text> [--json]
   evopilot-harness detect batch --source-root <path> [--include-modules] [--limit 50] [--json]
   evopilot-harness corpus scan --source-root <path> [--include-modules] [--limit 50] [--json]
   evopilot-harness corpus plan --source-root <path> [--include-modules] [--max-projects-per-group 5] [--json]
   evopilot-harness corpus list|review|approve|publish [corpus-id] [--json]
-  evopilot-harness evolution create --source-project <path> --goal <text> [--json]
-  evopilot-harness evolution sources <evolution-id> --source-project <path> [--json]
+  evopilot-harness evolution create --source-project <path>|--github-repo <repo> --goal <text> [--json]
+  evopilot-harness evolution sources <evolution-id> --source-project <path>|--github-repo <repo> [--json]
   evopilot-harness evolution advance|review|approve|publish|impact <evolution-id> [--json]
   evopilot-harness evolve --source-project <path> --goal <text> [--llm-advisor optional|required] [--apply-llm-advisor] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
+  evopilot-harness evolve --github-repo <url-or-owner/repo> [--github-ref <ref>] --goal <text> [--llm-advisor optional|required] [--apply-llm-advisor] [--json]
   evopilot-harness evolve corpus --source-root <path> [--include-modules] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
   evopilot-harness llm models [--llm-models-file models.json] [--llm-profile <id>] [--json]
   evopilot-harness llm replay [--fixture-root eval/llm-replay/cases] [--json]
@@ -4420,11 +4707,19 @@ LLM Advisor:
 Detect and quality:
   --match-threshold <number>            Override deterministic detect threshold. Default: ${DEFAULT_MATCH_THRESHOLD}.
   --source-root <path>                  Root directory for batch detect or corpus evolution.
+  --github-repo <url-or-owner/repo>     GitHub repository source. Uses local git credentials; do not pass raw tokens.
+  --github-ref <branch|tag|sha>         Optional branch, tag, or commit checked out before scanning.
+  --github-cache-root <path>            Cache for cloned repository sources. Default: <data-root>/github-sources.
+  --github-depth <number>               Clone/fetch depth for GitHub repository sources. Default: ${DEFAULT_GITHUB_CLONE_DEPTH}.
   --include-modules                     Include nested module roots, then dedupe during corpus planning.
   --max-depth <number>                  Maximum source-root discovery depth. Default: 5.
   --limit <number>                      Maximum discovered projects evaluated. Default: 50.
   --max-projects-per-group <number>     Representative projects per Harness group. Default: ${DEFAULT_CORPUS_GROUP_LIMIT}.
   --strict                              Enforce Template Quality Standard v1 during validation/publish.
+
+Definition quality target:
+  Generated drafts optimize for accurate, professional, and fine-grained Harness definitions.
+  Non-goals by default: large-scale performance optimization, throughput expansion, runtime performance tuning.
 `);
 }
 
@@ -4520,6 +4815,8 @@ function redactSensitiveText(text) {
 
 function maskSecretText(text) {
   return String(text ?? "")
+    .replace(/(https?:\/\/)([^/@\s]+)@/gi, "$1[REDACTED]@")
+    .replace(/([?&](?:access_token|token|api_key|apikey|password|secret)=)[^&#\s]+/gi, "$1[REDACTED]")
     .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/g, "Bearer [REDACTED]")
     .replace(/([A-Za-z0-9]{8,}\.[A-Za-z0-9._-]{8,})/g, "[REDACTED]")
     .replace(/(api(?:[_-]?key|Key)[\"']?\s*[:=]\s*[\"']?)[^\"',}\s]+/g, "$1[REDACTED]")

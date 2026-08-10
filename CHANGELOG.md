@@ -2,6 +2,31 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 2.1.0 - 2026-08-10
+
+### Added
+
+- Added `--github-repo`, `--github-ref`, `--github-cache-root`, and `--github-depth` source inputs for `detect`, `evolve`, and `evolution create`.
+- Added GitHub repository source coverage with repository, ref, resolved commit, and local cache path metadata.
+- Added credential rejection for GitHub HTTPS URLs and documented SSH/local credential usage.
+- Added generated `definitionQuality` guidance to Harness drafts so the next evolution target remains more accurate, professional, and fine-grained Harness definitions.
+- Added LLM Advisor definition-quality advice in the prompt and response contract.
+- Added `docs/guides/how-harness-works.md`, an OpenHands-style technical overview that explains Harness management, evolution, matching, source inputs, publication attributes, and EvoPilot control-plane consumption in one reader path.
+
+### Changed
+
+- Updated README and documentation indexes so new users, administrators, and AI agents can start from the Harness operating model before jumping into CLI and reference contracts.
+- Updated CLI, workflow, testing, and source-to-harness docs for GitHub repository sources and definition-quality goals.
+- Preserved the Harness Asset v2, Source Profile v2, Auto-Match v2, Catalog v2, and Registry contracts.
+
+### Validation
+
+- `node --check src/index.mjs`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 2.0.0 - 2026-08-10
 
 ### Added

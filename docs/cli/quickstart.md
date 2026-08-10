@@ -76,6 +76,8 @@ If validation succeeds, the run stops at `REVIEW_REQUIRED`. Review the generated
 
 The draft includes `template.yaml` and `asset.yaml`. The template is the EvoPilot-compatible Harness contract; the asset is the v2 review and publication envelope.
 
+Every generated draft includes `template.definitionQuality`. The default objective is a more accurate, professional, and fine-grained Harness definition. It improves boundary precision, match-policy specificity, evidence contracts, domain execution actions, and negative-signal review. Large-scale performance optimization, throughput expansion, and runtime tuning are non-goals unless an operator explicitly asks for them with source evidence.
+
 Approve and publish after administrator review:
 
 ```bash
@@ -87,7 +89,29 @@ node src/index.mjs evolution approve <evolution-id> \
 node src/index.mjs evolution publish <evolution-id> --json
 ```
 
-## 5. Evolve From A Source Root Corpus
+## 5. Evolve From A GitHub Repository
+
+Use this path when the source material is a public GitHub repository or another Git remote reachable by local `git`.
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+The CLI clones or fetches the repository into `.evopilot-harness/github-sources/`, records `sourceCoverage.sources[].type=github-repository`, `github.repository`, `github.ref`, `github.resolvedCommit`, and `github.cachePath`, then runs the same Source Profile v2 and Auto-Match v2 flow as a local `--source-project`.
+
+Do not put GitHub tokens in the URL. Use public HTTPS, local Git credentials, or SSH.
+
+## 6. Evolve From A Source Root Corpus
 
 Use this path when a directory contains many historical projects and the operator wants `evopilot-harness` to scan, group, dedupe, and generate grouped Harness drafts.
 
@@ -134,7 +158,7 @@ node src/index.mjs evolve corpus \
   --json
 ```
 
-## 6. Run Release-Gate Evaluations
+## 7. Run Release-Gate Evaluations
 
 ```bash
 node src/index.mjs eval run --json
@@ -143,7 +167,7 @@ node src/index.mjs llm replay --json
 
 Both commands must return `status=PASSED` before a v2 release.
 
-## 7. Configure EvoPilot
+## 8. Configure EvoPilot
 
 EvoPilot reads the Registry at use time:
 

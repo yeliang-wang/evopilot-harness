@@ -52,6 +52,7 @@ autoMatch.targetHarnessId
 sourceProfile.primaryRole
 draft.harnessId
 draft.version
+draft.template.definitionQuality
 validation.status=VALIDATED
 ```
 
@@ -62,6 +63,51 @@ Review generated files:
 .evopilot-harness/evolutions/<evolution-id>/draft/README.md
 .evopilot-harness/evolutions/<evolution-id>/draft/CHANGELOG.md
 .evopilot-harness/evolutions/<evolution-id>/draft/examples/selected-harness-binding.yaml
+```
+
+## One-Command GitHub Repository Evolution
+
+Use this workflow when the source material is a GitHub repository or another Git remote reachable by local `git`. The CLI checks out the repository into the local cache, then runs the same scanner, Source Profile v2, Auto-Match v2, LLM Advisor, draft generation, validation, and review gates as `--source-project`.
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+Review:
+
+```text
+sourceCoverage.sources[].type=github-repository
+sourceCoverage.sources[].github.repository
+sourceCoverage.sources[].github.ref
+sourceCoverage.sources[].github.resolvedCommit
+sourceCoverage.sources[].github.cachePath
+sourceProfile.primaryRole
+autoMatch.targetHarnessId
+autoMatch.reviewGate
+```
+
+Then generate a draft:
+
+```bash
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+Do not pass raw GitHub tokens in `--github-repo`. Public repositories use HTTPS without credentials. Private access should rely on local Git credentials or SSH.
+
+Expected draft quality target:
+
+```text
+draft.template.definitionQuality.objective=more accurate, professional, and fine-grained Harness definition
+draft.template.definitionQuality.focusAreas present
+draft.template.definitionQuality.nonGoals includes large-scale performance optimization, throughput expansion, runtime performance tuning
 ```
 
 ## Batch Source Detection

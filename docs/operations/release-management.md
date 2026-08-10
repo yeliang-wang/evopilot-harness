@@ -69,4 +69,4 @@ The release workflow is `.github/workflows/release-artifacts.yml`. On tag push o
 - Major: Catalog contract break, EvoPilot compatibility break, or lifecycle boundary change.
 
 The Registry upgrade that adds `registry publish`, `registry validate`, and Registry-aware Hub snapshots is released as `1.2.0`. Harness Detect Algorithm v1 and Template Quality Standard v1 are released as `1.3.0`.
-Corpus Lifecycle is released as `1.4.0`. Harness Asset v2, Source Profile v2, Auto-Match v2, unknown-source eval, and LLM Advisor replay are released as `2.0.0`.
+Corpus Lifecycle is released as `1.4.0`. Harness Asset v2, Source Profile v2, Auto-Match v2, unknown-source eval, and LLM Advisor replay are released as `2.0.0`. GitHub repository source evolution and the OpenHands-style Harness operating model guide are released as `2.1.0` without breaking the v2 template, asset, Catalog, or Registry contracts.

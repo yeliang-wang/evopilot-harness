@@ -2,7 +2,7 @@
 
 > Command-line access to the independent Harness Factory, Catalog publisher, evolution workflow, and Harness Hub.
 
-The CLI manages local repository state. It reads source Harness packs from `harnesses/`, detects source roles and target Harnesses, writes single-project evolution runs and source-root corpus runs under `.evopilot-harness/`, publishes usable Catalog files under `published/`, maintains `harness-registry.yaml`, and serves the standalone Harness Hub.
+The CLI manages local repository state. It reads source Harness packs from `harnesses/`, detects source roles and target Harnesses from local projects, GitHub repository sources, attachments, logs, notes, and source-root corpora, writes evolution runs under `.evopilot-harness/`, publishes usable Catalog files under `published/`, maintains `harness-registry.yaml`, and serves the standalone Harness Hub.
 
 ## Install
 

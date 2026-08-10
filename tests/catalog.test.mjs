@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { spawn, spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
 const cli = path.join(root, "src/index.mjs");
@@ -217,6 +218,75 @@ test("evolve reuses detect profile and generates a strict-valid Redis client dra
   assert.equal(result.validation.status, "VALIDATED");
   assert.ok(result.validation.checks.some((check) => check.id === "quality:redis-client-harness@0.1.0:score" && check.status === "PASS"));
   assert.ok(result.validation.checks.some((check) => check.id === "asset:redis-client-harness@0.1.0:apiVersion" && check.status === "PASS"));
+});
+
+test("detect scans a GitHub repository source through the local git cache", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-github-detect-"));
+  const sourceRepo = createRedisGitRepository(path.join(tmp, "redisclient-source"));
+  const cacheRoot = path.join(tmp, "github-cache");
+  const result = runJson([
+    "detect",
+    "--source", path.join(root, "harnesses"),
+    "--github-repo", pathToFileURL(sourceRepo).href,
+    "--github-ref", "main",
+    "--github-cache-root", cacheRoot,
+    "--goal", "Create or evolve a reusable domain Harness from this GitHub repository.",
+    "--json"
+  ]);
+
+  assert.equal(result.status, "READY");
+  assert.equal(result.sourceCoverage.sources[0].type, "github-repository");
+  assert.equal(result.sourceCoverage.sources[0].knowledgeCategory, "source-architecture");
+  assert.equal(result.sourceCoverage.sources[0].github.repository, "local/redisclient-source");
+  assert.match(result.sourceCoverage.sources[0].github.resolvedCommit, /^[0-9a-f]{40}$/);
+  assert.ok(fs.existsSync(result.sourceCoverage.sources[0].github.cachePath));
+  assert.ok(result.sourceProfile.sourceTypes.includes("github-repository"));
+  assert.ok(result.sourceProfile.projectRoots.some((projectRoot) => projectRoot.startsWith(cacheRoot)));
+  assert.equal(result.sourceProfile.githubRepositories[0].ref, "main");
+  assert.equal(result.sourceProfile.primaryRole, "redis-client-library");
+  assert.equal(result.autoMatch.targetHarnessId, "redis-client-harness");
+});
+
+test("github repository source rejects credentials in URLs", () => {
+  const run = spawnSync(process.execPath, [
+    cli,
+    "detect",
+    "--github-repo", "https://secret-token@github.com/example/private-repo",
+    "--goal", "Detect from a GitHub repository.",
+    "--json"
+  ], { encoding: "utf8", env: withoutAdvisorEnv() });
+
+  assert.equal(run.status, 2, run.stderr || run.stdout);
+  assert.match(run.stderr, /Do not include credentials in --github-repo/);
+  assert.doesNotMatch(run.stderr, /secret-token/);
+});
+
+test("evolve from a GitHub repository source keeps definition quality as the target", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-github-evolve-"));
+  const sourceRepo = createRedisGitRepository(path.join(tmp, "redisclient-source"));
+  const result = runJson([
+    "evolve",
+    "--source", path.join(root, "harnesses"),
+    "--data-root", path.join(tmp, "data"),
+    "--github-repo", pathToFileURL(sourceRepo).href,
+    "--github-ref", "main",
+    "--github-cache-root", path.join(tmp, "github-cache"),
+    "--goal", "Create or evolve a reusable domain Harness from this GitHub repository.",
+    "--json"
+  ]);
+
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.equal(result.sourceProfile.primaryRole, "redis-client-library");
+  assert.equal(result.draft.harnessId, "redis-client-harness");
+  assert.equal(result.draft.template.definitionQuality.schema, "evopilot-harness-definition-quality/v1");
+  assert.equal(result.draft.template.definitionQuality.objective, "more accurate, professional, and fine-grained Harness definition");
+  assert.ok(result.draft.template.definitionQuality.focusAreas.includes("match policy specificity"));
+  assert.ok(result.draft.template.definitionQuality.nonGoals.includes("large-scale performance optimization"));
+  assert.ok(result.draft.template.definitionQuality.nonGoals.includes("runtime performance tuning"));
+  assert.ok(result.draft.diffFromBase.changedSections.includes("definitionQuality"));
+  assert.equal(result.draft.template.sourceReferences[0].type, "github-repository");
+  assert.match(result.draft.template.sourceReferences[0].github.resolvedCommit, /^[0-9a-f]{40}$/);
+  assert.equal(result.validation.status, "VALIDATED");
 });
 
 test("default optional LLM Advisor without models config does not block deterministic evolution", () => {
@@ -623,6 +693,42 @@ function createCorpusFixture(sourceRoot) {
     "</dependencies></project>"
   ].join("\n"));
   fs.writeFileSync(path.join(adminProject, "README.md"), "Enterprise admin software with RBAC, reporting, audit, Swagger, permissions, and database backed service.");
+}
+
+function createRedisGitRepository(repoPath) {
+  fs.mkdirSync(path.join(repoPath, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(repoPath, "pom.xml"), [
+    "<project>",
+    "  <dependencies>",
+    "    <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-redis</artifactId><version>1.0.1</version></dependency>",
+    "    <dependency><groupId>redis.clients</groupId><artifactId>jedis</artifactId><version>2.0.0</version></dependency>",
+    "  </dependencies>",
+    "</project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(repoPath, "src", "main", "java", "com", "example", "RedisClientService.java"), [
+    "package com.example;",
+    "import org.springframework.data.redis.core.RedisTemplate;",
+    "import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;",
+    "import org.springframework.data.redis.serializer.RedisSerializer;",
+    "public class RedisClientService {",
+    "  RedisTemplate<String, String> template;",
+    "  JedisConnectionFactory factory;",
+    "  RedisSerializer<String> serializer;",
+    "}"
+  ].join("\n"));
+  git(["init"], repoPath);
+  git(["checkout", "-b", "main"], repoPath);
+  git(["config", "user.email", "evopilot-harness@example.com"], repoPath);
+  git(["config", "user.name", "EvoPilot Harness Test"], repoPath);
+  git(["add", "."], repoPath);
+  git(["commit", "-m", "initial redis client fixture"], repoPath);
+  return repoPath;
+}
+
+function git(args, cwd) {
+  const run = spawnSync("git", args, { cwd, encoding: "utf8" });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  return run.stdout.trim();
 }
 
 function runJson(args, options = {}) {

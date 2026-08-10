@@ -126,6 +126,36 @@ validation.status=VALIDATED
 
 Do not publish a corpus smoke into the repository's real `harnesses/` directory unless the generated group drafts have been reviewed and are intended release content.
 
+## GitHub Repository Source Smoke
+
+Use this smoke when validating that a repository source can be cloned or fetched, scanned, matched, and turned into a reviewable draft:
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+Expected result:
+
+```text
+sourceCoverage.sources[].type=github-repository
+sourceCoverage.sources[].github.resolvedCommit present
+sourceProfile.sourceTypes includes github-repository
+draft.template.definitionQuality.objective=more accurate, professional, and fine-grained Harness definition
+validation.status=VALIDATED
+```
+
+Do not pass GitHub tokens in `--github-repo`. For offline CI, use a local Git fixture exposed as `file://...`; the product behavior is the same after clone/fetch.
+
 ## External Sample Validation
 
 When the local historical project corpus exists, use it only as validation input:

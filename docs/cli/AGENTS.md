@@ -15,6 +15,7 @@ Read this file first. Then read [quickstart.md](quickstart.md). Use [automation.
 - Do not invent `--confirmed-by` or `--confirmation` values.
 - Stop on `nextAction`, `BLOCKED`, `FAILED`, validation blockers, missing source files, missing Catalog files, approval gates, or non-zero exit codes.
 - Do not pass raw production secrets in `--note`, `--file`, `--attachment`, or `--production-log`.
+- Do not pass raw GitHub tokens in `--github-repo`; use public HTTPS, local Git credentials, or SSH.
 - Do not print or rewrite `models.json`; it is a manually maintained CodeBuddy-style local LLM config file.
 - Production logs are redacted for common patterns, but operators must still review inputs before sharing output.
 
@@ -94,6 +95,7 @@ validation
 draft.harnessId
 draft.version
 draft.digest
+draft.template.definitionQuality
 draft.asset
 llmAdvisor.status
 llmAdvisor.llmProfileId
@@ -156,6 +158,24 @@ node src/index.mjs corpus approve <corpus-id> \
 
 node src/index.mjs corpus publish <corpus-id> --json
 ```
+
+For GitHub repository source evolution:
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+Show `sourceCoverage.sources[].github.repository`, `ref`, `resolvedCommit`, `cachePath`, `sourceProfile.primaryRole`, `autoMatch.targetHarnessId`, and `draft.template.definitionQuality` before approval.
 
 ## EvoPilot Boundary
 

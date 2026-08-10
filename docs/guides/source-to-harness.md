@@ -7,6 +7,7 @@ This guide explains how source material becomes a Harness draft.
 | Input | CLI Option | Behavior |
 |---|---|---|
 | Source project | `--source-project <path>` | Scans code, docs, manifests, and selected text files. |
+| GitHub repository | `--github-repo <url-or-owner/repo>` | Clones or fetches a Git repository into the local cache, checks out `--github-ref` when supplied, then scans it as project source. |
 | Supporting file | `--file <path>` | Adds text material or records binary attachment digest. |
 | Attachment | `--attachment <path>` | Alias for supporting file. |
 | Production log | `--production-log <path>` | Adds text after common-pattern redaction. |
@@ -14,7 +15,7 @@ This guide explains how source material becomes a Harness draft.
 
 ## Source Project Scan
 
-The scan skips generated or heavy directories such as `.git`, `node_modules`, `dist`, `build`, `target`, `.next`, `coverage`, and `.evopilot-harness`.
+The same bounded scanner is used for local `--source-project` directories and cached `--github-repo` checkouts. The scan skips generated or heavy directories such as `.git`, `node_modules`, `dist`, `build`, `target`, `.next`, `coverage`, and `.evopilot-harness`.
 
 It reads common source and documentation files, including:
 
@@ -30,6 +31,39 @@ Dockerfile and Compose files
 ```
 
 The scan is bounded. It records file counts, selected files, top extensions, and extracted text excerpts.
+
+## GitHub Repository Source
+
+Use `--github-repo` when the project source is an open-source GitHub repository or another Git remote reachable by the local `git` command:
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref v1.2.3 \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+Supported repository forms:
+
+```text
+owner/repo
+https://github.com/owner/repo
+git@github.com:owner/repo.git
+other git URL reachable by local git
+```
+
+The CLI stores cloned repositories under `.evopilot-harness/github-sources/` by default. Override with `--github-cache-root <path>` when the cache must live elsewhere. Use `--github-depth <number>` to change clone/fetch depth; the default is `1`.
+
+The generated JSON records `sourceCoverage.sources[].type=github-repository`, `sourceCoverage.sources[].github.repository`, `ref`, `resolvedCommit`, and `cachePath`. The source then enters the same Source Profile v2, Auto-Match v2, LLM Advisor, draft generation, and review gates as a local project.
+
+Do not pass raw GitHub tokens in `--github-repo`. Public repositories use HTTPS without a token. Private or rate-limited access should rely on local SSH or Git credential configuration. CLI output masks common secret patterns, but operators remain responsible for the supplied URL.
 
 ## Unknown Source Matching v2
 
@@ -110,6 +144,8 @@ The matching algorithm is not hard-coded to a fixed business domain list. It com
 
 Fixtures under `eval/` are release gates for representative unknown-source mistakes. They are not production matching rules and do not force future user projects into a predefined domain.
 
+The next evolution target is definition quality: generated drafts should become more accurate, professional, and fine-grained. The default focus areas are product boundary precision, match policy specificity, evidence contract completeness, domain execution action granularity, and review warnings or negative signal coverage. Large-scale performance optimization, throughput expansion, and runtime performance tuning are non-goals unless the operator explicitly asks for them with source evidence.
+
 ## Match Decisions
 
 Possible `autoMatch.decision` values:
@@ -185,7 +221,7 @@ Draft files are written under:
 
 Review these files before approval.
 
-Generated `template.yaml` files include Template Quality Standard v1 sections:
+Generated `template.yaml` files include Template Quality Standard v1 and definition-quality sections:
 
 ```text
 productBoundary
@@ -193,6 +229,7 @@ matchPolicy
 executionModel
 evidenceContract
 qualityGate
+definitionQuality
 runtimePatterns.domainExecution
 ```
 

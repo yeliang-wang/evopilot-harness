@@ -47,6 +47,19 @@ executionModel:
       - evopilot-harness harness validate <harness-id> --strict --json
 qualityGate:
   minTemplateScore: 0.8
+definitionQuality:
+  schema: evopilot-harness-definition-quality/v1
+  objective: more accurate, professional, and fine-grained Harness definition
+  focusAreas:
+    - product boundary precision
+    - match policy specificity
+    - evidence contract completeness
+    - domain execution action granularity
+    - review warnings and negative signal coverage
+  nonGoals:
+    - large-scale performance optimization
+    - throughput expansion
+    - runtime performance tuning
 ```
 
 Runtime templates can act as fallback baselines when a domain Harness does not match.
@@ -122,6 +135,7 @@ runtimePatterns:
 | `validationBaseline` | Required command groups and evidence rules. |
 | `evidenceContract` | Required artifact format and correlation fields. |
 | `qualityGate` | Minimum template quality score and review expectations. |
+| `definitionQuality` | Draft evolution target for more accurate, professional, and fine-grained Harness definitions; records quality focus areas and non-goals. |
 | `failureTaxonomy` | Failure categories used in diagnostics. |
 | `diagnosticsBaseline` | Required diagnostic signals. |
 | `observabilityBaseline` | Required health, readiness, log, and metric signals. |
@@ -197,3 +211,5 @@ Strict validation also enforces Template Quality Standard v1:
 - `evidenceContract.requiredArtifacts[]` and `evidenceContract.correlationFields[]`
 - `qualityGate.minTemplateScore`
 - total `templateQuality.score >= qualityGate.minTemplateScore` where the default minimum is `0.8`
+
+Generated draft templates also include `definitionQuality`. It is review guidance rather than a release-performance claim. The default non-goals are large-scale performance optimization, throughput expansion, and runtime performance tuning unless the operator explicitly supplies evidence and asks for that work.

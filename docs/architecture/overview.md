@@ -7,7 +7,7 @@
 | Component | Responsibility |
 |---|---|
 | Source packs | Human-reviewed Harness templates under `harnesses/<id>/`. |
-| CLI | Catalog publication, source scanning, Unknown Source Decision Aggregator v2, draft generation, Harness Asset v2 validation, strict template validation, review gates, approval, and publication. |
+| CLI | Catalog publication, local/GitHub source scanning, Unknown Source Decision Aggregator v2, draft generation, Harness Asset v2 validation, strict template validation, review gates, approval, and publication. |
 | Evolution store | Local run state under `.evopilot-harness/evolutions/<id>/`. |
 | Published Catalog | `published/CATALOG.md` plus versioned Harness directories. This is the artifact EvoPilot reads. |
 | Harness Hub | Standalone browser UI served from `ui/harness-hub/` and `/api/hub/snapshot`. |
@@ -18,7 +18,7 @@
 
 ```mermaid
 flowchart TD
-  A["Source project, attachment, production log, note"] --> B["Source coverage"]
+  A["Source project, GitHub repository, attachment, production log, note"] --> B["Source coverage"]
   B --> P["Source Profile"]
   P --> C["Unknown Source Decision Aggregator v2"]
   C --> D["Draft Harness pack"]
@@ -46,6 +46,7 @@ flowchart TD
 |---|---|---|
 | `harnesses/` | Harness maintainers | Edited by administrators or evolution publication. |
 | `.evopilot-harness/` | Local evolution workflow | Generated runtime state, ignored by Git. |
+| `.evopilot-harness/github-sources/` | GitHub repository source cache | Generated clone/fetch cache, ignored by Git. |
 | `published/` | Catalog publisher | Generated but tracked as the usable offline Catalog. |
 | `ui/harness-hub/` | Harness Hub | Static UI and optional generated snapshot. |
 | `dist/release/` | Release workflow | Generated release artifacts, not source truth. |

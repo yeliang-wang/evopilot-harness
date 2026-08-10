@@ -2,7 +2,7 @@
 
 > Independent Harness Factory, lifecycle CLI, Harness Hub, and published Catalog for EvoPilot-compatible domain templates.
 
-Current release: `2.0.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
+Current release: `2.1.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
 
 [Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Registry Contract](docs/reference/registry-contract.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
 
@@ -19,9 +19,11 @@ Current release: `2.0.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=
 | Inspect and validate source Harness packs | `node src/index.mjs harness validate --strict --json` |
 | Inspect and validate Harness Asset v2 envelopes | `node src/index.mjs asset validate --source harnesses --json` |
 | Detect the best Harness target before evolution | `node src/index.mjs detect --source-project /path/to/project --goal "..." --json` |
+| Detect from a GitHub repository source | `node src/index.mjs detect --github-repo owner/repo --github-ref main --goal "..." --json` |
 | Batch-detect projects under a source root | `node src/index.mjs detect batch --source-root /path/to/root --include-modules --json` |
 | Plan grouped Harness evolution from a project corpus | `node src/index.mjs corpus plan --source-root /path/to/root --include-modules --json` |
 | Evolve a Harness from a project, attachment, log, or note | `node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
+| Evolve a Harness from a GitHub repository | `node src/index.mjs evolve --github-repo https://github.com/owner/repo --github-ref main --goal "..." --json` |
 | One-command corpus evolution with review gates | `node src/index.mjs evolve corpus --source-root /path/to/root --include-modules --json` |
 | Inspect local EvoPilot GLM config | `node src/index.mjs llm models --llm-models-file models.json --json` |
 | Add semantic LLM Advisor review | `EVOPILOT_HARNESS_LLM_ADVISOR=optional node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
@@ -62,6 +64,24 @@ node src/index.mjs evolve \
   --confirmation "Reviewed source coverage, draft diff, validation, and impact." \
   --json
 ```
+
+For a public GitHub project, use `--github-repo`. The CLI clones or fetches the repository into `.evopilot-harness/github-sources/`, scans that local checkout, and records the upstream repository, ref, resolved commit, and cache path in source coverage. Do not pass raw GitHub tokens in the URL; use local Git credentials or SSH for repositories that require authentication.
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+
+node src/index.mjs evolve \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
+Generated drafts optimize for more accurate, professional, and fine-grained Harness definitions: stronger product boundaries, more specific match policies, concrete evidence contracts, finer domain execution actions, and reviewable negative signals. Large-scale performance optimization, throughput expansion, and runtime tuning are non-goals unless an operator explicitly supplies evidence and asks for them.
 
 For production semantic review, configure `models.json` manually with the same GLM used by EvoPilot. The file format intentionally matches CodeBuddy-style `models.json`, but the content should contain only EvoPilot GLM:
 
@@ -173,7 +193,7 @@ The boundary is intentionally strict:
 |---|---|
 | New users | [Documentation Index](docs/README.md), [CLI Quickstart](docs/cli/quickstart.md) |
 | AI agents and CI | [CLI Agent Instructions](docs/cli/AGENTS.md), [Automation Rules](docs/cli/automation.md) |
-| Harness administrators | [Harness Lifecycle](docs/guides/harness-evolution.md), [Source To Harness](docs/guides/source-to-harness.md) |
+| Harness administrators | [How Harness Works](docs/guides/how-harness-works.md), [Harness Lifecycle](docs/guides/harness-evolution.md), [Source To Harness](docs/guides/source-to-harness.md) |
 | EvoPilot integrators | [EvoPilot Integration](docs/guides/evopilot-integration.md), [Catalog Boundary](docs/architecture/catalog-consumption-boundary.md) |
 | Dashboard integrators | [Harness Hub Integration](docs/guides/harness-hub-integration.md) |
 | Release operators | [Release Management](docs/operations/release-management.md), [Deployment](docs/operations/deployment.md) |

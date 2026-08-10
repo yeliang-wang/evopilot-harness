@@ -10,6 +10,7 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 - Stop on `BLOCKED`, `FAILED`, validation blockers, missing files, missing Catalog blocks, approval gates, or non-zero exit codes.
 - Do not invent administrator confirmations.
 - Do not send raw secrets in source material. Redaction is a safety layer, not permission to include secrets.
+- Do not pass raw GitHub tokens in `--github-repo`; use public HTTPS, local Git credentials, or SSH.
 
 ## Common Parse Fields
 
@@ -61,11 +62,13 @@ Automation summaries must include:
 
 - `evolutionId`
 - source count and source digests
+- GitHub source metadata when present: repository, ref, resolved commit, and cache path
 - `sourceProfile.primaryRole`, recommended Harness id, architecture signals, negative signals, and sensitive material findings
 - auto-match decision, confidence, target Harness id, target version, parent candidates, candidate scores, and reasons
 - validation status and blockers
 - strict template quality scores when validation is run with `--strict`
 - draft Harness id, version, digest, and draft path
+- `draft.template.definitionQuality.objective`, focus areas, and non-goals
 - approval actor and confirmation when present
 - publication Harness id, version, Harness root, Catalog root, and Registry file when present
 - for corpus runs: `corpusId`, source root, discovered/evaluated count, duplicate count, group count, every target Harness id, selected project count, duplicate project count, and group validation status

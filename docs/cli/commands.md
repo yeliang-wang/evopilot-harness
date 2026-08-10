@@ -159,6 +159,16 @@ node src/index.mjs detect \
   --json
 ```
 
+Detect from a GitHub repository or Git remote:
+
+```bash
+node src/index.mjs detect \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
 Run detection across many candidate project roots:
 
 ```bash
@@ -169,7 +179,7 @@ node src/index.mjs detect batch \
   --json
 ```
 
-Accepted source inputs are the same as evolution: `--source-project`, `--file`, `--attachment`, `--production-log`, `--note`, and `--goal`.
+Accepted source inputs are the same as evolution: `--source-project`, `--github-repo`, `--file`, `--attachment`, `--production-log`, `--note`, and `--goal`.
 
 Detection options:
 
@@ -177,6 +187,10 @@ Detection options:
 |---|---|
 | `--match-threshold <number>` | Override deterministic match threshold. Default: `0.45`. |
 | `--source-root <path>` | Root scanned by `detect batch`. |
+| `--github-repo <url-or-owner/repo>` | Repository source cloned or fetched into the local cache before scanning. Supports `owner/repo`, GitHub HTTPS, GitHub SSH, and other git URLs reachable by local `git`. |
+| `--github-ref <branch|tag|sha>` | Optional branch, tag, or commit to check out before scanning. |
+| `--github-cache-root <path>` | Local cache for cloned repository sources. Default: `.evopilot-harness/github-sources` or `<data-root>/github-sources`. |
+| `--github-depth <number>` | Clone/fetch depth. Default: `1`. |
 | `--include-modules` | Include nested module roots discovered under a project root. |
 | `--limit <number>` | Maximum batch detections. Default: `50`. |
 | `--max-depth <number>` | Maximum source-root discovery depth. Default: `5`. |
@@ -197,6 +211,7 @@ sourceProfile.scannerVersion
 sourceProfile.scanners[]
 sourceProfile.scannerSummary
 sourceProfile.uncertainty
+sourceProfile.githubRepositories[]
 ```
 
 `autoMatch` is the decision used again by `evolve`. It is produced by scanner evidence, candidate retrieval, deterministic scoring, conflict detection, and review gates. LLM Advisor can review it later, but approval remains manual.
@@ -307,6 +322,16 @@ node src/index.mjs evolution create \
   --json
 ```
 
+Create a run from a GitHub repository source:
+
+```bash
+node src/index.mjs evolution create \
+  --github-repo https://github.com/owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --json
+```
+
 Add more sources:
 
 ```bash
@@ -355,6 +380,10 @@ Accepted source inputs:
 | Option | Meaning |
 |---|---|
 | `--source-project <path>` | Local code and documentation directory. |
+| `--github-repo <url-or-owner/repo>` | GitHub repository or Git remote used as a project source after local clone/fetch. Do not pass raw tokens; use local Git credentials or SSH. |
+| `--github-ref <branch|tag|sha>` | Optional Git ref checked out before scanning. |
+| `--github-cache-root <path>` | Cache root for cloned repository sources. |
+| `--github-depth <number>` | Clone/fetch depth. Default: `1`. |
 | `--file <path>` | Supporting text or binary material. |
 | `--attachment <path>` | Alias for supporting material. |
 | `--production-log <path>` | Runtime log input with common-pattern redaction. |
@@ -382,6 +411,8 @@ evopilot-harness-evolution-impact/v1
 ```
 
 Evolution responses include the same `sourceProfile` and `autoMatch` that `detect` returns, so administrators can compare preflight detection with the generated draft target.
+
+Generated drafts include `draft.template.definitionQuality`. The default objective is a more accurate, professional, and fine-grained Harness definition. The focus is product boundary precision, match-policy specificity, evidence-contract completeness, domain-action granularity, and reviewable negative signals. Large-scale performance optimization, throughput expansion, and runtime tuning are non-goals unless explicitly requested with source evidence.
 
 ## LLM Models And Advisor
 
@@ -422,6 +453,7 @@ llmAdvisor.recommendation.action
 llmAdvisor.recommendation.targetHarnessId
 llmAdvisor.alternatives[]
 llmAdvisor.reviewWarnings[]
+llmAdvisor.definitionQualityAdvice
 llmAdvisor.provider
 llmAdvisor.model
 llmAdvisor.usage.totalTokens
@@ -481,6 +513,16 @@ Run create, advance, validation, and optional approval/publication:
 node src/index.mjs evolve \
   --source-project /path/to/source-project \
   --goal "Create or evolve a reusable Harness definition." \
+  --json
+```
+
+Use the same one-command path with a GitHub repository source:
+
+```bash
+node src/index.mjs evolve \
+  --github-repo owner/repo \
+  --github-ref main \
+  --goal "Create or evolve a reusable Harness definition from this GitHub repository." \
   --json
 ```
 
