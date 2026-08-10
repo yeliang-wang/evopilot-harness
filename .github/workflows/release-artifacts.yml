@@ -111,8 +111,6 @@ jobs:
           fi
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" --title "EvoPilot Harness $RELEASE_TAG" --notes-file "$NOTES_FILE" --draft=false --prerelease=false
-            RELEASE_ID="$(gh api "repos/${{ github.repository }}/releases/tags/$RELEASE_TAG" --jq .id)"
-            gh api -X PATCH "repos/${{ github.repository }}/releases/$RELEASE_ID" -f target_commitish="$TAG_COMMIT" >/dev/null
           else
             gh release create "$RELEASE_TAG" --title "EvoPilot Harness $RELEASE_TAG" --notes-file "$NOTES_FILE" --target "$TAG_COMMIT"
           fi
