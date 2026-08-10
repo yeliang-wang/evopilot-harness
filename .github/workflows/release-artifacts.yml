@@ -53,6 +53,7 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "TAG_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Check
         run: npm run check
@@ -110,7 +111,9 @@ jobs:
           fi
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release edit "$RELEASE_TAG" --title "EvoPilot Harness $RELEASE_TAG" --notes-file "$NOTES_FILE" --draft=false --prerelease=false
+            RELEASE_ID="$(gh api "repos/${{ github.repository }}/releases/tags/$RELEASE_TAG" --jq .id)"
+            gh api -X PATCH "repos/${{ github.repository }}/releases/$RELEASE_ID" -f target_commitish="$TAG_COMMIT" >/dev/null
           else
-            gh release create "$RELEASE_TAG" --title "EvoPilot Harness $RELEASE_TAG" --notes-file "$NOTES_FILE" --target "$GITHUB_SHA"
+            gh release create "$RELEASE_TAG" --title "EvoPilot Harness $RELEASE_TAG" --notes-file "$NOTES_FILE" --target "$TAG_COMMIT"
           fi
           gh release upload "$RELEASE_TAG" dist/release/* --clobber
