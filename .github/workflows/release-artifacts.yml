@@ -91,10 +91,9 @@ jobs:
       - name: Build release artifacts
         env:
           CI: "false"
-          GITHUB_REF_NAME: ${{ env.RELEASE_TAG }}
           EVOPILOT_HARNESS_IMAGE_REF: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
           EVOPILOT_HARNESS_IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
-        run: npm run release:artifact
+        run: GITHUB_REF_NAME="$RELEASE_TAG" npm run release:artifact
 
       - name: Verify release artifacts
         run: npm run verify:release-artifact
