@@ -85,6 +85,9 @@ jobs:
           provenance: true
           sbom: true
 
+      - name: Restore release source checkout
+        run: git restore harness-registry.yaml published
+
       - name: Build release artifacts
         env:
           GITHUB_REF_NAME: ${{ env.RELEASE_TAG }}
