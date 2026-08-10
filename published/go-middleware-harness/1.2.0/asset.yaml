@@ -10,7 +10,7 @@ metadata:
     scope: platform
   annotations:
     evopilot-harness/templateDigest: sha256:d91c6ebbdea34844ca11d10ac2fc46c47c170da134913bdc56c8d854efb02925
-    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/go-middleware-harness
+    evopilot-harness/sourceRoot: harnesses/go-middleware-harness
 spec:
   templateSchema: evopilot-harness-template/v2
   template:

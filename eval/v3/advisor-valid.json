@@ -1,0 +1,18 @@
+{
+  "id": "advisor-citations-valid",
+  "type": "advisor-contract",
+  "graph": {
+    "nodes": [
+      { "evidenceId": "evidence-0001" }
+    ]
+  },
+  "response": {
+    "recommendation": "REVIEW_REQUIRED",
+    "rationale": "The source boundary is ambiguous.",
+    "evidenceIds": ["evidence-0001"],
+    "risks": ["boundary ambiguity"],
+    "proposedDeltas": []
+  },
+  "expectedStatus": "VALIDATED",
+  "reviewStatus": "unreviewed"
+}

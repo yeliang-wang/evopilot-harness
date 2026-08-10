@@ -1,0 +1,33 @@
+apiVersion: harness.evopilot.io/v1
+kind: MatchPolicyPack
+metadata:
+  id: default-matcher
+  version: 1.0.0
+  lifecycle: published
+  description: Deterministic eligibility, BM25 retrieval, candidate scoring, and review risk policy.
+spec:
+  eligibility:
+    minimumEvidenceNodes: 2
+    minimumActionSignals: 1
+    actionTerms: [build, test, validate, deploy, diagnose, benchmark, migrate, verify, rollback, release, 构建, 测试, 验证, 发布]
+    rejectTerms: [personal diary, meeting invitation, vacation plan, image collection, 个人日记, 会议邀请]
+  retrieval:
+    topK: 5
+    bm25K1: 1.5
+    bm25B: 0.75
+  weights:
+    role: 0.24
+    boundary: 0.18
+    capability: 0.16
+    execution: 0.14
+    evidence: 0.14
+    negativeConflict: 0.1
+    novelty: 0.04
+  thresholds:
+    evolveExisting: 0.68
+    composeBundle: 0.52
+    ambiguousDelta: 0.08
+    newProfileMaximum: 0.38
+  risk:
+    advisorRequiredFor: [REVIEW_REQUIRED, PROPOSE_NEW_PROFILE]
+    humanApprovalRequiredFor: [COMPOSE_NEW_BUNDLE, PROPOSE_NEW_PROFILE, REVIEW_REQUIRED]

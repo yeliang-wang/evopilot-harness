@@ -1,0 +1,77 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: distributed-cache
+  version: 0.2.0
+  name: Distributed Cache Harness
+  description: Domain baseline for self-developed distributed cache and key-value storage products.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: distributed-cache-harness
+spec:
+  classification:
+    domain: distributed-cache
+    role: distributed-cache-engineering
+    taskClass: domain-task
+  boundary:
+    inScope:
+      - Define consistency, ttl, eviction, persistence, and protocol compatibility boundaries.
+      - Provide cluster failover, replica recovery, and slot migration evidence.
+      - Provide benchmark, hot-key, memory pressure, and latency evidence.
+      - Engineering work supported by the distributed-cache-harness v2 contract.
+    outOfScope:
+      - browser cache
+      - http cache header
+      - local in-memory cache wrapper
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - distributed-cache
+      - executable-engineering
+      - cache-product
+      - redis-compatible
+      - memcached-compatible
+      - key-value-store
+      - kv-store
+      - ttl
+      - eviction
+      - lru
+      - lfu
+      - hot-key
+      - consistent-hash
+      - hash-slot
+      - slot-migration
+      - replica
+      - failover
+      - signal
+      - key
+    negativeConcepts:
+      - browser-cache
+      - http-cache-header
+      - local-in-memory-cache-wrapper
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - protocol-report
+      - cluster-topology
+      - failover-report
+      - benchmark-summary
+      - runtime-log
+      - target-evidence-package
+      - goal-completion-report
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: distributed-cache@0.2.0
+provenance:
+  sourceDigests:
+    - sha256:9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

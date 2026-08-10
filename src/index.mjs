@@ -6,6 +6,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { handleV3Command } from "./v3/cli.mjs";
 
 const CATALOG_BLOCK = "evopilot-harness-catalog";
 const REGISTRY_SCHEMA = "evopilot-harness-registry/v1";
@@ -49,6 +50,13 @@ const DEFINITION_QUALITY_TARGET = {
 };
 
 async function main(argv) {
+  if (argv[0] === "version" || argv.includes("--version")) {
+    const result = { name: "evopilot-harness", version: readPackageVersion(), engineApiVersion: "harness.evopilot.io/v3" };
+    process.stdout.write(argv.includes("--json") ? `${JSON.stringify(result, null, 2)}\n` : `${result.name} ${result.version}\n`);
+    return 0;
+  }
+  const v3 = await handleV3Command(argv);
+  if (v3.handled) return v3.exitCode;
   const args = parseArgs(argv);
   const [group, action, idArg] = args.positionals;
   if (!group || args.options.help || args.options.h) {
@@ -3248,29 +3256,29 @@ function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, pack
     `The next evolution target is definition quality: ${DEFINITION_QUALITY_TARGET.objective}.`,
     `Focus on: ${DEFINITION_QUALITY_TARGET.focusAreas.join(", ")}.`,
     `Do not optimize for these non-goals unless the user explicitly supplies evidence and asks for them: ${DEFINITION_QUALITY_TARGET.nonGoals.join(", ")}.`,
-    "Prefer a narrower domain Harness when the source is a client SDK, integration library, adapter, plugin, or operational tool rather than a full product kernel.",
-    "For Redis examples: if the source is a Java Redis client wrapper, cache client library, Spring Data Redis/Jedis adapter, serializer, server selection helper, or health-probe wrapper, recommend redis-client-harness or cache-client-library-harness. Only recommend distributed-cache-harness when the source is the owner's cache product runtime/kernel, cluster, protocol engine, eviction, replication, failover, or storage implementation.",
+    "Prefer the narrowest evidence-supported task boundary. A client SDK, adapter, plugin, operator, service, framework, and product kernel are different roles even when they share technology terms.",
+    "Every classification and recommendation must be grounded in the supplied source coverage. Unknown or conflicting boundaries require review rather than a forced domain match.",
     "Return JSON fields exactly compatible with this schema:",
     JSON.stringify({
-      sourceClassification: "redis-client-library | distributed-cache-product | database-product | api-gateway | runtime-library | unknown",
+      sourceClassification: "evidence-supported role or unknown",
       rationale: "short reason",
-      domainFit: [{ harnessId: "distributed-cache-harness", fit: "strong|partial|weak|none", reason: "short reason" }],
+      domainFit: [{ harnessId: "candidate-harness", fit: "strong|partial|weak|none", reason: "short reason" }],
       recommendation: {
         action: "KEEP_AUTO_MATCH | EVOLVE_EXISTING | CREATE_NEW | CREATE_NEW_WITH_PARENT_REFERENCE | FORK_FROM_MATCH",
-        targetHarnessId: "redis-client-harness",
-        targetDomain: "redis-client",
+        targetHarnessId: "candidate-or-proposed-harness",
+        targetDomain: "evidence-supported-domain",
         confidence: 0.9,
         reason: "short reason"
       },
-      alternatives: [{ action: "EVOLVE_EXISTING", targetHarnessId: "distributed-cache-harness", condition: "when this source is part of the cache product boundary" }],
+      alternatives: [{ action: "EVOLVE_EXISTING", targetHarnessId: "alternative-harness", condition: "when cited evidence proves that task boundary" }],
       reviewWarnings: ["check hardcoded credentials before publication"],
       definitionQualityAdvice: {
-        requiredImprovements: ["add negative signals that separate a Redis client wrapper from a cache product kernel"],
+        requiredImprovements: ["add negative signals that separate adjacent engineering roles"],
         nonGoals: ["do not add large-scale performance optimization unless requested with source evidence"]
       },
       sensitiveMaterialFindings: ["hardcoded credential or internal endpoint suspected"],
       commandRecommendations: [
-        "node src/index.mjs evolve --source-project <path> --target-id redis-client-harness --match-threshold 1.1 --goal \"...\" --json"
+        "node src/index.mjs evolve --source-project <path> --target-id <reviewed-harness-id> --match-threshold 1.1 --goal \"...\" --json"
       ]
     }, null, 2),
     "",
@@ -3992,7 +4000,8 @@ function publishPack(pack, out, context = {}) {
   if (fs.existsSync(pack.examplesPath)) fs.cpSync(pack.examplesPath, path.join(targetRoot, "examples"), { recursive: true });
   const templateFile = path.basename(pack.templatePath);
   const relativePath = `./${pack.id}/${pack.version}/${templateFile}`;
-  const asset = toHarnessAssetV2(pack, { sourceRoot: pack.root, phase: pack.template.lifecycle?.status === "deprecated" ? "deprecated" : "published", generatedAt: context.generatedAt });
+  const sourceRoot = path.relative(PACKAGE_ROOT, pack.root).split(path.sep).join("/") || ".";
+  const asset = toHarnessAssetV2(pack, { sourceRoot, phase: pack.template.lifecycle?.status === "deprecated" ? "deprecated" : "published", generatedAt: context.generatedAt });
   const assetText = stringifyYaml(asset);
   fs.writeFileSync(path.join(targetRoot, "asset.yaml"), assetText, "utf8");
   const assetPath = `./${pack.id}/${pack.version}/asset.yaml`;
@@ -4669,6 +4678,21 @@ function printHelp() {
   process.stdout.write(`EvoPilot Harness CLI
 
 Usage:
+  evopilot-harness workspace init|status [--workspace <dir>] [--json]
+  evopilot-harness produce --source-project <path>|--source-root <path>|--github-repo <repo> [--attachment <file>] [--production-log <file>] [--goal <text>] [--workspace <dir>] [--json]
+  evopilot-harness proposal review|approve|publish <proposal-id> [--workspace <dir>] [--json]
+  evopilot-harness asset v3-inspect|v3-validate|v3-test|v3-sign|v3-verify [asset-id] [--workspace <dir>] [--json]
+  evopilot-harness catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify [--workspace <dir>] [--json]
+  evopilot-harness registry v3-validate|v3-sign|v3-verify [--workspace <dir>] [--json]
+  evopilot-harness ontology inspect|validate|diff|publish [--workspace <dir>] [--json]
+  evopilot-harness policy inspect|validate|diff|publish [--type matcher|advisor] [--workspace <dir>] [--json]
+  evopilot-harness migrate v2-to-v3|rollback [migration-id] [--workspace <dir>] [--json]
+  evopilot-harness llm v3-models [--models-file models.json] [--workspace <dir>] [--json]
+  evopilot-harness eval v3-run [--workspace <dir>] [--json]
+  evopilot-harness hub v3-snapshot|v3-serve [--workspace <dir>] [--json]
+  evopilot-harness keys generate [--workspace <dir>] [--json]
+
+Legacy v2 compatibility:
   evopilot-harness catalog publish --source harnesses --out published [--catalog-id <id>] [--json]
   evopilot-harness catalog validate --source published [--json]
   evopilot-harness registry publish --catalog published --registry harness-registry.yaml [--id <catalog-id>] [--priority 100] [--json]

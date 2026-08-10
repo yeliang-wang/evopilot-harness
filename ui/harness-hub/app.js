@@ -18,7 +18,10 @@ const elements = {
   sourceProject: document.querySelector("#source-project"),
   goal: document.querySelector("#goal"),
   confirmedBy: document.querySelector("#confirmed-by"),
-  commandPreview: document.querySelector("#command-preview")
+  commandPreview: document.querySelector("#command-preview"),
+  assetCounts: document.querySelector("#asset-counts"),
+  governanceList: document.querySelector("#governance-list"),
+  llmUsage: document.querySelector("#llm-usage")
 };
 
 elements.refresh.addEventListener("click", () => loadSnapshot());
@@ -53,7 +56,7 @@ function render() {
   elements.catalogId.textContent = catalog.catalogId ?? "missing";
   elements.catalogStatus.textContent = `${snapshot.status ?? "ATTENTION"} · ${catalog.catalogDigest ?? "digest missing"}`;
   elements.entryCount.textContent = String(catalog.entryCount ?? 0);
-  elements.compatibleEvopilot.textContent = catalog.compatibleEvopilot ?? snapshot.project?.compatibleEvopilot ?? "compatible";
+  elements.compatibleEvopilot.textContent = snapshot.schema?.endsWith("/v3") ? "Component / Profile / Bundle" : catalog.compatibleEvopilot ?? snapshot.project?.compatibleEvopilot ?? "compatible";
   elements.evolutionCount.textContent = String(snapshot.evolutions?.length ?? 0);
   elements.nextAction.textContent = snapshot.nextAction ?? "review";
   elements.catalogPath.textContent = catalog.catalogPath ?? "published/CATALOG.md";
@@ -61,19 +64,24 @@ function render() {
   renderHarnessCards(snapshot.harnesses ?? []);
   renderEvolutions(snapshot.evolutions ?? []);
   renderSourceTypes(snapshot.sourceTypes ?? []);
+  renderGovernance(snapshot.governancePacks ?? [], snapshot.evaluation ?? {}, snapshot.llmUsage ?? {});
+  if (elements.assetCounts) {
+    const counts = snapshot.assetCounts ?? {};
+    elements.assetCounts.textContent = `components=${counts.HarnessComponent ?? 0} profiles=${counts.HarnessProfile ?? 0} bundles=${counts.HarnessBundle ?? 0}`;
+  }
   updateCommandPreview();
 }
 
 function renderCatalogTable(entries) {
   elements.catalogTable.innerHTML = "";
-  elements.catalogTable.append(row(["Harness", "Version", "Domain", "Status", "Asset", "Digest"], "head"));
+  elements.catalogTable.append(row(["Asset", "Version", "Domain", "Status", "Kind", "Digest"], "head"));
   for (const entry of entries) {
     elements.catalogTable.append(row([
-      entry.name,
+      entry.name ?? entry.id,
       entry.version,
       entry.domain ?? entry.layer ?? "-",
       pill(entry.status ?? "published", entry.status !== "published"),
-      entry.assetPath ? `${entry.assetApiVersion ?? "evopilot.dev/v2"} · ${entry.qualityStatus ?? "unchecked"}` : "-",
+      entry.kind ?? (entry.assetPath ? `${entry.assetApiVersion ?? "evopilot.dev/v2"} · ${entry.qualityStatus ?? "unchecked"}` : "-"),
       entry.digest ?? "-"
     ]));
   }
@@ -95,8 +103,8 @@ function renderHarnessCards(harnesses) {
         ${pill(harness.lifecycleStatus ?? "active", harness.lifecycleStatus !== "active")}
       </header>
       <small>${escapeHtml(harness.description ?? harness.domain ?? "domain harness")}</small>
-      <small>actions=${harness.contract?.requiredActionCount ?? 0} adapters=${harness.contract?.evidenceAdapterCount ?? 0} blockers=${harness.contract?.releaseBlockerCount ?? 0}</small>
-      <pre>${escapeHtml(commands.evolve ?? "evopilot-harness evolve --source-project /path/to/project --goal \"...\" --json")}</pre>
+      <small>${escapeHtml(harness.kind ?? "HarnessProfile")} · ${escapeHtml(harness.domain ?? "product-neutral")}</small>
+      <pre>${escapeHtml(commands.evolve ?? "evopilot-harness produce --source-project /path/to/project --goal \"...\" --json")}</pre>
     `;
     elements.harnessCards.append(card);
   }
@@ -129,17 +137,33 @@ function renderSourceTypes(sourceTypes) {
 
 function updateCommandPreview() {
   const sourceProject = elements.sourceProject.value.trim() || "/path/to/source-project";
-  const goal = elements.goal.value.trim() || "Create or evolve a reusable Harness definition.";
-  const confirmedBy = elements.confirmedBy.value.trim() || "admin@example.com";
+  const goal = elements.goal.value.trim() || "Produce or evolve a reusable Harness asset.";
+  const workspace = elements.confirmedBy.value.trim() || "$EVOPILOT_HARNESS_HOME";
   elements.commandPreview.textContent = [
-    "evopilot-harness evolve \\",
+    "evopilot-harness produce \\",
+    `  --workspace ${quote(workspace)} \\`,
     `  --source-project ${quote(sourceProject)} \\`,
     `  --goal ${quote(goal)} \\`,
-    "  --approve-and-publish \\",
-    `  --confirmed-by ${quote(confirmedBy)} \\`,
-    "  --confirmation \"Reviewed source coverage, draft diff, validation, and impact.\" \\",
     "  --json"
   ].join("\n");
+}
+
+function renderGovernance(packs, evaluation, usage) {
+  if (!elements.governanceList || !elements.llmUsage) return;
+  elements.governanceList.innerHTML = "";
+  for (const pack of packs) {
+    const item = document.createElement("article");
+    item.innerHTML = `<strong>${escapeHtml(pack.kind)} · ${escapeHtml(pack.id)}@${escapeHtml(pack.version)}</strong><small>${escapeHtml(pack.lifecycle)} · ${escapeHtml(pack.digest)}</small>`;
+    elements.governanceList.append(item);
+  }
+  if (!packs.length) elements.governanceList.append(emptyCard("No governance packs found."));
+  elements.llmUsage.innerHTML = "";
+  const evalItem = document.createElement("article");
+  evalItem.innerHTML = `<strong>Evaluation Packs · ${evaluation.packCount ?? 0}</strong><small>ready=${evaluation.readyCount ?? 0} insufficient=${evaluation.insufficientCount ?? 0}</small>`;
+  elements.llmUsage.append(evalItem);
+  const usageItem = document.createElement("article");
+  usageItem.innerHTML = `<strong>GLM Advisor Runs · ${usage.runCount ?? 0}</strong><small>input=${usage.inputTokens ?? 0} output=${usage.outputTokens ?? 0} total=${usage.totalTokens ?? 0}</small>`;
+  elements.llmUsage.append(usageItem);
 }
 
 function renderError(error) {

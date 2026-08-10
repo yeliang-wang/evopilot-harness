@@ -1,5 +1,17 @@
 # Testing
 
+## v3 Acceptance
+
+```bash
+npm test
+npm run v3:check
+npm run check
+```
+
+The v3 gates validate formal schemas, immutable references, Evidence Graph decisions, GLM citations/failure behavior, source types, source-root grouping, migration/rollback, signatures, Catalog/Registry closure, Hub state, and all v2 compatibility tests. See [v3 Acceptance Baseline](v3-acceptance.md).
+
+`eval v3-run` reports `INSUFFICIENT_EVAL_EVIDENCE` until enough reviewed cases exist; do not convert passing contract fixtures into a general accuracy claim.
+
 Use these commands before publishing a Catalog, changing CLI behavior, or preparing a release.
 
 ## Full Local Check

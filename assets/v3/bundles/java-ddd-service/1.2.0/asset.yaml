@@ -1,0 +1,48 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessBundle
+metadata:
+  id: java-ddd-service
+  version: 1.2.0
+  name: Java DDD Service Harness Bundle
+  description: Immutable resolved execution package migrated from java-ddd-service-harness.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: java-ddd-service-harness
+spec:
+  profile:
+    id: java-ddd-service
+    version: 1.2.0
+    digest: sha256:d8e7f2570947e8ccf862b4284f2f5f8cc69e5d6bd1a8c0147a6aae77a6f81a14
+  resolvedComponents:
+    - id: engineering-validation
+      version: 1.0.0
+      digest: sha256:aa84fa704cdc31dbf3c1fb8ebe84e26acd2ade7a5cc364ab5c71784f05d78638
+      required: true
+  executionPlan:
+    - discover-project-commands
+    - run-approved-validation
+  constraints:
+    - Execute only administrator-approved commands in an isolated workspace.
+    - Preserve source and credential boundaries from the source Harness contract.
+  evidence:
+    - target-evidence-package
+    - phase-package
+    - goal-completion-report
+    - incident-or-failure-report
+    - observability-snapshot
+    - command
+    - exit-code
+    - stdout-or-log
+    - changed-files
+  validators:
+    - approved-command-only
+    - validation-exit-code
+  exports:
+    - adapter: evopilot
+      path: exports/evopilot/template.yaml
+provenance:
+  sourceDigests:
+    - sha256:2714f53e7de70f574ab2075344df37aa49bdf246ca8ac6042cc8afca963678e2
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

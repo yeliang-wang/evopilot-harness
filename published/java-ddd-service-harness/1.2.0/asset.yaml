@@ -10,7 +10,7 @@ metadata:
     scope: platform
   annotations:
     evopilot-harness/templateDigest: sha256:8df2b50ebe7bbf1188eb5f63967476377b561d9b875dc9ac8bc13afe68d65a6e
-    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/java-ddd-service-harness
+    evopilot-harness/sourceRoot: harnesses/java-ddd-service-harness
 spec:
   templateSchema: evopilot-harness-template/v2
   template:

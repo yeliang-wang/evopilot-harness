@@ -1,0 +1,8 @@
+schema: evopilot-harness-export/v1
+adapter: evopilot
+sourceAsset:
+  id: distributed-cache-product
+  version: 1.0.0
+mapping:
+  legacyHarnessId: distributed-cache-harness
+  templatePath: ../../../../../harnesses/distributed-cache-harness/template.yaml

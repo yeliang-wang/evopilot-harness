@@ -1,0 +1,53 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: node-saas-control-plane
+  version: 1.2.0
+  name: Node SaaS Control Plane Harness
+  description: Enterprise Node.js baseline for SaaS control planes, API platforms, tenant/workspace services, and workers.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: node-saas-control-plane-harness
+spec:
+  classification:
+    domain: runtime
+    role: runtime-engineering
+    taskClass: runtime-task
+  boundary:
+    inScope:
+      - Engineering work supported by the node-saas-control-plane-harness v2 contract.
+    outOfScope:
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - runtime
+      - executable-engineering
+    negativeConcepts: []
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - incident-or-failure-report
+      - observability-snapshot
+      - command
+      - exit-code
+      - stdout-or-log
+      - changed-files
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: node-saas-control-plane@1.2.0
+provenance:
+  sourceDigests:
+    - sha256:0450e4113c45f469ef6434314df0159ba43f20ee076cba2d488662d722c28103
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

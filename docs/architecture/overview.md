@@ -1,5 +1,7 @@
 # Architecture Overview
 
+> v3 primary architecture is documented in [v3 Product Boundary](v3-product-boundary.md), [v3 Asset Model](v3-asset-model.md), and [v3 Reasoning Contract](../reference/v3-reasoning-contract.md). The v2 template architecture below remains as a migration-compatibility reference.
+
 `evopilot-harness` is the Harness authoring and publication system. It is intentionally separate from EvoPilot runtime execution.
 
 ## Components

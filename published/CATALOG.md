@@ -21,7 +21,7 @@ catalogVersion: 2
 catalogId: evopilot-public-harness-catalog
 generatedAt: 2026-08-09T05:24:19.115Z
 generatedBy: evopilot-harness
-release: v2.1.0
+release: v3.0.0
 assetApiVersion: evopilot.dev/v2
 assetKind: HarnessAsset
 compatibleEvopilot: ">=3.0.0"
@@ -42,7 +42,7 @@ entries:
     path: ./api-gateway-harness/2.3.0/template.yaml
     digest: sha256:637e55ca3683a7e9eb0522ac7e9322575a0b05dad3d8330969f8b332fe205e95
     assetPath: ./api-gateway-harness/2.3.0/asset.yaml
-    assetDigest: sha256:e219b09abf5e6fdcc6a07a64ee9f98e6be432d310fae4c7d966bb055e298f422
+    assetDigest: sha256:7d6c4282d4834a48cf36272d9ddabe475a297388b62ac06ce82ed9ccee170422
     qualityScore: 1
     qualityStatus: PASS
     tags:
@@ -83,7 +83,7 @@ entries:
     path: ./database-product-harness/2.3.0/template.yaml
     digest: sha256:0a9c1424c884b75cb9f4460961b395ab699cc45dfb430e7a34ed109df6ca9963
     assetPath: ./database-product-harness/2.3.0/asset.yaml
-    assetDigest: sha256:63b741b022e621346c32624a2ac8c6be441e550f27cc04f173e1fd9958c70224
+    assetDigest: sha256:9a8304227bf7b6a849f1b4774127f9038db68f75022683c8a35acc2ffe0275f8
     qualityScore: 1
     qualityStatus: PASS
     tags:
@@ -120,7 +120,7 @@ entries:
     path: ./distributed-cache-harness/0.2.0/template.yaml
     digest: sha256:9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc
     assetPath: ./distributed-cache-harness/0.2.0/asset.yaml
-    assetDigest: sha256:c87fc78cce40f78425cb0ae6a09f70f2806bc589e97695ff05f6b330db7920c7
+    assetDigest: sha256:4a550f4d16fe8cccb6b76ccbf8f360e6469e4751a48152363e9f636b59ccec2c
     qualityScore: 1
     qualityStatus: PASS
     tags:
@@ -157,7 +157,7 @@ entries:
     path: ./generic-management-software-harness/1.2.0/template.yaml
     digest: sha256:b59902bad09f9f2fd542fccb1477ed4a33ba98c2dbc95a165088439fa992c096
     assetPath: ./generic-management-software-harness/1.2.0/asset.yaml
-    assetDigest: sha256:48c3aa62f970e926fb98aa8d305ebb438143bc0aaf4cab27d6dfc09b5ff4d1bd
+    assetDigest: sha256:c36d2506a30add81d53c3705dfafaf533eb74dc7394e6a9547b4f1dbb0acde36
     qualityScore: 1
     qualityStatus: PASS
     tags:
@@ -179,7 +179,7 @@ entries:
     path: ./go-middleware-harness/1.2.0/template.yaml
     digest: sha256:26de1113e842846c4ca491a8293f4327cd361b6451c8b0e9ce96a5f3d072069e
     assetPath: ./go-middleware-harness/1.2.0/asset.yaml
-    assetDigest: sha256:ef3a63990c8efd4aaa971eca050093ce71416ab838a54308bab295a737bd01e8
+    assetDigest: sha256:d6a97b798f140d7cb0f9730bafab337a24efca0d2b3df51142276ca1ef7bdbe6
     qualityScore: 0.9
     qualityStatus: PASS
     tags:
@@ -200,7 +200,7 @@ entries:
     path: ./java-ddd-service-harness/1.2.0/template.yaml
     digest: sha256:2714f53e7de70f574ab2075344df37aa49bdf246ca8ac6042cc8afca963678e2
     assetPath: ./java-ddd-service-harness/1.2.0/asset.yaml
-    assetDigest: sha256:29de6c197142b4a0a2a3fc02827017a4cff3e977fff53e747a045a548aae6827
+    assetDigest: sha256:05e9f3f274f39382ad49a18795d8a5acf4c6121ee5878893af75027cc4fd35c1
     qualityScore: 0.9
     qualityStatus: PASS
     tags:
@@ -221,7 +221,7 @@ entries:
     path: ./node-saas-control-plane-harness/1.2.0/template.yaml
     digest: sha256:0450e4113c45f469ef6434314df0159ba43f20ee076cba2d488662d722c28103
     assetPath: ./node-saas-control-plane-harness/1.2.0/asset.yaml
-    assetDigest: sha256:26c344c1cee5d1ea51d30a7b0df4fc54f3d77f0d0f736b8229c214f941148cf0
+    assetDigest: sha256:3a786b0339162a9b9d7171a50dc5daf10dc7c4601f9d91e843e284b2533afccc
     qualityScore: 0.9
     qualityStatus: PASS
     tags:
@@ -243,7 +243,7 @@ entries:
     path: ./observability-apm-harness/1.2.0/template.yaml
     digest: sha256:bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e
     assetPath: ./observability-apm-harness/1.2.0/asset.yaml
-    assetDigest: sha256:3bda93d11ae1f7c189fe822a7d52b4c89ee97d906a00e43662c84b0eb6e6948d
+    assetDigest: sha256:8569ac13e9240480724773709c8f407f4621714e35f0f73bfbb334fc196935e8
     qualityScore: 1
     qualityStatus: PASS
     tags:
@@ -265,7 +265,7 @@ entries:
     path: ./python-enterprise-harness/1.2.0/template.yaml
     digest: sha256:99e4e6612dd492941cd6540e779fcf20492e6bfd8bbe17790dd568ffa4ab60c0
     assetPath: ./python-enterprise-harness/1.2.0/asset.yaml
-    assetDigest: sha256:d1eac6cb458f3abcbf05a29072f56009d372e874db6e8dec94feaed797b746eb
+    assetDigest: sha256:fbab78b58a4980ab1dc92c42d1ab3af7a8e680ff6c372e70a393e2c669e7b5bb
     qualityScore: 0.9
     qualityStatus: PASS
     tags:

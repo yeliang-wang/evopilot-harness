@@ -1,0 +1,36 @@
+{
+  "id": "unknown-domain-becomes-profile-proposal",
+  "type": "reasoning-contract",
+  "graph": {
+    "schema": "evopilot-harness-evidence-graph/v1",
+    "runId": "eval-unknown-domain",
+    "nodeCount": 2,
+    "graphDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "nodes": [
+      {
+        "evidenceId": "evidence-0001",
+        "kind": "build-manifest",
+        "label": "build.manifest",
+        "sourceRef": "fixture",
+        "sourceType": "source-project",
+        "sourceDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "excerptDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "excerpt": "build test validate the repeatable engineering package",
+        "redactionApplied": false
+      },
+      {
+        "evidenceId": "evidence-0002",
+        "kind": "source-code",
+        "label": "source.ext",
+        "sourceRef": "fixture",
+        "sourceType": "source-project",
+        "sourceDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "excerptDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "excerpt": "novel domain execution boundary with rollback evidence",
+        "redactionApplied": false
+      }
+    ]
+  },
+  "expectedDecision": "PROPOSE_NEW_PROFILE",
+  "reviewStatus": "unreviewed"
+}

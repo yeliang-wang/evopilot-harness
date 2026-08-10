@@ -1,5 +1,7 @@
 # Harness Evolution
 
+> New v3 lifecycle uses Profile/Bundle Proposals under a writable Workspace. See [v3 Production Lifecycle](v3-production-lifecycle.md). The lifecycle below is retained for v2 compatibility.
+
 Harness evolution is a local lifecycle managed by `evopilot-harness`. It is independent from EvoPilot releases.
 
 ## Lifecycle

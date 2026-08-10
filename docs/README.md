@@ -4,6 +4,10 @@
 
 ## New Users
 
+- [v3 Product Boundary](architecture/v3-product-boundary.md) - precise scope, ownership, and version independence.
+- [v3 Asset Model](architecture/v3-asset-model.md) - Component, Profile, Bundle, and supporting Packs.
+- [v3 Production Lifecycle](guides/v3-production-lifecycle.md) - source-to-proposal-to-signed-Catalog flow.
+- [v3 Reasoning Contract](reference/v3-reasoning-contract.md) - eligibility, BM25, scoring, LLM boundary, and decisions.
 - [How Harness Works](guides/how-harness-works.md) - OpenHands-style overview of management, evolution, matching, source inputs, publication, and control-plane consumption.
 - [CLI Quickstart](cli/quickstart.md) - shortest local path to publish a Catalog, validate it, and run the Harness Hub.
 - [Harness Hub Integration](guides/harness-hub-integration.md) - run the standalone browser UI and embed it from another dashboard.
@@ -37,6 +41,8 @@
 
 ## Production Operators
 
+- [v3 Workspace And Migration](operations/v3-workspace.md) - read-only Engine, writable Workspace, Packs, and rollback.
+- [v3 Acceptance Baseline](operations/v3-acceptance.md) - exact meaning of 100 percent acceptance.
 - [Deployment](operations/deployment.md) - Docker, Compose, and process mode.
 - [Release Management](operations/release-management.md) - release artifacts, tags, checksums, SBOM, and provenance.
 - [Testing](operations/testing.md) - validation commands and expected boundaries.
@@ -44,6 +50,7 @@
 
 ## Releases
 
+- [3.0.0](releases/3.0.0.md)
 - [2.1.0](releases/2.1.0.md)
 - [2.0.0](releases/2.0.0.md)
 - [1.4.0](releases/1.4.0.md)

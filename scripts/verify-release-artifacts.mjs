@@ -33,6 +33,11 @@ const provenance = JSON.parse(fs.readFileSync(path.join(outDir, `${projectName}-
 assert.equal(provenance.project, projectName);
 assert.equal(provenance.version, version);
 assert.equal(provenance.tag, `v${version}`);
+assert.equal(provenance.source.commit, provenance.commit);
+assert.equal(typeof provenance.source.dirty, "boolean");
+if (provenance.source.dirty) assert.match(provenance.source.statusDigest, /^sha256:[a-f0-9]{64}$/);
+else assert.equal(provenance.source.statusDigest, null);
+if (process.env.CI === "true") assert.equal(provenance.source.dirty, false, "release provenance must come from a clean CI checkout");
 assert.ok(Array.isArray(provenance.artifacts));
 
 const checksums = fs.readFileSync(path.join(outDir, "SHA256SUMS"), "utf8").trim().split(/\r?\n/);
@@ -45,7 +50,7 @@ for (const line of checksums) {
 }
 
 const sourceList = execTarList(path.join(outDir, `${projectName}-${version}-source.tar.gz`));
-for (const expectedPath of ["src/index.mjs", "ui/harness-hub/index.html", "published/CATALOG.md", "Dockerfile", "compose.yaml"]) {
+for (const expectedPath of ["src/index.mjs", "src/v3/reasoning.mjs", "assets/v3/components/engineering-validation/asset.yaml", "schemas/harness-asset-v3.schema.json", "ontology/builtin/software-engineering.yaml", "policies/matcher/default.yaml", "ui/harness-hub/index.html", "published/CATALOG.md", "Dockerfile", "compose.yaml"]) {
   assert.ok(sourceList.some((item) => item.endsWith(expectedPath)), `${expectedPath} should be in source archive`);
 }
 

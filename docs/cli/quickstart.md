@@ -1,178 +1,161 @@
-# EvoPilot Harness CLI Quickstart
+# EvoPilot Harness v3 CLI Quickstart
 
-> Shortest successful path to publish Harness definitions, validate them, and run the Harness Hub.
+> Shortest safe path for a person or AI agent to produce, review, approve, and publish Harness assets.
 
-## 1. Prepare The Repository
+## 1. Initialize
 
 ```bash
 cd /path/to/evopilot-harness
 npm install
-node src/index.mjs --help
-```
 
-Continue only when Node.js is `>=22` and the CLI prints the expected command groups.
-
-## 2. Publish And Validate The Catalog And Registry
-
-```bash
-node src/index.mjs catalog publish --source harnesses --out published --json
-node src/index.mjs catalog validate --source published --json
-node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json
-node src/index.mjs registry validate --registry harness-registry.yaml --json
-node src/index.mjs asset validate --source published --json
-```
-
-Expected result:
-
-```text
-catalog publish status=PUBLISHED
-catalog validate status=VALIDATED
-registry publish status=PUBLISHED
-registry validate status=VALIDATED
-asset validate status=VALIDATED
-```
-
-The `published/` directory must contain `CATALOG.md` with a fenced `yaml evopilot-harness-catalog` block, `catalogVersion: 2`, and `entries[].assetPath` pointing to Harness Asset v2 envelopes. `harness-registry.yaml` points EvoPilot at one or more Catalog roots and must not duplicate Harness entries.
-
-## 3. Start Harness Hub
-
-```bash
-node src/index.mjs hub serve --catalog published --registry harness-registry.yaml --source harnesses
-```
-
-Open:
-
-```text
-http://127.0.0.1:4176
-```
-
-The Hub reads `/api/hub/snapshot` from the local `evopilot-harness` server. It does not require EvoPilot or Dashboard.
-
-## 4. Evolve From A Source Project
-
-Detect the source role and candidate Harness first:
-
-```bash
-node src/index.mjs detect \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
+export EVOPILOT_HARNESS_HOME="$HOME/.evopilot-harness"
+node src/index.mjs workspace init \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
 
-Review `sourceProfile.primaryRole`, `autoMatch.decision`, `autoMatch.targetHarnessId`, and `autoMatch.parentCandidates`.
+Continue only when `status=READY`, `engine.mode=read-only`, `engine.mutationAllowed=false`, and `workspace.writable=true`. `engine.filesystemWritable` reports the host/container filesystem fact; it does not grant the Harness lifecycle permission to mutate installed Engine files.
+
+## 2. Validate The Bootstrap
 
 ```bash
-node src/index.mjs evolve \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
+node src/index.mjs asset v3-test --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs catalog v3-validate \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source "$EVOPILOT_HARNESS_HOME/catalogs/builtin" \
+  --json
+node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+All three must pass. `asset v3-test` also returns the honest `accuracyClaim` from the evaluation gate.
+
+## 3. Inspect GLM Readiness
+
+```bash
+node src/index.mjs llm v3-models \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --models-file /path/to/models.json \
   --json
 ```
 
-If validation succeeds, the run stops at `REVIEW_REQUIRED`. Review the generated files under:
+Do not print or rewrite `models.json`. A new Profile or ambiguous decision requires a usable Zhipu GLM profile. Missing GLM does not erase the deterministic result, but it blocks approval.
 
-```text
-.evopilot-harness/evolutions/<evolution-id>/draft/
-```
+## 4. Produce A Proposal
 
-The draft includes `template.yaml` and `asset.yaml`. The template is the EvoPilot-compatible Harness contract; the asset is the v2 review and publication envelope.
-
-Every generated draft includes `template.definitionQuality`. The default objective is a more accurate, professional, and fine-grained Harness definition. It improves boundary precision, match-policy specificity, evidence contracts, domain execution actions, and negative-signal review. Large-scale performance optimization, throughput expansion, and runtime tuning are non-goals unless an operator explicitly asks for them with source evidence.
-
-Approve and publish after administrator review:
+Local project:
 
 ```bash
-node src/index.mjs evolution approve <evolution-id> \
-  --confirmed-by <administrator> \
-  --confirmation "Reviewed source coverage, draft diff, validation, and impact." \
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-project /path/to/project \
+  --goal "Produce or evolve a reusable Harness asset." \
   --json
-
-node src/index.mjs evolution publish <evolution-id> --json
 ```
 
-## 5. Evolve From A GitHub Repository
-
-Use this path when the source material is a public GitHub repository or another Git remote reachable by local `git`.
+Project root:
 
 ```bash
-node src/index.mjs detect \
-  --github-repo owner/repo \
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-root /path/to/project-root \
+  --goal "Produce grouped Harness asset proposals." \
+  --json
+```
+
+GitHub:
+
+```bash
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --github-repo owner/repository \
   --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
-  --json
-
-node src/index.mjs evolve \
-  --github-repo https://github.com/owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+  --goal "Produce or evolve a reusable Harness asset." \
   --json
 ```
 
-The CLI clones or fetches the repository into `.evopilot-harness/github-sources/`, records `sourceCoverage.sources[].type=github-repository`, `github.repository`, `github.ref`, `github.resolvedCommit`, and `github.cachePath`, then runs the same Source Profile v2 and Auto-Match v2 flow as a local `--source-project`.
+The command stops at `REVIEW_REQUIRED`, `INSUFFICIENT_EVIDENCE`, or `NOT_HARNESS_ELIGIBLE`. It never approves or publishes automatically.
 
-Do not put GitHub tokens in the URL. Use public HTTPS, local Git credentials, or SSH.
+## 5. Review The Contract
 
-## 6. Evolve From A Source Root Corpus
-
-Use this path when a directory contains many historical projects and the operator wants `evopilot-harness` to scan, group, dedupe, and generate grouped Harness drafts.
-
-```bash
-node src/index.mjs corpus scan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --json
-```
-
-Review `groups[]`, `selectedProjects[]`, and `duplicateProjects[]`, then generate draft packs:
-
-```bash
-node src/index.mjs corpus plan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --max-projects-per-group 5 \
-  --json
-```
-
-If validation succeeds, the run stops at `REVIEW_REQUIRED`. Review the generated files under:
+Read these JSON fields:
 
 ```text
-.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/
+runId
+evidenceGraph.path
+evidenceGraph.digest
+reasoning.algorithmVersion
+reasoning.ontology
+reasoning.policy
+reasoning.eligibility
+reasoning.decision
+reasoning.targetProfile
+reasoning.composeProfiles
+reasoning.proposedProfile
+reasoning.candidates[].factors
+reasoning.candidates[].rejectionReasons
+reasoning.evidenceIds
+advisor.status
+advisor.model
+advisor.usage
+advisor.validation
+proposal.proposedAssets
+proposal.validations
+proposal.blockers
+proposal.evaluationStatus
+nextAction
 ```
 
-Approve and publish after administrator review:
+Then inspect the full proposal:
 
 ```bash
-node src/index.mjs corpus approve <corpus-id> \
-  --confirmed-by <administrator> \
-  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+node src/index.mjs proposal review <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+Stop if any blocker remains.
+
+## 6. Approve And Publish
+
+Use real reviewer values. An AI agent must not invent them.
+
+```bash
+node src/index.mjs proposal approve <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --confirmed-by <reviewer> \
+  --confirmation "Reviewed evidence, reasoning, Advisor citations, asset boundary, and evaluation case." \
+  --evaluation-reviewed \
   --json
 
-node src/index.mjs corpus publish <corpus-id> --json
-```
-
-For a one-command wrapper that still stops at review:
-
-```bash
-node src/index.mjs evolve corpus \
-  --source-root /path/to/project-root \
-  --include-modules \
+node src/index.mjs proposal publish <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
 
-## 7. Run Release-Gate Evaluations
+Publication fails if the proposal is not approved, a schema fails, a dependency cannot be resolved, or an immutable asset version already exists.
+
+## 7. Sign And Verify
 
 ```bash
-node src/index.mjs eval run --json
-node src/index.mjs llm replay --json
+node src/index.mjs keys generate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs catalog v3-sign \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --private-key "$EVOPILOT_HARNESS_HOME/keys/catalog-signing-private.pem" \
+  --json
+node src/index.mjs catalog v3-verify \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --public-key "$EVOPILOT_HARNESS_HOME/keys/catalog-signing-public.pem" \
+  --json
 ```
 
-Both commands must return `status=PASSED` before a v2 release.
-
-## 8. Configure EvoPilot
-
-EvoPilot reads the Registry at use time:
+## 8. Run Harness Hub
 
 ```bash
-EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
+node src/index.mjs hub v3-serve --workspace "$EVOPILOT_HARNESS_HOME"
 ```
 
-New or regenerated EvoPilot plans can bind newer Harness versions. Existing plans keep their recorded `selectedHarness` digests.
+Open `http://127.0.0.1:4176`.
+
+## Legacy v2
+
+Existing `detect`, `evolve`, `corpus`, `evolution`, `harness`, `asset validate`, and Catalog v2 commands remain available for compatibility. New automation should use the v3 commands above. See [commands.md](commands.md) for both surfaces and [v3 Workspace And Migration](../operations/v3-workspace.md) for migration.

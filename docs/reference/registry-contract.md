@@ -1,5 +1,7 @@
 # Registry Contract
 
+> v3 Workspace registries use `evopilot-harness-registry/v2` and still list Catalog roots only. Asset entries remain exclusively in each Catalog. Signature commands are documented in [v3 Production Lifecycle](../guides/v3-production-lifecycle.md). The detailed v1 fields below remain compatible guidance.
+
 `harness-registry.yaml` is the multi-Catalog discovery file published by `evopilot-harness` and read by EvoPilot.
 
 It is not a Harness index. Harness entries stay in each Catalog's `CATALOG.md`; Harness behavior stays in each `template.yaml` or `harness.yaml`.

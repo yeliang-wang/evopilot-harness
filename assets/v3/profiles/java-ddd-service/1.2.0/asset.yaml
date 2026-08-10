@@ -1,0 +1,53 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: java-ddd-service
+  version: 1.2.0
+  name: Java DDD Service Harness
+  description: Enterprise Java baseline for DDD, Spring Boot, hexagonal services, and JVM release governance.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: java-ddd-service-harness
+spec:
+  classification:
+    domain: runtime
+    role: runtime-engineering
+    taskClass: runtime-task
+  boundary:
+    inScope:
+      - Engineering work supported by the java-ddd-service-harness v2 contract.
+    outOfScope:
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - runtime
+      - executable-engineering
+    negativeConcepts: []
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - incident-or-failure-report
+      - observability-snapshot
+      - command
+      - exit-code
+      - stdout-or-log
+      - changed-files
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: java-ddd-service@1.2.0
+provenance:
+  sourceDigests:
+    - sha256:2714f53e7de70f574ab2075344df37aa49bdf246ca8ac6042cc8afca963678e2
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

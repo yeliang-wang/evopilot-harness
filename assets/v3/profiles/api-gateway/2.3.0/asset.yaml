@@ -1,0 +1,72 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: api-gateway
+  version: 2.3.0
+  name: API Gateway Harness
+  description: Domain baseline for API gateway products.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: api-gateway-harness
+spec:
+  classification:
+    domain: api-gateway
+    role: api-gateway-engineering
+    taskClass: domain-task
+  boundary:
+    inScope:
+      - Engineering work supported by the api-gateway-harness v2 contract.
+    outOfScope:
+      - gateway timeout from downstream api
+      - api client wrapper
+      - http client
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - api-gateway
+      - executable-engineering
+      - gateway-product
+      - ingress-controller
+      - traffic-proxy
+      - route-matching
+      - upstream-selection
+      - rate-limit
+      - auth-policy
+      - plugin-lifecycle
+      - filter-chain
+      - service-mesh-gateway
+      - envoy
+      - kong
+      - apisix
+      - signal
+      - api
+    negativeConcepts:
+      - gateway-timeout-from-downstream-api
+      - api-client-wrapper
+      - http-client
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - route-table
+      - policy-matrix
+      - plugin-report
+      - load-summary
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: api-gateway@2.3.0
+provenance:
+  sourceDigests:
+    - sha256:637e55ca3683a7e9eb0522ac7e9322575a0b05dad3d8330969f8b332fe205e95
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

@@ -1,0 +1,34 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessBundle
+metadata:
+  id: distributed-cache-product
+  version: 1.0.0
+  name: Distributed Cache Product Bundle
+  description: Immutable resolved execution package for distributed cache product engineering.
+  lifecycle: published
+  owner: evopilot-harness
+  labels:
+    domain: distributed-cache
+spec:
+  profile:
+    id: distributed-cache-product
+    version: 1.0.0
+    digest: sha256:144055fac6b09975c8df0c828b2103eed490e4e8cab4057c0da58dd1b2678bd5
+  resolvedComponents:
+    - id: engineering-validation
+      version: 1.0.0
+      digest: sha256:aa84fa704cdc31dbf3c1fb8ebe84e26acd2ade7a5cc364ab5c71784f05d78638
+      required: true
+  executionPlan: [discover-project-commands, run-approved-validation]
+  constraints:
+    - Execute only in an isolated workspace.
+    - Require approval before running project-provided commands.
+  evidence: [protocol-report, cluster-topology, failover-report, benchmark-summary, validation-result]
+  validators: [approved-command-only, validation-exit-code]
+  exports:
+    - adapter: evopilot
+      path: exports/evopilot/template.yaml
+provenance:
+  sourceDigests: []
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

@@ -1,5 +1,18 @@
 # Harness Hub Integration
 
+## v3 Standalone Mode
+
+```bash
+node src/index.mjs hub v3-serve \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --host 127.0.0.1 \
+  --port 4176
+```
+
+The v3 Hub reads the writable Workspace and exposes `/api/health`, `/api/hub/snapshot`, and `/api/v3/snapshot`. It shows Component/Profile/Bundle assets, Profile Proposals, Ontology and Policy versions, Evaluation status, GLM token usage, source types, and a review-safe `produce` command. It does not approve or publish from browser-local state.
+
+The sections below describe the legacy v2 snapshot mode retained for compatibility.
+
 Harness Hub is the standalone browser UI owned by `evopilot-harness`.
 
 ## Run Locally

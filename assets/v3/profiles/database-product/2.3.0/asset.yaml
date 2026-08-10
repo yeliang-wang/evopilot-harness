@@ -1,0 +1,76 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: database-product
+  version: 2.3.0
+  name: Database Product Harness
+  description: Domain baseline for self-developed database products.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: database-product-harness
+spec:
+  classification:
+    domain: database-product
+    role: database-product-engineering
+    taskClass: domain-task
+  boundary:
+    inScope:
+      - Engineering work supported by the database-product-harness v2 contract.
+    outOfScope:
+      - database connection
+      - jdbc datasource
+      - orm
+      - crud repository
+      - connect to mysql
+      - connect to postgres
+      - 数据库连接
+      - 数据源
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - database-product
+      - executable-engineering
+      - self-developed-database
+      - dbms
+      - sql-engine
+      - storage-engine
+      - query-optimizer
+      - transaction-engine
+      - distributed-database
+      - postgres-compatible
+      - mysql-compatible
+      - signal
+    negativeConcepts:
+      - database-connection
+      - jdbc-datasource
+      - orm
+      - crud-repository
+      - connect-to-mysql
+      - connect-to-postgres
+      - signal
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - sql-compatibility-report
+      - differential-oracle-report
+      - crash-recovery-log
+      - benchmark-summary
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: database-product@2.3.0
+provenance:
+  sourceDigests:
+    - sha256:0a9c1424c884b75cb9f4460961b395ab699cc45dfb430e7a34ed109df6ca9963
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

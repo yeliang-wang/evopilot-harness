@@ -1,0 +1,56 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: generic-management-software
+  version: 1.2.0
+  name: Generic Management Software Harness
+  description: Enterprise baseline for management software, workflow systems, admin products, reports, imports, exports,
+    and integrations.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: generic-management-software-harness
+spec:
+  classification:
+    domain: management-software
+    role: management-software-engineering
+    taskClass: domain-task
+  boundary:
+    inScope:
+      - Declare product boundary, source ownership, runtime commands, and release evidence.
+      - Bind domain-specific checks to executable commands and evidence artifacts.
+      - Engineering work supported by the generic-management-software-harness v2 contract.
+    outOfScope:
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - management-software
+      - executable-engineering
+    negativeConcepts: []
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - incident-or-failure-report
+      - observability-snapshot
+      - command
+      - exit-code
+      - stdout-or-log
+      - changed-files
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: generic-management-software@1.2.0
+provenance:
+  sourceDigests:
+    - sha256:b59902bad09f9f2fd542fccb1477ed4a33ba98c2dbc95a165088439fa992c096
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

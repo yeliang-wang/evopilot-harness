@@ -1,0 +1,12 @@
+{
+  "id": "asset-invalid-missing-contract",
+  "type": "asset-schema",
+  "document": {
+    "apiVersion": "harness.evopilot.io/v3",
+    "kind": "HarnessComponent",
+    "metadata": {},
+    "spec": {}
+  },
+  "expectedValid": false,
+  "reviewStatus": "unreviewed"
+}

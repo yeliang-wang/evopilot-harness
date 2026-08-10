@@ -1,5 +1,7 @@
 # Catalog Contract
 
+> v3 uses `schema: evopilot-harness-catalog/v3`, `yaml evopilot-harness-catalog-v3`, immutable asset digests, `catalog.lock.json`, and optional Ed25519 signatures. See [v3 Asset Model](../architecture/v3-asset-model.md) and [v3 Production Lifecycle](../guides/v3-production-lifecycle.md). The contract below is v2 compatibility.
+
 The published Catalog is the offline directory EvoPilot reads.
 
 ## Directory Shape

@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/harness-asset-v3.schema.json",
+  "title": "EvoPilot Harness Asset v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "harness.evopilot.io/v3" },
+    "kind": { "enum": ["HarnessComponent", "HarnessProfile", "HarnessBundle"] },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "spec": { "type": "object" },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "HarnessComponent" } } },
+      "then": { "properties": { "spec": { "$ref": "#/$defs/componentSpec" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "HarnessProfile" } } },
+      "then": { "properties": { "spec": { "$ref": "#/$defs/profileSpec" } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "HarnessBundle" } } },
+      "then": { "properties": { "spec": { "$ref": "#/$defs/bundleSpec" } } }
+    }
+  ],
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "semver": { "type": "string", "pattern": "^0|[1-9][0-9]*\\.0|[1-9][0-9]*\\.0|[1-9][0-9]*$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nonEmptyStrings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "name", "description", "lifecycle"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+        "name": { "type": "string", "minLength": 3 },
+        "description": { "type": "string", "minLength": 16 },
+        "lifecycle": { "enum": ["draft", "review", "approved", "published", "deprecated"] },
+        "owner": { "type": "string", "minLength": 1 },
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceDigests", "ontologyVersion", "policyVersion"],
+      "properties": {
+        "sourceDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" }, "uniqueItems": true },
+        "ontologyVersion": { "type": "string", "minLength": 1 },
+        "policyVersion": { "type": "string", "minLength": 1 },
+        "advisorRunDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "executor", "inputs", "outputs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "description": { "type": "string", "minLength": 8 },
+        "executor": { "enum": ["shell", "http", "container", "agent", "manual"] },
+        "command": { "type": "string" },
+        "inputs": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "outputs": { "$ref": "#/$defs/nonEmptyStrings" },
+        "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "network": { "enum": ["denied", "restricted", "allowed"] }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "assertion", "evidenceRefs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": { "enum": ["exit-code", "json-schema", "content", "metric", "manual-review", "signature"] },
+        "assertion": { "type": "string", "minLength": 3 },
+        "evidenceRefs": { "$ref": "#/$defs/nonEmptyStrings" },
+        "blocking": { "type": "boolean" }
+      }
+    },
+    "componentSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "environment", "actions", "constraints", "evidence", "validators"],
+      "properties": {
+        "capability": { "$ref": "#/$defs/identifier" },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["workspaceMode", "requiredTools"],
+          "properties": {
+            "workspaceMode": { "enum": ["read-only", "read-write", "isolated"] },
+            "requiredTools": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "requiredServices": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+          }
+        },
+        "actions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/action" } },
+        "constraints": { "$ref": "#/$defs/nonEmptyStrings" },
+        "evidence": { "$ref": "#/$defs/nonEmptyStrings" },
+        "validators": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/validator" } }
+      }
+    },
+    "assetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "profileSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "boundary", "match", "components", "acceptance"],
+      "properties": {
+        "classification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["domain", "role", "taskClass"],
+          "properties": {
+            "domain": { "$ref": "#/$defs/identifier" },
+            "role": { "$ref": "#/$defs/identifier" },
+            "taskClass": { "$ref": "#/$defs/identifier" }
+          }
+        },
+        "boundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["inScope", "outOfScope"],
+          "properties": {
+            "inScope": { "$ref": "#/$defs/nonEmptyStrings" },
+            "outOfScope": { "$ref": "#/$defs/nonEmptyStrings" }
+          }
+        },
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["positiveConcepts", "negativeConcepts", "requiredEvidenceKinds"],
+          "properties": {
+            "positiveConcepts": { "$ref": "#/$defs/nonEmptyStrings" },
+            "negativeConcepts": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+            "requiredEvidenceKinds": { "$ref": "#/$defs/nonEmptyStrings" }
+          }
+        },
+        "components": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/assetRef" } },
+        "acceptance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requiredEvidence", "blockingValidators"],
+          "properties": {
+            "requiredEvidence": { "$ref": "#/$defs/nonEmptyStrings" },
+            "blockingValidators": { "$ref": "#/$defs/nonEmptyStrings" }
+          }
+        },
+        "evaluationPackRef": { "type": "string", "minLength": 1 }
+      }
+    },
+    "bundleSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "resolvedComponents", "executionPlan", "constraints", "evidence", "validators"],
+      "properties": {
+        "profile": {
+          "allOf": [
+            { "$ref": "#/$defs/assetRef" },
+            { "type": "object", "required": ["digest"], "properties": { "digest": { "$ref": "#/$defs/digest" } } }
+          ]
+        },
+        "resolvedComponents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/assetRef" },
+              { "type": "object", "required": ["digest"], "properties": { "digest": { "$ref": "#/$defs/digest" } } }
+            ]
+          }
+        },
+        "executionPlan": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+        "constraints": { "$ref": "#/$defs/nonEmptyStrings" },
+        "evidence": { "$ref": "#/$defs/nonEmptyStrings" },
+        "validators": { "$ref": "#/$defs/nonEmptyStrings" },
+        "exports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["adapter", "path"],
+            "properties": {
+              "adapter": { "type": "string", "minLength": 1 },
+              "path": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

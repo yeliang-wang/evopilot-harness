@@ -1,5 +1,7 @@
 # How Harness Works
 
+> This page describes the v2.1 compatibility model. For v3, start with [v3 Product Boundary](../architecture/v3-product-boundary.md), [v3 Asset Model](../architecture/v3-asset-model.md), [v3 Reasoning Contract](../reference/v3-reasoning-contract.md), and [v3 Production Lifecycle](v3-production-lifecycle.md).
+
 > A technical overview of how `evopilot-harness` manages, evolves, matches, publishes, and exposes Harness definitions to EvoPilot-compatible control planes.
 
 This guide follows the documentation shape used by mature open-source projects such as [OpenHands](https://github.com/OpenHands/OpenHands): the README is the product front door, quick starts come first, and deeper mechanics live in focused guide and reference pages.

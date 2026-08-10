@@ -4,6 +4,11 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 
 ## Contract
 
+- Use the v3 `produce` and `proposal` commands for new automation; v2 commands are compatibility-only.
+- Initialize and pass an explicit `--workspace` so automation never mutates the Engine checkout.
+- Treat `REVIEW_REQUIRED`, `INSUFFICIENT_EVIDENCE`, `NOT_HARNESS_ELIGIBLE`, and `INSUFFICIENT_EVAL_EVIDENCE` as explicit stop states.
+- Report Evidence Graph, Ontology, Policy, Advisor model/token/digest, candidate factor, blocker, and evaluation fields.
+- Never apply an LLM recommendation by replacing `reasoning.decision`; the deterministic result remains authoritative.
 - Use JSON output whenever available.
 - Do not parse human-readable CLI output for automation.
 - Treat `status`, `blockers`, and `nextAction` as control-flow fields.

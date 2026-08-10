@@ -1,0 +1,25 @@
+apiVersion: harness.evopilot.io/v1
+kind: AdvisorPolicyPack
+metadata:
+  id: default-advisor
+  version: 1.0.0
+  lifecycle: published
+  description: Evidence-bound GLM review contract for ambiguous and high-risk Harness asset decisions.
+spec:
+  modelConfigMode: manual-read-only
+  allowedProvider: zhipu
+  requiredCitations: true
+  systemPrompt: >-
+    You review Harness asset eligibility and candidate relationships. Use only the supplied Evidence Graph,
+    Ontology Pack, Match Policy result, and cited research evidence. Every conclusion must cite one or more
+    evidenceId values. Do not invent domain facts, approve or publish assets, execute code, mutate model
+    configuration, or override deterministic safety gates. Return only JSON matching the output contract.
+  outputContract:
+    requiredFields: [recommendation, rationale, evidenceIds, risks, proposedDeltas]
+    allowedRecommendations: [EVOLVE_EXISTING, COMPOSE_NEW_BUNDLE, PROPOSE_NEW_PROFILE, INSUFFICIENT_EVIDENCE, NOT_HARNESS_ELIGIBLE, REVIEW_REQUIRED]
+  authority:
+    mayRecommend: true
+    mayApprove: false
+    mayPublish: false
+    mayExecute: false
+    mayMutateModelConfig: false

@@ -2,6 +2,37 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.0.0 - 2026-08-10
+
+### Added
+
+- Added product-neutral `HarnessComponent`, `HarnessProfile`, and immutable `HarnessBundle` assets with formal JSON Schemas.
+- Added versioned `OntologyPack`, `MatchPolicyPack`, `AdvisorPolicyPack`, and `EvaluationPack` governance assets.
+- Added a read-only Engine plus configurable `EVOPILOT_HARNESS_HOME` Workspace model.
+- Added `produce` for local projects, project roots, GitHub repositories, attachments, logs, historical Harnesses, notes, and controlled research.
+- Added redacted Evidence Graphs, Harness Eligibility Gate, BM25 retrieval, seven-factor scoring, negative conflicts, novelty, and deterministic v3 decisions.
+- Added evidence-bound GLM Advisor review with citation validation, token usage, policy/ontology versions, prompt/response digests, replay records, and enforced authority limits.
+- Added Profile/Bundle Proposal review, approval, evaluation review, immutable publication, Catalog/Registry validation, Ed25519 signatures, and Hub v3 views.
+- Added v2-to-v3 dry-run/apply/rollback and generated v3 Profiles/Bundles for all nine legacy templates.
+- Added v3 contract, adversarial, lifecycle, migration, source, signature, and Hub tests while preserving all v2 compatibility tests.
+
+### Changed
+
+- Narrowed the product from broad software classification to Harness eligibility, candidate relationships, and evolution decisions for repeatable engineering tasks.
+- Moved v3 domain concepts, roles, weights, thresholds, risk rules, and Advisor prompt out of matcher code into versioned assets.
+- Changed unknown domains to reviewed Profile Proposals instead of automatically published Harnesses.
+- Decoupled Engine, Harness asset, Ontology, Policy, Evaluation, and Catalog versions.
+- Made EvoPilot format an optional Bundle export rather than the canonical v3 asset.
+
+### Validation
+
+- `npm test`
+- `npm run v3:check`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 2.1.0 - 2026-08-10
 
 ### Added

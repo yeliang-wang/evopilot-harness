@@ -2,9 +2,53 @@
 
 > Command reference for `evopilot-harness`.
 
+## v3 Primary Commands
+
+All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HARNESS_HOME` or `$HOME/.evopilot-harness`.
+
+| Command | Purpose |
+|---|---|
+| `workspace init|status` | Create or inspect the writable v3 Workspace. |
+| `produce` | Build Evidence Graph, reason, call Advisor when required, and stop at proposal review. |
+| `proposal review|approve|publish` | Atomic human-gated proposal lifecycle. |
+| `asset v3-inspect|v3-validate|v3-test|v3-sign|v3-verify` | Inspect, validate, test, sign, or verify v3 assets. |
+| `catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify` | Publish and verify v3 Catalogs. |
+| `registry v3-validate|v3-sign|v3-verify` | Validate Catalog-root discovery and Registry signatures. |
+| `ontology inspect|validate|diff|publish` | Versioned Ontology Pack lifecycle. |
+| `policy inspect|validate|diff|publish` | Matcher or Advisor Policy Pack lifecycle. |
+| `llm v3-models` | Read redacted GLM readiness from manual `models.json`. |
+| `migrate v2-to-v3|rollback` | Non-mutating migration with journal rollback. |
+| `eval v3-run` | Contract and safety evaluation with explicit accuracy-evidence status. |
+| `hub v3-snapshot|v3-serve` | Standalone Harness Hub state and web server. |
+| `keys generate` | Create an Ed25519 signing key pair. |
+
+Primary `produce` options:
+
+| Option | Meaning |
+|---|---|
+| `--source-project <dir>` | One local project. Repeatable. |
+| `--source-root <dir>` | Discover and group valid projects under a root. |
+| `--include-modules` | Treat nested modules as independent projects. |
+| `--github-repo <owner/repo-or-url>` | Clone or refresh a commit-resolved Git source. Repeatable. |
+| `--github-ref <ref>` | Branch, tag, or commit. Default: `main`. |
+| `--attachment <file>` | PDF, PPTX, DOCX, or text evidence. Repeatable. |
+| `--production-log <file>` | Redacted runtime evidence. Repeatable. |
+| `--historical-harness <file>` | Prior Harness evidence. Repeatable. |
+| `--note <text>` | Operator context. Repeatable. |
+| `--research-url <https-url>` | Supplemental cited research. Requires `--allow-internet-research`. |
+| `--goal <text>` | Desired repeatable engineering task. |
+| `--advisor auto|on|off|required` | Advisor risk mode. `auto` follows Policy. |
+| `--models-file <file>` | Manual read-only CodeBuddy-style GLM configuration. |
+
+See [quickstart.md](quickstart.md), [automation.md](automation.md), and [v3 Production Lifecycle](../guides/v3-production-lifecycle.md).
+
+## Legacy v2 Compatibility Commands
+
+The remainder of this page documents the frozen v2 compatibility surface. New implementations should use the v3 commands above.
+
 From the repository, use `node src/index.mjs`. If the command is installed on the shell path, use `evopilot-harness`.
 
-## Global Options
+## Legacy Global Options
 
 | Option | Meaning |
 |---|---|

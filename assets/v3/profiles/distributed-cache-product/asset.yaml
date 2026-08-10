@@ -1,0 +1,40 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: distributed-cache-product
+  version: 1.0.0
+  name: Distributed Cache Product
+  description: Task composition for engineering a self-developed distributed cache product.
+  lifecycle: published
+  owner: evopilot-harness
+  labels:
+    domain: distributed-cache
+spec:
+  classification:
+    domain: distributed-cache
+    role: distributed-cache-product
+    taskClass: product-engineering
+  boundary:
+    inScope:
+      - Cache server protocol and command semantics.
+      - TTL, eviction, persistence, replication, sharding, migration, and failover.
+      - Product validation, diagnostics, observability, and release evidence.
+    outOfScope:
+      - Redis client libraries or connection-pool wrappers.
+      - Generic application caching without a cache server implementation.
+  match:
+    positiveConcepts: [distributed-cache, executable-engineering]
+    negativeConcepts: [redis-client]
+    requiredEvidenceKinds: [source-code, build-manifest]
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence: [protocol-report, cluster-topology, failover-report, benchmark-summary, validation-result]
+    blockingValidators: [approved-command-only, validation-exit-code]
+  evaluationPackRef: distributed-cache-product@1.0.0
+provenance:
+  sourceDigests: []
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

@@ -1,0 +1,506 @@
+schema: evopilot-harness-template/v1
+id: go-middleware-harness
+version: 1.2.0
+name: Go Middleware Harness
+description: Enterprise Go baseline for middleware, control-loop, gateway, and
+  infrastructure services.
+scope: platform
+languageFamily: go
+capabilities:
+  - id: source-boundary
+    name: Source and workspace boundary
+    boundary: Tenant/workspace/repository/branch/writeback boundaries are explicit.
+    requiredEvidence:
+      - project-registration
+      - source-readiness-preflight
+  - id: go-runtime
+    name: Go runtime harness
+    boundary: Module download, fmt, vet, unit, race, integration, benchmark, build,
+      and readiness commands are explicit.
+    requiredEvidence:
+      - mod-download-output
+      - fmt-output
+      - vet-output
+      - unit-output
+      - race-output
+      - build-output
+  - id: middleware-reliability
+    name: Middleware reliability boundary
+    boundary: Concurrency, idempotency, backpressure, config reload, storage/network
+      dependency, and SLO behavior are observable.
+    requiredEvidence:
+      - race-test
+      - load-or-benchmark-proof
+      - slo-metric
+      - dependency-failure-proof
+  - id: exception-tracking
+    name: Exception and error tracking
+    boundary: Panic, context cancellation, dependency failure, controller reconcile
+      errors, and retryability are classified and correlated.
+    requiredEvidence:
+      - error-code-contract
+      - exception-sample
+      - trace-link
+      - repair-verification
+  - id: test-and-quality
+    name: Test and quality gates
+    boundary: Unit, race, integration, benchmark, API compatibility, and dependency
+      failure tests produce command evidence.
+    requiredEvidence:
+      - test-report
+      - race-output
+      - benchmark-output
+      - contract-check
+  - id: failure-diagnostics
+    name: Failure diagnostics
+    boundary: Failures include command, stack/log excerpt, pprof/race evidence, root
+      cause, owner, next action, and verification.
+    requiredEvidence:
+      - failure-classification
+      - pprof-or-race-proof
+      - repair-verification
+  - id: observability
+    name: Observability
+    boundary: Health, readiness, logs, metrics, traces, pprof, saturation signals,
+      and alert routes are bound before Beta/RC/GA.
+    requiredEvidence:
+      - health-check
+      - runtime-log
+      - metric-or-trace-proof
+      - alert-route
+  - id: slo-monitoring
+    name: SLO monitoring and alert routing
+    boundary: Availability, latency, dependency, queue, reconcile, and saturation
+      SLOs are explicit before RC/GA.
+    requiredEvidence:
+      - sli-definition
+      - slo-dashboard
+      - alert-rule
+      - runbook-link
+      - error-budget-status
+  - id: operational-runbooks
+    name: Operational runbooks
+    boundary: Critical runtime/dependency/control-loop failure modes have triage,
+      mitigation, rollback, owner, and verification.
+    requiredEvidence:
+      - runbook
+      - triage-query
+      - rollback-or-mitigation
+      - oncall-owner
+  - id: release-governance
+    name: Release governance
+    boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+      and ReleaseDecision are required before GA.
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - source-closure
+      - release-decision
+runtimePatterns:
+  language: go
+  packageManagers:
+    - go modules
+  architectureStyles:
+    - middleware
+    - control-loop
+    - infrastructure-service
+  defaultCommands: &a2
+    install:
+      - go mod download
+    lint:
+      - gofmt -w .
+      - go vet ./...
+    typecheck:
+      - go test ./... -run TestNonExistent
+    unit:
+      - go test ./...
+    smoke:
+      - go test ./... -race
+    functional:
+      - go test ./... -run Integration
+  exceptionTracking:
+    handlers:
+      - panic recovery middleware
+      - context cancellation classifier
+      - dependency error wrapper
+      - controller reconcile error policy
+    requiredErrorEnvelope:
+      - errorCode
+      - message
+      - requestId
+      - traceId
+      - retryable
+      - component
+      - supportReference
+    exceptionAttributes:
+      - exception.type
+      - exception.message
+      - exception.stacktrace
+      - go.package
+      - goroutine.id
+      - tenant.id
+  observability:
+    instrumentation:
+      - OpenTelemetry Go
+      - Prometheus client_golang
+      - net/http/pprof
+      - structured logr/klog
+    logs:
+      - requestId
+      - traceId
+      - spanId
+      - component
+      - controller
+      - resource
+      - namespace
+      - errorCode
+    metrics:
+      - http.server.duration
+      - go.goroutines
+      - process.cpu.seconds
+      - queue.depth
+      - reconcile.duration
+      - dependency.latency
+    traces:
+      - HTTP handler
+      - controller reconcile
+      - storage call
+      - network dependency
+      - queue worker
+validationBaseline:
+  requiredCommandGroups:
+    - install
+    - lint
+    - typecheck
+    - unit
+    - smoke
+  requiredBoundaries:
+    - api
+    - concurrency
+    - storage
+    - network
+    - config
+    - observability
+  contractChecks:
+    - api-compatibility
+    - race-safety
+    - metric-contract
+    - dependency-failure-mode
+  commandEvidenceRequired: true
+  realBoundaryEvidenceRequired: true
+  noMockEvidenceForReleaseClaims: true
+evidenceContract:
+  format: json
+  requiredArtifacts:
+    - target-evidence-package
+    - phase-package
+    - goal-completion-report
+    - incident-or-failure-report
+    - observability-snapshot
+    - command
+    - exit-code
+    - stdout-or-log
+    - changed-files
+  requiredEvidence:
+    - command
+    - exit-code
+    - stdout-or-log
+    - changed-files
+    - ci-status-or-local-proof
+    - api-or-interface-contract
+    - observability-signal
+    - error-code-contract
+    - trace-or-correlation-link
+    - runbook-or-repair-note
+  correlationFields:
+    - requestId
+    - traceId
+    - spanId
+    - tenantId
+    - workspaceId
+    - projectId
+    - actor
+    - environment
+    - release
+    - commitSha
+failureTaxonomy:
+  categories:
+    - business
+    - validation
+    - permission
+    - dependency
+    - environment
+    - syntax
+    - type
+    - test
+    - contract
+    - security
+    - performance
+    - deploy
+    - observability
+    - governance
+    - data
+    - database
+    - queue
+    - external-api
+    - concurrency
+    - resource-saturation
+    - unknown
+  severityLevels:
+    - debug
+    - info
+    - warn
+    - error
+    - critical
+  exceptionTracking:
+    requiredAttributes:
+      - exception.type
+      - exception.message
+      - exception.stacktrace
+      - errorCode
+      - requestId
+      - traceId
+      - spanId
+      - tenantId
+      - workspaceId
+      - projectId
+      - actor
+      - release
+      - commitSha
+      - retryable
+diagnosticsBaseline:
+  requiredSignals:
+    - failing-command
+    - exit-code
+    - stack-trace-or-log
+    - changed-files
+    - runtime-env
+    - dependency-lock
+    - request-id
+    - trace-id
+    - release-or-commit
+    - recent-deploy
+    - ci-job-url
+    - health-status
+    - alert-name
+  rootCauseFields:
+    - symptom
+    - hypothesis
+    - evidence
+    - fix
+    - verification
+    - owner
+    - risk
+    - rollbackOrMitigation
+observabilityBaseline:
+  requiredSignals:
+    - health
+    - readiness
+    - logs
+    - metrics
+    - traces
+    - apm
+    - alerts
+    - dashboards
+    - slo
+    - runbooks
+  logLevels:
+    - debug
+    - info
+    - warn
+    - error
+  structuredLogs:
+    format: json
+    requiredFields:
+      - timestamp
+      - level
+      - service
+      - environment
+      - requestId
+      - traceId
+      - spanId
+      - tenantId
+      - workspaceId
+      - projectId
+      - actor
+      - event
+      - errorCode
+      - exceptionClass
+      - rootCauseHint
+      - release
+      - commitSha
+    redactionRequired: true
+  metrics:
+    red:
+      - request_rate
+      - error_rate
+      - duration_p50_p95_p99
+    dependency:
+      - dependency_latency
+      - dependency_error_rate
+      - queue_depth
+      - goroutine_count
+  traces:
+    requiredSpans:
+      - inbound request
+      - controller reconcile
+      - storage call
+      - network dependency
+      - queue worker
+    samplingPolicyMustBeDeclared: true
+governanceRules:
+  tenantWorkspaceScopeRequired: true
+  targetPlanRequiresApproval: true
+  selectedHarnessBindingRequiresReview: true
+  promotionRequiresReleaseDecision: true
+  sourceClosureRequired: true
+  noSilentSelectedHarnessMutation: true
+  mandatoryGates:
+    - selected-harness-bound
+    - target-plan-user-confirmed
+    - target-evidence-package
+    - phase-package
+    - observability-evidence
+    - slo-or-risk-acceptance
+    - source-closure
+    - release-decision
+phaseMapping:
+  alpha:
+    - source-boundary
+    - go-runtime
+    - middleware-reliability
+    - exception-tracking
+    - failure-diagnostics
+  beta:
+    - test-and-quality
+    - middleware-reliability
+    - observability
+    - exception-tracking
+    - slo-monitoring
+  rc:
+    - observability
+    - slo-monitoring
+    - operational-runbooks
+    - release-governance
+    - test-and-quality
+  ga:
+    - release-governance
+    - observability
+    - slo-monitoring
+    - operational-runbooks
+    - source-boundary
+llmDraftPolicy:
+  enabled: true
+  generatedStatus: DRAFT
+  requireUserReview: true
+  activationRequiresAdmin: true
+  reonboardingUsesPreviousActiveProfile: true
+  allowedToSilentlyModifyActiveProfile: false
+  mustExplainTemplateSelection: true
+  mustNotInventEvidence: true
+sourceReferences:
+  - name: Kubernetes
+    url: https://github.com/kubernetes/kubernetes
+    category: github
+    rationale: Go control-loop
+    API: null
+    health: null
+    config: null
+    controller: null
+    and reliability patterns for infrastructure software.: null
+  - name: Prometheus
+    url: https://github.com/prometheus/prometheus
+    category: github
+    rationale: Go monitoring service practices
+    metrics: null
+    reliability: null
+    storage: null
+    and operational evidence.: null
+  - name: OpenTelemetry Go
+    url: https://github.com/open-telemetry/opentelemetry-go
+    category: github
+    rationale: Go tracing
+    metrics: null
+    baggage: null
+    context propagation: null
+    and semantic convention APIs.: null
+changelog:
+  - version: 1.2.0
+    changedAt: 2026-08-09T12:00:00.000Z
+    changedBy: evopilot-harness
+    summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1 metadata.
+    changes:
+      - Add productBoundary includes/excludes.
+      - Add structured matchPolicy with positive and negative evidence.
+      - Add executionModel and qualityGate for strict validation.
+  - version: 1.1.0
+    changedAt: 2026-07-31T06:00:00.000Z
+    changedBy: evopilot
+    summary: Upgrade Go middleware template to enterprise harness knowledge baseline.
+    changes:
+      - Add concurrency/backpressure boundaries
+      - panic/context/dependency failure handling
+      - race and pprof diagnostics
+      - OpenTelemetry/Prometheus observability
+      - SLO gates
+      - and release evidence.
+harnessLayer: runtime
+productBoundary:
+  includes:
+    - Go middleware or infrastructure service
+    - control-loop runtime
+    - concurrency and dependency reliability
+    - Go build/test/release evidence
+  excludes: &a1
+    - non-Go project
+    - frontend-only app
+    - language-agnostic domain product without Go runtime
+matchPolicy:
+  requiredAny:
+    - file:go.mod
+    - file:.go
+    - architecture:middleware-framework
+  positive:
+    dependencies: []
+    imports:
+      - context
+      - net/http
+      - go.opentelemetry.io
+    files:
+      - go.mod
+      - .go
+    symbols:
+      - Context
+      - Handler
+      - Reconciler
+    architectureSignals:
+      - middleware-framework
+      - control-loop
+      - infrastructure-service
+  negative:
+    productBoundaryExcludes: *a1
+    signals:
+      - non-go-project
+executionModel:
+  phases:
+    - detect
+    - scan
+    - build
+    - unit
+    - integration
+    - diagnostics
+    - release-review
+  requiredCommands: *a2
+  optionalCommands:
+    profile:
+      - evopilot-harness detect --source-project <path> --json
+    strictValidate:
+      - evopilot-harness harness validate <harness-id> --strict --json
+qualityGate:
+  minTemplateScore: 0.8
+  requireProductBoundary: true
+  requireMatchPolicy: true
+  requireExecutionModel: true
+  requireEvidenceContract: true
+  requireExamples: true
+  requireHumanApproval: true

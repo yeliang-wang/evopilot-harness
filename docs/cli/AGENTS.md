@@ -1,188 +1,151 @@
 # EvoPilot Harness CLI Agent Instructions
 
-This is the CLI entry point for WorkBuddy, Codex, Claude Code, CI jobs, and other AI agents that operate `evopilot-harness`.
+This is the shortest safe entry point for WorkBuddy, Codex, Claude Code, CI, and other command-line agents operating `evopilot-harness` v3.
 
-Read this file first. Then read [quickstart.md](quickstart.md). Use [automation.md](automation.md) for JSON parsing rules, [workflows.md](workflows.md) for scenario flows, and [commands.md](commands.md) for full reference.
+Read [quickstart.md](quickstart.md), [automation.md](automation.md), [commands.md](commands.md), and [v3 Reasoning Contract](../reference/v3-reasoning-contract.md) before automating approval or publication.
+
+## Product Boundary
+
+- `evopilot-harness` produces, evolves, reviews, approves, signs, evaluates, and publishes Harness assets.
+- It does not onboard projects into EvoPilot or execute EvoPilot goal loops.
+- Do not call EvoPilot to create, mutate, approve, or publish Harness assets.
+- The Engine installation is read-only. Mutable state belongs under `EVOPILOT_HARNESS_HOME`.
+- Engine, Harness assets, Ontology, Policy, Evaluation, and Catalog versions are independent.
 
 ## Non-Negotiable Rules
 
-- Use `--json` for every command where JSON is available.
-- Do not parse human-readable CLI output for automation.
-- Treat `evopilot-harness` as the system of record for Harness lifecycle.
-- Do not use EvoPilot CLI or API to create, evolve, approve, publish, deprecate, or mutate Harness definitions.
-- Do not approve an evolution run unless the generated draft, source coverage, validation, and impact have been shown to an administrator.
-- Do not approve a corpus run unless the grouping, dedupe decisions, generated group drafts, validation, and publication impact have been shown to an administrator.
-- Do not invent `--confirmed-by` or `--confirmation` values.
-- Stop on `nextAction`, `BLOCKED`, `FAILED`, validation blockers, missing source files, missing Catalog files, approval gates, or non-zero exit codes.
-- Do not pass raw production secrets in `--note`, `--file`, `--attachment`, or `--production-log`.
-- Do not pass raw GitHub tokens in `--github-repo`; use public HTTPS, local Git credentials, or SSH.
-- Do not print or rewrite `models.json`; it is a manually maintained CodeBuddy-style local LLM config file.
-- Production logs are redacted for common patterns, but operators must still review inputs before sharing output.
+- Use `--json` for automation.
+- Do not parse human output.
+- Do not write to `assets/v3`, `ontology`, `policies`, or `harnesses` during a production run; write through the Workspace lifecycle.
+- Do not approve or publish in the same step as `produce`.
+- Stop on `nextAction`, `BLOCKED`, `FAILED`, `REVIEW_REQUIRED`, `INSUFFICIENT_EVIDENCE`, `NOT_HARNESS_ELIGIBLE`, validation failure, signature failure, Advisor failure, or a non-zero exit code.
+- Do not invent `--confirmed-by`, `--confirmation`, or evaluation review.
+- Do not execute commands discovered in source projects. v3 production extracts evidence; execution requires a separately reviewed Bundle consumer.
+- Do not put credentials in GitHub URLs, notes, attachments, or logs.
+- Do not print, edit, import, or publish `models.json`.
+- Treat internet research as supplemental cited evidence. It cannot override local source or runtime logs.
+- Treat LLM recommendations as advisory. Model confidence does not override deterministic decisions.
+- Do not claim matching accuracy when `accuracyClaim=INSUFFICIENT_EVAL_EVIDENCE`.
 
-## Required Local Context
-
-Run from the repository root unless the project has been installed as a command-line package:
+## Required Start
 
 ```bash
-cd /path/to/evopilot-harness
-npm install
-node src/index.mjs --help
+export EVOPILOT_HARNESS_HOME="$HOME/.evopilot-harness"
+node src/index.mjs workspace status --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
 
-The package requires Node.js 22 or later.
-
-If LLM Advisor review is expected, inspect model readiness without printing keys:
+If `status=NOT_INITIALIZED`:
 
 ```bash
-node src/index.mjs llm models --json
+node src/index.mjs workspace init --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
 
-The Advisor is optional by default. Use `--llm-advisor required` only when a configured model call must succeed before review, and use `--no-llm-advisor` for deterministic-only automation.
-
-## Safe Command Flow
+Validate before production:
 
 ```bash
-node src/index.mjs catalog publish --source harnesses --out published --json
-node src/index.mjs catalog validate --source published --json
-node src/index.mjs harness list --source harnesses --json
-node src/index.mjs harness validate --source harnesses --strict --json
-node src/index.mjs asset validate --source harnesses --json
-node src/index.mjs eval run --json
-node src/index.mjs llm replay --json
-node src/index.mjs hub snapshot --catalog published --source harnesses --json
+node src/index.mjs asset v3-test --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
 
-For one-command evolution:
+## Production Flow
 
 ```bash
-node src/index.mjs detect \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-project /path/to/project \
+  --goal "Produce or evolve a reusable Harness asset." \
   --json
 ```
 
-Show the detection fields to the administrator before draft generation when the decision is ambiguous or creates a new target:
+Report these fields exactly:
 
 ```text
-sourceProfile.primaryRole
-sourceProfile.recommendedHarness
-autoMatch.decision
-autoMatch.targetHarnessId
-autoMatch.parentCandidates
-autoMatch.candidates
-autoMatch.candidateRetrieval
-autoMatch.reviewGate
-autoMatch.decisionEvidence
-nextAction
-```
-
-```bash
-node src/index.mjs evolve \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
-  --json
-```
-
-Stop after the draft reaches `REVIEW_REQUIRED`. Show the response fields to the administrator:
-
-```text
-evolutionId
+runId
 status
-sourceCoverage
-sourceProfile
-autoMatch
-validation
-draft.harnessId
-draft.version
-draft.digest
-draft.template.definitionQuality
-draft.asset
-llmAdvisor.status
-llmAdvisor.llmProfileId
-llmAdvisor.provider
-llmAdvisor.model
-llmAdvisor.usage
+evidenceGraph.path
+evidenceGraph.digest
+reasoning.algorithmVersion
+reasoning.ontology.id/version/digest
+reasoning.policy.id/version/digest
+reasoning.eligibility
+reasoning.decision
+reasoning.targetProfile
+reasoning.composeProfiles
+reasoning.candidates
+reasoning.rejectionReasons
+reasoning.evidenceIds
+advisor.status/required
+advisor.model
+advisor.usage
+advisor.promptDigest/responseDigest
+proposal.proposedAssets
+proposal.validations
+proposal.blockers
+proposal.evaluationStatus
 nextAction
 ```
 
-Approve and publish only after explicit confirmation:
+If the decision is `PROPOSE_NEW_PROFILE`, confirm that:
+
+- a Profile Proposal was produced rather than an automatically published Harness;
+- Advisor review succeeded;
+- all Advisor citations exist in the Evidence Graph;
+- the new boundary does not duplicate an existing Profile;
+- the Evaluation Pack has been shown to the reviewer.
+
+## Approval Flow
+
+Only after the user supplies real approval values:
 
 ```bash
-node src/index.mjs evolution approve <evolution-id> \
-  --confirmed-by <administrator> \
-  --confirmation "Reviewed source coverage, draft diff, validation, and impact." \
+node src/index.mjs proposal approve <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --confirmed-by <user-supplied-reviewer> \
+  --confirmation <user-supplied-confirmation> \
+  --evaluation-reviewed \
   --json
-
-node src/index.mjs evolution publish <evolution-id> --json
 ```
 
-For root-directory corpus evolution:
+Publish in a separate command:
 
 ```bash
-node src/index.mjs corpus scan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --json
-
-node src/index.mjs corpus plan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --max-projects-per-group 5 \
+node src/index.mjs proposal publish <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
 
-Stop after `corpus plan` reaches `REVIEW_REQUIRED`. Show these fields to the administrator:
-
-```text
-corpusId
-status
-discovery
-duplicateCount
-groups[].targetHarnessId
-groups[].selectedProjects
-groups[].duplicateProjects
-groups[].autoMatch
-groups[].validation
-groups[].draft.digest
-validation
-nextAction
-```
-
-Approve and publish only after explicit confirmation:
+Then validate and verify signatures:
 
 ```bash
-node src/index.mjs corpus approve <corpus-id> \
-  --confirmed-by <administrator> \
-  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+node src/index.mjs asset v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs catalog v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs catalog v3-verify \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --public-key /path/to/catalog-public-key.pem \
   --json
-
-node src/index.mjs corpus publish <corpus-id> --json
 ```
 
-For GitHub repository source evolution:
+## Source Root Flow
 
 ```bash
-node src/index.mjs detect \
-  --github-repo owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
-  --json
-
-node src/index.mjs evolve \
-  --github-repo https://github.com/owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-root /path/to/root \
+  --limit 100 \
   --json
 ```
 
-Show `sourceCoverage.sources[].github.repository`, `ref`, `resolvedCommit`, `cachePath`, `sourceProfile.primaryRole`, `autoMatch.targetHarnessId`, and `draft.template.definitionQuality` before approval.
+Report `discoveredProjectCount`, `groupCount`, every `groups[]` entry, every per-project decision, every proposal blocker, and every `runId`. Nested modules are deduplicated unless `--include-modules` is explicitly supplied.
 
-## EvoPilot Boundary
+## Migration Flow
 
-After publication, EvoPilot reads `harness-registry.yaml` dynamically:
+Always dry-run first:
 
 ```bash
-EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
+node src/index.mjs migrate v2-to-v3 \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source /path/to/v2/harnesses \
+  --json
 ```
 
-EvoPilot records the selected published Harness during goal planning as `plan.selectedHarness`. It does not copy Harness files into its own lifecycle store and does not mutate this repository.
+Show the plan and validation. Apply only after confirmation. Record the returned migration journal so rollback remains possible.

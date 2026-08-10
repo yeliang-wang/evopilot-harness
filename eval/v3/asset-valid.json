@@ -1,0 +1,7 @@
+{
+  "id": "asset-valid-component",
+  "type": "asset-file",
+  "file": "assets/v3/components/engineering-validation/asset.yaml",
+  "expectedValid": true,
+  "reviewStatus": "unreviewed"
+}

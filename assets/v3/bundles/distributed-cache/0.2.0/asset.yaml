@@ -1,0 +1,46 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessBundle
+metadata:
+  id: distributed-cache
+  version: 0.2.0
+  name: Distributed Cache Harness Bundle
+  description: Immutable resolved execution package migrated from distributed-cache-harness.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: distributed-cache-harness
+spec:
+  profile:
+    id: distributed-cache
+    version: 0.2.0
+    digest: sha256:5fa8908191603808fc6df540a6e3e65d9c4219be461933252492464ab3b7166f
+  resolvedComponents:
+    - id: engineering-validation
+      version: 1.0.0
+      digest: sha256:aa84fa704cdc31dbf3c1fb8ebe84e26acd2ade7a5cc364ab5c71784f05d78638
+      required: true
+  executionPlan:
+    - discover-project-commands
+    - run-approved-validation
+  constraints:
+    - Execute only administrator-approved commands in an isolated workspace.
+    - Preserve source and credential boundaries from the source Harness contract.
+  evidence:
+    - protocol-report
+    - cluster-topology
+    - failover-report
+    - benchmark-summary
+    - runtime-log
+    - target-evidence-package
+    - goal-completion-report
+  validators:
+    - approved-command-only
+    - validation-exit-code
+  exports:
+    - adapter: evopilot
+      path: exports/evopilot/template.yaml
+provenance:
+  sourceDigests:
+    - sha256:9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

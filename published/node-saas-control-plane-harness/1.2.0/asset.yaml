@@ -10,7 +10,7 @@ metadata:
     scope: platform
   annotations:
     evopilot-harness/templateDigest: sha256:e0197b44c73091a36914c78a96921341b5c2e1e52835d39ccc9232c9730842f2
-    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/node-saas-control-plane-harness
+    evopilot-harness/sourceRoot: harnesses/node-saas-control-plane-harness
 spec:
   templateSchema: evopilot-harness-template/v2
   template:

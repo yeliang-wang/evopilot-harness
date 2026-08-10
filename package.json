@@ -1,8 +1,8 @@
 {
   "name": "evopilot-harness",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "EvoPilot-compatible Harness Factory and Published Harness Catalog.",
+  "description": "Independent user-owned Harness asset factory, reasoning engine, lifecycle, and signed Catalog.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
@@ -17,14 +17,19 @@
     "eval:run": "node src/index.mjs eval run --json",
     "llm:replay": "node src/index.mjs llm replay --json",
     "hub:snapshot": "node src/index.mjs hub snapshot --catalog published --registry harness-registry.yaml --source harnesses --out ui/harness-hub/catalog-snapshot.json --generated-at 2026-08-09T05:24:19.115Z --json",
+    "hub:v3-snapshot": "node scripts/build-v3-hub-snapshot.mjs",
     "hub:serve": "node src/index.mjs hub serve --catalog published --registry harness-registry.yaml --source harnesses",
     "docs:links": "node scripts/check-doc-links.mjs",
-    "check": "npm run catalog:publish && npm run catalog:validate && npm run registry:publish && npm run registry:validate && npm run asset:validate && npm run eval:run && npm run llm:replay && npm run hub:snapshot && npm run docs:links && npm test",
+    "verify:architecture": "node scripts/verify-architecture-boundaries.mjs",
+    "v3:generate-builtins": "node scripts/generate-v3-builtins.mjs",
+    "v3:check": "node scripts/validate-v3.mjs",
+    "check": "npm run catalog:publish && npm run catalog:validate && npm run registry:publish && npm run registry:validate && npm run asset:validate && npm run eval:run && npm run llm:replay && npm run hub:snapshot && npm run docs:links && npm run verify:architecture && npm test && npm run v3:check && npm run hub:v3-snapshot",
     "release:artifact": "node scripts/build-release-artifacts.mjs",
     "verify:release-artifact": "node scripts/verify-release-artifacts.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
+    "ajv": "^8.20.0",
     "yaml": "^2.9.0"
   },
   "engines": {

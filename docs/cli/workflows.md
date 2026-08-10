@@ -2,6 +2,34 @@
 
 These workflows describe how Harness administrators and AI agents use the CLI.
 
+## v3 Primary Workflow
+
+```bash
+node src/index.mjs workspace init --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-project /path/to/project \
+  --goal "Produce or evolve a reusable Harness asset." \
+  --json
+node src/index.mjs proposal review <proposal-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+Stop at review. After a real reviewer approves evidence, candidate reasoning, Advisor citations, asset boundary, and Evaluation Pack:
+
+```bash
+node src/index.mjs proposal approve <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --confirmed-by <reviewer> \
+  --confirmation <reviewer-confirmation> \
+  --evaluation-reviewed \
+  --json
+node src/index.mjs proposal publish <proposal-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+Detailed single-project, project-root, GitHub, attachment, log, research, signing, and migration workflows are in [v3 Production Lifecycle](../guides/v3-production-lifecycle.md).
+
+## Legacy v2 Workflows
+
 ## Publish Current Source Packs
 
 ```bash

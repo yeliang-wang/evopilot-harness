@@ -11,7 +11,7 @@ metadata:
     scope: platform
   annotations:
     evopilot-harness/templateDigest: sha256:8c3a9c02238446156a79d9369e3a69e43e27169e093b9994a175fd5576e8e000
-    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/database-product-harness
+    evopilot-harness/sourceRoot: harnesses/database-product-harness
 spec:
   templateSchema: evopilot-harness-template/v2
   template:

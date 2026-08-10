@@ -1,0 +1,53 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: python-enterprise
+  version: 1.2.0
+  name: Python Enterprise Harness
+  description: Enterprise Python baseline for API services, platform tools, and async workers.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: python-enterprise-harness
+spec:
+  classification:
+    domain: runtime
+    role: runtime-engineering
+    taskClass: runtime-task
+  boundary:
+    inScope:
+      - Engineering work supported by the python-enterprise-harness v2 contract.
+    outOfScope:
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - runtime
+      - executable-engineering
+    negativeConcepts: []
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - incident-or-failure-report
+      - observability-snapshot
+      - command
+      - exit-code
+      - stdout-or-log
+      - changed-files
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: python-enterprise@1.2.0
+provenance:
+  sourceDigests:
+    - sha256:99e4e6612dd492941cd6540e779fcf20492e6bfd8bbe17790dd568ffa4ab60c0
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

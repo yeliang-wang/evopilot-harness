@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/match-policy-pack-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "harness.evopilot.io/v1" },
+    "kind": { "const": "MatchPolicyPack" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "lifecycle"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "lifecycle": { "enum": ["draft", "review", "approved", "published", "deprecated"] },
+        "description": { "type": "string" }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligibility", "retrieval", "weights", "thresholds", "risk"],
+      "properties": {
+        "eligibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimumEvidenceNodes", "minimumActionSignals", "actionTerms", "rejectTerms"],
+          "properties": {
+            "minimumEvidenceNodes": { "type": "integer", "minimum": 1 },
+            "minimumActionSignals": { "type": "integer", "minimum": 1 },
+            "actionTerms": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "rejectTerms": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "retrieval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["topK", "bm25K1", "bm25B"],
+          "properties": {
+            "topK": { "type": "integer", "minimum": 1 },
+            "bm25K1": { "type": "number", "minimum": 0 },
+            "bm25B": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["role", "boundary", "capability", "execution", "evidence", "negativeConflict", "novelty"],
+          "properties": {
+            "role": { "type": "number" },
+            "boundary": { "type": "number" },
+            "capability": { "type": "number" },
+            "execution": { "type": "number" },
+            "evidence": { "type": "number" },
+            "negativeConflict": { "type": "number" },
+            "novelty": { "type": "number" }
+          }
+        },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["evolveExisting", "composeBundle", "ambiguousDelta", "newProfileMaximum"],
+          "properties": {
+            "evolveExisting": { "type": "number", "minimum": 0, "maximum": 1 },
+            "composeBundle": { "type": "number", "minimum": 0, "maximum": 1 },
+            "ambiguousDelta": { "type": "number", "minimum": 0, "maximum": 1 },
+            "newProfileMaximum": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["advisorRequiredFor", "humanApprovalRequiredFor"],
+          "properties": {
+            "advisorRequiredFor": { "type": "array", "items": { "type": "string" } },
+            "humanApprovalRequiredFor": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,240 +1,156 @@
 # EvoPilot Harness
 
-> Independent Harness Factory, lifecycle CLI, Harness Hub, and published Catalog for EvoPilot-compatible domain templates.
+> A user-owned Harness asset factory for turning model-external execution environments, actions, constraints, evidence, and validators into reusable production assets.
 
-Current release: `2.1.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
+Current version: `3.0.0` | Runtime: Node.js `>=22` | License: Apache-2.0
 
-[Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Registry Contract](docs/reference/registry-contract.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
+[Documentation](docs/README.md) | [Quickstart](docs/cli/quickstart.md) | [Asset Model](docs/architecture/v3-asset-model.md) | [Reasoning Contract](docs/reference/v3-reasoning-contract.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [v3 Release](docs/releases/3.0.0.md)
 
-`evopilot-harness` owns Harness authoring, source-driven evolution, review, approval, versioning, publication, and the standalone Harness Hub UI. EvoPilot consumes the result by reading `harness-registry.yaml` and the published Catalog directories it points to at goal-plan time. EvoPilot does not import, publish, approve, or evolve Harness definitions.
+`evopilot-harness` is an independent Harness producer. It owns source ingestion, Evidence Graphs, eligibility and matching, GLM Advisor review, asset drafting, human approval, signing, evaluation, and Catalog publication. It does not onboard third-party projects into EvoPilot and does not run EvoPilot goal loops.
 
-## What You Can Do
+## Asset Model
 
-| Capability | Command or Artifact |
+| Asset | Purpose |
 |---|---|
-| Publish a usable Harness Catalog | `node src/index.mjs catalog publish --source harnesses --out published --json` |
-| Validate a Catalog before EvoPilot uses it | `node src/index.mjs catalog validate --source published --json` |
-| Publish a multi-Catalog Registry | `node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json` |
-| Validate Registry and enabled Catalog roots | `node src/index.mjs registry validate --registry harness-registry.yaml --json` |
-| Inspect and validate source Harness packs | `node src/index.mjs harness validate --strict --json` |
-| Inspect and validate Harness Asset v2 envelopes | `node src/index.mjs asset validate --source harnesses --json` |
-| Detect the best Harness target before evolution | `node src/index.mjs detect --source-project /path/to/project --goal "..." --json` |
-| Detect from a GitHub repository source | `node src/index.mjs detect --github-repo owner/repo --github-ref main --goal "..." --json` |
-| Batch-detect projects under a source root | `node src/index.mjs detect batch --source-root /path/to/root --include-modules --json` |
-| Plan grouped Harness evolution from a project corpus | `node src/index.mjs corpus plan --source-root /path/to/root --include-modules --json` |
-| Evolve a Harness from a project, attachment, log, or note | `node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
-| Evolve a Harness from a GitHub repository | `node src/index.mjs evolve --github-repo https://github.com/owner/repo --github-ref main --goal "..." --json` |
-| One-command corpus evolution with review gates | `node src/index.mjs evolve corpus --source-root /path/to/root --include-modules --json` |
-| Inspect local EvoPilot GLM config | `node src/index.mjs llm models --llm-models-file models.json --json` |
-| Add semantic LLM Advisor review | `EVOPILOT_HARNESS_LLM_ADVISOR=optional node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
-| Replay expected LLM Advisor decisions | `node src/index.mjs llm replay --json` |
-| Run unknown-source matching evals | `node src/index.mjs eval run --json` |
-| Review, approve, and publish generated drafts | `node src/index.mjs evolution review <id> --json` |
-| Run the independent Harness Hub | `node src/index.mjs hub serve --catalog published --source harnesses` |
-| Let EvoPilot read published Harnesses | `EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml` |
+| `HarnessComponent` | Atomic reusable execution capability with environment, actions, constraints, evidence, and validators. |
+| `HarnessProfile` | Domain, role, and repeatable-task composition built from Components. |
+| `HarnessBundle` | Immutable resolved executable publication with pinned Component digests. |
+| `OntologyPack` | Versioned concepts and role relationships used by the matcher. |
+| `MatchPolicyPack` | Versioned eligibility, BM25 retrieval, scoring, thresholds, and risk rules. |
+| `AdvisorPolicyPack` | Evidence-bound GLM prompt, output contract, and authority limits. |
+| `EvaluationPack` | Reviewed regression cases and explicit evidence-sufficiency status. |
+
+A Harness is not a broad software category description. It is a versioned executable asset package for one class of repeatable engineering task.
 
 ## Quick Start
 
 ```bash
 npm install
-npm run check
-npm run hub:serve
+
+export EVOPILOT_HARNESS_HOME="$HOME/.evopilot-harness"
+node src/index.mjs workspace init --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs asset v3-test --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs hub v3-serve --workspace "$EVOPILOT_HARNESS_HOME"
 ```
 
-Open `http://127.0.0.1:4176` for the Harness Hub.
+Open `http://127.0.0.1:4176` for the standalone Harness Hub.
 
-Use the one-command evolution path when a user should not need the atomic lifecycle:
+Produce a proposal from one local project:
 
 ```bash
-node src/index.mjs detect \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-project /path/to/project \
+  --goal "Produce or evolve a reusable Harness asset for this engineering task." \
   --json
 ```
 
-Review `sourceProfile.primaryRole`, `autoMatch.decision`, `autoMatch.targetHarnessId`, `autoMatch.parentCandidates`, and `nextAction` before deciding whether to run `evolve`.
+Produce grouped proposals from all valid projects under a root:
 
 ```bash
-node src/index.mjs evolve \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a distributed cache Harness from this project." \
-  --llm-advisor optional \
-  --approve-and-publish \
-  --confirmed-by admin@example.com \
-  --confirmation "Reviewed source coverage, draft diff, validation, and impact." \
-  --json
-```
-
-For a public GitHub project, use `--github-repo`. The CLI clones or fetches the repository into `.evopilot-harness/github-sources/`, scans that local checkout, and records the upstream repository, ref, resolved commit, and cache path in source coverage. Do not pass raw GitHub tokens in the URL; use local Git credentials or SSH for repositories that require authentication.
-
-```bash
-node src/index.mjs detect \
-  --github-repo owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
-  --json
-
-node src/index.mjs evolve \
-  --github-repo https://github.com/owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
-  --json
-```
-
-Generated drafts optimize for more accurate, professional, and fine-grained Harness definitions: stronger product boundaries, more specific match policies, concrete evidence contracts, finer domain execution actions, and reviewable negative signals. Large-scale performance optimization, throughput expansion, and runtime tuning are non-goals unless an operator explicitly supplies evidence and asks for them.
-
-For production semantic review, configure `models.json` manually with the same GLM used by EvoPilot. The file format intentionally matches CodeBuddy-style `models.json`, but the content should contain only EvoPilot GLM:
-
-```json
-{
-  "models": [
-    {
-      "id": "glm-5.1",
-      "name": "EvoPilot GLM",
-      "vendor": "zhipu",
-      "apiKey": "<manual-local-api-key>",
-      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
-      "supportsToolCall": true,
-      "supportsReasoning": true
-    }
-  ]
-}
-```
-
-`models.json` is ignored by Git. `evopilot-harness` reads it but never writes, edits, imports, or publishes it. By default the CLI selects a GLM profile from that file. If no file exists, it falls back to the built-in `evopilot-glm` profile metadata and requires `EVOPILOT_HARNESS_LLM_API_KEY` or `EVOPILOT_LLM_API_KEY` to actually call the model.
-
-```bash
-node src/index.mjs llm models --json
-
-node src/index.mjs evolve \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
-  --llm-advisor required \
-  --json
-```
-
-`llmAdvisor` is optional by default. It records source classification, target recommendation, alternatives, warnings, profile/provider/model, and token usage when a configured model is available, but it does not approve or publish. Use `--llm-advisor required` when a model call must succeed, `--no-llm-advisor` for deterministic-only runs, and `--apply-llm-advisor` only when a high-confidence Advisor recommendation is allowed to change the generated draft target.
-
-Validate template quality before publishing a release baseline:
-
-```bash
-node src/index.mjs harness validate --source harnesses --strict --json
-node src/index.mjs catalog publish --source harnesses --out published --strict --json
-```
-
-Use atomic commands when an administrator needs review gates:
-
-```bash
-node src/index.mjs evolution create --source-project /path/to/project --goal "..." --json
-node src/index.mjs evolution advance <evolution-id> --json
-node src/index.mjs evolution review <evolution-id> --json
-node src/index.mjs evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json
-node src/index.mjs evolution publish <evolution-id> --json
-```
-
-For a root directory that contains many historical projects, use the corpus lifecycle. It scans all valid project roots, auto-matches them, groups by target Harness, dedupes nested modules, generates one draft per group, and stops at review:
-
-```bash
-node src/index.mjs corpus scan \
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
   --source-root /path/to/project-root \
-  --include-modules \
-  --json
-
-node src/index.mjs corpus plan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --max-projects-per-group 5 \
+  --goal "Produce reusable Harness assets from this project corpus." \
   --json
 ```
 
-After review:
+Supported evidence sources are local projects, project roots, GitHub repositories, PDF/PPTX/DOCX/text attachments, production logs, historical Harness files, and operator notes. Controlled internet research requires both `--research-url` and `--allow-internet-research`; it is supplemental evidence and cannot override local source or log facts.
+
+## Decision Contract
+
+The v3 matcher emits one of these decisions:
+
+- `EVOLVE_EXISTING`
+- `COMPOSE_NEW_BUNDLE`
+- `PROPOSE_NEW_PROFILE`
+- `INSUFFICIENT_EVIDENCE`
+- `NOT_HARNESS_ELIGIBLE`
+- `REVIEW_REQUIRED`
+
+Unknown domains become reviewed Profile Proposals. They are not silently converted into published Harnesses. Ambiguous and new-Profile decisions require GLM Advisor review plus human approval. The model may recommend; it cannot approve, publish, execute arbitrary code, mutate `models.json`, or override deterministic gates.
+
+## Review And Publish
+
+Every `produce` run stops at review. Inspect `reasoning`, candidate factor scores, `evidenceIds`, Advisor citations, proposed asset diff, schema validation, blockers, and evaluation status.
 
 ```bash
-node src/index.mjs corpus approve <corpus-id> \
-  --confirmed-by admin@example.com \
-  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+node src/index.mjs proposal review <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 
-node src/index.mjs corpus publish <corpus-id> --json
+node src/index.mjs proposal approve <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --confirmed-by admin@example.com \
+  --confirmation "Reviewed evidence, reasoning, Advisor citations, asset boundary, and evaluation case." \
+  --evaluation-reviewed \
+  --json
+
+node src/index.mjs proposal publish <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+Configure GLM manually in a CodeBuddy-style `models.json`. The application reads this file but never writes it. Only a Zhipu GLM profile is eligible in v3.
+
+```bash
+node src/index.mjs llm v3-models \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --models-file /path/to/models.json \
+  --json
 ```
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  Source["Source projects, attachments, logs, notes"] --> Detect["Unknown Source Decision Aggregator v2"]
-  Detect --> Factory["evopilot-harness CLI"]
-  Factory --> Draft["Draft Harness pack"]
-  Draft --> Quality["Template Quality Standard v1"]
-  Quality --> Review["Review and approval"]
-  Review --> Asset["Harness Asset v2 envelope"]
-  Asset --> Catalog["published/CATALOG.md"]
-  Catalog --> Registry["harness-registry.yaml"]
-  Registry --> EvoPilot["EvoPilot goal planning"]
-  Catalog --> Hub["Harness Hub UI"]
-  Hub --> Dashboard["Dashboard iframe container"]
-  EvoPilot --> Selected["plan.selectedHarness evidence"]
+  Sources["Projects, GitHub, attachments, logs, notes"] --> Snapshot["Redacted Evidence Graph"]
+  Snapshot --> Gate["Harness Eligibility Gate"]
+  Gate --> Matcher["Ontology + BM25 + multi-factor matcher"]
+  Matcher --> Advisor["Policy-required GLM Advisor"]
+  Advisor --> Proposal["Profile or Bundle Proposal"]
+  Proposal --> Review["Human review and evaluation"]
+  Review --> Assets["Component / Profile / Bundle"]
+  Assets --> Catalog["Signed CATALOG.md"]
+  Catalog --> Registry["Registry lists Catalog roots"]
 ```
 
-The boundary is intentionally strict:
+The Engine installation is treated as read-only. Mutable user assets, evidence, policies, runs, evaluations, keys, and Catalogs live under `EVOPILOT_HARNESS_HOME`. Engine release `3.0.0` and user asset versions are independent.
 
-- `evopilot-harness` manages Harness lifecycle, owns `CATALOG.md`, and publishes `harness-registry.yaml`.
-- `harness-registry.yaml` only lists enabled Catalog roots, priority, release, and optional expected digest. It does not duplicate Harness entries.
-- EvoPilot dynamically reads the Registry or legacy Catalog directories and records `selectedHarness` evidence.
-- Dashboard can embed the Harness Hub, but it does not own Harness state.
-- Harness definitions are EvoPilot-compatible contracts, not a universal control-plane format.
-- The matching path uses scanner evidence, candidate retrieval, deterministic decision aggregation, review gates, and optional LLM Advisor review. It chooses between `EVOLVE_EXISTING`, `CREATE_NEW_WITH_PARENT_REFERENCE`, `CREATE_NEW`, `FORK_FROM_MATCH`, and `REVIEW_REQUIRED`; the LLM Advisor reviews through the manually maintained `models.json` and never approves.
-- Published Catalog entries include both the legacy template path and a Harness Asset v2 envelope path with digest, provenance, lifecycle, quality, and source-reference metadata.
-- `eval run` and `llm replay` are release gates for unknown-source matching and Advisor response contracts.
+The canonical v3 asset is product-neutral. A Bundle may contain an optional `exports/evopilot/template.yaml` projection, but the canonical asset is not defined by EvoPilot's legacy template format.
 
-## Documentation
+## Compatibility
 
-| Reader | Start Here |
-|---|---|
-| New users | [Documentation Index](docs/README.md), [CLI Quickstart](docs/cli/quickstart.md) |
-| AI agents and CI | [CLI Agent Instructions](docs/cli/AGENTS.md), [Automation Rules](docs/cli/automation.md) |
-| Harness administrators | [How Harness Works](docs/guides/how-harness-works.md), [Harness Lifecycle](docs/guides/harness-evolution.md), [Source To Harness](docs/guides/source-to-harness.md) |
-| EvoPilot integrators | [EvoPilot Integration](docs/guides/evopilot-integration.md), [Catalog Boundary](docs/architecture/catalog-consumption-boundary.md) |
-| Dashboard integrators | [Harness Hub Integration](docs/guides/harness-hub-integration.md) |
-| Release operators | [Release Management](docs/operations/release-management.md), [Deployment](docs/operations/deployment.md) |
-| Schema reviewers | [Registry Contract](docs/reference/registry-contract.md), [Catalog Contract](docs/reference/catalog-contract.md), [Template Schema](docs/reference/template-schema.md) |
-
-## Development
+The v2 commands remain available as a compatibility layer for existing automation. Use `migrate v2-to-v3` for a non-mutating dry run or `--apply` to create v3 Profiles, Bundles, and optional EvoPilot exports in the writable Workspace. Migration journals support rollback.
 
 ```bash
-npm run catalog:publish
-npm run catalog:validate
-npm run registry:publish
-npm run registry:validate
-npm run asset:validate
-npm run eval:run
-npm run llm:replay
-npm run hub:snapshot
-npm run docs:links
+node src/index.mjs migrate v2-to-v3 \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source harnesses \
+  --json
+```
+
+## Validation
+
+```bash
 npm test
+npm run v3:check
 npm run check
 ```
 
-Release artifacts are built from a clean checkout:
-
-```bash
-npm run release:artifact
-npm run verify:release-artifact
-```
+`eval v3-run` validates contracts and safety regressions. Unless enough reviewed cases exist, it reports `INSUFFICIENT_EVAL_EVIDENCE`; passing fixtures is not presented as open-domain matching accuracy.
 
 ## Repository Layout
 
 ```text
-harnesses/             Source Harness packs maintained by this project
-published/             Usable Catalog directory read by EvoPilot
-harness-registry.yaml  Optional multi-Catalog discovery config read by EvoPilot
-src/index.mjs          CLI, Catalog publisher, evolution engine, and Hub server
-ui/harness-hub/        Standalone browser UI
-docs/                  Human, AI-agent, architecture, operation, and reference docs
-scripts/               Release and documentation verification helpers
-tests/                 CLI and Catalog behavior tests
+assets/v3/          Built-in Component, Profile, Bundle, and export assets
+ontology/           Versioned Ontology Packs
+policies/           Versioned Matcher and Advisor Policy Packs
+schemas/            Formal JSON Schemas
+src/v3/             Workspace, reasoning, Advisor, lifecycle, Catalog, and Hub modules
+harnesses/          Legacy v2 source packs retained for compatibility and migration
+ui/harness-hub/     Standalone Harness Hub
+docs/               Human and AI-agent documentation
+eval/               Contract, safety, and replay fixtures
+tests/              v2 compatibility and v3 end-to-end tests
 ```
-
-## License
-
-`evopilot-harness` is declared as `Apache-2.0` in `package.json`.

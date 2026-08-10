@@ -1,0 +1,93 @@
+apiVersion: harness.evopilot.io/v1
+kind: OntologyPack
+metadata:
+  id: software-engineering
+  version: 1.0.0
+  lifecycle: published
+  description: Product-neutral concepts used only to determine Harness asset eligibility and candidate relationships.
+spec:
+  evidenceKinds:
+    - source-code
+    - architecture-document
+    - build-manifest
+    - runtime-log
+    - attachment
+    - operator-note
+    - github-repository
+    - historical-harness
+    - research-evidence
+  concepts:
+    - id: distributed-cache
+      terms: [distributed cache, redis compatible, key-value store, ttl, eviction, hash slot, failover, cluster cache, 分布式缓存, 键值存储]
+      parents: [data-infrastructure]
+      conflicts: [redis-client]
+    - id: redis-client
+      terms: [spring-data-redis, jedis, redis client, redis template, redis serializer, connection factory]
+      parents: [client-library]
+      conflicts: [distributed-cache]
+    - id: database-product
+      terms: [database engine, sql parser, query optimizer, transaction, wal, mvcc, storage engine, distributed sql, 数据库内核]
+      parents: [data-infrastructure]
+      conflicts: [database-client]
+    - id: api-gateway
+      terms: [api gateway, reverse proxy, route policy, rate limit, upstream, ingress, traffic gateway, 网关, 限流]
+      parents: [network-infrastructure]
+      conflicts: [http-client]
+    - id: scheduler
+      terms: [scheduler, job scheduling, cron, task dispatch, worker queue, 调度系统, 任务调度]
+      parents: [platform-infrastructure]
+    - id: rpc-framework
+      terms: [rpc framework, dubbo, grpc, service discovery, remoting, rpc context]
+      parents: [network-infrastructure]
+    - id: observability
+      terms: [apm, tracing, telemetry, metrics, span, observability, 可观测性]
+      parents: [platform-infrastructure]
+    - id: management-software
+      terms: [rbac, admin console, workflow approval, reporting, audit trail, crm, enterprise management]
+      parents: [business-application]
+    - id: language-service
+      terms: [spring boot, java service, golang service, node service, python service, rest controller]
+      parents: [application-runtime]
+    - id: executable-engineering
+      terms: [build, test, validate, deploy, diagnose, benchmark, migrate, verify, rollback, release]
+  roles:
+    - id: distributed-cache-product
+      domain: distributed-cache
+      taskClass: product-engineering
+      concepts: [distributed-cache, executable-engineering]
+      negativeConcepts: [redis-client]
+    - id: redis-client-library
+      domain: redis-client
+      taskClass: library-engineering
+      concepts: [redis-client, executable-engineering]
+      negativeConcepts: [distributed-cache]
+    - id: database-product
+      domain: database
+      taskClass: product-engineering
+      concepts: [database-product, executable-engineering]
+      negativeConcepts: [database-client]
+    - id: api-gateway-product
+      domain: api-gateway
+      taskClass: product-engineering
+      concepts: [api-gateway, executable-engineering]
+      negativeConcepts: [http-client]
+    - id: scheduler-platform
+      domain: scheduler
+      taskClass: platform-engineering
+      concepts: [scheduler, executable-engineering]
+    - id: rpc-framework
+      domain: rpc-framework
+      taskClass: framework-engineering
+      concepts: [rpc-framework, executable-engineering]
+    - id: observability-platform
+      domain: observability
+      taskClass: platform-engineering
+      concepts: [observability, executable-engineering]
+    - id: enterprise-management-application
+      domain: management-software
+      taskClass: application-engineering
+      concepts: [management-software, executable-engineering]
+    - id: language-service
+      domain: language-service
+      taskClass: service-engineering
+      concepts: [language-service, executable-engineering]

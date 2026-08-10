@@ -2,17 +2,24 @@ name: evopilot-harness
 
 services:
   evopilot-harness-hub:
-    image: ${EVOPILOT_HARNESS_IMAGE:-ghcr.io/yeliang-wang/evopilot-harness:1.1.1}
+    image: ${EVOPILOT_HARNESS_IMAGE:-ghcr.io/yeliang-wang/evopilot-harness:3.0.0}
+    read_only: true
     ports:
       - "${EVOPILOT_HARNESS_HUB_PORT:-4176}:4176"
     environment:
       EVOPILOT_HARNESS_HUB_HOST: "0.0.0.0"
       EVOPILOT_HARNESS_HUB_PORT: "4176"
-      EVOPILOT_HARNESS_CATALOG_ROOT: "published"
-      EVOPILOT_HARNESS_SOURCE_ROOT: "harnesses"
+      EVOPILOT_HARNESS_HOME: "/data"
+    volumes:
+      - evopilot-harness-data:/data
+    tmpfs:
+      - /tmp
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4176/api/hub/snapshot >/dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4176/api/health >/dev/null"]
       interval: 20s
       timeout: 5s
       retries: 10
     restart: unless-stopped
+
+volumes:
+  evopilot-harness-data:

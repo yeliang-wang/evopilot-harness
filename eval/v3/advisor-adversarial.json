@@ -1,0 +1,18 @@
+{
+  "id": "advisor-unknown-citation-rejected",
+  "type": "advisor-contract",
+  "graph": {
+    "nodes": [
+      { "evidenceId": "evidence-0001" }
+    ]
+  },
+  "response": {
+    "recommendation": "EVOLVE_EXISTING",
+    "rationale": "Unsupported claim.",
+    "evidenceIds": ["evidence-invented"],
+    "risks": [],
+    "proposedDeltas": []
+  },
+  "expectedStatus": "FAILED",
+  "reviewStatus": "unreviewed"
+}

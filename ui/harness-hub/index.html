@@ -18,8 +18,9 @@
         </div>
         <nav>
           <a href="#catalog">Catalog</a>
-          <a href="#harnesses">Harnesses</a>
-          <a href="#evolution">Evolution</a>
+          <a href="#harnesses">Assets</a>
+          <a href="#evolution">Proposals</a>
+          <a href="#governance">Governance</a>
           <a href="#sources">Sources</a>
         </nav>
       </aside>
@@ -27,7 +28,7 @@
         <header class="topbar">
           <div>
             <h1>Harness Hub</h1>
-            <p>管理、进化、审批并发布 EvoPilot 可读取的 Harness Catalog。</p>
+            <p>生产、评审并发布可复用的 Harness 执行资产。</p>
           </div>
           <button id="refresh" type="button">Refresh</button>
         </header>
@@ -39,9 +40,9 @@
             <small id="catalog-status">waiting</small>
           </article>
           <article>
-            <span>Published Harness</span>
+            <span>Published Assets</span>
             <strong id="entry-count">0</strong>
-            <small id="compatible-evopilot">compatible</small>
+            <small id="compatible-evopilot">Component / Profile / Bundle</small>
           </article>
           <article>
             <span>Evolution Runs</span>
@@ -54,7 +55,7 @@
           <div class="panel-head">
             <div>
               <span>Published Catalog</span>
-              <h2>可交付 Harness Catalog</h2>
+              <h2>不可变 Harness Catalog</h2>
             </div>
             <code id="catalog-path">published/CATALOG.md</code>
           </div>
@@ -65,9 +66,9 @@
           <div class="panel-head">
             <div>
               <span>Lifecycle</span>
-              <h2>Harness 管理</h2>
+              <h2>Component / Profile / Bundle</h2>
             </div>
-            <code>harnesses/*/template.yaml</code>
+            <code id="asset-counts">assets</code>
           </div>
           <div class="cards" id="harness-cards"></div>
         </section>
@@ -77,7 +78,7 @@
             <div class="panel-head">
               <div>
                 <span>Evolution</span>
-                <h2>进化运行</h2>
+                <h2>评审与发布提案</h2>
               </div>
             </div>
             <div class="timeline" id="evolution-list"></div>
@@ -86,7 +87,7 @@
             <div class="panel-head">
               <div>
                 <span>Command Builder</span>
-                <h2>一键进化命令</h2>
+                <h2>一键生产命令</h2>
               </div>
             </div>
             <label>
@@ -95,13 +96,34 @@
             </label>
             <label>
               <span>Goal</span>
-              <textarea id="goal">Create or evolve a domain Harness from this project.</textarea>
+              <textarea id="goal">Produce or evolve a reusable Harness asset from this project.</textarea>
             </label>
             <label>
-              <span>Confirm Actor</span>
-              <input id="confirmed-by" value="admin@example.com" />
+              <span>Workspace</span>
+              <input id="confirmed-by" value="$EVOPILOT_HARNESS_HOME" />
             </label>
             <pre id="command-preview"></pre>
+          </div>
+        </section>
+
+        <section id="governance" class="panel split">
+          <div>
+            <div class="panel-head">
+              <div>
+                <span>Versioned Knowledge</span>
+                <h2>Ontology / Matcher / Advisor Policy</h2>
+              </div>
+            </div>
+            <div class="timeline" id="governance-list"></div>
+          </div>
+          <div>
+            <div class="panel-head">
+              <div>
+                <span>Evaluation & LLM</span>
+                <h2>证据充足度与模型用量</h2>
+              </div>
+            </div>
+            <div class="timeline" id="llm-usage"></div>
           </div>
         </section>
 

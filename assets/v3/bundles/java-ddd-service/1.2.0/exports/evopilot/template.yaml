@@ -1,0 +1,501 @@
+schema: evopilot-harness-template/v1
+id: java-ddd-service-harness
+version: 1.2.0
+name: Java DDD Service Harness
+description: Enterprise Java baseline for DDD, Spring Boot, hexagonal services,
+  and JVM release governance.
+scope: platform
+languageFamily: java
+capabilities:
+  - id: source-boundary
+    name: Source and workspace boundary
+    boundary: Tenant/workspace/repository/branch/writeback boundaries are explicit.
+    requiredEvidence:
+      - project-registration
+      - source-readiness-preflight
+  - id: java-runtime
+    name: Java runtime harness
+    boundary: Build, static analysis, unit, integration, contract, package, and JVM
+      readiness commands are explicit.
+    requiredEvidence:
+      - build-output
+      - unit-output
+      - integration-output
+      - contract-output
+      - jvm-runtime-log
+  - id: ddd-boundaries
+    name: DDD module boundaries
+    boundary: Domain, application, infrastructure, and interface adapters remain
+      explicit and reviewable.
+    requiredEvidence:
+      - module-boundary-report
+      - aggregate-contract
+      - repository-contract
+  - id: exception-tracking
+    name: Exception and error tracking
+    boundary: Domain errors, dependency failures, retries, and user-facing errors
+      are mapped and correlated.
+    requiredEvidence:
+      - error-code-contract
+      - exception-sample
+      - trace-link
+      - repair-verification
+  - id: test-and-quality
+    name: Test and quality gates
+    boundary: Unit, integration, contract, aggregate invariant, and regression
+      checks produce command evidence.
+    requiredEvidence:
+      - test-report
+      - contract-check
+      - aggregate-invariant-proof
+  - id: failure-diagnostics
+    name: Failure diagnostics
+    boundary: JVM and service failures include command, stack/log excerpt, root
+      cause, owner, next action, and verification.
+    requiredEvidence:
+      - failure-classification
+      - jvm-diagnostic
+      - repair-verification
+  - id: observability
+    name: Observability
+    boundary: Actuator, logs, metrics, traces, APM, dependency health, and alert
+      routes are bound before Beta/RC/GA.
+    requiredEvidence:
+      - actuator-health
+      - runtime-log
+      - metric-or-trace-proof
+      - alert-route
+  - id: slo-monitoring
+    name: SLO monitoring and alert routing
+    boundary: SLIs, SLOs, dashboards, alerts, runbooks, and error budgets are
+      explicit before RC/GA.
+    requiredEvidence:
+      - sli-definition
+      - slo-dashboard
+      - alert-rule
+      - runbook-link
+      - error-budget-status
+  - id: operational-runbooks
+    name: Operational runbooks
+    boundary: Critical JVM/service failure modes have symptom-first triage,
+      mitigation, rollback, owner, and verification.
+    requiredEvidence:
+      - runbook
+      - triage-query
+      - rollback-or-mitigation
+      - oncall-owner
+  - id: release-governance
+    name: Release governance
+    boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+      and ReleaseDecision are required before GA.
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - source-closure
+      - release-decision
+runtimePatterns:
+  language: java
+  buildTools:
+    - maven
+    - gradle
+  architectureStyles:
+    - tactical-ddd
+    - hexagonal
+    - spring-boot-service
+  defaultCommands: &a2
+    install:
+      - ./mvnw -q -DskipTests package
+      - ./gradlew assemble
+    lint:
+      - ./mvnw -q checkstyle:check
+      - ./gradlew check
+    typecheck:
+      - ./mvnw -q -DskipTests compile
+      - ./gradlew classes
+    unit:
+      - ./mvnw test
+      - ./gradlew test
+    smoke:
+      - ./mvnw verify
+      - ./gradlew integrationTest
+  exceptionTracking:
+    handlers:
+      - Spring @ControllerAdvice
+      - domain exception hierarchy
+      - problem-details response mapper
+    requiredErrorEnvelope:
+      - errorCode
+      - message
+      - requestId
+      - traceId
+      - retryable
+      - domainAggregate
+      - supportReference
+    exceptionAttributes:
+      - exception.type
+      - exception.message
+      - exception.stacktrace
+      - http.route
+      - jvm.thread
+      - tenant.id
+  observability:
+    instrumentation:
+      - Spring Boot Actuator
+      - Micrometer
+      - OpenTelemetry Java instrumentation
+      - Prometheus registry
+    logs:
+      - MDC requestId
+      - traceId
+      - spanId
+      - tenantId
+      - workspaceId
+      - aggregateId
+      - errorCode
+    metrics:
+      - http.server.requests
+      - jvm.memory.used
+      - jvm.threads.live
+      - jdbc.connections.active
+      - executor.completed
+    traces:
+      - controller
+      - application service
+      - repository
+      - transaction boundary
+      - outbound HTTP
+validationBaseline:
+  requiredCommandGroups:
+    - install
+    - lint
+    - typecheck
+    - unit
+    - smoke
+  requiredBoundaries:
+    - domain
+    - application
+    - infrastructure
+    - interfaces
+  contractChecks:
+    - openapi
+    - repository-contract
+    - aggregate-invariant
+  commandEvidenceRequired: true
+  realBoundaryEvidenceRequired: true
+  noMockEvidenceForReleaseClaims: true
+evidenceContract:
+  format: json
+  requiredArtifacts:
+    - target-evidence-package
+    - phase-package
+    - goal-completion-report
+    - incident-or-failure-report
+    - observability-snapshot
+    - command
+    - exit-code
+    - stdout-or-log
+    - changed-files
+  requiredEvidence:
+    - command
+    - exit-code
+    - stdout-or-log
+    - changed-files
+    - ci-status-or-local-proof
+    - api-or-interface-contract
+    - observability-signal
+    - error-code-contract
+    - trace-or-correlation-link
+    - runbook-or-repair-note
+  correlationFields:
+    - requestId
+    - traceId
+    - spanId
+    - tenantId
+    - workspaceId
+    - projectId
+    - actor
+    - environment
+    - release
+    - commitSha
+failureTaxonomy:
+  categories:
+    - business
+    - validation
+    - permission
+    - dependency
+    - environment
+    - syntax
+    - type
+    - test
+    - contract
+    - security
+    - performance
+    - deploy
+    - observability
+    - governance
+    - data
+    - database
+    - queue
+    - external-api
+    - concurrency
+    - resource-saturation
+    - unknown
+  severityLevels:
+    - debug
+    - info
+    - warn
+    - error
+    - critical
+  exceptionTracking:
+    requiredAttributes:
+      - exception.type
+      - exception.message
+      - exception.stacktrace
+      - errorCode
+      - requestId
+      - traceId
+      - spanId
+      - tenantId
+      - workspaceId
+      - projectId
+      - actor
+      - release
+      - commitSha
+      - retryable
+diagnosticsBaseline:
+  requiredSignals:
+    - failing-command
+    - exit-code
+    - stack-trace-or-log
+    - changed-files
+    - runtime-env
+    - dependency-lock
+    - request-id
+    - trace-id
+    - release-or-commit
+    - recent-deploy
+    - ci-job-url
+    - health-status
+    - alert-name
+  rootCauseFields:
+    - symptom
+    - hypothesis
+    - evidence
+    - fix
+    - verification
+    - owner
+    - risk
+    - rollbackOrMitigation
+observabilityBaseline:
+  requiredSignals:
+    - health
+    - readiness
+    - logs
+    - metrics
+    - traces
+    - apm
+    - alerts
+    - dashboards
+    - slo
+    - runbooks
+  logLevels:
+    - debug
+    - info
+    - warn
+    - error
+  structuredLogs:
+    format: json
+    requiredFields:
+      - timestamp
+      - level
+      - service
+      - environment
+      - requestId
+      - traceId
+      - spanId
+      - tenantId
+      - workspaceId
+      - projectId
+      - actor
+      - event
+      - errorCode
+      - exceptionClass
+      - rootCauseHint
+      - release
+      - commitSha
+    redactionRequired: true
+  metrics:
+    red:
+      - request_rate
+      - error_rate
+      - duration_p50_p95_p99
+    dependency:
+      - jdbc_latency
+      - jdbc_error_rate
+      - timeout_count
+      - circuit_breaker_state
+  traces:
+    requiredSpans:
+      - inbound request
+      - authorization
+      - application service
+      - repository
+      - database query
+      - outbound dependency
+    samplingPolicyMustBeDeclared: true
+governanceRules:
+  tenantWorkspaceScopeRequired: true
+  targetPlanRequiresApproval: true
+  selectedHarnessBindingRequiresReview: true
+  promotionRequiresReleaseDecision: true
+  sourceClosureRequired: true
+  noSilentSelectedHarnessMutation: true
+  mandatoryGates:
+    - selected-harness-bound
+    - target-plan-user-confirmed
+    - target-evidence-package
+    - phase-package
+    - observability-evidence
+    - slo-or-risk-acceptance
+    - source-closure
+    - release-decision
+phaseMapping:
+  alpha:
+    - source-boundary
+    - java-runtime
+    - ddd-boundaries
+    - exception-tracking
+    - failure-diagnostics
+  beta:
+    - test-and-quality
+    - ddd-boundaries
+    - observability
+    - exception-tracking
+    - slo-monitoring
+  rc:
+    - observability
+    - slo-monitoring
+    - operational-runbooks
+    - release-governance
+    - test-and-quality
+  ga:
+    - release-governance
+    - observability
+    - slo-monitoring
+    - operational-runbooks
+    - source-boundary
+llmDraftPolicy:
+  enabled: true
+  generatedStatus: DRAFT
+  requireUserReview: true
+  activationRequiresAdmin: true
+  reonboardingUsesPreviousActiveProfile: true
+  allowedToSilentlyModifyActiveProfile: false
+  mustExplainTemplateSelection: true
+  mustNotInventEvidence: true
+sourceReferences:
+  - name: Spring Boot
+    url: https://github.com/spring-projects/spring-boot
+    category: github
+    rationale: Java service runtime
+    Actuator health/readiness: null
+    build/test lifecycle: null
+    and packaging conventions.: null
+  - name: Micrometer
+    url: https://github.com/micrometer-metrics/micrometer
+    category: github
+    rationale: Dimensional metrics
+    Prometheus export: null
+    and Java observability correlation.: null
+  - name: OpenTelemetry Java instrumentation
+    url: https://github.com/open-telemetry/opentelemetry-java-instrumentation
+    category: github
+    rationale: Auto-instrumentation for HTTP
+    JDBC: null
+    messaging: null
+    JVM: null
+    and framework telemetry.: null
+changelog:
+  - version: 1.2.0
+    changedAt: 2026-08-09T12:00:00.000Z
+    changedBy: evopilot-harness
+    summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1 metadata.
+    changes:
+      - Add productBoundary includes/excludes.
+      - Add structured matchPolicy with positive and negative evidence.
+      - Add executionModel and qualityGate for strict validation.
+  - version: 1.1.0
+    changedAt: 2026-07-31T06:00:00.000Z
+    changedBy: evopilot
+    summary: Upgrade Java DDD template to enterprise harness knowledge baseline.
+    changes:
+      - Add DDD boundaries
+      - Spring exception mapping
+      - JVM diagnostics
+      - Micrometer/OpenTelemetry observability
+      - SLO gates
+      - and release evidence.
+harnessLayer: runtime
+productBoundary:
+  includes:
+    - Java service runtime
+    - Maven or Gradle build
+    - DDD or layered service boundaries
+    - JVM test and diagnostic evidence
+  excludes: &a1
+    - Java client SDK only when a narrower Harness exists
+    - database/cache/gateway product kernel
+    - frontend-only app
+matchPolicy:
+  requiredAny:
+    - file:pom.xml
+    - file:build.gradle
+    - architecture:java-service
+  positive:
+    dependencies:
+      - spring-boot
+      - spring-context
+      - junit
+    imports:
+      - org.springframework
+      - java.util
+    files:
+      - pom.xml
+      - build.gradle
+      - src/main/java
+    symbols:
+      - Controller
+      - Service
+      - Repository
+    architectureSignals:
+      - java-service
+      - spring-boot-service
+      - ddd-application-service
+  negative:
+    productBoundaryExcludes: *a1
+    signals:
+      - client-library-not-cache-engine
+      - frontend-app-not-gateway-product
+executionModel:
+  phases:
+    - detect
+    - scan
+    - build
+    - unit
+    - integration
+    - diagnostics
+    - release-review
+  requiredCommands: *a2
+  optionalCommands:
+    profile:
+      - evopilot-harness detect --source-project <path> --json
+    strictValidate:
+      - evopilot-harness harness validate <harness-id> --strict --json
+qualityGate:
+  minTemplateScore: 0.8
+  requireProductBoundary: true
+  requireMatchPolicy: true
+  requireExecutionModel: true
+  requireEvidenceContract: true
+  requireExamples: true
+  requireHumanApproval: true

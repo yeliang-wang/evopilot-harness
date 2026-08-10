@@ -1,5 +1,7 @@
 # Source To Harness
 
+> New v3 production uses `produce` and Evidence Graphs as documented in [v3 Production Lifecycle](v3-production-lifecycle.md). The commands below are the v2 compatibility flow.
+
 This guide explains how source material becomes a Harness draft.
 
 ## Supported Inputs

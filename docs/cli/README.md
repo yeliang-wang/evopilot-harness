@@ -1,8 +1,8 @@
 # EvoPilot Harness CLI
 
-> Command-line access to the independent Harness Factory, Catalog publisher, evolution workflow, and Harness Hub.
+> Command-line access to the independent v3 Harness asset factory, proposal lifecycle, signed Catalog, and Harness Hub.
 
-The CLI manages local repository state. It reads source Harness packs from `harnesses/`, detects source roles and target Harnesses from local projects, GitHub repository sources, attachments, logs, notes, and source-root corpora, writes evolution runs under `.evopilot-harness/`, publishes usable Catalog files under `published/`, maintains `harness-registry.yaml`, and serves the standalone Harness Hub.
+The v3 CLI treats the Engine as read-only and writes user state under `EVOPILOT_HARNESS_HOME`. Its primary path is `workspace init` -> `produce` -> `proposal review` -> `proposal approve` -> `proposal publish` -> Catalog validation/signing. Legacy v2 commands remain available for migration compatibility.
 
 ## Install
 

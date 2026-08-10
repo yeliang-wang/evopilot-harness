@@ -1,0 +1,51 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessComponent
+metadata:
+  id: engineering-validation
+  version: 1.0.0
+  name: Engineering Validation
+  description: Reusable constrained build, test, evidence collection, and validation capability.
+  lifecycle: published
+  owner: evopilot-harness
+  labels:
+    scope: product-neutral
+spec:
+  capability: engineering-validation
+  environment:
+    workspaceMode: isolated
+    requiredTools: [shell, source-control]
+  actions:
+    - id: discover-project-commands
+      description: Discover repository-declared build and test commands without executing untrusted code.
+      executor: agent
+      inputs: [source-snapshot]
+      outputs: [command-inventory]
+      timeoutSeconds: 300
+      network: denied
+    - id: run-approved-validation
+      description: Execute only administrator-approved validation commands in an isolated workspace.
+      executor: shell
+      inputs: [approved-command-inventory]
+      outputs: [validation-command-log, validation-result]
+      timeoutSeconds: 3600
+      network: restricted
+  constraints:
+    - Never execute source-provided commands before explicit approval.
+    - Never expose credentials in command output or evidence.
+    - Release claims require real command evidence.
+  evidence: [source-snapshot, command-inventory, validation-command-log, validation-result]
+  validators:
+    - id: approved-command-only
+      type: content
+      assertion: Every executed command is present in approved-command-inventory.
+      evidenceRefs: [approved-command-inventory, validation-command-log]
+      blocking: true
+    - id: validation-exit-code
+      type: exit-code
+      assertion: Required validation commands exit successfully.
+      evidenceRefs: [validation-result]
+      blocking: true
+provenance:
+  sourceDigests: []
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

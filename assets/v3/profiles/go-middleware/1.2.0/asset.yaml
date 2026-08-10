@@ -1,0 +1,53 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: go-middleware
+  version: 1.2.0
+  name: Go Middleware Harness
+  description: Enterprise Go baseline for middleware, control-loop, gateway, and infrastructure services.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: go-middleware-harness
+spec:
+  classification:
+    domain: runtime
+    role: runtime-engineering
+    taskClass: runtime-task
+  boundary:
+    inScope:
+      - Engineering work supported by the go-middleware-harness v2 contract.
+    outOfScope:
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - runtime
+      - executable-engineering
+    negativeConcepts: []
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - incident-or-failure-report
+      - observability-snapshot
+      - command
+      - exit-code
+      - stdout-or-log
+      - changed-files
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: go-middleware@1.2.0
+provenance:
+  sourceDigests:
+    - sha256:26de1113e842846c4ca491a8293f4327cd361b6451c8b0e9ce96a5f3d072069e
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

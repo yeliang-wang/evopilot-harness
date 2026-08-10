@@ -11,7 +11,7 @@ metadata:
     scope: platform
   annotations:
     evopilot-harness/templateDigest: sha256:fd9bda5955d20adaa87a197e90a307f96d56ff9fd65b195e97573c7af069caf6
-    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/observability-apm-harness
+    evopilot-harness/sourceRoot: harnesses/observability-apm-harness
 spec:
   templateSchema: evopilot-harness-template/v2
   template:
