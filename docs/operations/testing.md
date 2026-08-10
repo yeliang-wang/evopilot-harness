@@ -88,6 +88,35 @@ autoMatch.targetHarnessId=distributed-cache-harness
 validation.status=VALIDATED
 ```
 
+## Corpus Smoke
+
+Use a temporary source root with more than one project when validating corpus behavior:
+
+```bash
+node src/index.mjs corpus scan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --json
+
+node src/index.mjs corpus plan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --json
+```
+
+Expected result:
+
+```text
+status=REVIEW_REQUIRED
+nextAction=review-approve-corpus-plan
+groups[].targetHarnessId present
+groups[].validation.status=VALIDATED
+validation.status=VALIDATED
+```
+
+Do not publish a corpus smoke into the repository's real `harnesses/` directory unless the generated group drafts have been reviewed and are intended release content.
+
 ## External Sample Validation
 
 When the local historical project corpus exists, use it only as validation input:

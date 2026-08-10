@@ -102,6 +102,38 @@ node src/index.mjs evolution publish <evolution-id> --json
 
 Use the atomic flow for normal administration because it leaves review points between draft generation, approval, and publication.
 
+## Corpus Flow
+
+Use corpus flow when a root directory contains many historical projects and the administrator wants automatic grouping, dedupe, and batch draft generation:
+
+```bash
+node src/index.mjs corpus scan --source-root /path/to/project-root --include-modules --json
+node src/index.mjs corpus plan --source-root /path/to/project-root --include-modules --json
+node src/index.mjs corpus review <corpus-id> --json
+node src/index.mjs corpus approve <corpus-id> --confirmed-by <admin> --confirmation <text> --json
+node src/index.mjs corpus publish <corpus-id> --json
+```
+
+`corpus plan` writes one draft pack per target Harness group:
+
+```text
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/
+```
+
+It uses the same Source Profile, auto-match, optional LLM Advisor, draft generator, and Template Quality Standard v1 validator as single-project evolution. It differs from single-project evolution in three ways:
+
+- it discovers many projects from `--source-root`
+- it groups by target Harness and dedupes nested modules
+- it publishes multiple Harness packs in one approved run
+
+The one-command wrapper is:
+
+```bash
+node src/index.mjs evolve corpus --source-root /path/to/project-root --include-modules --json
+```
+
+This wrapper still stops at `REVIEW_REQUIRED` by default.
+
 ## Review Checklist
 
 Before approval, verify:
@@ -111,6 +143,7 @@ Before approval, verify:
 - `sourceProfile.primaryRole`, recommended Harness, architecture signals, and negative signals are reasonable
 - `autoMatch.decision`, confidence, target Harness id, parent candidates, and reasons are reasonable
 - LLM Advisor classification, recommendation, alternatives, warnings, and token usage are understood when enabled
+- for corpus runs, `groups[].selectedProjects`, `groups[].duplicateProjects`, and every group draft are reasonable
 - target Harness id and version are correct
 - `draft/template.yaml` has clear `productBoundary`, `matchPolicy`, `executionModel`, `evidenceContract`, `qualityGate`, domain actions, evidence adapters, and release blockers
 - `validation.status=VALIDATED`
@@ -130,5 +163,7 @@ harnesses/<harness-id>/examples/selected-harness-binding.yaml
 published/CATALOG.md
 published/<harness-id>/<version>/
 ```
+
+Corpus publication can mutate several `harnesses/<harness-id>/` directories in one approved run and republishes the Catalog once after all group drafts are written.
 
 It does not change EvoPilot. EvoPilot sees the new Catalog only when its configured Catalog directory is read during a later planning request.

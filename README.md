@@ -2,7 +2,7 @@
 
 > Independent Harness Factory, lifecycle CLI, Harness Hub, and published Catalog for EvoPilot-compatible domain templates.
 
-Current release: `1.3.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
+Current release: `1.4.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
 
 [Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Registry Contract](docs/reference/registry-contract.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
 
@@ -19,7 +19,9 @@ Current release: `1.3.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=
 | Inspect and validate source Harness packs | `node src/index.mjs harness validate --strict --json` |
 | Detect the best Harness target before evolution | `node src/index.mjs detect --source-project /path/to/project --goal "..." --json` |
 | Batch-detect projects under a source root | `node src/index.mjs detect batch --source-root /path/to/root --include-modules --json` |
+| Plan grouped Harness evolution from a project corpus | `node src/index.mjs corpus plan --source-root /path/to/root --include-modules --json` |
 | Evolve a Harness from a project, attachment, log, or note | `node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
+| One-command corpus evolution with review gates | `node src/index.mjs evolve corpus --source-root /path/to/root --include-modules --json` |
 | Add semantic LLM Advisor review | `EVOPILOT_HARNESS_LLM_ADVISOR=optional node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
 | Review, approve, and publish generated drafts | `node src/index.mjs evolution review <id> --json` |
 | Run the independent Harness Hub | `node src/index.mjs hub serve --catalog published --source harnesses` |
@@ -87,6 +89,32 @@ node src/index.mjs evolution advance <evolution-id> --json
 node src/index.mjs evolution review <evolution-id> --json
 node src/index.mjs evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json
 node src/index.mjs evolution publish <evolution-id> --json
+```
+
+For a root directory that contains many historical projects, use the corpus lifecycle. It scans all valid project roots, auto-matches them, groups by target Harness, dedupes nested modules, generates one draft per group, and stops at review:
+
+```bash
+node src/index.mjs corpus scan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --json
+
+node src/index.mjs corpus plan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --json
+```
+
+After review:
+
+```bash
+node src/index.mjs corpus approve <corpus-id> \
+  --confirmed-by admin@example.com \
+  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+  --json
+
+node src/index.mjs corpus publish <corpus-id> --json
 ```
 
 ## Architecture

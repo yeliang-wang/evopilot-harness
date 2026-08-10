@@ -42,6 +42,7 @@
 
 ## Releases
 
+- [1.4.0](releases/1.4.0.md)
 - [1.3.0](releases/1.3.0.md)
 - [1.2.0](releases/1.2.0.md)
 - [1.1.1](releases/1.1.1.md)

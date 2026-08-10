@@ -2,6 +2,28 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 1.4.0 - 2026-08-10
+
+### Added
+
+- Added the source-root Corpus Lifecycle: `corpus scan`, `corpus plan`, `corpus list`, `corpus review`, `corpus approve`, and `corpus publish`.
+- Added one-command root-directory evolution through `evolve corpus --source-root <path>`.
+- Added grouped Harness draft generation with target Harness grouping, nested module dedupe, representative project selection, strict draft validation, approval, and batch publication.
+- Added Corpus state storage under `.evopilot-harness/corpora/<corpus-id>/` and draft output under `.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/`.
+- Added Harness Hub snapshot visibility for recent corpus runs and corpus lifecycle commands.
+
+### Changed
+
+- Kept single-project `detect`, `detect batch`, `evolve`, and atomic `evolution` commands compatible while reusing the same detection, Source Profile, LLM Advisor, draft generation, validation, and publication primitives for corpus runs.
+- Updated CLI, automation, quickstart, workflows, source-to-harness, testing, and release documentation for both human operators and AI Agents.
+
+### Validation
+
+- `node --check src/index.mjs`
+- `npm test`
+- `npm run check`
+- `git diff --check`
+
 ## 1.3.0 - 2026-08-09
 
 ### Added

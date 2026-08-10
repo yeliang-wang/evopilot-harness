@@ -22,12 +22,17 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 | `harness validate --json` | `status`, `harnessCount`, `strict`, `quality[]`, `checks[]`, `blockers[]` |
 | `detect --json` | `status`, `sourceCoverage`, `sourceProfile`, `autoMatch`, `nextAction` |
 | `detect batch --json` | `status`, `discoveredCount`, `evaluatedCount`, `detections[]`, `nextAction` |
+| `corpus scan --json` | `status`, `sourceRoot`, `discoveredCount`, `evaluatedCount`, `groups[]`, `nextAction` |
+| `corpus plan --json` | `corpusId`, `status`, `discovery`, `duplicateCount`, `groups[]`, `validation`, `nextAction` |
+| `corpus approve --json` | `corpusId`, `status`, `approval`, `nextAction` |
+| `corpus publish --json` | `corpusId`, `status`, `publication`, `nextAction` |
 | `evolution create --json` | `evolutionId`, `status`, `sources[]`, `nextAction` |
 | `evolution advance --json` | `sourceCoverage`, `sourceProfile`, `autoMatch`, `draft`, `validation`, `nextAction` |
 | `evolution approve --json` | `status`, `approval`, `nextAction` |
 | `evolution publish --json` | `status`, `publication`, `impactReport`, `nextAction` |
 | `evolve --json` | `evolutionId`, `status`, `sourceProfile`, `autoMatch`, `sourceCoverage`, `validation`, `draft`, `publication`, `nextAction` |
-| `hub snapshot --json` | `status`, `project`, `catalog`, `harnesses[]`, `evolutions[]`, `sourceTypes[]`, `lifecycleCommands[]` |
+| `evolve corpus --json` | `corpusId`, `status`, `discovery`, `duplicateCount`, `groups[]`, `validation`, `publication`, `nextAction` |
+| `hub snapshot --json` | `status`, `project`, `catalog`, `harnesses[]`, `evolutions[]`, `corpora[]`, `sourceTypes[]`, `lifecycleCommands[]` |
 
 ## Stop Conditions
 
@@ -38,13 +43,17 @@ status=BLOCKED
 status=FAILED
 blockers.length > 0
 nextAction=review-approve-harness
+nextAction=review-approve-corpus-plan
 nextAction=review-candidate-match
 nextAction=repair-draft-validation
+nextAction=repair-corpus-plan-validation
 nextAction=publish-catalog-directory-and-configure-evopilot-catalog-dir
+nextAction=publish-registry-and-configure-evopilot
 process exit code != 0
 ```
 
 `nextAction=review-approve-harness` is not an error. It means an administrator must review the generated draft before approval.
+`nextAction=review-approve-corpus-plan` has the same meaning for grouped corpus drafts.
 
 ## Required Report Fields
 
@@ -59,6 +68,7 @@ Automation summaries must include:
 - draft Harness id, version, digest, and draft path
 - approval actor and confirmation when present
 - publication Harness id, version, Harness root, Catalog root, and Registry file when present
+- for corpus runs: `corpusId`, source root, discovered/evaluated count, duplicate count, group count, every target Harness id, selected project count, duplicate project count, and group validation status
 - Registry digest, Catalog id, Catalog digest, entry path, and entry digest after publication
 - `nextAction`
 

@@ -11,6 +11,7 @@ Read this file first. Then read [quickstart.md](quickstart.md). Use [automation.
 - Treat `evopilot-harness` as the system of record for Harness lifecycle.
 - Do not use EvoPilot CLI or API to create, evolve, approve, publish, deprecate, or mutate Harness definitions.
 - Do not approve an evolution run unless the generated draft, source coverage, validation, and impact have been shown to an administrator.
+- Do not approve a corpus run unless the grouping, dedupe decisions, generated group drafts, validation, and publication impact have been shown to an administrator.
 - Do not invent `--confirmed-by` or `--confirmation` values.
 - Stop on `nextAction`, `BLOCKED`, `FAILED`, validation blockers, missing source files, missing Catalog files, approval gates, or non-zero exit codes.
 - Do not pass raw production secrets in `--note`, `--file`, `--attachment`, or `--production-log`.
@@ -90,6 +91,49 @@ node src/index.mjs evolution approve <evolution-id> \
   --json
 
 node src/index.mjs evolution publish <evolution-id> --json
+```
+
+For root-directory corpus evolution:
+
+```bash
+node src/index.mjs corpus scan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --json
+
+node src/index.mjs corpus plan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --json
+```
+
+Stop after `corpus plan` reaches `REVIEW_REQUIRED`. Show these fields to the administrator:
+
+```text
+corpusId
+status
+discovery
+duplicateCount
+groups[].targetHarnessId
+groups[].selectedProjects
+groups[].duplicateProjects
+groups[].autoMatch
+groups[].validation
+groups[].draft.digest
+validation
+nextAction
+```
+
+Approve and publish only after explicit confirmation:
+
+```bash
+node src/index.mjs corpus approve <corpus-id> \
+  --confirmed-by <administrator> \
+  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+  --json
+
+node src/index.mjs corpus publish <corpus-id> --json
 ```
 
 ## EvoPilot Boundary

@@ -54,6 +54,30 @@ node src/index.mjs detect batch \
 
 Batch detection is a validation and planning tool. It does not copy source projects, publish templates, or turn the detected projects into fixed Harness packs.
 
+When the operator wants the CLI to continue from detection into grouped draft generation, use the corpus lifecycle:
+
+```bash
+node src/index.mjs corpus plan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --goal "Batch evolve Harness definitions from this historical project corpus." \
+  --json
+```
+
+Corpus planning performs:
+
+1. discovers valid project roots under `--source-root`
+2. runs the same deterministic detect algorithm for each project
+3. groups projects by target Harness id
+4. dedupes nested modules and lower-priority same-target projects
+5. selects representative projects per group
+6. generates one draft pack per group
+7. validates every draft against Template Quality Standard v1
+8. stops at `REVIEW_REQUIRED`
+
+The historical projects remain input material only. The CLI records source coverage and digests, but it does not copy those projects into committed Harness templates.
+
 The detector builds a `sourceProfile` from:
 
 - languages, build tools, frameworks, imports, dependencies, symbols, and selected filenames
@@ -144,5 +168,17 @@ Publication copies the draft into `harnesses/<harness-id>/`, republishes `publis
 
 ```bash
 node src/index.mjs evolution publish <evolution-id> --json
+node src/index.mjs catalog validate --source published --json
+```
+
+For corpus publication:
+
+```bash
+node src/index.mjs corpus approve <corpus-id> \
+  --confirmed-by <administrator> \
+  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+  --json
+
+node src/index.mjs corpus publish <corpus-id> --json
 node src/index.mjs catalog validate --source published --json
 ```

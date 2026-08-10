@@ -266,6 +266,96 @@ test("one-click evolve auto-matches, approves, publishes, and keeps JSON parseab
   assert.equal(validation.status, "VALIDATED");
 });
 
+test("corpus lifecycle scans, groups, dedupes, reviews, approves, and publishes batch drafts", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-corpus-"));
+  const sourceRoot = path.join(tmp, "source-root");
+  const harnessSource = path.join(tmp, "harnesses");
+  const published = path.join(tmp, "published");
+  const dataRoot = path.join(tmp, "data");
+  fs.cpSync(path.join(root, "harnesses"), harnessSource, { recursive: true });
+  createCorpusFixture(sourceRoot);
+
+  const plan = runJson([
+    "corpus", "plan",
+    "--source-root", sourceRoot,
+    "--source", harnessSource,
+    "--out", published,
+    "--data-root", dataRoot,
+    "--include-modules",
+    "--limit", "20",
+    "--max-projects-per-group", "2",
+    "--goal", "Batch evolve Harness definitions from this historical project corpus.",
+    "--json"
+  ]);
+
+  assert.equal(plan.schema, "evopilot-harness-corpus-detail/v1");
+  assert.equal(plan.status, "REVIEW_REQUIRED");
+  assert.equal(plan.validation.status, "VALIDATED");
+  assert.ok(plan.discovery.discoveredCount > plan.groups.length);
+  assert.ok(plan.duplicateCount >= 1);
+  assert.ok(plan.groups.some((group) => group.targetHarnessId === "redis-client-harness" && group.validation.status === "VALIDATED"));
+  assert.ok(plan.groups.some((group) => group.targetHarnessId === "rpc-framework-harness" && group.duplicateProjects.length >= 1));
+  assert.ok(plan.groups.some((group) => group.targetHarnessId === "generic-management-software-harness"));
+  assert.ok(fs.existsSync(path.join(dataRoot, "corpora", plan.corpusId, "drafts", "redis-client-harness", "template.yaml")));
+
+  const review = runJson(["corpus", "review", plan.corpusId, "--data-root", dataRoot, "--json"]);
+  assert.equal(review.corpusId, plan.corpusId);
+  assert.equal(review.status, "REVIEW_REQUIRED");
+
+  const approved = runJson([
+    "corpus", "approve", plan.corpusId,
+    "--data-root", dataRoot,
+    "--confirmed-by", "admin@example.com",
+    "--confirmation", "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact.",
+    "--json"
+  ]);
+  assert.equal(approved.status, "APPROVED");
+
+  const publishedResult = runJson([
+    "corpus", "publish", plan.corpusId,
+    "--source", harnessSource,
+    "--out", published,
+    "--data-root", dataRoot,
+    "--json"
+  ]);
+  assert.equal(publishedResult.status, "PUBLISHED");
+  assert.ok(publishedResult.publication.groups.some((group) => group.harnessId === "redis-client-harness"));
+  assert.ok(fs.existsSync(path.join(harnessSource, "redis-client-harness", "template.yaml")));
+  assert.ok(fs.existsSync(path.join(harnessSource, "rpc-framework-harness", "template.yaml")));
+
+  const validation = runJson(["catalog", "validate", "--source", published, "--json"]);
+  assert.equal(validation.status, "VALIDATED");
+});
+
+test("one-command corpus evolve can approve and publish to a temporary catalog", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-corpus-one-"));
+  const sourceRoot = path.join(tmp, "source-root");
+  const harnessSource = path.join(tmp, "harnesses");
+  const published = path.join(tmp, "published");
+  fs.cpSync(path.join(root, "harnesses"), harnessSource, { recursive: true });
+  createCorpusFixture(sourceRoot);
+
+  const result = runJson([
+    "evolve", "corpus",
+    "--source-root", sourceRoot,
+    "--source", harnessSource,
+    "--out", published,
+    "--data-root", path.join(tmp, "data"),
+    "--include-modules",
+    "--limit", "20",
+    "--approve-and-publish",
+    "--confirmed-by", "admin@example.com",
+    "--confirmation", "Reviewed corpus grouping, generated draft packs, validation, and publication impact.",
+    "--json"
+  ]);
+
+  assert.equal(result.schema, "evopilot-harness-corpus-evolve-result/v1");
+  assert.equal(result.status, "PUBLISHED");
+  assert.equal(result.validation.status, "VALIDATED");
+  assert.ok(result.publication.groups.length >= 3);
+  assert.ok(fs.existsSync(path.join(published, "CATALOG.md")));
+});
+
 test("Harness Hub snapshot exposes Catalog, lifecycle commands, source types, and evolution runs", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-hub-"));
   const catalogRoot = path.join(tmp, "published");
@@ -291,13 +381,59 @@ test("Harness Hub snapshot exposes Catalog, lifecycle commands, source types, an
   assert.ok(result.catalog.entryCount >= 2);
   assert.ok(result.harnesses.some((harness) => harness.id === "database-product-harness" && harness.commands.evolve.includes("evopilot-harness evolve")));
   assert.ok(result.sourceTypes.some((source) => source.id === "production-log"));
+  assert.ok(result.lifecycleCommands.some((command) => command.id === "corpus-plan"));
   assert.ok(result.lifecycleCommands.some((command) => command.id === "publish"));
   assert.ok(fs.existsSync(snapshotFile));
   assert.equal(JSON.parse(fs.readFileSync(snapshotFile, "utf8")).schema, "evopilot-harness-hub-snapshot/v1");
 });
 
-function runJson(args) {
-  const run = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8" });
+function createCorpusFixture(sourceRoot) {
+  const redisProject = path.join(sourceRoot, "redisclient");
+  fs.mkdirSync(path.join(redisProject, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(redisProject, "pom.xml"), [
+    "<project><dependencies>",
+    "<dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-redis</artifactId><version>1.0.1</version></dependency>",
+    "<dependency><groupId>redis.clients</groupId><artifactId>jedis</artifactId><version>2.0.0</version></dependency>",
+    "</dependencies></project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(redisProject, "src", "main", "java", "com", "example", "RedisClientService.java"), [
+    "package com.example;",
+    "import org.springframework.data.redis.core.RedisTemplate;",
+    "import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;",
+    "public class RedisClientService { RedisTemplate<String, String> template; JedisConnectionFactory factory; }"
+  ].join("\n"));
+
+  const rpcRoot = path.join(sourceRoot, "dubbo-platform");
+  const rpcModule = path.join(rpcRoot, "dubbo-remoting");
+  fs.mkdirSync(path.join(rpcModule, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(rpcRoot, "pom.xml"), [
+    "<project><modules><module>dubbo-remoting</module></modules>",
+    "<dependencies><dependency><groupId>com.alibaba</groupId><artifactId>dubbo</artifactId><version>2.7.0</version></dependency></dependencies>",
+    "</project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(rpcModule, "pom.xml"), [
+    "<project><dependencies><dependency><groupId>com.alibaba</groupId><artifactId>dubbo</artifactId><version>2.7.0</version></dependency></dependencies></project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(rpcModule, "src", "main", "java", "com", "example", "RpcFilter.java"), [
+    "package com.example;",
+    "import com.alibaba.dubbo.rpc.RpcContext;",
+    "import com.alibaba.dubbo.rpc.Invoker;",
+    "public class RpcFilter { RpcContext context; Invoker<?> invoker; }"
+  ].join("\n"));
+
+  const adminProject = path.join(sourceRoot, "admin-console");
+  fs.mkdirSync(path.join(adminProject, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(adminProject, "pom.xml"), [
+    "<project><dependencies>",
+    "<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId><version>2.7.0</version></dependency>",
+    "<dependency><groupId>org.mybatis</groupId><artifactId>mybatis</artifactId><version>3.5.0</version></dependency>",
+    "</dependencies></project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(adminProject, "README.md"), "Enterprise admin software with RBAC, reporting, audit, Swagger, permissions, and database backed service.");
+}
+
+function runJson(args, options = {}) {
+  const run = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", ...options });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.equal(run.stderr, "");
   try {

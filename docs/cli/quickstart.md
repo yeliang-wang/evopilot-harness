@@ -83,7 +83,54 @@ node src/index.mjs evolution approve <evolution-id> \
 node src/index.mjs evolution publish <evolution-id> --json
 ```
 
-## 5. Configure EvoPilot
+## 5. Evolve From A Source Root Corpus
+
+Use this path when a directory contains many historical projects and the operator wants `evopilot-harness` to scan, group, dedupe, and generate grouped Harness drafts.
+
+```bash
+node src/index.mjs corpus scan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --json
+```
+
+Review `groups[]`, `selectedProjects[]`, and `duplicateProjects[]`, then generate draft packs:
+
+```bash
+node src/index.mjs corpus plan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --json
+```
+
+If validation succeeds, the run stops at `REVIEW_REQUIRED`. Review the generated files under:
+
+```text
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/
+```
+
+Approve and publish after administrator review:
+
+```bash
+node src/index.mjs corpus approve <corpus-id> \
+  --confirmed-by <administrator> \
+  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+  --json
+
+node src/index.mjs corpus publish <corpus-id> --json
+```
+
+For a one-command wrapper that still stops at review:
+
+```bash
+node src/index.mjs evolve corpus \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --json
+```
+
+## 6. Configure EvoPilot
 
 EvoPilot reads the Registry at use time:
 

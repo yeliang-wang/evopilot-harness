@@ -14,10 +14,12 @@ const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
 const LLM_ADVISOR_SCHEMA = "evopilot-harness-llm-advisor/v1";
 const DETECT_SCHEMA = "evopilot-harness-detect-result/v1";
 const SOURCE_PROFILE_SCHEMA = "evopilot-harness-source-profile/v1";
+const CORPUS_SCHEMA = "evopilot-harness-corpus/v1";
 const DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
 const DEFAULT_GLM_MODEL = "glm-5.2";
 const DEFAULT_MATCH_THRESHOLD = 0.45;
 const AMBIGUOUS_MATCH_DELTA = 0.1;
+const DEFAULT_CORPUS_GROUP_LIMIT = 5;
 
 async function main(argv) {
   const args = parseArgs(argv);
@@ -43,12 +45,19 @@ async function main(argv) {
   if (group === "evolution" && action === "approve") return approveEvolution(args, idArg);
   if (group === "evolution" && action === "publish") return publishEvolution(args, idArg);
   if (group === "evolution" && action === "impact") return evolutionImpact(args, idArg);
+  if (group === "corpus" && action === "list") return listCorpora(args);
+  if (group === "corpus" && action === "scan") return scanCorpus(args);
+  if (group === "corpus" && action === "plan") return planCorpus(args);
+  if (group === "corpus" && action === "review") return inspectCorpus(args, idArg);
+  if (group === "corpus" && action === "approve") return approveCorpus(args, idArg);
+  if (group === "corpus" && action === "publish") return publishCorpus(args, idArg);
   if (group === "detect" && action === "batch") return detectBatch(args);
   if (group === "detect") return detectSources(args);
+  if (group === "evolve" && action === "corpus") return oneClickCorpusEvolve(args);
   if (group === "evolve") return oneClickEvolve(args);
   if (group === "hub" && action === "snapshot") return hubSnapshot(args);
   if (group === "hub" && action === "serve") return serveHub(args);
-  throw usage("Use: evopilot-harness <catalog|registry|harness|detect|evolution|evolve|hub> --help.");
+  throw usage("Use: evopilot-harness <catalog|registry|harness|detect|corpus|evolution|evolve|hub> --help.");
 }
 
 function publishRegistry(args) {
@@ -442,35 +451,7 @@ function detectBatch(args) {
   const sourceRoot = path.resolve(requiredOption(args, "source-root"));
   if (!fs.existsSync(sourceRoot)) throw usage(`source-root not found: ${sourceRoot}`);
   const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Detect the best Harness target for this source project.";
-  const limit = numberOption(args, "limit", 50);
-  const projects = discoverSourceProjects(sourceRoot, {
-    maxDepth: numberOption(args, "max-depth", 5),
-    includeModules: Boolean(args.options["include-modules"]),
-    limit
-  });
-  const detections = projects.slice(0, limit).map((project) => {
-    const source = sourceProjectSource(project.path);
-    const detected = detectHarnessForSources(args, [source], goal);
-    return {
-      path: project.path,
-      relativePath: path.relative(sourceRoot, project.path) || ".",
-      rootType: project.rootType,
-      markers: project.markers,
-      status: detected.status,
-      primaryRole: detected.sourceProfile.primaryRole,
-      recommendedHarnessId: detected.sourceProfile.recommendedHarness?.id,
-      decision: detected.autoMatch.decision,
-      targetHarnessId: detected.autoMatch.targetHarnessId,
-      confidence: detected.autoMatch.confidence,
-      parentCandidates: detected.autoMatch.parentCandidates,
-      topCandidates: detected.autoMatch.candidates.slice(0, 3).map((candidate) => ({
-        harnessId: candidate.harnessId,
-        score: candidate.score,
-        boundaryFit: candidate.boundaryFit,
-        roleFit: candidate.roleFit
-      }))
-    };
-  });
+  const { projects, detections, limit } = detectProjectsUnderRoot(args, sourceRoot, goal);
   const result = {
     schema: "evopilot-harness-detect-batch-result/v1",
     status: "READY",
@@ -482,6 +463,459 @@ function detectBatch(args) {
   };
   printResult(args, result, `detect-batch=${detections.length} sourceRoot=${sourceRoot}`);
   return 0;
+}
+
+function detectProjectsUnderRoot(args, sourceRoot, goal) {
+  const limit = numberOption(args, "limit", 50);
+  const projects = discoverSourceProjects(sourceRoot, {
+    maxDepth: numberOption(args, "max-depth", 5),
+    includeModules: Boolean(args.options["include-modules"]),
+    limit
+  });
+  const detections = projects.slice(0, limit).map((project) => detectOneSourceProject(args, sourceRoot, project, goal));
+  return { projects, detections, limit };
+}
+
+function detectOneSourceProject(args, sourceRoot, project, goal) {
+  const source = sourceProjectSource(project.path);
+  const detected = detectHarnessForSources(args, [source], goal);
+  return {
+    path: project.path,
+    relativePath: path.relative(sourceRoot, project.path) || ".",
+    rootType: project.rootType,
+    markers: project.markers,
+    status: detected.status,
+    primaryRole: detected.sourceProfile.primaryRole,
+    recommendedHarnessId: detected.sourceProfile.recommendedHarness?.id,
+    recommendedHarness: detected.sourceProfile.recommendedHarness,
+    decision: detected.autoMatch.decision,
+    targetHarnessId: detected.autoMatch.targetHarnessId,
+    targetDomain: detected.autoMatch.targetDomain,
+    targetVersion: detected.autoMatch.targetVersion,
+    confidence: detected.autoMatch.confidence,
+    parentCandidates: detected.autoMatch.parentCandidates,
+    topCandidates: detected.autoMatch.candidates.slice(0, 3).map((candidate) => ({
+      harnessId: candidate.harnessId,
+      score: candidate.score,
+      boundaryFit: candidate.boundaryFit,
+      roleFit: candidate.roleFit
+    }))
+  };
+}
+
+function listCorpora(args) {
+  const dataRoot = evolutionDataRoot(args);
+  const runs = listCorpusRuns(dataRoot);
+  const result = {
+    schema: "evopilot-harness-corpus-list/v1",
+    status: "READY",
+    dataRoot,
+    count: runs.length,
+    corpora: runs.map(corpusSummary)
+  };
+  printResult(args, result, `corpora=${runs.length}`);
+  return 0;
+}
+
+function scanCorpus(args) {
+  const sourceRoot = path.resolve(requiredOption(args, "source-root"));
+  if (!fs.existsSync(sourceRoot)) throw usage(`source-root not found: ${sourceRoot}`);
+  const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Detect and group source projects for Harness evolution.";
+  const { projects, detections } = detectProjectsUnderRoot(args, sourceRoot, goal);
+  const grouping = groupCorpusDetections(args, sourceRoot, detections);
+  const result = {
+    schema: "evopilot-harness-corpus-scan-result/v1",
+    status: "READY",
+    sourceRoot,
+    discoveredCount: projects.length,
+    evaluatedCount: detections.length,
+    groupCount: grouping.groups.length,
+    duplicateCount: grouping.duplicateCount,
+    detections,
+    groups: grouping.groups.map((group) => corpusGroupScanSummary(group)),
+    nextAction: "run-corpus-plan-to-generate-reviewable-drafts"
+  };
+  printResult(args, result, `corpus-scan=${detections.length} groups=${grouping.groups.length} duplicates=${grouping.duplicateCount}`);
+  return 0;
+}
+
+async function planCorpus(args) {
+  const run = await createCorpusRunFromArgs(args);
+  printResult(args, corpusDetail(run), `corpus=${run.corpusId} status=${run.status} groups=${run.groups.length}`);
+  return run.status === "BLOCKED" ? 2 : 0;
+}
+
+function inspectCorpus(args, idArg) {
+  const run = readRequiredCorpus(args, idArg);
+  printResult(args, corpusDetail(run), `corpus=${run.corpusId} status=${run.status}`);
+  return 0;
+}
+
+function approveCorpus(args, idArg) {
+  const run = readRequiredCorpus(args, idArg);
+  const next = approveCorpusRun(args, run);
+  printResult(args, corpusDetail(next), `corpus=${next.corpusId} status=${next.status}`);
+  return 0;
+}
+
+function publishCorpus(args, idArg) {
+  const run = readRequiredCorpus(args, idArg);
+  const next = publishCorpusRun(args, run);
+  printResult(args, corpusDetail(next), `corpus=${next.corpusId} status=${next.status}`);
+  return 0;
+}
+
+async function oneClickCorpusEvolve(args) {
+  const planned = await createCorpusRunFromArgs(args);
+  let result = planned;
+  if (args.options["approve-and-publish"]) {
+    result = approveCorpusRun(args, result);
+    result = publishCorpusRun(args, result);
+  }
+  printResult(args, corpusEvolveResult(result), `corpus=${result.corpusId} status=${result.status} groups=${result.groups.length}`);
+  return result.status === "BLOCKED" ? 2 : 0;
+}
+
+async function createCorpusRunFromArgs(args) {
+  const sourceRoot = path.resolve(requiredOption(args, "source-root"));
+  if (!fs.existsSync(sourceRoot)) throw usage(`source-root not found: ${sourceRoot}`);
+  const now = new Date().toISOString();
+  const goal = stringOption(args, "goal") ?? stringOption(args, "intent") ?? "Batch evolve Harness definitions from this source project corpus.";
+  const { projects, detections, limit } = detectProjectsUnderRoot(args, sourceRoot, goal);
+  if (detections.length === 0) throw usage(`No valid source projects found under ${sourceRoot}.`);
+  const corpusId = safeId(stringOption(args, "id") ?? `corpus-${new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}-${digestText(JSON.stringify({ sourceRoot, goal, detections: detections.map((item) => item.path) })).slice(7, 15)}`);
+  const grouping = groupCorpusDetections(args, sourceRoot, detections);
+  const baseRun = {
+    schema: CORPUS_SCHEMA,
+    corpusId,
+    status: "PLANNING",
+    goal,
+    sourceRoot,
+    createdAt: now,
+    updatedAt: now,
+    discovery: {
+      sourceRoot,
+      includeModules: Boolean(args.options["include-modules"]),
+      maxDepth: numberOption(args, "max-depth", 5),
+      limit,
+      discoveredCount: projects.length,
+      evaluatedCount: detections.length
+    },
+    detections,
+    duplicateCount: grouping.duplicateCount,
+    groups: [],
+    validation: undefined,
+    approval: undefined,
+    publication: undefined,
+    nextAction: "generate-corpus-drafts"
+  };
+  writeCorpusRun(args, baseRun);
+  const groups = [];
+  for (const group of grouping.groups) groups.push(await buildCorpusGroupDraft(args, baseRun, group));
+  const validation = validateCorpusPlan(groups);
+  const advisorBlocking = groups.some((group) => isLlmAdvisorBlocking(group.llmAdvisor));
+  const status = advisorBlocking || validation.blockers.length > 0 ? "BLOCKED" : "REVIEW_REQUIRED";
+  const run = {
+    ...baseRun,
+    status,
+    updatedAt: new Date().toISOString(),
+    groups,
+    validation,
+    workflow: {
+      steps: [
+        { id: "scan-source-root", status: "COMPLETED" },
+        { id: "auto-match-projects", status: "COMPLETED" },
+        { id: "group-and-dedupe", status: "COMPLETED" },
+        { id: "generate-group-drafts", status: "COMPLETED" },
+        { id: "validate-group-drafts", status: validation.blockers.length === 0 ? "COMPLETED" : "BLOCKED" }
+      ]
+    },
+    nextAction: status === "BLOCKED" ? "repair-corpus-plan-validation" : "review-approve-corpus-plan"
+  };
+  writeCorpusRun(args, run);
+  return run;
+}
+
+function groupCorpusDetections(args, sourceRoot, detections) {
+  const maxProjectsPerGroup = Math.max(1, numberOption(args, "max-projects-per-group", DEFAULT_CORPUS_GROUP_LIMIT));
+  const byTarget = new Map();
+  for (const detection of detections) {
+    const targetHarnessId = safeId(detection.targetHarnessId || detection.recommendedHarnessId || "domain-harness");
+    if (!byTarget.has(targetHarnessId)) byTarget.set(targetHarnessId, []);
+    byTarget.get(targetHarnessId).push(detection);
+  }
+  const groups = [];
+  let duplicateCount = 0;
+  for (const [targetHarnessId, items] of byTarget.entries()) {
+    const sorted = [...items].sort(compareCorpusDetectionPriority);
+    const selected = [];
+    const duplicates = [];
+    for (const detection of sorted) {
+      const nestedParent = selected.find((item) => isNestedPath(detection.path, item.path));
+      if (nestedParent) {
+        duplicateCount += 1;
+        duplicates.push({ ...detection, duplicateReason: `nested-module-of:${nestedParent.relativePath}` });
+        continue;
+      }
+      if (selected.length >= maxProjectsPerGroup) {
+        duplicateCount += 1;
+        duplicates.push({ ...detection, duplicateReason: `same-target-over-limit:${maxProjectsPerGroup}` });
+        continue;
+      }
+      selected.push(detection);
+    }
+    if (selected.length === 0 && sorted.length > 0) selected.push(sorted[0]);
+    const representative = selected[0] ?? sorted[0] ?? {};
+    groups.push({
+      groupId: targetHarnessId,
+      targetHarnessId,
+      targetDomain: representative.targetDomain ?? representative.recommendedHarness?.domain ?? targetHarnessId.replace(/-harness$/, ""),
+      decision: inferCorpusGroupDecision(selected.length ? selected : sorted),
+      primaryRole: representative.primaryRole ?? "unknown",
+      selectedProjects: selected.map((item) => corpusProjectRef(sourceRoot, item)),
+      duplicateProjects: duplicates.map((item) => corpusProjectRef(sourceRoot, item, item.duplicateReason)),
+      detections: sorted.map((item) => corpusProjectRef(sourceRoot, item))
+    });
+  }
+  groups.sort((left, right) => {
+    if (right.selectedProjects.length !== left.selectedProjects.length) return right.selectedProjects.length - left.selectedProjects.length;
+    return left.targetHarnessId.localeCompare(right.targetHarnessId);
+  });
+  return { groups, duplicateCount };
+}
+
+async function buildCorpusGroupDraft(args, run, group) {
+  const sourceRoot = path.resolve(stringOption(args, "source") ?? "harnesses");
+  const sources = group.selectedProjects.map((project) => sourceProjectSource(project.path));
+  const groupGoal = `${run.goal}\n\nCorpus group: ${group.targetHarnessId}\nSelected projects:\n${group.selectedProjects.map((project) => `- ${project.relativePath}`).join("\n")}`;
+  const detection = detectHarnessForSources(args, sources, groupGoal, sourceRoot);
+  const packs = detection.packs;
+  const deterministicAutoMatch = forceCorpusTargetMatch(detection.autoMatch, group, packs);
+  const syntheticRun = {
+    evolutionId: `${run.corpusId}-${group.targetHarnessId}`,
+    goal: groupGoal,
+    sources
+  };
+  const llmAdvisor = await adviseHarnessEvolution(args, {
+    run: syntheticRun,
+    sourceCoverage: detection.sourceCoverage,
+    sourceProfile: detection.sourceProfile,
+    corpus: detection.corpus,
+    packs,
+    autoMatch: deterministicAutoMatch
+  });
+  const autoMatch = forceCorpusTargetMatch(applyLlmAdvisorToMatch(deterministicAutoMatch, llmAdvisor, packs, args), group, packs);
+  const draft = createDraftPack(syntheticRun, autoMatch, detection.corpus, args, detection.sourceProfile);
+  const validation = validateDraftPack(draft);
+  writeCorpusDraftFiles(evolutionDataRoot(args), run.corpusId, group.groupId, draft);
+  return {
+    ...group,
+    status: isLlmAdvisorBlocking(llmAdvisor) || validation.blockers.length > 0 ? "BLOCKED" : "REVIEW_REQUIRED",
+    sourceCoverage: detection.sourceCoverage,
+    sourceProfile: detection.sourceProfile,
+    autoMatch,
+    llmAdvisor,
+    draft,
+    validation,
+    nextAction: validation.blockers.length === 0 ? "review-group-draft" : "repair-group-draft"
+  };
+}
+
+function forceCorpusTargetMatch(autoMatch, group, packs) {
+  const targetHarnessId = safeId(group.targetHarnessId);
+  const pack = packs.find((item) => item.id === targetHarnessId);
+  const candidate = autoMatch.candidates?.find((item) => item.harnessId === targetHarnessId);
+  const decision = pack
+    ? "EVOLVE_EXISTING"
+    : group.decision === "CREATE_NEW_WITH_PARENT_REFERENCE" || group.duplicateProjects.length > 0
+      ? "CREATE_NEW_WITH_PARENT_REFERENCE"
+      : "CREATE_NEW";
+  const parentCandidates = uniqueParentCandidates([
+    ...(Array.isArray(autoMatch.parentCandidates) ? autoMatch.parentCandidates : []),
+    ...group.detections.flatMap((item) => item.parentCandidates ?? [])
+  ]);
+  return {
+    ...autoMatch,
+    decision,
+    targetHarnessId,
+    targetVersion: pack ? bumpPatch(pack.version) : "0.1.0",
+    targetDomain: safeId(group.targetDomain || autoMatch.targetDomain || targetHarnessId.replace(/-harness$/, "")),
+    confidence: Number(Math.max(autoMatch.confidence ?? 0, candidate?.score ?? 0, ...group.detections.map((item) => item.confidence ?? 0)).toFixed(3)),
+    baseHarnessRef: pack ? { id: pack.id, version: pack.version, digest: digestText(pack.templateText) } : undefined,
+    parentCandidates,
+    reasons: uniqueStrings([`corpus-group=${group.groupId}`, `selected-projects=${group.selectedProjects.length}`, ...(autoMatch.reasons ?? [])]).slice(0, 12),
+    nextAction: "review-generated-corpus-draft"
+  };
+}
+
+function validateCorpusPlan(groups) {
+  const checks = [];
+  for (const group of groups) {
+    checks.push({
+      id: `group:${group.groupId}:selected-projects`,
+      status: group.selectedProjects.length > 0 ? "PASS" : "FAIL",
+      evidence: [`count=${group.selectedProjects.length}`]
+    });
+    checks.push({
+      id: `group:${group.groupId}:draft-validation`,
+      status: group.validation?.status === "VALIDATED" ? "PASS" : "FAIL",
+      evidence: [`status=${group.validation?.status ?? "missing"}`]
+    });
+    for (const blocker of group.validation?.blockers ?? []) {
+      checks.push({ id: `group:${group.groupId}:blocker`, status: "FAIL", evidence: [blocker] });
+    }
+    if (isLlmAdvisorBlocking(group.llmAdvisor)) {
+      checks.push({ id: `group:${group.groupId}:llm-advisor`, status: "FAIL", evidence: [`status=${group.llmAdvisor?.status ?? "missing"}`] });
+    }
+  }
+  const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
+  return {
+    schema: "evopilot-harness-corpus-validation/v1",
+    status: blockers.length === 0 ? "VALIDATED" : "FAILED",
+    groupCount: groups.length,
+    checks,
+    blockers
+  };
+}
+
+function approveCorpusRun(args, run) {
+  if (run.status !== "REVIEW_REQUIRED") throw usage(`Only REVIEW_REQUIRED corpus runs can be approved. Current status=${run.status}.`);
+  if (run.validation?.blockers?.length > 0) throw usage("Cannot approve corpus run with validation blockers.");
+  const confirmedBy = stringOption(args, "confirmed-by");
+  const confirmation = stringOption(args, "confirmation");
+  if (!confirmedBy || !confirmation) throw usage("Approval requires --confirmed-by and --confirmation.");
+  const next = {
+    ...run,
+    status: "APPROVED",
+    updatedAt: new Date().toISOString(),
+    approval: { confirmedBy, confirmation, approvedAt: new Date().toISOString() },
+    nextAction: "publish-corpus-harnesses"
+  };
+  writeCorpusRun(args, next);
+  return next;
+}
+
+function publishCorpusRun(args, run) {
+  if (run.status !== "APPROVED") throw usage(`Only APPROVED corpus runs can be published. Current status=${run.status}.`);
+  const harnessRoot = path.resolve(stringOption(args, "source") ?? "harnesses");
+  const out = path.resolve(stringOption(args, "out") ?? "published");
+  const publications = [];
+  for (const group of run.groups) {
+    const draft = group.draft;
+    if (!draft?.templateYaml) throw usage(`Corpus group ${group.groupId} has no draft template.`);
+    if (group.validation?.blockers?.length > 0) throw usage(`Corpus group ${group.groupId} has validation blockers.`);
+    const targetRoot = path.join(harnessRoot, safeId(draft.harnessId));
+    fs.mkdirSync(path.join(targetRoot, "examples"), { recursive: true });
+    fs.writeFileSync(path.join(targetRoot, "template.yaml"), draft.templateYaml, "utf8");
+    fs.writeFileSync(path.join(targetRoot, "README.md"), draft.readme, "utf8");
+    fs.writeFileSync(path.join(targetRoot, "CHANGELOG.md"), draft.changelog, "utf8");
+    fs.writeFileSync(path.join(targetRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
+    publications.push({
+      groupId: group.groupId,
+      harnessId: draft.harnessId,
+      version: draft.version,
+      harnessRoot: targetRoot,
+      selectedProjectCount: group.selectedProjects.length,
+      duplicateProjectCount: group.duplicateProjects.length
+    });
+  }
+  const catalogArgs = {
+    ...args,
+    options: {
+      ...args.options,
+      source: harnessRoot,
+      out,
+      json: false,
+      silent: true
+    }
+  };
+  publishCatalog(catalogArgs);
+  const catalogPath = path.join(out, "CATALOG.md");
+  const next = {
+    ...run,
+    status: "PUBLISHED",
+    updatedAt: new Date().toISOString(),
+    publication: {
+      publishedAt: new Date().toISOString(),
+      harnessRoot,
+      catalogRoot: out,
+      catalogDigest: fs.existsSync(catalogPath) ? digestText(fs.readFileSync(catalogPath, "utf8")) : undefined,
+      groups: publications
+    },
+    nextAction: "publish-registry-and-configure-evopilot"
+  };
+  writeCorpusRun(args, next);
+  return next;
+}
+
+function corpusGroupScanSummary(group) {
+  return {
+    groupId: group.groupId,
+    targetHarnessId: group.targetHarnessId,
+    targetDomain: group.targetDomain,
+    decision: group.decision,
+    primaryRole: group.primaryRole,
+    selectedProjectCount: group.selectedProjects.length,
+    duplicateProjectCount: group.duplicateProjects.length,
+    selectedProjects: group.selectedProjects,
+    duplicateProjects: group.duplicateProjects
+  };
+}
+
+function corpusProjectRef(sourceRoot, detection, duplicateReason) {
+  return {
+    path: detection.path,
+    relativePath: detection.relativePath ?? (path.relative(sourceRoot, detection.path) || "."),
+    rootType: detection.rootType,
+    markers: detection.markers,
+    primaryRole: detection.primaryRole,
+    decision: detection.decision,
+    targetHarnessId: detection.targetHarnessId,
+    targetDomain: detection.targetDomain,
+    confidence: detection.confidence,
+    parentCandidates: detection.parentCandidates,
+    topCandidates: detection.topCandidates,
+    duplicateReason
+  };
+}
+
+function compareCorpusDetectionPriority(left, right) {
+  const leftDepth = pathDepth(left.relativePath);
+  const rightDepth = pathDepth(right.relativePath);
+  if (leftDepth !== rightDepth) return leftDepth - rightDepth;
+  if ((right.confidence ?? 0) !== (left.confidence ?? 0)) return (right.confidence ?? 0) - (left.confidence ?? 0);
+  return String(left.relativePath).localeCompare(String(right.relativePath));
+}
+
+function inferCorpusGroupDecision(detections) {
+  if (detections.some((item) => item.decision === "EVOLVE_EXISTING")) return "EVOLVE_EXISTING";
+  if (detections.some((item) => item.decision === "CREATE_NEW_WITH_PARENT_REFERENCE")) return "CREATE_NEW_WITH_PARENT_REFERENCE";
+  if (detections.some((item) => item.decision === "FORK_FROM_MATCH")) return "FORK_FROM_MATCH";
+  if (detections.some((item) => item.decision === "REVIEW_REQUIRED")) return "REVIEW_REQUIRED";
+  return "CREATE_NEW";
+}
+
+function uniqueParentCandidates(candidates) {
+  const seen = new Set();
+  const refs = [];
+  for (const candidate of candidates) {
+    const id = safeId(candidate?.id ?? candidate?.harnessId ?? "");
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    refs.push({ id, version: candidate.version, score: candidate.score, reason: candidate.reason ?? "corpus-parent-candidate" });
+  }
+  return refs.slice(0, 6);
+}
+
+function isNestedPath(child, parent) {
+  const relative = path.relative(parent, child);
+  return Boolean(relative && !relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function pathDepth(relativePath) {
+  const normalized = String(relativePath ?? ".").replace(/^\.$/, "");
+  if (!normalized) return 0;
+  return normalized.split(path.sep).filter(Boolean).length;
 }
 
 function listEvolutions(args) {
@@ -633,6 +1067,12 @@ function buildHubSnapshot(args) {
     validationStatus: run.validation?.status,
     publication: run.publication
   }));
+  const corpora = listCorpusRuns(dataRoot).slice(0, 20).map((run) => ({
+    ...corpusSummary(run),
+    updatedAt: run.updatedAt,
+    validationStatus: run.validation?.status,
+    publication: run.publication
+  }));
   return {
     schema: "evopilot-harness-hub-snapshot/v1",
     status: catalog.status === "READY" ? "READY" : "ATTENTION",
@@ -647,6 +1087,7 @@ function buildHubSnapshot(args) {
     catalog,
     harnesses,
     evolutions,
+    corpora,
     sourceTypes: hubSourceTypes(),
     lifecycleCommands: lifecycleCommandModel(),
     nextAction: catalog.status === "READY" ? "use-hub-review-evolve-or-publish-registry" : "run-catalog-publish-and-validate"
@@ -775,6 +1216,9 @@ function lifecycleCommands(harnessId) {
 function lifecycleCommandModel() {
   return [
     { id: "detect", label: "Detect source profile and Harness target", command: "evopilot-harness detect --source-project /path/to/source-project --goal \"...\" --json" },
+    { id: "corpus-scan", label: "Scan and group a source corpus", command: "evopilot-harness corpus scan --source-root /path/to/project-root --json" },
+    { id: "corpus-plan", label: "Generate reviewable corpus Harness drafts", command: "evopilot-harness corpus plan --source-root /path/to/project-root --include-modules --json" },
+    { id: "corpus-evolve", label: "One-command corpus evolution", command: "evopilot-harness evolve corpus --source-root /path/to/project-root --json" },
     { id: "scan-auto-match", label: "Scan and auto-match", command: "evopilot-harness evolve --source-project /path/to/source-project --goal \"...\" --json" },
     { id: "review-draft", label: "Review draft", command: "evopilot-harness evolution review <evolution-id> --json" },
     { id: "approve", label: "Approve", command: "evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json" },
@@ -2517,6 +2961,15 @@ function writeDraftFiles(dataRoot, evolutionId, draft) {
   fs.writeFileSync(path.join(draftRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
 }
 
+function writeCorpusDraftFiles(dataRoot, corpusId, groupId, draft) {
+  const draftRoot = path.join(dataRoot, "corpora", safeId(corpusId), "drafts", safeId(groupId));
+  fs.mkdirSync(path.join(draftRoot, "examples"), { recursive: true });
+  fs.writeFileSync(path.join(draftRoot, "template.yaml"), draft.templateYaml, "utf8");
+  fs.writeFileSync(path.join(draftRoot, "README.md"), draft.readme, "utf8");
+  fs.writeFileSync(path.join(draftRoot, "CHANGELOG.md"), draft.changelog, "utf8");
+  fs.writeFileSync(path.join(draftRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
+}
+
 function listHarnessPacks(source) {
   if (!fs.existsSync(source)) return [];
   return fs.readdirSync(source)
@@ -2846,6 +3299,10 @@ function evolutionPath(dataRoot, evolutionId) {
   return path.join(dataRoot, "evolutions", safeId(evolutionId), "run.json");
 }
 
+function corpusPath(dataRoot, corpusId) {
+  return path.join(dataRoot, "corpora", safeId(corpusId), "run.json");
+}
+
 function writeEvolutionRun(args, run) {
   const dataRoot = evolutionDataRoot(args);
   const file = evolutionPath(dataRoot, run.evolutionId);
@@ -2853,8 +3310,21 @@ function writeEvolutionRun(args, run) {
   fs.writeFileSync(file, `${JSON.stringify(run, null, 2)}\n`, "utf8");
 }
 
+function writeCorpusRun(args, run) {
+  const dataRoot = evolutionDataRoot(args);
+  const file = corpusPath(dataRoot, run.corpusId);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(run, null, 2)}\n`, "utf8");
+}
+
 function readEvolutionRun(args, evolutionId) {
   const file = evolutionPath(evolutionDataRoot(args), evolutionId);
+  if (!fs.existsSync(file)) return undefined;
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function readCorpusRun(args, corpusId) {
+  const file = corpusPath(evolutionDataRoot(args), corpusId);
   if (!fs.existsSync(file)) return undefined;
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
@@ -2866,8 +3336,25 @@ function readRequiredEvolution(args, idArg) {
   return run;
 }
 
+function readRequiredCorpus(args, idArg) {
+  const corpusId = safeId(idArg ?? requiredOption(args, "id"));
+  const run = readCorpusRun(args, corpusId);
+  if (!run) throw usage(`Corpus ${corpusId} not found.`);
+  return run;
+}
+
 function listEvolutionRuns(dataRoot) {
   const root = path.join(dataRoot, "evolutions");
+  if (!fs.existsSync(root)) return [];
+  return fs.readdirSync(root)
+    .map((id) => path.join(root, id, "run.json"))
+    .filter((file) => fs.existsSync(file))
+    .map((file) => JSON.parse(fs.readFileSync(file, "utf8")))
+    .sort((left, right) => String(right.updatedAt).localeCompare(String(left.updatedAt)));
+}
+
+function listCorpusRuns(dataRoot) {
+  const root = path.join(dataRoot, "corpora");
   if (!fs.existsSync(root)) return [];
   return fs.readdirSync(root)
     .map((id) => path.join(root, id, "run.json"))
@@ -2891,8 +3378,27 @@ function evolutionSummary(run) {
   };
 }
 
+function corpusSummary(run) {
+  return {
+    corpusId: run.corpusId,
+    status: run.status,
+    goal: run.goal,
+    sourceRoot: run.sourceRoot,
+    discoveredCount: run.discovery?.discoveredCount ?? run.detections?.length ?? 0,
+    evaluatedCount: run.discovery?.evaluatedCount ?? run.detections?.length ?? 0,
+    groupCount: run.groups?.length ?? 0,
+    duplicateCount: run.duplicateCount ?? 0,
+    targetHarnessIds: (run.groups ?? []).map((group) => group.targetHarnessId),
+    nextAction: run.nextAction
+  };
+}
+
 function evolutionDetail(run) {
   return { schema: "evopilot-harness-evolution-detail/v1", ...run };
+}
+
+function corpusDetail(run) {
+  return { ...run, schema: "evopilot-harness-corpus-detail/v1" };
 }
 
 function evolveResult(run) {
@@ -2906,6 +3412,22 @@ function evolveResult(run) {
     sourceProfile: run.sourceProfile,
     validation: run.validation,
     draft: run.draft,
+    publication: run.publication,
+    nextAction: run.nextAction
+  };
+}
+
+function corpusEvolveResult(run) {
+  return {
+    schema: "evopilot-harness-corpus-evolve-result/v1",
+    corpusId: run.corpusId,
+    status: run.status,
+    sourceRoot: run.sourceRoot,
+    discovery: run.discovery,
+    duplicateCount: run.duplicateCount,
+    validation: run.validation,
+    groups: run.groups,
+    approval: run.approval,
     publication: run.publication,
     nextAction: run.nextAction
   };
@@ -3014,10 +3536,14 @@ Usage:
   evopilot-harness harness list|inspect|validate|publish|deprecate [harness-id] [--strict] [--json]
   evopilot-harness detect --source-project <path> --goal <text> [--json]
   evopilot-harness detect batch --source-root <path> [--include-modules] [--limit 50] [--json]
+  evopilot-harness corpus scan --source-root <path> [--include-modules] [--limit 50] [--json]
+  evopilot-harness corpus plan --source-root <path> [--include-modules] [--max-projects-per-group 5] [--json]
+  evopilot-harness corpus list|review|approve|publish [corpus-id] [--json]
   evopilot-harness evolution create --source-project <path> --goal <text> [--json]
   evopilot-harness evolution sources <evolution-id> --source-project <path> [--json]
   evopilot-harness evolution advance|review|approve|publish|impact <evolution-id> [--json]
   evopilot-harness evolve --source-project <path> --goal <text> [--llm-advisor optional|required] [--apply-llm-advisor] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
+  evopilot-harness evolve corpus --source-root <path> [--include-modules] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
   evopilot-harness hub snapshot [--catalog published] [--registry harness-registry.yaml] [--source harnesses] [--out ui/harness-hub/catalog-snapshot.json] [--json]
   evopilot-harness hub serve [--host 127.0.0.1] [--port 4176] [--catalog published] [--registry harness-registry.yaml] [--source harnesses]
 
@@ -3031,6 +3557,11 @@ LLM Advisor:
 
 Detect and quality:
   --match-threshold <number>            Override deterministic detect threshold. Default: ${DEFAULT_MATCH_THRESHOLD}.
+  --source-root <path>                  Root directory for batch detect or corpus evolution.
+  --include-modules                     Include nested module roots, then dedupe during corpus planning.
+  --max-depth <number>                  Maximum source-root discovery depth. Default: 5.
+  --limit <number>                      Maximum discovered projects evaluated. Default: 50.
+  --max-projects-per-group <number>     Representative projects per Harness group. Default: ${DEFAULT_CORPUS_GROUP_LIMIT}.
   --strict                              Enforce Template Quality Standard v1 during validation/publish.
 `);
 }

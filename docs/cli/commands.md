@@ -189,6 +189,82 @@ evopilot-harness-source-profile/v1
 evopilot-harness-auto-match/v1
 ```
 
+## Corpus
+
+Use `corpus` commands when one root directory contains many valid historical projects and the operator wants grouped Harness evolution instead of selecting one `--source-project` manually.
+
+Scan only:
+
+```bash
+node src/index.mjs corpus scan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --limit 50 \
+  --json
+```
+
+Create a reviewable corpus run with one generated draft per target Harness group:
+
+```bash
+node src/index.mjs corpus plan \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --goal "Batch evolve Harness definitions from this historical project corpus." \
+  --json
+```
+
+Review, approve, and publish:
+
+```bash
+node src/index.mjs corpus review <corpus-id> --json
+
+node src/index.mjs corpus approve <corpus-id> \
+  --confirmed-by <administrator> \
+  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+  --json
+
+node src/index.mjs corpus publish <corpus-id> --json
+```
+
+List stored corpus runs:
+
+```bash
+node src/index.mjs corpus list --json
+```
+
+Corpus options:
+
+| Option | Meaning |
+|---|---|
+| `--source-root <path>` | Root directory scanned for valid source projects. |
+| `--include-modules` | Include nested module roots, then mark nested duplicates during grouping. |
+| `--max-depth <number>` | Maximum discovery depth. Default: `5`. |
+| `--limit <number>` | Maximum discovered projects evaluated. Default: `50`. |
+| `--max-projects-per-group <number>` | Representative projects included in one Harness group draft. Default: `5`. |
+| `--data-root <dir>` | Corpus state root. Default: `.evopilot-harness`. |
+
+Corpus planning writes:
+
+```text
+.evopilot-harness/corpora/<corpus-id>/run.json
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/template.yaml
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/README.md
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/CHANGELOG.md
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/examples/selected-harness-binding.yaml
+```
+
+JSON schema:
+
+```text
+evopilot-harness-corpus-scan-result/v1
+evopilot-harness-corpus-detail/v1
+evopilot-harness-corpus-list/v1
+evopilot-harness-corpus-evolve-result/v1
+```
+
+`corpus plan` stops at `REVIEW_REQUIRED` when validation succeeds. `corpus approve` requires administrator confirmation. `corpus publish` mutates `harnesses/` and republishes the Catalog.
+
 ## Evolution
 
 Create a run:
@@ -342,7 +418,19 @@ JSON schema:
 
 ```text
 evopilot-harness-evolve-result/v1
+evopilot-harness-corpus-evolve-result/v1
 ```
+
+Batch root-directory evolution is available through:
+
+```bash
+node src/index.mjs evolve corpus \
+  --source-root /path/to/project-root \
+  --include-modules \
+  --json
+```
+
+This is a one-command wrapper around `corpus plan`. It still stops at `REVIEW_REQUIRED` unless `--approve-and-publish`, `--confirmed-by`, and `--confirmation` are supplied.
 
 ## Hub
 

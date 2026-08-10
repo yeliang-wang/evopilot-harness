@@ -55,6 +55,15 @@ draft.version
 validation.status=VALIDATED
 ```
 
+Review generated files:
+
+```text
+.evopilot-harness/evolutions/<evolution-id>/draft/template.yaml
+.evopilot-harness/evolutions/<evolution-id>/draft/README.md
+.evopilot-harness/evolutions/<evolution-id>/draft/CHANGELOG.md
+.evopilot-harness/evolutions/<evolution-id>/draft/examples/selected-harness-binding.yaml
+```
+
 ## Batch Source Detection
 
 Use batch detection to evaluate many historical project directories without publishing anything:
@@ -69,14 +78,65 @@ node src/index.mjs detect batch \
 
 Review `detections[]` and choose which source project should enter `evolve`. This workflow is for upgrading the algorithm and operator decision quality; it does not copy source code or convert every detected project into a Harness template.
 
+## Corpus Evolution From A Source Root
+
+Use corpus evolution when the operator wants the CLI to continue beyond batch detection and create grouped review drafts:
+
+```bash
+node src/index.mjs corpus plan \
+  --source-root /path/to/source-root \
+  --include-modules \
+  --max-projects-per-group 5 \
+  --goal "Batch evolve Harness definitions from this historical project corpus." \
+  --json
+```
+
+Expected review fields:
+
+```text
+status=REVIEW_REQUIRED
+nextAction=review-approve-corpus-plan
+discovery.discoveredCount
+discovery.evaluatedCount
+duplicateCount
+groups[].targetHarnessId
+groups[].selectedProjects[]
+groups[].duplicateProjects[]
+groups[].validation.status=VALIDATED
+validation.status=VALIDATED
+```
+
 Review generated files:
 
 ```text
-.evopilot-harness/evolutions/<evolution-id>/draft/template.yaml
-.evopilot-harness/evolutions/<evolution-id>/draft/README.md
-.evopilot-harness/evolutions/<evolution-id>/draft/CHANGELOG.md
-.evopilot-harness/evolutions/<evolution-id>/draft/examples/selected-harness-binding.yaml
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/template.yaml
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/README.md
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/CHANGELOG.md
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/examples/selected-harness-binding.yaml
 ```
+
+After administrator review:
+
+```bash
+node src/index.mjs corpus approve <corpus-id> \
+  --confirmed-by <administrator> \
+  --confirmation "Reviewed corpus grouping, dedupe decisions, generated drafts, validation, and publication impact." \
+  --json
+
+node src/index.mjs corpus publish <corpus-id> --json
+node src/index.mjs catalog validate --source published --json
+```
+
+For one-command operation:
+
+```bash
+node src/index.mjs evolve corpus \
+  --source-root /path/to/source-root \
+  --include-modules \
+  --json
+```
+
+`evolve corpus` is a wrapper around `corpus plan`. It does not approve or publish unless `--approve-and-publish`, `--confirmed-by`, and `--confirmation` are supplied.
 
 ## Review-Gated Atomic Evolution
 

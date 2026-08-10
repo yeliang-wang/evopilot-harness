@@ -6,6 +6,6 @@ catalogs:
     enabled: true
     priority: 100
     root: ./published
-    release: v1.3.0
+    release: v1.4.0
     expectedCatalogDigest: sha256:45aa6508b33ee90bfb00aeb97fda9915d9ca14448c791e6cda8ef74d4f0e5e7c
     description: Published Harness Catalog evopilot-public-harness-catalog
