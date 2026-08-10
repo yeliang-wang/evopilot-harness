@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const root = path.resolve(import.meta.dirname, "..");
 const cli = path.join(root, "src/index.mjs");
@@ -17,11 +18,39 @@ test("publishes and validates a Harness Catalog", () => {
   assert.ok(fs.existsSync(catalogPath));
   const catalogMarkdown = fs.readFileSync(catalogPath, "utf8");
   assert.match(catalogMarkdown, /```yaml evopilot-harness-catalog/);
+  assert.match(catalogMarkdown, /catalogVersion: 2/);
+  assert.match(catalogMarkdown, /assetApiVersion: evopilot\.dev\/v2/);
+  assert.match(catalogMarkdown, /assetKind: HarnessAsset/);
+  assert.match(catalogMarkdown, /qualityReport:/);
+  assert.match(catalogMarkdown, /assetPath: \.\/database-product-harness\/2\.3\.0\/asset\.yaml/);
+  assert.match(catalogMarkdown, /assetDigest: sha256:/);
   assert.match(catalogMarkdown, /compatibleEvopilot: ">=3.0.0"/);
   assert.match(catalogMarkdown, /distributed-cache-harness/);
+  assert.ok(fs.existsSync(path.join(tmp, "database-product-harness", "2.3.0", "asset.yaml")));
 
   const validation = runJson(["catalog", "validate", "--source", tmp, "--json"]);
   assert.equal(validation.status, "VALIDATED");
+});
+
+test("validates Harness Asset v2 envelopes for source packs and published packs", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-asset-"));
+  runJson(["catalog", "publish", "--source", path.join(root, "harnesses"), "--out", tmp, "--json"]);
+
+  const sourceAssets = runJson(["asset", "validate", "--source", path.join(root, "harnesses"), "--json"]);
+  assert.equal(sourceAssets.schema, "evopilot-harness-asset-validation-result/v2");
+  assert.equal(sourceAssets.status, "VALIDATED");
+  assert.ok(sourceAssets.assetCount >= 2);
+  assert.ok(sourceAssets.checks.some((check) => check.id.includes(":apiVersion") && check.status === "PASS"));
+
+  const publishedAssets = runJson(["asset", "validate", "--source", tmp, "--json"]);
+  assert.equal(publishedAssets.status, "VALIDATED");
+  assert.ok(publishedAssets.checks.some((check) => check.id.includes(":provenance") && check.status === "PASS"));
+
+  const inspect = runJson(["asset", "inspect", "database-product-harness", "--source", tmp, "--json"]);
+  assert.equal(inspect.schema, "evopilot-harness-asset-inspect/v2");
+  assert.equal(inspect.asset.apiVersion, "evopilot.dev/v2");
+  assert.equal(inspect.asset.kind, "HarnessAsset");
+  assert.equal(inspect.asset.metadata.id, "database-product-harness");
 });
 
 test("publishes and validates a Harness Registry without duplicating Catalog entries", () => {
@@ -134,10 +163,17 @@ test("detect classifies a Redis client library as a new narrow Harness target", 
   ]);
 
   assert.equal(result.status, "READY");
+  assert.equal(result.schema, "evopilot-harness-detect-result/v2");
+  assert.equal(result.sourceProfile.schema, "evopilot-harness-source-profile/v2");
+  assert.equal(result.sourceProfile.scannerVersion, "unknown-source-scanner/v2");
   assert.equal(result.sourceProfile.primaryRole, "redis-client-library");
   assert.equal(result.sourceProfile.recommendedHarness.id, "redis-client-harness");
+  assert.equal(result.autoMatch.schema, "evopilot-harness-auto-match/v2");
+  assert.equal(result.autoMatch.algorithmVersion, "unknown-source-decision-aggregator/v2");
   assert.equal(result.autoMatch.decision, "CREATE_NEW_WITH_PARENT_REFERENCE");
   assert.equal(result.autoMatch.targetHarnessId, "redis-client-harness");
+  assert.equal(result.autoMatch.candidateRetrieval.schema, "evopilot-harness-candidate-retrieval/v2");
+  assert.equal(result.autoMatch.reviewGate.required, true);
   assert.ok(result.autoMatch.parentCandidates.some((candidate) => candidate.id === "distributed-cache-harness"));
   assert.ok(!result.autoMatch.candidates.slice(0, 2).some((candidate) => candidate.harnessId === "api-gateway-harness"));
 });
@@ -175,11 +211,15 @@ test("evolve reuses detect profile and generates a strict-valid Redis client dra
   assert.equal(result.sourceProfile.primaryRole, "redis-client-library");
   assert.equal(result.autoMatch.targetHarnessId, "redis-client-harness");
   assert.equal(result.draft.harnessId, "redis-client-harness");
+  assert.equal(result.draft.template.schema, "evopilot-harness-template/v2");
+  assert.equal(result.draft.asset.apiVersion, "evopilot.dev/v2");
+  assert.equal(result.draft.asset.kind, "HarnessAsset");
   assert.equal(result.validation.status, "VALIDATED");
   assert.ok(result.validation.checks.some((check) => check.id === "quality:redis-client-harness@0.1.0:score" && check.status === "PASS"));
+  assert.ok(result.validation.checks.some((check) => check.id === "asset:redis-client-harness@0.1.0:apiVersion" && check.status === "PASS"));
 });
 
-test("optional LLM Advisor without provider config does not block deterministic evolution", () => {
+test("default optional LLM Advisor without models config does not block deterministic evolution", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-llm-optional-"));
   const project = path.join(tmp, "project");
   fs.mkdirSync(project, { recursive: true });
@@ -190,11 +230,12 @@ test("optional LLM Advisor without provider config does not block deterministic 
     "--data-root", path.join(tmp, "data"),
     "--source-project", project,
     "--goal", "Evolve a distributed cache Harness from this source project.",
-    "--llm-advisor", "optional",
     "--json"
   ], { env: withoutAdvisorEnv() });
   assert.equal(result.status, "REVIEW_REQUIRED");
   assert.equal(result.llmAdvisor.status, "SKIPPED");
+  assert.equal(result.llmAdvisor.mode, "optional");
+  assert.equal(result.llmAdvisor.llmProfileId, "evopilot-glm");
   assert.equal(result.nextAction, "review-approve-harness");
 });
 
@@ -218,6 +259,135 @@ test("required LLM Advisor without provider config blocks before review", () => 
   assert.equal(result.status, "BLOCKED");
   assert.equal(result.llmAdvisor.status, "FAILED");
   assert.equal(result.nextAction, "repair-llm-advisor-config");
+});
+
+test("LLM models command reads EvoPilot GLM in CodeBuddy-style models.json without printing API keys", () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-llm-models-"));
+  const modelsFile = path.join(tmp, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({
+    models: [
+      {
+        id: "glm-5.1",
+        name: "EvoPilot GLM",
+        vendor: "zhipu",
+        apiKey: "secret-evopilot-glm",
+        url: "https://open.bigmodel.cn/api/coding/paas/v4",
+        supportsToolCall: true,
+        supportsReasoning: true
+      }
+    ]
+  }, null, 2));
+
+  const { result, stdout } = runJsonWithRaw(["llm", "models", "--llm-models-file", modelsFile, "--json"], { env: withoutAdvisorEnv() });
+  assert.equal(result.schema, "evopilot-harness-llm-models/v1");
+  assert.equal(result.status, "READY");
+  assert.equal(result.selectedProfile.id, "glm-5.1");
+  assert.equal(result.selectedProfile.vendor, "zhipu");
+  assert.equal(result.selectedProfile.url, "https://open.bigmodel.cn/api/coding/paas/v4");
+  assert.equal(result.selectedProfile.modelName, "glm-5.1");
+  assert.equal(result.selectedProfile.apiKeyConfigured, true);
+  assert.equal(result.models.length, 1);
+  assert.doesNotMatch(stdout, /secret-evopilot-glm/);
+});
+
+test("required LLM Advisor uses CodeBuddy-style model profile and records token usage", async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-llm-required-call-"));
+  const project = path.join(tmp, "redisclient");
+  fs.mkdirSync(path.join(project, "src", "main", "java", "com", "example"), { recursive: true });
+  fs.writeFileSync(path.join(project, "pom.xml"), [
+    "<project>",
+    "  <dependencies>",
+    "    <dependency><groupId>org.springframework.data</groupId><artifactId>spring-data-redis</artifactId><version>1.0.1</version></dependency>",
+    "    <dependency><groupId>redis.clients</groupId><artifactId>jedis</artifactId><version>2.0.0</version></dependency>",
+    "  </dependencies>",
+    "</project>"
+  ].join("\n"));
+  fs.writeFileSync(path.join(project, "src", "main", "java", "com", "example", "RedisClientService.java"), [
+    "package com.example;",
+    "import org.springframework.data.redis.core.RedisTemplate;",
+    "import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;",
+    "public class RedisClientService { RedisTemplate<String, String> template; JedisConnectionFactory factory; }"
+  ].join("\n"));
+
+  const requests = [];
+  const server = http.createServer((request, response) => {
+    const chunks = [];
+    request.on("data", (chunk) => chunks.push(chunk));
+    request.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8");
+      requests.push({ headers: request.headers, body });
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        model: "glm-5.1",
+        choices: [
+          {
+            finish_reason: "stop",
+            message: {
+              content: JSON.stringify({
+                sourceClassification: "redis-client-library",
+                rationale: "The source wraps Spring Data Redis and Jedis client APIs.",
+                domainFit: [{ harnessId: "redis-client-harness", fit: "strong", reason: "client library boundary" }],
+                recommendation: {
+                  action: "CREATE_NEW_WITH_PARENT_REFERENCE",
+                  targetHarnessId: "redis-client-harness",
+                  targetDomain: "redis-client",
+                  confidence: 0.94,
+                  reason: "The project is not a cache server implementation."
+                },
+                alternatives: [],
+                reviewWarnings: ["Verify internal endpoint references before publishing."],
+                sensitiveMaterialFindings: [],
+                commandRecommendations: []
+              })
+            }
+          }
+        ],
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 }
+      }));
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => server.close());
+  const { port } = server.address();
+  const modelsFile = path.join(tmp, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({
+    models: [
+      {
+        id: "glm-5.1",
+        name: "EvoPilot GLM",
+        vendor: "zhipu",
+        apiKey: "test-secret-key",
+        url: `http://127.0.0.1:${port}/coding/paas/v4`,
+        supportsToolCall: true,
+        supportsReasoning: true
+      }
+    ]
+  }, null, 2));
+
+  const { result, stdout } = await runJsonWithRawAsync([
+    "evolve",
+    "--source", path.join(root, "harnesses"),
+    "--data-root", path.join(tmp, "data"),
+    "--source-project", project,
+    "--goal", "Create or evolve a reusable domain Harness from this project.",
+    "--llm-advisor", "required",
+    "--apply-llm-advisor",
+    "--llm-models-file", modelsFile,
+    "--json"
+  ], { env: withoutAdvisorEnv() });
+
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.equal(result.llmAdvisor.status, "SUCCEEDED");
+  assert.equal(result.llmAdvisor.llmProfileId, "glm-5.1");
+  assert.equal(result.llmAdvisor.provider, "zhipu");
+  assert.equal(result.llmAdvisor.model, "glm-5.1");
+  assert.equal(result.llmAdvisor.usage.totalTokens, 15);
+  assert.equal(result.llmAdvisor.recommendation.targetHarnessId, "redis-client-harness");
+  assert.equal(result.autoMatch.llmAdvisorApplied, true);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].headers.authorization, "Bearer test-secret-key");
+  assert.match(requests[0].body, /glm-5.1/);
+  assert.doesNotMatch(stdout, /test-secret-key/);
 });
 
 test("one-click evolve auto-matches, approves, publishes, and keeps JSON parseable", () => {
@@ -379,12 +549,35 @@ test("Harness Hub snapshot exposes Catalog, lifecycle commands, source types, an
   assert.equal(result.registry.status, "VALIDATED");
   assert.ok(result.registry.catalogs.some((catalog) => catalog.id === "evopilot-public-harness-catalog"));
   assert.ok(result.catalog.entryCount >= 2);
+  assert.equal(result.catalog.catalogVersion, 2);
+  assert.ok(result.catalog.entries.some((entry) => entry.name === "database-product-harness" && entry.assetPath && entry.assetApiVersion === "evopilot.dev/v2" && entry.qualityStatus === "PASS"));
   assert.ok(result.harnesses.some((harness) => harness.id === "database-product-harness" && harness.commands.evolve.includes("evopilot-harness evolve")));
   assert.ok(result.sourceTypes.some((source) => source.id === "production-log"));
   assert.ok(result.lifecycleCommands.some((command) => command.id === "corpus-plan"));
+  assert.ok(result.lifecycleCommands.some((command) => command.id === "llm-models"));
+  assert.ok(result.lifecycleCommands.some((command) => command.id === "asset-validate"));
+  assert.ok(result.lifecycleCommands.some((command) => command.id === "unknown-source-eval"));
+  assert.ok(result.lifecycleCommands.some((command) => command.id === "llm-replay"));
   assert.ok(result.lifecycleCommands.some((command) => command.id === "publish"));
   assert.ok(fs.existsSync(snapshotFile));
   assert.equal(JSON.parse(fs.readFileSync(snapshotFile, "utf8")).schema, "evopilot-harness-hub-snapshot/v1");
+});
+
+test("unknown-source eval and LLM replay are release gates", () => {
+  const evalReport = runJson(["eval", "run", "--json"]);
+  assert.equal(evalReport.schema, "evopilot-harness-unknown-source-eval-report/v2");
+  assert.equal(evalReport.status, "PASSED");
+  assert.ok(evalReport.caseCount >= 3);
+  assert.equal(evalReport.failedCount, 0);
+  assert.equal(evalReport.matrix.EVOLVE_EXISTING, 1);
+  assert.equal(evalReport.matrix.CREATE_NEW_WITH_PARENT_REFERENCE, 1);
+  assert.equal(evalReport.matrix.CORPUS_GROUPED, 1);
+
+  const replay = runJson(["llm", "replay", "--json"]);
+  assert.equal(replay.schema, "evopilot-harness-llm-replay-report/v2");
+  assert.equal(replay.status, "PASSED");
+  assert.ok(replay.caseCount >= 1);
+  assert.equal(replay.failedCount, 0);
 });
 
 function createCorpusFixture(sourceRoot) {
@@ -433,25 +626,59 @@ function createCorpusFixture(sourceRoot) {
 }
 
 function runJson(args, options = {}) {
-  const run = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", ...options });
+  return runJsonWithRaw(args, options).result;
+}
+
+function runJsonWithRaw(args, options = {}) {
+  const run = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", env: withoutAdvisorEnv(), ...options });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.equal(run.stderr, "");
   try {
-    return JSON.parse(run.stdout);
+    return { result: JSON.parse(run.stdout), stdout: run.stdout, stderr: run.stderr };
   } catch (error) {
     assert.fail(`Expected JSON output, got:\n${run.stdout}\n${error.message}`);
   }
 }
 
-function withoutAdvisorEnv() {
+async function runJsonWithRawAsync(args, options = {}) {
+  const child = spawn(process.execPath, [cli, ...args], { env: withoutAdvisorEnv(), ...options });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk) => { stdout += chunk; });
+  child.stderr.on("data", (chunk) => { stderr += chunk; });
+  const status = await new Promise((resolve, reject) => {
+    child.on("error", reject);
+    child.on("close", resolve);
+  });
+  assert.equal(status, 0, stderr || stdout);
+  assert.equal(stderr, "");
+  try {
+    return { result: JSON.parse(stdout), stdout, stderr };
+  } catch (error) {
+    assert.fail(`Expected JSON output, got:\n${stdout}\n${error.message}`);
+  }
+}
+
+function withoutAdvisorEnv(overrides = {}) {
   const env = { ...process.env };
   for (const key of [
+    "EVOPILOT_HARNESS_LLM_ADVISOR",
     "EVOPILOT_HARNESS_LLM_API_KEY",
     "EVOPILOT_HARNESS_LLM_BASE_URL",
     "EVOPILOT_HARNESS_LLM_MODEL_NAME",
+    "EVOPILOT_HARNESS_LLM_PROVIDER_NAME",
+    "EVOPILOT_HARNESS_LLM_PROVIDER_PRESET",
+    "EVOPILOT_HARNESS_LLM_PROFILE",
+    "EVOPILOT_HARNESS_LLM_PROFILE_ID",
+    "EVOPILOT_HARNESS_LLM_MODEL_ID",
+    "EVOPILOT_HARNESS_LLM_MODELS_FILE",
+    "EVOPILOT_HARNESS_LLM_API_KEY_ENV",
     "EVOPILOT_LLM_API_KEY",
     "EVOPILOT_LLM_BASE_URL",
-    "EVOPILOT_LLM_MODEL_NAME"
+    "EVOPILOT_LLM_MODEL_NAME",
+    "EVOPILOT_LLM_PROVIDER_NAME"
   ]) delete env[key];
-  return env;
+  return { ...env, EVOPILOT_HARNESS_LLM_MODELS_FILE: path.join(os.tmpdir(), "evopilot-harness-test-missing-models.json"), ...overrides };
 }

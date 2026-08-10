@@ -66,13 +66,14 @@ function render() {
 
 function renderCatalogTable(entries) {
   elements.catalogTable.innerHTML = "";
-  elements.catalogTable.append(row(["Harness", "Version", "Domain", "Status", "Digest"], "head"));
+  elements.catalogTable.append(row(["Harness", "Version", "Domain", "Status", "Asset", "Digest"], "head"));
   for (const entry of entries) {
     elements.catalogTable.append(row([
       entry.name,
       entry.version,
       entry.domain ?? entry.layer ?? "-",
       pill(entry.status ?? "published", entry.status !== "published"),
+      entry.assetPath ? `${entry.assetApiVersion ?? "evopilot.dev/v2"} · ${entry.qualityStatus ?? "unchecked"}` : "-",
       entry.digest ?? "-"
     ]));
   }

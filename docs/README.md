@@ -21,7 +21,7 @@
 
 - [Source To Harness](guides/source-to-harness.md) - convert source projects, attachments, logs, and notes into a Harness draft.
 - [Harness Evolution](guides/harness-evolution.md) - lifecycle from source collection through approval and publication.
-- [Template Schema](reference/template-schema.md) - Template Quality Standard v1 fields and strict validation.
+- [Template Schema](reference/template-schema.md) - template v2, Harness Asset v2 envelope, Template Quality Standard v1 fields, and strict validation.
 - [Registry Contract](reference/registry-contract.md) - `harness-registry.yaml` discovery file and multi-Catalog rules.
 - [Catalog Contract](reference/catalog-contract.md) - `CATALOG.md` block, directory shape, and validation rules.
 
@@ -42,6 +42,7 @@
 
 ## Releases
 
+- [2.0.0](releases/2.0.0.md)
 - [1.4.0](releases/1.4.0.md)
 - [1.3.0](releases/1.3.0.md)
 - [1.2.0](releases/1.2.0.md)

@@ -1,0 +1,508 @@
+apiVersion: evopilot.dev/v2
+kind: HarnessAsset
+metadata:
+  id: distributed-cache-harness
+  name: Distributed Cache Harness
+  version: 0.2.0
+  domain: distributed-cache
+  layer: domain
+  labels:
+    languageFamily: generic
+    scope: platform
+  annotations:
+    evopilot-harness/templateDigest: sha256:cad17a31441f17f5d20af9787fc34fe8f2955d1fe76763e6f26a716f722bf9a9
+    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/distributed-cache-harness
+spec:
+  templateSchema: evopilot-harness-template/v2
+  template:
+    schema: evopilot-harness-template/v2
+    id: distributed-cache-harness
+    version: 0.2.0
+    name: Distributed Cache Harness
+    description: Domain baseline for self-developed distributed cache and key-value
+      storage products.
+    scope: platform
+    languageFamily: generic
+    matchSignals: &a3
+      include:
+        - distributed cache
+        - cache product
+        - redis-compatible
+        - memcached-compatible
+        - key-value store
+        - kv store
+        - ttl
+        - eviction
+        - lru
+        - lfu
+        - hot key
+        - consistent hash
+        - hash slot
+        - slot migration
+        - replica
+        - failover
+        - 缓存产品
+        - 分布式缓存
+        - 键值存储
+        - 一致性哈希
+        - 热点 key
+        - 淘汰策略
+      exclude:
+        - browser cache
+        - http cache header
+        - local in-memory cache wrapper
+    capabilities:
+      - id: source-boundary
+        name: Source and workspace boundary
+        boundary: Project source, credentials, tenant, workspace, branch, writeback, and
+          read-only mode are explicit before execution.
+        requiredEvidence:
+          - project-registration
+          - source-readiness-preflight
+          - credential-or-read-only-boundary
+      - id: cache-product-runtime
+        name: Distributed cache runtime harness
+        boundary: Build, protocol compatibility, cluster, replication, eviction,
+          failover, benchmark, and readiness commands are declared.
+        requiredEvidence:
+          - build-output
+          - protocol-compatibility-output
+          - cluster-output
+          - eviction-output
+          - failover-output
+          - benchmark-output
+      - id: exception-tracking
+        name: Exception and error tracking
+        boundary: Runtime exceptions, protocol errors, dependency failures, retries, and
+          user-facing errors are classified and correlated.
+        requiredEvidence:
+          - error-code-contract
+          - exception-sample
+          - trace-link
+          - owner-next-action
+          - repair-verification
+      - id: test-and-quality
+        name: Test and quality gates
+        boundary: Tests, coverage expectations, interface contracts, and regression
+          scope are proven through command evidence.
+        requiredEvidence:
+          - test-report
+          - coverage-or-risk-acceptance
+          - contract-check
+      - id: failure-diagnostics
+        name: Failure diagnostics
+        boundary: Failures are classified with command, stack/log excerpt, suspected
+          root cause, owner, next action, and verification.
+        requiredEvidence:
+          - failure-classification
+          - root-cause-note
+          - repair-verification
+      - id: observability
+        name: Observability
+        boundary: Health, readiness, logs, metrics, traces, APM signals, and alert
+          routes are bound before Beta/RC/GA claims.
+        requiredEvidence:
+          - health-check
+          - runtime-log
+          - metric-or-trace-proof
+          - alert-route
+      - id: slo-monitoring
+        name: SLO monitoring and alert routing
+        boundary: SLIs, SLOs, dashboards, alert thresholds, routing targets, and error
+          budget status are explicit before RC/GA.
+        requiredEvidence:
+          - sli-definition
+          - slo-dashboard
+          - alert-rule
+          - runbook-link
+          - error-budget-status
+      - id: operational-runbooks
+        name: Operational runbooks
+        boundary: Critical cache failure modes have symptom-first runbooks with triage
+          queries, mitigation, rollback, owner, and verification.
+        requiredEvidence:
+          - runbook
+          - triage-query
+          - rollback-or-mitigation
+          - oncall-owner
+          - post-repair-verification
+      - id: release-governance
+        name: Release governance
+        boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+          and ReleaseDecision are required before GA.
+        requiredEvidence:
+          - target-evidence-package
+          - phase-package
+          - source-closure
+          - release-decision
+    runtimePatterns:
+      harnessLayer: domain
+      domain: distributed-cache
+      domainLabel: Self-developed distributed cache product
+      language: generic
+      compatibilityProfiles:
+        - id: redis-compatible
+          role: protocol-oracle
+          scope:
+            - resp-protocol
+            - command-semantics
+            - error-code
+            - client-compatibility
+          referenceProduct: Redis
+        - id: memcached-compatible
+          role: protocol-oracle
+          scope:
+            - text-protocol
+            - binary-protocol
+            - command-semantics
+          referenceProduct: Memcached
+      architectureProfiles:
+        - id: single-node
+          concerns:
+            - storage
+            - ttl
+            - eviction
+            - persistence
+        - id: clustered
+          concerns:
+            - sharding
+            - hash-slot
+            - slot-migration
+            - replica
+            - failover
+        - id: multi-tenant
+          concerns:
+            - quota
+            - isolation
+            - noisy-neighbor
+            - hot-key
+      runtimeProfiles:
+        - go
+        - java
+        - rust
+        - cpp
+        - generic
+      domainExecution:
+        requiredActions:
+          - id: declare-cache-semantics
+            action: Define consistency, ttl, eviction, persistence, and protocol
+              compatibility boundaries.
+            evidence:
+              - cache-semantics.md
+              - protocol-compatibility-report
+          - id: prove-cluster-failover
+            action: Provide cluster failover, replica recovery, and slot migration evidence.
+            evidence:
+              - failover-test-report
+              - slot-migration-report
+          - id: prove-performance-envelope
+            action: Provide benchmark, hot-key, memory pressure, and latency evidence.
+            evidence:
+              - benchmark-summary
+              - hot-key-test
+              - memory-pressure-test
+        evidenceAdapters:
+          - id: protocol-suite
+            artifact: protocol-report
+            description: Redis and Memcached compatibility command output and semantic
+              diffs.
+          - id: benchmark
+            artifact: benchmark-summary
+            description: Throughput, latency, hot-key, and memory pressure benchmark
+              evidence.
+          - id: chaos-test
+            artifact: failover-report
+            description: Replica failover, slot migration, and recovery drill evidence.
+          - id: runtime-log
+            artifact: runtime-log
+            description: Correlated node, shard, slot, and command logs for diagnostics.
+          - id: cluster-topology
+            artifact: cluster-topology
+            description: Topology, shard ownership, replica placement, and migration state.
+        releaseBlockers:
+          - missing protocol compatibility evidence
+          - missing failover and recovery evidence
+          - missing benchmark and memory pressure evidence
+    validationBaseline:
+      requiredCommandGroups:
+        - install
+        - lint
+        - typecheck
+        - unit
+        - smoke
+        - functional
+      contractChecks:
+        - protocol-compatibility
+        - cluster-failover
+        - eviction-policy
+        - benchmark
+      commandEvidenceRequired: true
+      realBoundaryEvidenceRequired: true
+      noMockEvidenceForReleaseClaims: true
+    evidenceContract: &a5
+      format: json
+      requiredArtifacts:
+        - protocol-report
+        - cluster-topology
+        - failover-report
+        - benchmark-summary
+        - runtime-log
+        - target-evidence-package
+        - goal-completion-report
+      correlationFields:
+        - requestId
+        - traceId
+        - nodeId
+        - shardId
+        - slotId
+        - tenantId
+    failureTaxonomy:
+      categories:
+        - protocol
+        - cluster
+        - eviction
+        - persistence
+        - memory
+        - network
+        - benchmark
+        - observability
+        - governance
+    diagnosticsBaseline:
+      requiredSignals:
+        - command
+        - node-id
+        - shard-id
+        - slot-id
+        - memory
+        - latency
+        - log-excerpt
+      rootCauseFields:
+        - symptom
+        - suspected-node
+        - suspected-shard
+        - evidence
+        - fix
+        - verification
+    observabilityBaseline:
+      requiredSignals:
+        - health
+        - readiness
+        - logs
+        - metrics
+        - traces
+        - alerts
+      metrics:
+        required:
+          - cache_ops_total
+          - cache_latency_ms
+          - memory_used_bytes
+          - evictions_total
+          - replication_lag_ms
+          - failovers_total
+      structuredLogs:
+        requiredFields:
+          - requestId
+          - traceId
+          - nodeId
+          - shardId
+          - slotId
+          - command
+          - errorCode
+    governanceRules:
+      selectedHarnessBindingRequiresReview: true
+      noSilentSelectedHarnessMutation: true
+      releaseRequiresFailoverEvidence: true
+    phaseMapping:
+      alpha:
+        - source-boundary
+        - cache-product-runtime
+        - exception-tracking
+        - failure-diagnostics
+      beta:
+        - test-and-quality
+        - observability
+        - slo-monitoring
+        - failure-diagnostics
+      rc:
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - release-governance
+      ga:
+        - release-governance
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - source-boundary
+    llmDraftPolicy:
+      enabled: true
+      requireUserReview: true
+      activationRequiresAdmin: true
+    sourceReferences:
+      - name: Redis compatibility practice
+        category: engineering-practice
+        rationale: Redis command and protocol compatibility are used as differential
+          oracle references, not as the product being evolved.
+      - name: Distributed cache operations practice
+        category: engineering-practice
+        rationale: Cluster, replica, failover, slot migration, eviction, and benchmark
+          evidence define the domain execution boundary.
+    changelog:
+      - version: 0.2.0
+        changedAt: 2026-08-09T12:00:00.000Z
+        changedBy: evopilot-harness
+        summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1
+          metadata.
+        changes:
+          - Add productBoundary includes/excludes.
+          - Add structured matchPolicy with positive and negative evidence.
+          - Add executionModel and qualityGate for strict validation.
+      - version: 0.1.0
+        changedAt: 2026-08-09T00:00:00.000Z
+        summary: Initial distributed cache domain Harness.
+        changes:
+          - Add distributed cache domain match signals.
+          - Add protocol, cluster, failover, eviction, benchmark, and
+            observability execution contract.
+    createdAt: 2026-08-09T00:00:00.000Z
+    updatedAt: 2026-08-09T00:00:00.000Z
+    harnessLayer: domain
+    domain: distributed-cache
+    productBoundary: &a1
+      includes:
+        - self-developed distributed cache runtime
+        - Redis-compatible or Memcached-compatible protocol
+        - replication/failover/slot migration
+        - eviction and TTL engine
+      excludes:
+        - Redis client wrapper
+        - cache client SDK
+        - local in-memory cache helper
+        - cache proxy monitor only
+    matchPolicy: &a2
+      requiredAny:
+        - architecture:distributed-cache-product
+        - signal:failover
+        - signal:slot migration
+        - signal:eviction
+      positive:
+        dependencies: []
+        imports: []
+        files:
+          - cluster
+          - replica
+          - eviction
+        symbols:
+          - CacheServer
+          - Shard
+          - Replica
+        architectureSignals:
+          - distributed-cache-product
+          - replication
+          - failover
+          - slot-migration
+          - eviction-engine
+      negative:
+        productBoundaryExcludes:
+          - Redis client wrapper
+          - cache client SDK
+          - local in-memory cache helper
+          - cache proxy monitor only
+        signals:
+          - client-library-not-cache-engine
+          - no-cache-product-kernel
+          - operational-monitor-not-cache-kernel
+    executionModel: &a4
+      phases:
+        - detect
+        - scan
+        - build
+        - unit
+        - integration
+        - diagnostics
+        - release-review
+      requiredCommands:
+        install:
+          - make deps
+        test:
+          - make test
+        smoke:
+          - make smoke
+      optionalCommands:
+        profile:
+          - evopilot-harness detect --source-project <path> --json
+        strictValidate:
+          - evopilot-harness harness validate <harness-id> --strict --json
+    qualityGate: &a6
+      minTemplateScore: 0.8
+      requireProductBoundary: true
+      requireMatchPolicy: true
+      requireExecutionModel: true
+      requireEvidenceContract: true
+      requireExamples: true
+      requireHumanApproval: true
+    apiVersion: evopilot.dev/v2
+    kind: HarnessTemplate
+    metadata:
+      id: distributed-cache-harness
+      name: Distributed Cache Harness
+      version: 0.2.0
+      domain: distributed-cache
+      layer: domain
+    status:
+      phase: draft
+      conditions:
+        - type: TemplateQualityModeled
+          status: "True"
+          reason: RequiredSectionsPresent
+        - type: HumanReviewRequired
+          status: "True"
+          reason: HarnessPublicationGate
+  match:
+    productBoundary: *a1
+    matchPolicy: *a2
+    matchSignals: *a3
+  execution: *a4
+  evidence: *a5
+  qualityGate: *a6
+  lifecycle:
+    status: published
+relations:
+  parents: []
+  sourceReferences:
+    - name: Redis compatibility practice
+    - name: Distributed cache operations practice
+status:
+  phase: published
+  observedAt: 2026-08-09T05:24:19.115Z
+  conditions:
+    - type: TemplateQualityValidated
+      status: "True"
+      reason: TemplateQualityComplete
+      message: score=1;missing=none
+    - type: AssetEnvelopeReady
+      status: "True"
+      reason: HarnessAssetV2Generated
+      message: evopilot.dev/v2/HarnessAsset
+  quality:
+    harnessId: distributed-cache-harness
+    schema: evopilot-harness-template-quality/v1
+    score: 1
+    present:
+      - productBoundary
+      - matchPolicy
+      - executionModel
+      - evidenceContract
+      - qualityGate
+      - domainExecution
+      - validationBaseline
+      - failureTaxonomy
+      - observabilityBaseline
+      - governanceRules
+    missing: []
+  provenance:
+    generatedBy: evopilot-harness
+    generatedAt: 2026-08-09T05:24:19.115Z
+    sourceTemplateDigest: sha256:9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc
+    assetTemplateDigest: sha256:cad17a31441f17f5d20af9787fc34fe8f2955d1fe76763e6f26a716f722bf9a9
+    sourceReferenceCount: 2

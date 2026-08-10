@@ -2,6 +2,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
+import os from "node:os";
 import path from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
@@ -12,11 +13,20 @@ const DEFAULT_DATA_ROOT = ".evopilot-harness";
 const EVOLUTION_STATUSES = ["CREATED", "SOURCES_COLLECTED", "ANALYZED", "REVIEW_REQUIRED", "APPROVED", "PUBLISHED", "BLOCKED"];
 const PACKAGE_ROOT = path.resolve(import.meta.dirname, "..");
 const LLM_ADVISOR_SCHEMA = "evopilot-harness-llm-advisor/v1";
-const DETECT_SCHEMA = "evopilot-harness-detect-result/v1";
-const SOURCE_PROFILE_SCHEMA = "evopilot-harness-source-profile/v1";
+const LLM_MODELS_SCHEMA = "evopilot-harness-llm-models/v1";
+const DETECT_SCHEMA = "evopilot-harness-detect-result/v2";
+const SOURCE_PROFILE_SCHEMA = "evopilot-harness-source-profile/v2";
 const CORPUS_SCHEMA = "evopilot-harness-corpus/v1";
-const DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/paas/v4";
-const DEFAULT_GLM_MODEL = "glm-5.2";
+const HARNESS_ASSET_API_VERSION = "evopilot.dev/v2";
+const HARNESS_ASSET_KIND = "HarnessAsset";
+const HARNESS_TEMPLATE_SCHEMA_V2 = "evopilot-harness-template/v2";
+const AUTO_MATCH_SCHEMA = "evopilot-harness-auto-match/v2";
+const DEFAULT_EVAL_FIXTURE_ROOT = path.join(PACKAGE_ROOT, "eval", "unknown-source", "cases");
+const DEFAULT_LLM_REPLAY_FIXTURE_ROOT = path.join(PACKAGE_ROOT, "eval", "llm-replay", "cases");
+const DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/coding/paas/v4";
+const DEFAULT_GLM_MODEL = "glm-5.1";
+const DEFAULT_LLM_PROFILE_ID = "evopilot-glm";
+const DEFAULT_LLM_MODELS_FILE = path.join(PACKAGE_ROOT, "models.json");
 const DEFAULT_MATCH_THRESHOLD = 0.45;
 const AMBIGUOUS_MATCH_DELTA = 0.1;
 const DEFAULT_CORPUS_GROUP_LIMIT = 5;
@@ -37,6 +47,8 @@ async function main(argv) {
   if (group === "harness" && action === "validate") return validateHarness(args, idArg);
   if (group === "harness" && action === "publish") return publishHarness(args, idArg);
   if (group === "harness" && action === "deprecate") return deprecateHarness(args, idArg);
+  if (group === "asset" && action === "inspect") return inspectHarnessAsset(args, idArg);
+  if (group === "asset" && action === "validate") return validateHarnessAssets(args, idArg);
   if (group === "evolution" && action === "list") return listEvolutions(args);
   if (group === "evolution" && action === "create") return createEvolution(args);
   if (group === "evolution" && action === "sources") return addEvolutionSources(args, idArg);
@@ -55,9 +67,12 @@ async function main(argv) {
   if (group === "detect") return detectSources(args);
   if (group === "evolve" && action === "corpus") return oneClickCorpusEvolve(args);
   if (group === "evolve") return oneClickEvolve(args);
+  if (group === "llm" && action === "models") return inspectLlmModels(args);
+  if (group === "llm" && action === "replay") return replayLlmAdvisor(args);
+  if (group === "eval" && action === "run") return runUnknownSourceEval(args);
   if (group === "hub" && action === "snapshot") return hubSnapshot(args);
   if (group === "hub" && action === "serve") return serveHub(args);
-  throw usage("Use: evopilot-harness <catalog|registry|harness|detect|corpus|evolution|evolve|hub> --help.");
+  throw usage("Use: evopilot-harness <catalog|registry|harness|detect|corpus|evolution|evolve|llm|hub> --help.");
 }
 
 function publishRegistry(args) {
@@ -271,12 +286,18 @@ function publishCatalog(args) {
     }
   }
   fs.mkdirSync(out, { recursive: true });
-  const entries = packs.map((pack) => publishPack(pack, out));
+  const generatedAt = generatedTimestamp(args);
+  const entries = packs.map((pack) => publishPack(pack, out, { generatedAt }));
   const catalog = {
-    catalogVersion: 1,
+    catalogVersion: 2,
     catalogId,
-    generatedAt: generatedTimestamp(args),
+    generatedAt,
+    assetApiVersion: HARNESS_ASSET_API_VERSION,
+    assetKind: HARNESS_ASSET_KIND,
+    generatedBy: "evopilot-harness",
+    release: `v${readPackageVersion()}`,
     compatibleEvopilot: stringOption(args, "compatible-evopilot") ?? DEFAULT_COMPATIBLE_EVOPILOT,
+    qualityReport: catalogQualityReport(entries),
     entries
   };
   const markdown = renderCatalogMarkdown(catalog, entries);
@@ -326,6 +347,22 @@ function validateCatalog(args) {
     if (ok) {
       const template = parseYaml(fs.readFileSync(file, "utf8"));
       for (const check of validateHarnessTemplateContract(template, entry)) checks.push(check);
+      const assetPath = entry.assetPath ? path.resolve(source, String(entry.assetPath)) : path.join(path.dirname(file), "asset.yaml");
+      if (fs.existsSync(assetPath) && assetPath.startsWith(source + path.sep)) {
+        const asset = parseYaml(fs.readFileSync(assetPath, "utf8"));
+        for (const check of validateHarnessAssetContract(asset, entry)) checks.push(check);
+        const expectedAssetDigest = entry.assetDigest ? String(entry.assetDigest) : "";
+        const actualAssetDigest = digestText(fs.readFileSync(assetPath, "utf8"));
+        if (expectedAssetDigest) {
+          checks.push({
+            id: `asset:${entry.name}@${entry.version}:digest`,
+            status: expectedAssetDigest === actualAssetDigest ? "PASS" : "FAIL",
+            evidence: [`expected=${expectedAssetDigest}`, `actual=${actualAssetDigest}`]
+          });
+        }
+      } else if (entry.assetPath) {
+        checks.push({ id: `asset:${entry.name}@${entry.version}:asset-yaml`, status: "FAIL", evidence: [`missing=${entry.assetPath}`] });
+      }
     }
   }
   const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
@@ -407,6 +444,52 @@ function validateHarness(args, idArg) {
     blockers
   };
   printResult(args, result, `status=${result.status} harnesses=${packs.length}`);
+  return blockers.length === 0 ? 0 : 2;
+}
+
+function inspectHarnessAsset(args, idArg) {
+  const source = path.resolve(stringOption(args, "source") ?? "harnesses");
+  const id = safeId(idArg ?? requiredOption(args, "name"));
+  const pack = findHarnessPack(source, id);
+  if (!pack) throw usage(`Harness ${id} not found in ${source}.`);
+  const asset = pack.asset ?? toHarnessAssetV2(pack, {
+    sourceRoot: source,
+    phase: pack.template.lifecycle?.status === "deprecated" ? "deprecated" : "source"
+  });
+  const result = {
+    schema: "evopilot-harness-asset-inspect/v2",
+    status: "FOUND",
+    source,
+    asset,
+    assetDigest: digestText(stringifyYaml(asset)),
+    checks: validateHarnessAssetContract(asset, packSummary(pack))
+  };
+  printResult(args, result, `asset=${pack.id}@${pack.version}`);
+  return 0;
+}
+
+function validateHarnessAssets(args, idArg) {
+  const source = path.resolve(stringOption(args, "source") ?? "harnesses");
+  const ids = idArg ? [safeId(idArg)] : stringListOption(args, "name");
+  const packs = listHarnessPacks(source).filter((pack) => ids.length === 0 || ids.includes(pack.id));
+  if (packs.length === 0) throw usage(`No Harness packs found in ${source}.`);
+  const checks = packs.flatMap((pack) => {
+    const asset = pack.asset ?? toHarnessAssetV2(pack, {
+      sourceRoot: source,
+      phase: pack.template.lifecycle?.status === "deprecated" ? "deprecated" : "source"
+    });
+    return validateHarnessAssetContract(asset, packSummary(pack));
+  });
+  const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
+  const result = {
+    schema: "evopilot-harness-asset-validation-result/v2",
+    status: blockers.length === 0 ? "VALIDATED" : "FAILED",
+    source,
+    assetCount: packs.length,
+    checks,
+    blockers
+  };
+  printResult(args, result, `asset-status=${result.status} assets=${packs.length}`);
   return blockers.length === 0 ? 0 : 2;
 }
 
@@ -807,6 +890,7 @@ function publishCorpusRun(args, run) {
     const targetRoot = path.join(harnessRoot, safeId(draft.harnessId));
     fs.mkdirSync(path.join(targetRoot, "examples"), { recursive: true });
     fs.writeFileSync(path.join(targetRoot, "template.yaml"), draft.templateYaml, "utf8");
+    if (draft.assetYaml) fs.writeFileSync(path.join(targetRoot, "asset.yaml"), draft.assetYaml, "utf8");
     fs.writeFileSync(path.join(targetRoot, "README.md"), draft.readme, "utf8");
     fs.writeFileSync(path.join(targetRoot, "CHANGELOG.md"), draft.changelog, "utf8");
     fs.writeFileSync(path.join(targetRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
@@ -1076,7 +1160,7 @@ function buildHubSnapshot(args) {
   return {
     schema: "evopilot-harness-hub-snapshot/v1",
     status: catalog.status === "READY" ? "READY" : "ATTENTION",
-    generatedAt: new Date().toISOString(),
+    generatedAt: generatedTimestamp(args),
     project: {
       name: "evopilot-harness",
       version: readPackageVersion(),
@@ -1183,6 +1267,12 @@ function hubCatalogEntry(catalogRoot, entry) {
     status: exists ? String(entry.status ?? "published") : "missing-template",
     path: entryPath,
     digest: templateDigest,
+    assetPath: entry.assetPath,
+    assetDigest: entry.assetDigest,
+    assetApiVersion: entry.apiVersion,
+    assetKind: entry.kind,
+    qualityScore: entry.qualityScore,
+    qualityStatus: entry.qualityStatus,
     tags: Array.isArray(entry.tags) ? entry.tags : [],
     matchSummary: entry.matchSummary,
     contract
@@ -1219,6 +1309,10 @@ function lifecycleCommandModel() {
     { id: "corpus-scan", label: "Scan and group a source corpus", command: "evopilot-harness corpus scan --source-root /path/to/project-root --json" },
     { id: "corpus-plan", label: "Generate reviewable corpus Harness drafts", command: "evopilot-harness corpus plan --source-root /path/to/project-root --include-modules --json" },
     { id: "corpus-evolve", label: "One-command corpus evolution", command: "evopilot-harness evolve corpus --source-root /path/to/project-root --json" },
+    { id: "llm-models", label: "Inspect local EvoPilot GLM config", command: "evopilot-harness llm models --json" },
+    { id: "asset-validate", label: "Validate Harness Asset v2 envelopes", command: "evopilot-harness asset validate --source published --json" },
+    { id: "unknown-source-eval", label: "Run unknown-source matching evals", command: "evopilot-harness eval run --json" },
+    { id: "llm-replay", label: "Replay LLM Advisor fixtures", command: "evopilot-harness llm replay --json" },
     { id: "scan-auto-match", label: "Scan and auto-match", command: "evopilot-harness evolve --source-project /path/to/source-project --goal \"...\" --json" },
     { id: "review-draft", label: "Review draft", command: "evopilot-harness evolution review <evolution-id> --json" },
     { id: "approve", label: "Approve", command: "evopilot-harness evolution approve <evolution-id> --confirmed-by <actor> --confirmation <text> --json" },
@@ -1411,6 +1505,7 @@ function publishRun(args, run) {
   const targetRoot = path.join(harnessRoot, safeId(draft.harnessId));
   fs.mkdirSync(path.join(targetRoot, "examples"), { recursive: true });
   fs.writeFileSync(path.join(targetRoot, "template.yaml"), draft.templateYaml, "utf8");
+  if (draft.assetYaml) fs.writeFileSync(path.join(targetRoot, "asset.yaml"), draft.assetYaml, "utf8");
   fs.writeFileSync(path.join(targetRoot, "README.md"), draft.readme, "utf8");
   fs.writeFileSync(path.join(targetRoot, "CHANGELOG.md"), draft.changelog, "utf8");
   fs.writeFileSync(path.join(targetRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
@@ -1606,6 +1701,8 @@ function buildSourceProfile(sources, corpus, goal) {
   const primaryRole = roles[0]?.id ?? "unknown";
   const recommendedHarness = recommendHarnessForRole(primaryRole, { dependencies, imports, symbols, architectureSignals, text: corpus.text, goal });
   const negativeSignals = inferNegativeSignals({ roles, dependencies, imports, symbols, architectureSignals, text: corpus.text });
+  const scannerEvidence = buildScannerEvidence({ sources, allFiles, selectedFiles, dependencies, imports, symbols, languages, buildTools, frameworks, architectureSignals, roles, text: corpus.text, goal });
+  const uncertainty = sourceProfileUncertainty({ roles, recommendedHarness, scannerEvidence, negativeSignals, sources });
   const positiveSignals = uniqueStrings([
     ...dependencies.slice(0, 20),
     ...frameworks,
@@ -1630,10 +1727,79 @@ function buildSourceProfile(sources, corpus, goal) {
     roles,
     primaryRole,
     recommendedHarness,
+    scannerVersion: "unknown-source-scanner/v2",
+    scanners: scannerEvidence,
+    scannerSummary: scannerSummary(scannerEvidence),
     positiveSignals,
     negativeSignals,
+    uncertainty,
     sensitiveMaterialFindings: uniqueStrings(sources.flatMap((source) => source.scan?.sensitiveMaterialFindings ?? detectSensitiveMaterial(source.contentText ?? ""))),
     goalDigest: digestText(goal)
+  };
+}
+
+function buildScannerEvidence(context) {
+  const text = normalizeForMatch([context.text, context.goal].join("\n"));
+  const evidence = [];
+  const add = (id, type, signals, confidence, rawEvidence = signals) => {
+    const normalizedSignals = uniqueStrings(signals).slice(0, 16);
+    evidence.push({
+      id,
+      type,
+      status: normalizedSignals.length > 0 ? "MATCHED" : "SKIPPED",
+      confidence: Number(clamp(confidence, 0, 1).toFixed(2)),
+      signals: normalizedSignals,
+      evidence: uniqueStrings(rawEvidence).slice(0, 16)
+    });
+  };
+  add("file-extension", "filesystem", context.allFiles.map((file) => path.extname(file).toLowerCase()).filter(Boolean), context.allFiles.length > 0 ? 0.55 : 0);
+  add("manifest", "manifest", context.buildTools, context.buildTools.length > 0 ? 0.82 : 0, context.selectedFiles.filter((file) => /pom\.xml|package\.json|go\.mod|pyproject\.toml|Cargo\.toml/i.test(file)));
+  add("dependency", "dependency", context.dependencies.slice(0, 20), context.dependencies.length > 0 ? 0.86 : 0);
+  add("import", "source-code", context.imports.slice(0, 20), context.imports.length > 0 ? 0.72 : 0);
+  add("symbol", "source-code", context.symbols.slice(0, 20), context.symbols.length > 0 ? 0.78 : 0);
+  add("architecture-text", "semantic", context.architectureSignals, context.architectureSignals.length > 0 ? 0.88 : 0);
+  add("role-inference", "semantic", context.roles.map((role) => role.id), context.roles[0]?.confidence ?? 0, context.roles.flatMap((role) => role.evidence ?? []));
+  if (context.sources.some((source) => source.type === "production-log")) {
+    add("runtime-log", "runtime-log", runtimeLogSignals(text), 0.76);
+  }
+  if (context.sources.some((source) => source.redactionApplied)) {
+    add("sensitive-material", "governance", ["redaction-applied"], 0.7);
+  }
+  return evidence;
+}
+
+function runtimeLogSignals(text) {
+  const signals = [];
+  if (/timeout|connection refused|reset|unavailable|failover|error|exception/.test(text)) signals.push("failure-mode");
+  if (/requestid|traceid|spanid|correlation/.test(text)) signals.push("correlation-context");
+  if (/latency|p99|qps|throughput|slow/.test(text)) signals.push("performance-signal");
+  return signals;
+}
+
+function scannerSummary(scannerEvidence) {
+  const matched = scannerEvidence.filter((scanner) => scanner.status === "MATCHED");
+  return {
+    matchedCount: matched.length,
+    totalCount: scannerEvidence.length,
+    topSignals: uniqueStrings(matched.flatMap((scanner) => scanner.signals)).slice(0, 24),
+    confidence: Number((matched.reduce((sum, scanner) => sum + scanner.confidence, 0) / Math.max(matched.length, 1)).toFixed(2))
+  };
+}
+
+function sourceProfileUncertainty({ roles, recommendedHarness, scannerEvidence, negativeSignals, sources }) {
+  const reasons = [];
+  const topRole = roles[0];
+  const secondRole = roles[1];
+  if (!topRole) reasons.push("no-source-role-detected");
+  if (topRole && secondRole && Math.abs(topRole.confidence - secondRole.confidence) < 0.12) reasons.push("close-role-confidence");
+  if ((recommendedHarness?.confidence ?? 0) < 0.6) reasons.push("low-recommended-harness-confidence");
+  if (scannerEvidence.filter((scanner) => scanner.status === "MATCHED").length < 3) reasons.push("low-scanner-coverage");
+  if (negativeSignals.length > 0) reasons.push("negative-boundary-signals-present");
+  if (sources.some((source) => source.type !== "source-project")) reasons.push("non-code-source-material-present");
+  return {
+    status: reasons.length > 0 ? "REVIEWABLE" : "LOW",
+    reasons: uniqueStrings(reasons),
+    confidence: Number(clamp(1 - reasons.length * 0.14, 0.2, 0.95).toFixed(2))
   };
 }
 
@@ -1704,8 +1870,21 @@ function autoMatchHarness(packs, sourceProfile, corpus, goal, args) {
     reasons = uniqueStrings([`source-role=${sourceProfile.primaryRole}`, ...(recommended?.evidence ?? []), "no-confident-existing-harness-match"]).slice(0, 12);
   }
 
+  const decisionContext = buildDecisionContext({
+    decision,
+    confidence,
+    matchThreshold,
+    candidates,
+    best,
+    second,
+    ambiguous,
+    sourceProfile,
+    parentCandidates,
+    reasons
+  });
   return {
-    schema: "evopilot-harness-auto-match/v1",
+    schema: AUTO_MATCH_SCHEMA,
+    algorithmVersion: "unknown-source-decision-aggregator/v2",
     decision,
     confidence: Number(confidence.toFixed(3)),
     matchThreshold,
@@ -1719,7 +1898,50 @@ function autoMatchHarness(packs, sourceProfile, corpus, goal, args) {
     parentCandidates,
     candidates: candidates.map(({ basePack, ...candidate }) => candidate).slice(0, 8),
     reasons,
+    candidateRetrieval: decisionContext.candidateRetrieval,
+    conflicts: decisionContext.conflicts,
+    uncertainty: decisionContext.uncertainty,
+    reviewGate: decisionContext.reviewGate,
+    decisionEvidence: decisionContext.decisionEvidence,
     nextAction: "review-generated-draft"
+  };
+}
+
+function buildDecisionContext({ decision, confidence, matchThreshold, candidates, best, second, ambiguous, sourceProfile, parentCandidates, reasons }) {
+  const conflicts = [];
+  if (ambiguous && best && second) conflicts.push(`ambiguous-top-candidates:${best.harnessId}:${second.harnessId}`);
+  if (sourceProfile.negativeSignals.length > 0) conflicts.push(...sourceProfile.negativeSignals.slice(0, 6).map((signal) => `negative:${signal}`));
+  const reviewReasons = [];
+  if (decision === "REVIEW_REQUIRED") reviewReasons.push("decision-review-required");
+  if (Number(confidence ?? 0) < matchThreshold) reviewReasons.push(`confidence<${matchThreshold}`);
+  if (conflicts.length > 0) reviewReasons.push("conflict-or-negative-signal");
+  if (sourceProfile.uncertainty?.status === "REVIEWABLE") reviewReasons.push(...(sourceProfile.uncertainty.reasons ?? []));
+  const reviewGate = {
+    required: reviewReasons.length > 0 || ["CREATE_NEW", "CREATE_NEW_WITH_PARENT_REFERENCE", "FORK_FROM_MATCH"].includes(decision),
+    reasons: uniqueStrings(reviewReasons).slice(0, 12),
+    stopAction: reviewReasons.length > 0 ? "review-candidate-evidence-before-approval" : "review-generated-draft"
+  };
+  return {
+    candidateRetrieval: {
+      schema: "evopilot-harness-candidate-retrieval/v2",
+      source: "published-or-source-harness-packs",
+      candidateCount: candidates.length,
+      topCandidate: best ? { harnessId: best.harnessId, score: best.score, boundaryFit: best.boundaryFit, roleFit: best.roleFit } : undefined,
+      secondCandidate: second ? { harnessId: second.harnessId, score: second.score, boundaryFit: second.boundaryFit, roleFit: second.roleFit } : undefined
+    },
+    conflicts: uniqueStrings(conflicts).slice(0, 12),
+    uncertainty: {
+      status: reviewGate.required ? "REVIEWABLE" : "LOW",
+      confidence: Number(clamp(confidence, 0, 1).toFixed(3)),
+      sourceProfile: sourceProfile.uncertainty
+    },
+    reviewGate,
+    decisionEvidence: uniqueStrings([
+      ...reasons,
+      `primaryRole=${sourceProfile.primaryRole}`,
+      `scannerConfidence=${sourceProfile.scannerSummary?.confidence ?? 0}`,
+      `topCandidate=${best?.harnessId ?? "none"}:${best?.score ?? 0}`
+    ]).slice(0, 16)
   };
 }
 
@@ -2049,7 +2271,7 @@ function inferArchitectureSignals(context) {
   if (/dubbo|rpccontext|remoting|registry zookeeper|hessian|protocol|consumer|provider/.test(text)) signals.push("rpc-framework", "middleware-framework");
   if (/\bworkflow\b|\bflow\b|taskstatus|taskserialstatus|noodel|orchestration|调度/.test(text)) signals.push("workflow-engine", "orchestration-engine");
   if (/logback|slf4j|loggerfactory|iloggingevent|classicconverter|mdc|traceid|requestid|logging filter/.test(text)) signals.push("logging-sdk", "observability-adapter");
-  if (/spring boot|starter web|mybatis|swagger|admin|housekeeper|butler|rbac|permission|workflow|report/.test(text)) signals.push("enterprise-admin-software");
+  if (/spring boot|starter web|mybatis|swagger|admin console|housekeeper|butler|rbac|permission system|audit report|management software/.test(text)) signals.push("enterprise-admin-software");
   if (/vue|iview|vue router|vuex|webpack|wangeditor|echarts|admin frontend/.test(text)) signals.push("frontend-admin-app");
   if (/facade|sdk|client api|resource api/.test(text)) signals.push("api-facade-library");
   if (/jdbc|datasource|mysql connector|druiddatasource/.test(text)) signals.push("database-client");
@@ -2284,6 +2506,370 @@ function sourceProjectMarker(dir) {
   return { rootType, markers };
 }
 
+function inspectLlmModels(args) {
+  const config = loadLlmModelsConfig(args);
+  const selected = selectLlmProfile(args, config);
+  const apiKeyConfigured = Boolean(selected.apiKey || (selected.apiKeyEnv && process.env[selected.apiKeyEnv]));
+  const result = {
+    schema: LLM_MODELS_SCHEMA,
+    status: apiKeyConfigured ? "READY" : "CONFIG_REQUIRED",
+    source: {
+      path: config.path,
+      exists: config.exists,
+      sourceType: config.sourceType,
+      error: config.error
+    },
+    defaultProfileId: DEFAULT_LLM_PROFILE_ID,
+    selectedProfile: safeLlmProfile(selected),
+    models: config.models.map(safeLlmProfile),
+    nextAction: apiKeyConfigured ? "run-harness-evolution" : "open-models-json-and-configure-api-key"
+  };
+  printResult(args, result, `llmModels=${result.models.length} selected=${selected.id} status=${result.status}`);
+}
+
+function replayLlmAdvisor(args) {
+  const fixtureRoot = path.resolve(stringOption(args, "fixture-root") ?? stringOption(args, "fixtures") ?? DEFAULT_LLM_REPLAY_FIXTURE_ROOT);
+  const fixtures = readFixtureFiles(fixtureRoot);
+  const cases = fixtures.map((fixturePath) => evaluateLlmReplayFixture(fixturePath));
+  const failed = cases.filter((item) => item.status !== "PASS");
+  const result = {
+    schema: "evopilot-harness-llm-replay-report/v2",
+    status: failed.length === 0 ? "PASSED" : "FAILED",
+    fixtureRoot,
+    caseCount: cases.length,
+    passedCount: cases.length - failed.length,
+    failedCount: failed.length,
+    cases,
+    nextAction: failed.length === 0 ? "run-unknown-source-eval" : "repair-llm-replay-fixtures-or-advisor-schema"
+  };
+  printResult(args, result, `llm-replay=${result.status} cases=${cases.length}`);
+  return failed.length === 0 ? 0 : 2;
+}
+
+function evaluateLlmReplayFixture(fixturePath) {
+  const fixture = parseFixtureFile(fixturePath);
+  const parsed = isRecord(fixture.advisorResponse) ? fixture.advisorResponse : {};
+  const expected = isRecord(fixture.expect) ? fixture.expect : {};
+  const recommendation = isRecord(parsed.recommendation) ? parsed.recommendation : {};
+  const checks = [];
+  if (expected.sourceClassification) {
+    checks.push({
+      id: "sourceClassification",
+      status: String(parsed.sourceClassification ?? "") === String(expected.sourceClassification) ? "PASS" : "FAIL",
+      evidence: [`expected=${expected.sourceClassification}`, `actual=${String(parsed.sourceClassification ?? "missing")}`]
+    });
+  }
+  if (expected.action) {
+    checks.push({
+      id: "recommendation.action",
+      status: normalizeAdvisorAction(recommendation.action) === normalizeAdvisorAction(expected.action) ? "PASS" : "FAIL",
+      evidence: [`expected=${expected.action}`, `actual=${String(recommendation.action ?? "missing")}`]
+    });
+  }
+  if (expected.targetHarnessId) {
+    checks.push({
+      id: "recommendation.targetHarnessId",
+      status: safeId(recommendation.targetHarnessId ?? "") === safeId(expected.targetHarnessId) ? "PASS" : "FAIL",
+      evidence: [`expected=${expected.targetHarnessId}`, `actual=${String(recommendation.targetHarnessId ?? "missing")}`]
+    });
+  }
+  if (expected.minConfidence !== undefined) {
+    checks.push({
+      id: "recommendation.confidence",
+      status: Number(recommendation.confidence ?? 0) >= Number(expected.minConfidence) ? "PASS" : "FAIL",
+      evidence: [`min=${expected.minConfidence}`, `actual=${Number(recommendation.confidence ?? 0)}`]
+    });
+  }
+  const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
+  return {
+    name: fixture.name ?? path.basename(fixturePath),
+    fixturePath,
+    status: blockers.length === 0 ? "PASS" : "FAIL",
+    checks,
+    blockers
+  };
+}
+
+function runUnknownSourceEval(args) {
+  const fixtureRoot = path.resolve(stringOption(args, "fixture-root") ?? stringOption(args, "fixtures") ?? DEFAULT_EVAL_FIXTURE_ROOT);
+  const fixtures = readFixtureFiles(fixtureRoot);
+  const cases = fixtures.map((fixturePath) => evaluateUnknownSourceFixture(args, fixtureRoot, fixturePath));
+  const failed = cases.filter((item) => item.status !== "PASS");
+  const matrix = evalDecisionMatrix(cases);
+  const result = {
+    schema: "evopilot-harness-unknown-source-eval-report/v2",
+    status: failed.length === 0 ? "PASSED" : "FAILED",
+    fixtureRoot,
+    caseCount: cases.length,
+    passedCount: cases.length - failed.length,
+    failedCount: failed.length,
+    matrix,
+    cases,
+    nextAction: failed.length === 0 ? "publish-harness-assets" : "repair-matching-algorithm-or-fixtures"
+  };
+  printResult(args, result, `unknown-source-eval=${result.status} cases=${cases.length}`);
+  return failed.length === 0 ? 0 : 2;
+}
+
+function evaluateUnknownSourceFixture(args, fixtureRoot, fixturePath) {
+  const fixture = parseFixtureFile(fixturePath);
+  const goal = String(fixture.goal ?? "Generate or evolve a reusable Harness from this unknown source.");
+  const source = path.resolve(path.dirname(fixturePath), String(fixture.sourceProject ?? fixture.sourceRoot ?? ""));
+  const evalArgs = {
+    ...args,
+    options: {
+      ...args.options,
+      "no-llm-advisor": true,
+      source: stringOption(args, "source") ?? "harnesses"
+    }
+  };
+  let detection;
+  let groupResult;
+  if (fixture.sourceRoot) {
+    const { detections } = detectProjectsUnderRoot(evalArgs, source, goal);
+    groupResult = groupCorpusDetections(evalArgs, source, detections);
+    detection = { detections, groups: groupResult.groups };
+  } else {
+    detection = publicDetectResult(detectHarnessForSources(evalArgs, [sourceProjectSource(source)], goal));
+  }
+  const checks = evaluateUnknownSourceExpectations(fixture, detection);
+  const blockers = checks.filter((check) => check.status === "FAIL").map((check) => `${check.id}:${check.evidence.join(",")}`);
+  return {
+    name: fixture.name ?? path.relative(fixtureRoot, fixturePath),
+    fixturePath,
+    source,
+    mode: fixture.sourceRoot ? "source-root" : "source-project",
+    status: blockers.length === 0 ? "PASS" : "FAIL",
+    actual: summarizeEvalActual(detection, Boolean(fixture.sourceRoot)),
+    checks,
+    blockers
+  };
+}
+
+function evaluateUnknownSourceExpectations(fixture, detection) {
+  const expect = isRecord(fixture.expect) ? fixture.expect : {};
+  const checks = [];
+  if (Array.isArray(detection.detections)) {
+    const groups = Array.isArray(detection.groups) ? detection.groups : [];
+    if (expect.minGroups !== undefined) {
+      checks.push({
+        id: "groups.minGroups",
+        status: groups.length >= Number(expect.minGroups) ? "PASS" : "FAIL",
+        evidence: [`min=${expect.minGroups}`, `actual=${groups.length}`]
+      });
+    }
+    for (const target of normalizeStrings(expect.mustIncludeTargets)) {
+      checks.push({
+        id: `groups.mustInclude:${target}`,
+        status: groups.some((group) => group.targetHarnessId === target) ? "PASS" : "FAIL",
+        evidence: [`targets=${groups.map((group) => group.targetHarnessId).join("|")}`]
+      });
+    }
+    return checks;
+  }
+  const autoMatch = detection.autoMatch ?? {};
+  if (expect.decision) {
+    checks.push({
+      id: "decision",
+      status: autoMatch.decision === expect.decision ? "PASS" : "FAIL",
+      evidence: [`expected=${expect.decision}`, `actual=${autoMatch.decision ?? "missing"}`]
+    });
+  }
+  if (expect.targetHarnessId) {
+    checks.push({
+      id: "targetHarnessId",
+      status: autoMatch.targetHarnessId === expect.targetHarnessId ? "PASS" : "FAIL",
+      evidence: [`expected=${expect.targetHarnessId}`, `actual=${autoMatch.targetHarnessId ?? "missing"}`]
+    });
+  }
+  for (const forbidden of normalizeStrings(expect.mustNotTargetHarnessIds)) {
+    checks.push({
+      id: `mustNotTarget:${forbidden}`,
+      status: autoMatch.targetHarnessId !== forbidden ? "PASS" : "FAIL",
+      evidence: [`actual=${autoMatch.targetHarnessId ?? "missing"}`]
+    });
+  }
+  if (expect.reviewGateRequired !== undefined) {
+    checks.push({
+      id: "reviewGate.required",
+      status: Boolean(autoMatch.reviewGate?.required) === Boolean(expect.reviewGateRequired) ? "PASS" : "FAIL",
+      evidence: [`expected=${Boolean(expect.reviewGateRequired)}`, `actual=${Boolean(autoMatch.reviewGate?.required)}`]
+    });
+  }
+  return checks;
+}
+
+function summarizeEvalActual(detection, isRoot) {
+  if (isRoot) {
+    return {
+      evaluatedCount: detection.detections.length,
+      groupCount: detection.groups.length,
+      targets: detection.groups.map((group) => group.targetHarnessId)
+    };
+  }
+  return {
+    primaryRole: detection.sourceProfile?.primaryRole,
+    decision: detection.autoMatch?.decision,
+    targetHarnessId: detection.autoMatch?.targetHarnessId,
+    confidence: detection.autoMatch?.confidence,
+    reviewGate: detection.autoMatch?.reviewGate,
+    topCandidates: detection.autoMatch?.candidates?.slice(0, 3)
+  };
+}
+
+function evalDecisionMatrix(cases) {
+  const matrix = {};
+  for (const item of cases) {
+    const decision = item.actual?.decision ?? (item.actual?.targets ? "CORPUS_GROUPED" : "UNKNOWN");
+    matrix[decision] = (matrix[decision] ?? 0) + 1;
+  }
+  return matrix;
+}
+
+function readFixtureFiles(root) {
+  if (!fs.existsSync(root)) throw usage(`Fixture root not found: ${root}`);
+  const files = [];
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else if (/\.(ya?ml|json)$/i.test(entry.name)) files.push(full);
+    }
+  };
+  visit(root);
+  return files.sort();
+}
+
+function parseFixtureFile(filePath) {
+  const text = fs.readFileSync(filePath, "utf8");
+  return filePath.endsWith(".json") ? JSON.parse(text) : parseYaml(text);
+}
+
+function loadLlmModelsConfig(args) {
+  const explicitPath = stringOption(args, "llm-models-file") ?? process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE;
+  const filePath = path.resolve(explicitPath ?? DEFAULT_LLM_MODELS_FILE);
+  if (!fs.existsSync(filePath)) {
+    return {
+      path: filePath,
+      exists: false,
+      sourceType: explicitPath ? "explicit-file" : "default-project-file",
+      models: []
+    };
+  }
+  try {
+    const text = fs.readFileSync(filePath, "utf8");
+    const root = JSON.parse(text);
+    const models = Array.isArray(root.models) ? root.models.map((item, index) => normalizeCodeBuddyModel(item, index, filePath)).filter(Boolean) : [];
+    return {
+      path: filePath,
+      exists: true,
+      sourceType: explicitPath ? "explicit-file" : "default-project-file",
+      models
+    };
+  } catch (error) {
+    return {
+      path: filePath,
+      exists: true,
+      sourceType: explicitPath ? "explicit-file" : "default-project-file",
+      models: [],
+      error: error instanceof Error ? maskSecretText(error.message) : maskSecretText(String(error))
+    };
+  }
+}
+
+function normalizeCodeBuddyModel(value, index, filePath) {
+  if (!isRecord(value)) return undefined;
+  const id = stringValue(value.id, "");
+  const name = stringValue(value.name, id || `model-${index + 1}`);
+  const vendor = stringValue(value.vendor, stringValue(value.providerName, "openai-compatible"));
+  const url = stringValue(value.url, stringValue(value.baseUrl, ""));
+  const modelName = stringValue(value.modelName, id || name);
+  if (!id && !modelName) return undefined;
+  return {
+    id: id || safeId(modelName),
+    name,
+    providerPreset: normalizeLlmPreset(`${vendor} ${modelName}`),
+    providerName: vendor,
+    vendor,
+    baseUrl: url,
+    modelName,
+    apiKey: typeof value.apiKey === "string" ? value.apiKey.trim() : "",
+    apiKeyEnv: typeof value.apiKeyEnv === "string" && value.apiKeyEnv.trim() ? value.apiKeyEnv.trim() : undefined,
+    supportsToolCall: Boolean(value.supportsToolCall),
+    supportsReasoning: Boolean(value.supportsReasoning),
+    source: filePath
+  };
+}
+
+function selectLlmProfile(args, config) {
+  const requested = stringOption(args, "llm-profile")
+    ?? stringOption(args, "llm-profile-id")
+    ?? stringOption(args, "llm-model-id")
+    ?? process.env.EVOPILOT_HARNESS_LLM_PROFILE
+    ?? process.env.EVOPILOT_HARNESS_LLM_PROFILE_ID
+    ?? process.env.EVOPILOT_HARNESS_LLM_MODEL_ID;
+  const models = Array.isArray(config.models) ? config.models : [];
+  const matched = requested ? models.find((model) => sameModelSelector(model, requested)) : undefined;
+  if (matched) return matched;
+  const preferred = preferredGlmProfile(models);
+  return preferred ?? models[0] ?? builtinGlmProfile();
+}
+
+function sameModelSelector(model, requested) {
+  const target = String(requested ?? "").trim().toLowerCase();
+  return [model.id, model.name, model.modelName].some((value) => String(value ?? "").trim().toLowerCase() === target);
+}
+
+function preferredGlmProfile(models) {
+  const glmModels = models.filter((model) => normalizeLlmPreset(`${model.vendor} ${model.providerName} ${model.id} ${model.modelName}`) === "glm");
+  return glmModels.find((model) => /glm[-_ ]?5\.?2/i.test(`${model.id} ${model.name} ${model.modelName}`))
+    ?? glmModels.find((model) => /glm[-_ ]?5/i.test(`${model.id} ${model.name} ${model.modelName}`))
+    ?? glmModels[0];
+}
+
+function builtinGlmProfile() {
+  return {
+    id: DEFAULT_LLM_PROFILE_ID,
+    name: "EvoPilot GLM",
+    providerPreset: "glm",
+    providerName: "zhipu",
+    vendor: "zhipu",
+    baseUrl: DEFAULT_GLM_BASE_URL,
+    modelName: DEFAULT_GLM_MODEL,
+    apiKey: "",
+    apiKeyEnv: "EVOPILOT_HARNESS_LLM_API_KEY",
+    supportsToolCall: true,
+    supportsReasoning: true,
+    source: "builtin"
+  };
+}
+
+function normalizeLlmPreset(value) {
+  const text = String(value ?? "").trim().toLowerCase();
+  if (text.includes("zhipu") || text.includes("glm")) return "glm";
+  if (text.includes("moonshot") || text.includes("kimi")) return "kimi";
+  if (text.includes("qwen") || text.includes("dashscope")) return "qwen";
+  if (text.includes("gemma")) return "gemma";
+  return "custom";
+}
+
+function safeLlmProfile(model) {
+  return {
+    id: model.id,
+    name: model.name,
+    vendor: model.vendor,
+    providerPreset: model.providerPreset,
+    providerName: model.providerName,
+    url: model.baseUrl,
+    modelName: model.modelName,
+    apiKeyConfigured: Boolean(model.apiKey || (model.apiKeyEnv && process.env[model.apiKeyEnv])),
+    apiKeyEnv: model.apiKey ? undefined : model.apiKeyEnv,
+    supportsToolCall: Boolean(model.supportsToolCall),
+    supportsReasoning: Boolean(model.supportsReasoning),
+    source: model.source
+  };
+}
+
 async function adviseHarnessEvolution(args, context) {
   const control = llmAdvisorControl(args);
   if (control.mode === "disabled") {
@@ -2302,6 +2888,10 @@ async function adviseHarnessEvolution(args, context) {
       mode: control.mode,
       errorCode: "LLM_ADVISOR_CONFIG_MISSING",
       errorMessage: config.missing.join(", "),
+      llmProfileId: config.profileId,
+      llmProfileName: config.profileName,
+      modelsFile: config.modelsFile,
+      modelsFileExists: config.modelsFileExists,
       provider: config.providerName,
       model: config.modelName,
       apiKeyConfigured: config.apiKeyConfigured,
@@ -2335,6 +2925,10 @@ async function adviseHarnessEvolution(args, context) {
       status: "FAILED",
       mode: control.mode,
       requestId,
+      llmProfileId: config.profileId,
+      llmProfileName: config.profileName,
+      modelsFile: config.modelsFile,
+      modelsFileExists: config.modelsFileExists,
       provider: config.providerName,
       model: config.modelName,
       apiKeyConfigured: config.apiKeyConfigured,
@@ -2351,25 +2945,31 @@ function llmAdvisorControl(args) {
   if (args.options["require-llm-advisor"]) return { mode: "required" };
   const value = stringOption(args, "llm-advisor") ?? process.env.EVOPILOT_HARNESS_LLM_ADVISOR;
   const normalized = String(value ?? "").trim().toLowerCase();
-  if (!normalized) return { mode: "disabled" };
+  if (!normalized) return { mode: "optional" };
   if (["0", "false", "off", "no", "disabled"].includes(normalized)) return { mode: "disabled" };
   if (["required", "require", "strict"].includes(normalized)) return { mode: "required" };
   return { mode: "optional" };
 }
 
 function llmAdvisorConfig(args) {
-  const preset = (stringOption(args, "llm-provider-preset") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_PRESET ?? "openai-compatible").toLowerCase();
-  const providerName = stringOption(args, "llm-provider-name") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_NAME ?? (preset === "glm" ? "zhipu" : "openai-compatible");
-  const baseUrl = stringOption(args, "llm-base-url") ?? process.env.EVOPILOT_HARNESS_LLM_BASE_URL ?? process.env.EVOPILOT_LLM_BASE_URL ?? (preset === "glm" ? DEFAULT_GLM_BASE_URL : "");
-  const modelName = stringOption(args, "llm-model") ?? stringOption(args, "llm-model-name") ?? process.env.EVOPILOT_HARNESS_LLM_MODEL_NAME ?? process.env.EVOPILOT_LLM_MODEL_NAME ?? (preset === "glm" ? DEFAULT_GLM_MODEL : "");
-  const apiKeyEnv = stringOption(args, "llm-api-key-env") ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY_ENV ?? "EVOPILOT_HARNESS_LLM_API_KEY";
-  const apiKey = process.env[apiKeyEnv] ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY ?? process.env.EVOPILOT_LLM_API_KEY ?? "";
+  const modelsConfig = loadLlmModelsConfig(args);
+  const selectedProfile = selectLlmProfile(args, modelsConfig);
+  const preset = (stringOption(args, "llm-provider-preset") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_PRESET ?? selectedProfile.providerPreset ?? "glm").toLowerCase();
+  const providerName = stringOption(args, "llm-provider-name") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_NAME ?? selectedProfile.providerName ?? (preset === "glm" ? "zhipu" : "openai-compatible");
+  const baseUrl = stringOption(args, "llm-base-url") ?? process.env.EVOPILOT_HARNESS_LLM_BASE_URL ?? process.env.EVOPILOT_LLM_BASE_URL ?? selectedProfile.baseUrl ?? (preset === "glm" ? DEFAULT_GLM_BASE_URL : "");
+  const modelName = stringOption(args, "llm-model") ?? stringOption(args, "llm-model-name") ?? process.env.EVOPILOT_HARNESS_LLM_MODEL_NAME ?? process.env.EVOPILOT_LLM_MODEL_NAME ?? selectedProfile.modelName ?? (preset === "glm" ? DEFAULT_GLM_MODEL : "");
+  const apiKeyEnv = stringOption(args, "llm-api-key-env") ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY_ENV ?? selectedProfile.apiKeyEnv ?? "EVOPILOT_HARNESS_LLM_API_KEY";
+  const apiKey = process.env[apiKeyEnv] ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY ?? process.env.EVOPILOT_LLM_API_KEY ?? selectedProfile.apiKey ?? "";
   const missing = [];
   if (!baseUrl) missing.push("llm-base-url");
   if (!modelName) missing.push("llm-model");
   if (!apiKey) missing.push(`env:${apiKeyEnv}`);
   return {
     preset,
+    profileId: selectedProfile.id,
+    profileName: selectedProfile.name,
+    modelsFile: modelsConfig.path,
+    modelsFileExists: modelsConfig.exists,
     providerName,
     baseUrl,
     modelName,
@@ -2450,6 +3050,8 @@ function harnessAdvisorPrompt({ run, sourceCoverage, sourceProfile, corpus, pack
       languages: sourceProfile?.languages,
       buildTools: sourceProfile?.buildTools,
       frameworks: sourceProfile?.frameworks,
+      scannerSummary: sourceProfile?.scannerSummary,
+      scanners: sourceProfile?.scanners,
       dependencies: sourceProfile?.dependencies?.slice(0, 60),
       symbols: sourceProfile?.symbols?.slice(0, 60),
       architectureSignals: sourceProfile?.architectureSignals,
@@ -2507,12 +3109,7 @@ async function callOpenAiCompatibleJsonOnce({ requestId, config, prompt, caller,
             role: "user",
             content: prompt
           }
-        ],
-        metadata: {
-          caller,
-          intent,
-          requestId
-        }
+        ]
       }),
       signal: controller.signal
     });
@@ -2560,6 +3157,10 @@ function normalizeLlmAdvisorResult({ control, config, response, parsed, duration
     status: "SUCCEEDED",
     mode: control.mode,
     requestId: response.requestId,
+    llmProfileId: config.profileId,
+    llmProfileName: config.profileName,
+    modelsFile: config.modelsFile,
+    modelsFileExists: config.modelsFileExists,
     provider: response.provider,
     model: response.model,
     durationMs,
@@ -2709,6 +3310,7 @@ function createDraftPack(run, match, corpus, args, sourceProfile) {
   const source = path.resolve(stringOption(args, "source") ?? "harnesses");
   const basePack = match.baseHarnessRef ? findHarnessPack(source, match.baseHarnessRef.id) : undefined;
   const template = basePack ? structuredCloneJson(basePack.template) : createGenericDomainTemplate(match.targetHarnessId, match.targetDomain, sourceProfile, match);
+  template.schema = HARNESS_TEMPLATE_SCHEMA_V2;
   template.id = match.targetHarnessId;
   template.version = match.targetVersion;
   template.name = humanName(match.targetHarnessId);
@@ -2740,10 +3342,13 @@ function createDraftPack(run, match, corpus, args, sourceProfile) {
   ];
   ensureDomainExecution(template, match.targetDomain);
   ensureTemplateQualityModel(template, match, sourceProfile);
+  ensureHarnessTemplateV2Metadata(template, match, sourceProfile);
   const templateYaml = stringifyYaml(template);
   const readme = renderDraftReadme(run, template, match);
   const changelog = renderDraftChangelog(run, template, match);
   const exampleProfile = renderExampleProfile(template);
+  const asset = draftAssetV2({ harnessId: template.id, version: String(template.version), template, templateYaml }, sourceProfile, match);
+  const assetYaml = stringifyYaml(asset);
   return {
     schema: "evopilot-harness-draft-pack/v1",
     harnessId: template.id,
@@ -2752,6 +3357,8 @@ function createDraftPack(run, match, corpus, args, sourceProfile) {
     digest: digestText(templateYaml),
     template,
     templateYaml,
+    asset,
+    assetYaml,
     readme,
     changelog,
     exampleProfile,
@@ -2766,7 +3373,9 @@ function createGenericDomainTemplate(id, domain, sourceProfile, match) {
   const boundary = defaultProductBoundary(id, domain, sourceProfile);
   const policy = defaultMatchPolicy(id, domain, sourceProfile, boundary);
   return {
-    schema: "evopilot-harness-template/v1",
+    schema: HARNESS_TEMPLATE_SCHEMA_V2,
+    apiVersion: HARNESS_ASSET_API_VERSION,
+    kind: "HarnessTemplate",
     id,
     version: "0.1.0",
     name: humanName(id),
@@ -2846,6 +3455,31 @@ function ensureTemplateQualityModel(template, match, sourceProfile) {
   template.executionModel.phases = normalizeStrings(template.executionModel.phases).length > 0 ? normalizeStrings(template.executionModel.phases) : defaultExecutionModel(sourceProfile).phases;
   template.executionModel.requiredCommands = isRecord(template.executionModel.requiredCommands) ? template.executionModel.requiredCommands : defaultExecutionModel(sourceProfile).requiredCommands;
   template.qualityGate = isRecord(template.qualityGate) ? template.qualityGate : defaultQualityGate();
+}
+
+function ensureHarnessTemplateV2Metadata(template, match, sourceProfile) {
+  template.schema = HARNESS_TEMPLATE_SCHEMA_V2;
+  template.apiVersion = HARNESS_ASSET_API_VERSION;
+  template.kind = "HarnessTemplate";
+  template.metadata = {
+    ...(isRecord(template.metadata) ? template.metadata : {}),
+    id: template.id ?? match.targetHarnessId,
+    name: template.name ?? humanName(match.targetHarnessId),
+    version: String(template.version ?? match.targetVersion ?? "0.1.0"),
+    domain: template.domain ?? match.targetDomain,
+    layer: template.harnessLayer ?? template.runtimePatterns?.harnessLayer ?? "domain",
+    sourceProfileDigest: sourceProfile?.digest
+  };
+  template.status = {
+    ...(isRecord(template.status) ? template.status : {}),
+    phase: template.lifecycle?.status ?? "draft",
+    conditions: Array.isArray(template.status?.conditions) && template.status.conditions.length > 0
+      ? template.status.conditions
+      : [
+          { type: "TemplateQualityModeled", status: "True", reason: "RequiredSectionsPresent" },
+          { type: "HumanReviewRequired", status: "True", reason: "HarnessPublicationGate" }
+        ]
+  };
 }
 
 function defaultProductBoundary(id, domain, sourceProfile) {
@@ -2941,8 +3575,10 @@ function defaultQualityGate() {
 function validateDraftPack(draft) {
   const checks = [
     { id: "draft-template", status: draft.templateYaml ? "PASS" : "FAIL", evidence: [`digest=${draft.digest}`] },
+    { id: "draft-asset", status: draft.assetYaml ? "PASS" : "FAIL", evidence: [`digest=${draft.assetYaml ? digestText(draft.assetYaml) : "missing"}`] },
     { id: "draft-readme", status: draft.readme ? "PASS" : "FAIL", evidence: [`bytes=${draft.readme?.length ?? 0}`] },
-    ...validateHarnessTemplateContract(draft.template, { name: draft.harnessId, version: draft.version, layer: "domain", domain: draft.domain }, { strict: true })
+    ...validateHarnessTemplateContract(draft.template, { name: draft.harnessId, version: draft.version, layer: "domain", domain: draft.domain }, { strict: true }),
+    ...validateHarnessAssetContract(draft.asset, { name: draft.harnessId, version: draft.version, layer: "domain", domain: draft.domain })
   ];
   return {
     schema: "evopilot-harness-draft-validation/v1",
@@ -2956,6 +3592,7 @@ function writeDraftFiles(dataRoot, evolutionId, draft) {
   const draftRoot = path.join(dataRoot, "evolutions", evolutionId, "draft");
   fs.mkdirSync(path.join(draftRoot, "examples"), { recursive: true });
   fs.writeFileSync(path.join(draftRoot, "template.yaml"), draft.templateYaml, "utf8");
+  if (draft.assetYaml) fs.writeFileSync(path.join(draftRoot, "asset.yaml"), draft.assetYaml, "utf8");
   fs.writeFileSync(path.join(draftRoot, "README.md"), draft.readme, "utf8");
   fs.writeFileSync(path.join(draftRoot, "CHANGELOG.md"), draft.changelog, "utf8");
   fs.writeFileSync(path.join(draftRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
@@ -2965,6 +3602,7 @@ function writeCorpusDraftFiles(dataRoot, corpusId, groupId, draft) {
   const draftRoot = path.join(dataRoot, "corpora", safeId(corpusId), "drafts", safeId(groupId));
   fs.mkdirSync(path.join(draftRoot, "examples"), { recursive: true });
   fs.writeFileSync(path.join(draftRoot, "template.yaml"), draft.templateYaml, "utf8");
+  if (draft.assetYaml) fs.writeFileSync(path.join(draftRoot, "asset.yaml"), draft.assetYaml, "utf8");
   fs.writeFileSync(path.join(draftRoot, "README.md"), draft.readme, "utf8");
   fs.writeFileSync(path.join(draftRoot, "CHANGELOG.md"), draft.changelog, "utf8");
   fs.writeFileSync(path.join(draftRoot, "examples", "selected-harness-binding.yaml"), draft.exampleProfile, "utf8");
@@ -2972,19 +3610,33 @@ function writeCorpusDraftFiles(dataRoot, corpusId, groupId, draft) {
 
 function listHarnessPacks(source) {
   if (!fs.existsSync(source)) return [];
-  return fs.readdirSync(source)
-    .map((entry) => path.join(source, entry))
-    .filter((entryPath) => fs.statSync(entryPath).isDirectory())
+  const packRoots = [];
+  for (const entry of fs.readdirSync(source)) {
+    const entryPath = path.join(source, entry);
+    if (!fs.statSync(entryPath).isDirectory()) continue;
+    if (readHarnessPack(entryPath)) {
+      packRoots.push(entryPath);
+      continue;
+    }
+    for (const nested of fs.readdirSync(entryPath)) {
+      const nestedPath = path.join(entryPath, nested);
+      if (fs.statSync(nestedPath).isDirectory() && readHarnessPack(nestedPath)) packRoots.push(nestedPath);
+    }
+  }
+  return packRoots
     .map(readHarnessPack)
     .filter(Boolean)
-    .sort((left, right) => left.id.localeCompare(right.id));
+    .sort(compareHarnessPacks);
 }
 
 function readHarnessPack(packRoot) {
+  const assetPath = path.join(packRoot, "asset.yaml");
+  const rawAsset = fs.existsSync(assetPath) ? parseYaml(fs.readFileSync(assetPath, "utf8")) : undefined;
   const templatePath = ["template.yaml", "harness.yaml"].map((file) => path.join(packRoot, file)).find((file) => fs.existsSync(file));
-  if (!templatePath) return undefined;
-  const templateText = fs.readFileSync(templatePath, "utf8");
-  const template = parseYaml(templateText);
+  if (!templatePath && !rawAsset?.spec?.template) return undefined;
+  const templateText = templatePath ? fs.readFileSync(templatePath, "utf8") : stringifyYaml(rawAsset.spec.template);
+  const parsed = parseYaml(templateText);
+  const template = normalizeHarnessTemplateRoot(parsed, rawAsset);
   const id = safeId(String(template.id ?? path.basename(packRoot)));
   const version = String(template.version ?? "0.1.0");
   return {
@@ -2994,14 +3646,41 @@ function readHarnessPack(packRoot) {
     templatePath,
     templateText,
     template,
+    assetPath: fs.existsSync(assetPath) ? assetPath : undefined,
+    asset: rawAsset,
     readmePath: path.join(packRoot, "README.md"),
     changelogPath: path.join(packRoot, "CHANGELOG.md"),
     examplesPath: path.join(packRoot, "examples")
   };
 }
 
+function normalizeHarnessTemplateRoot(template, asset) {
+  if (isRecord(template) && template.apiVersion === HARNESS_ASSET_API_VERSION && template.kind === HARNESS_ASSET_KIND && isRecord(template.spec?.template)) {
+    return template.spec.template;
+  }
+  if (isRecord(asset?.spec?.template) && (!isRecord(template) || !template.id)) return asset.spec.template;
+  return isRecord(template) ? template : {};
+}
+
 function findHarnessPack(source, id) {
   return listHarnessPacks(source).find((pack) => pack.id === id);
+}
+
+function compareHarnessPacks(left, right) {
+  const byId = left.id.localeCompare(right.id);
+  if (byId !== 0) return byId;
+  return compareVersionsDesc(left.version, right.version);
+}
+
+function compareVersionsDesc(left, right) {
+  const leftParts = String(left).split(".").map((part) => Number.parseInt(part, 10));
+  const rightParts = String(right).split(".").map((part) => Number.parseInt(part, 10));
+  for (let index = 0; index < Math.max(leftParts.length, rightParts.length); index += 1) {
+    const leftPart = Number.isFinite(leftParts[index]) ? leftParts[index] : 0;
+    const rightPart = Number.isFinite(rightParts[index]) ? rightParts[index] : 0;
+    if (leftPart !== rightPart) return rightPart - leftPart;
+  }
+  return 0;
 }
 
 function packSummary(pack) {
@@ -3012,11 +3691,13 @@ function packSummary(pack) {
     domain: pack.template.domain ?? pack.template.runtimePatterns?.domain,
     layer: pack.template.harnessLayer ?? pack.template.runtimePatterns?.harnessLayer ?? "runtime",
     digest: digestText(pack.templateText),
+    assetApiVersion: HARNESS_ASSET_API_VERSION,
+    assetDigest: pack.asset ? digestText(stringifyYaml(pack.asset)) : undefined,
     description: pack.template.description
   };
 }
 
-function publishPack(pack, out) {
+function publishPack(pack, out, context = {}) {
   const targetRoot = path.join(out, pack.id, pack.version);
   fs.rmSync(targetRoot, { recursive: true, force: true });
   fs.mkdirSync(targetRoot, { recursive: true });
@@ -3026,16 +3707,183 @@ function publishPack(pack, out) {
   if (fs.existsSync(pack.examplesPath)) fs.cpSync(pack.examplesPath, path.join(targetRoot, "examples"), { recursive: true });
   const templateFile = path.basename(pack.templatePath);
   const relativePath = `./${pack.id}/${pack.version}/${templateFile}`;
+  const asset = toHarnessAssetV2(pack, { sourceRoot: pack.root, phase: pack.template.lifecycle?.status === "deprecated" ? "deprecated" : "published", generatedAt: context.generatedAt });
+  const assetText = stringifyYaml(asset);
+  fs.writeFileSync(path.join(targetRoot, "asset.yaml"), assetText, "utf8");
+  const assetPath = `./${pack.id}/${pack.version}/asset.yaml`;
+  const quality = templateQualitySummary(pack.template, pack.id);
   return {
     name: pack.id,
     version: pack.version,
+    apiVersion: HARNESS_ASSET_API_VERSION,
+    kind: HARNESS_ASSET_KIND,
     layer: pack.template.harnessLayer ?? pack.template.runtimePatterns?.harnessLayer ?? "runtime",
     domain: pack.template.domain ?? pack.template.runtimePatterns?.domain,
     status: pack.template.lifecycle?.status === "deprecated" ? "deprecated" : "published",
     path: relativePath,
     digest: digestText(pack.templateText),
+    assetPath,
+    assetDigest: digestText(assetText),
+    qualityScore: quality.score,
+    qualityStatus: quality.score >= Number(pack.template.qualityGate?.minTemplateScore ?? 0.8) ? "PASS" : "FAIL",
     tags: catalogTags(pack.template),
-    matchSummary: pack.template.description ?? pack.template.name ?? pack.id
+    matchSummary: pack.template.description ?? pack.template.name ?? pack.id,
+    provenance: {
+      generatedBy: "evopilot-harness",
+      generatedAt: asset.status?.observedAt,
+      templateDigest: digestText(pack.templateText)
+    }
+  };
+}
+
+function toHarnessAssetV2(pack, context = {}) {
+  const template = structuredCloneJson(pack.template);
+  ensureHarnessTemplateV2Metadata(template, {
+    targetHarnessId: pack.id,
+    targetVersion: pack.version,
+    targetDomain: template.domain ?? template.runtimePatterns?.domain ?? pack.id.replace(/-harness$/, "")
+  });
+  const quality = templateQualitySummary(template, pack.id);
+  const templateText = stringifyYaml(template);
+  const templateDigest = digestText(templateText);
+  const phase = context.phase ?? (template.lifecycle?.status === "deprecated" ? "deprecated" : "published");
+  const generatedAt = context.generatedAt ?? new Date().toISOString();
+  const sourceReferences = Array.isArray(template.sourceReferences) ? template.sourceReferences : [];
+  return compactRecord({
+    apiVersion: HARNESS_ASSET_API_VERSION,
+    kind: HARNESS_ASSET_KIND,
+    metadata: {
+      id: pack.id,
+      name: template.name ?? humanName(pack.id),
+      version: String(pack.version),
+      domain: template.domain ?? template.runtimePatterns?.domain,
+      layer: template.harnessLayer ?? template.runtimePatterns?.harnessLayer ?? "runtime",
+      labels: {
+        languageFamily: template.languageFamily ?? "generic",
+        scope: template.scope ?? "platform"
+      },
+      annotations: {
+        "evopilot-harness/templateDigest": templateDigest,
+        "evopilot-harness/sourceRoot": context.sourceRoot
+      }
+    },
+    spec: {
+      templateSchema: template.schema ?? HARNESS_TEMPLATE_SCHEMA_V2,
+      template,
+      match: {
+        productBoundary: template.productBoundary,
+        matchPolicy: template.matchPolicy,
+        matchSignals: template.matchSignals
+      },
+      execution: template.executionModel,
+      evidence: template.evidenceContract,
+      qualityGate: template.qualityGate,
+      lifecycle: template.lifecycle ?? { status: phase }
+    },
+    relations: {
+      parents: normalizeStrings(template.parentHarnessIds),
+      sourceReferences: sourceReferences.map((source) => compactRecord({
+        name: source.name,
+        type: source.type,
+        digest: source.digest,
+        description: source.description
+      }))
+    },
+    status: {
+      phase,
+      observedAt: generatedAt,
+      conditions: [
+        {
+          type: "TemplateQualityValidated",
+          status: quality.score >= Number(template.qualityGate?.minTemplateScore ?? 0.8) ? "True" : "False",
+          reason: quality.missing.length === 0 ? "TemplateQualityComplete" : "TemplateQualityMissingSections",
+          message: `score=${quality.score};missing=${quality.missing.join("|") || "none"}`
+        },
+        {
+          type: "AssetEnvelopeReady",
+          status: "True",
+          reason: "HarnessAssetV2Generated",
+          message: `${HARNESS_ASSET_API_VERSION}/${HARNESS_ASSET_KIND}`
+        }
+      ],
+      quality,
+      provenance: {
+        generatedBy: "evopilot-harness",
+        generatedAt,
+        sourceTemplateDigest: digestText(pack.templateText),
+        assetTemplateDigest: templateDigest,
+        sourceReferenceCount: sourceReferences.length
+      }
+    }
+  });
+}
+
+function draftAssetV2(draft, sourceProfile, match) {
+  return toHarnessAssetV2({
+    id: draft.harnessId,
+    version: draft.version,
+    root: "",
+    templatePath: "",
+    templateText: draft.templateYaml,
+    template: draft.template
+  }, {
+    phase: "draft",
+    sourceRoot: sourceProfile?.projectRoots?.[0],
+    match
+  });
+}
+
+function validateHarnessAssetContract(asset, entry = {}) {
+  const metadata = isRecord(asset?.metadata) ? asset.metadata : {};
+  const spec = isRecord(asset?.spec) ? asset.spec : {};
+  const status = isRecord(asset?.status) ? asset.status : {};
+  const conditions = Array.isArray(status.conditions) ? status.conditions : [];
+  const checks = [];
+  const name = entry.name ?? metadata.id ?? "harness";
+  const version = entry.version ?? metadata.version ?? "0.1.0";
+  checks.push({
+    id: `asset:${name}@${version}:apiVersion`,
+    status: asset?.apiVersion === HARNESS_ASSET_API_VERSION ? "PASS" : "FAIL",
+    evidence: [`apiVersion=${String(asset?.apiVersion ?? "missing")}`]
+  });
+  checks.push({
+    id: `asset:${name}@${version}:kind`,
+    status: asset?.kind === HARNESS_ASSET_KIND ? "PASS" : "FAIL",
+    evidence: [`kind=${String(asset?.kind ?? "missing")}`]
+  });
+  checks.push({
+    id: `asset:${name}@${version}:metadata`,
+    status: metadata.id && metadata.version && metadata.name ? "PASS" : "FAIL",
+    evidence: [`id=${String(metadata.id ?? "missing")}`, `version=${String(metadata.version ?? "missing")}`]
+  });
+  checks.push({
+    id: `asset:${name}@${version}:spec-template`,
+    status: isRecord(spec.template) && spec.template.id ? "PASS" : "FAIL",
+    evidence: [`template=${spec.template?.id ?? "missing"}`]
+  });
+  checks.push({
+    id: `asset:${name}@${version}:status-conditions`,
+    status: conditions.length > 0 && conditions.every(isRecord) ? "PASS" : "FAIL",
+    evidence: [`count=${conditions.length}`]
+  });
+  checks.push({
+    id: `asset:${name}@${version}:provenance`,
+    status: isRecord(status.provenance) && status.provenance.generatedBy === "evopilot-harness" ? "PASS" : "FAIL",
+    evidence: [`generatedBy=${String(status.provenance?.generatedBy ?? "missing")}`]
+  });
+  return checks;
+}
+
+function catalogQualityReport(entries) {
+  const scores = entries.map((entry) => Number(entry.qualityScore ?? 0));
+  const minScore = scores.length ? Math.min(...scores) : 0;
+  const averageScore = scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+  return {
+    schema: "evopilot-harness-catalog-quality/v2",
+    assetCount: entries.length,
+    minScore: Number(minScore.toFixed(2)),
+    averageScore: Number(averageScore.toFixed(2)),
+    failedAssets: entries.filter((entry) => entry.qualityStatus === "FAIL").map((entry) => `${entry.name}@${entry.version}`)
   };
 }
 
@@ -3150,15 +3998,22 @@ function renderCatalogMarkdown(catalog, entries) {
     catalogVersion: catalog.catalogVersion,
     catalogId: catalog.catalogId,
     generatedAt: catalog.generatedAt,
+    generatedBy: catalog.generatedBy,
+    release: catalog.release,
+    assetApiVersion: catalog.assetApiVersion,
+    assetKind: catalog.assetKind,
     compatibleEvopilot: catalog.compatibleEvopilot,
+    qualityReport: catalog.qualityReport,
     entries
   });
   const lines = [
     "# Harness Catalog",
     "",
-    "This catalog is published by evopilot-harness. EvoPilot reads the fenced catalog block and then loads each published Harness definition by path.",
+    "This catalog is published by evopilot-harness. Each entry has a legacy-compatible template path and a Harness Asset v2 envelope for professional review, provenance, and quality evidence.",
     "",
     `Published Harness count: ${entries.length}`,
+    `Harness Asset API: ${catalog.assetApiVersion}`,
+    `Minimum quality score: ${catalog.qualityReport.minScore}`,
     "",
     ...entries.map((entry) => `- ${entry.name}@${entry.version} (${entry.domain ?? entry.layer})`),
     "",
@@ -3534,6 +4389,7 @@ Usage:
   evopilot-harness registry publish --catalog published --registry harness-registry.yaml [--id <catalog-id>] [--priority 100] [--json]
   evopilot-harness registry validate --registry harness-registry.yaml [--json]
   evopilot-harness harness list|inspect|validate|publish|deprecate [harness-id] [--strict] [--json]
+  evopilot-harness asset inspect|validate [harness-id] [--source harnesses] [--json]
   evopilot-harness detect --source-project <path> --goal <text> [--json]
   evopilot-harness detect batch --source-root <path> [--include-modules] [--limit 50] [--json]
   evopilot-harness corpus scan --source-root <path> [--include-modules] [--limit 50] [--json]
@@ -3544,16 +4400,22 @@ Usage:
   evopilot-harness evolution advance|review|approve|publish|impact <evolution-id> [--json]
   evopilot-harness evolve --source-project <path> --goal <text> [--llm-advisor optional|required] [--apply-llm-advisor] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
   evopilot-harness evolve corpus --source-root <path> [--include-modules] [--approve-and-publish --confirmed-by <actor> --confirmation <text>] [--json]
+  evopilot-harness llm models [--llm-models-file models.json] [--llm-profile <id>] [--json]
+  evopilot-harness llm replay [--fixture-root eval/llm-replay/cases] [--json]
+  evopilot-harness eval run [--fixture-root eval/unknown-source/cases] [--json]
   evopilot-harness hub snapshot [--catalog published] [--registry harness-registry.yaml] [--source harnesses] [--out ui/harness-hub/catalog-snapshot.json] [--json]
   evopilot-harness hub serve [--host 127.0.0.1] [--port 4176] [--catalog published] [--registry harness-registry.yaml] [--source harnesses]
 
 LLM Advisor:
-  --llm-advisor [optional|required]      Run semantic review after deterministic auto-match.
+  --llm-advisor [optional|required]      Run semantic review after deterministic auto-match. Default: optional.
   --require-llm-advisor                 Require a successful Advisor call before review.
+  --no-llm-advisor                      Disable Advisor and use deterministic auto-match only.
   --apply-llm-advisor                   Use a high-confidence Advisor target for draft generation.
-  --llm-provider-preset glm             Default base URL/model for GLM-compatible deployments.
-  --llm-base-url <url> --llm-model <id>  OpenAI-compatible chat/completions endpoint and model.
-  --llm-api-key-env <env>               Environment variable containing the API key.
+  --llm-models-file <file>              CodeBuddy-style JSON file: {"models":[{"id","name","vendor","apiKey","url"}]}.
+  --llm-profile <id>                    Select a model entry by id, name, or modelName.
+  --llm-provider-preset glm             Override provider preset. Defaults to EvoPilot GLM when no file exists.
+  --llm-base-url <url> --llm-model <id>  Override OpenAI-compatible chat/completions endpoint and model.
+  --llm-api-key-env <env>               Environment variable containing the API key when models.json does not hold one.
 
 Detect and quality:
   --match-threshold <number>            Override deterministic detect threshold. Default: ${DEFAULT_MATCH_THRESHOLD}.

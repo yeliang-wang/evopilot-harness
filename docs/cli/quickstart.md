@@ -19,6 +19,7 @@ node src/index.mjs catalog publish --source harnesses --out published --json
 node src/index.mjs catalog validate --source published --json
 node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json
 node src/index.mjs registry validate --registry harness-registry.yaml --json
+node src/index.mjs asset validate --source published --json
 ```
 
 Expected result:
@@ -28,9 +29,10 @@ catalog publish status=PUBLISHED
 catalog validate status=VALIDATED
 registry publish status=PUBLISHED
 registry validate status=VALIDATED
+asset validate status=VALIDATED
 ```
 
-The `published/` directory must contain `CATALOG.md` with a fenced `yaml evopilot-harness-catalog` block. `harness-registry.yaml` points EvoPilot at one or more Catalog roots and must not duplicate Harness entries.
+The `published/` directory must contain `CATALOG.md` with a fenced `yaml evopilot-harness-catalog` block, `catalogVersion: 2`, and `entries[].assetPath` pointing to Harness Asset v2 envelopes. `harness-registry.yaml` points EvoPilot at one or more Catalog roots and must not duplicate Harness entries.
 
 ## 3. Start Harness Hub
 
@@ -71,6 +73,8 @@ If validation succeeds, the run stops at `REVIEW_REQUIRED`. Review the generated
 ```text
 .evopilot-harness/evolutions/<evolution-id>/draft/
 ```
+
+The draft includes `template.yaml` and `asset.yaml`. The template is the EvoPilot-compatible Harness contract; the asset is the v2 review and publication envelope.
 
 Approve and publish after administrator review:
 
@@ -130,7 +134,16 @@ node src/index.mjs evolve corpus \
   --json
 ```
 
-## 6. Configure EvoPilot
+## 6. Run Release-Gate Evaluations
+
+```bash
+node src/index.mjs eval run --json
+node src/index.mjs llm replay --json
+```
+
+Both commands must return `status=PASSED` before a v2 release.
+
+## 7. Configure EvoPilot
 
 EvoPilot reads the Registry at use time:
 

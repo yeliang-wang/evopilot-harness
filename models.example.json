@@ -1,0 +1,13 @@
+{
+  "models": [
+    {
+      "id": "glm-5.1",
+      "name": "EvoPilot GLM",
+      "vendor": "zhipu",
+      "apiKey": "<manual-local-api-key>",
+      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "supportsToolCall": true,
+      "supportsReasoning": true
+    }
+  ]
+}

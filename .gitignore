@@ -1,5 +1,7 @@
 node_modules/
+dist/
 *.tgz
 .DS_Store
 .evopilot-harness/
+models.json
 ui/harness-hub/catalog-snapshot.json

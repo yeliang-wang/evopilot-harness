@@ -31,9 +31,9 @@ Dockerfile and Compose files
 
 The scan is bounded. It records file counts, selected files, top extensions, and extracted text excerpts.
 
-## Harness Detect Algorithm v1
+## Unknown Source Matching v2
 
-Before draft generation, the CLI runs deterministic detection. This makes the matching step explicit and reviewable instead of letting a model silently decide whether to update an existing Harness or create a new one.
+Before draft generation, the CLI runs unknown-source matching. This makes the matching step explicit and reviewable instead of letting a model silently decide whether to update an existing Harness or create a new one.
 
 ```bash
 node src/index.mjs detect \
@@ -68,7 +68,7 @@ node src/index.mjs corpus plan \
 Corpus planning performs:
 
 1. discovers valid project roots under `--source-root`
-2. runs the same deterministic detect algorithm for each project
+2. runs the same Source Profile v2 and auto-match v2 path for each project
 3. groups projects by target Harness id
 4. dedupes nested modules and lower-priority same-target projects
 5. selects representative projects per group
@@ -85,6 +85,7 @@ The detector builds a `sourceProfile` from:
 - negative signals that keep a narrow library from being misclassified as a full product
 - source coverage and sensitive material findings
 - the human `--goal` or `--intent`
+- scanner evidence, scanner summary, and uncertainty reasons
 
 The profile then scores each existing Harness using:
 
@@ -95,7 +96,19 @@ The profile then scores each existing Harness using:
 - role fit and boundary fit
 - Catalog priority only as a tie breaker
 
-The default deterministic threshold is `0.45`. Use `--match-threshold` only for controlled experiments or policy tuning.
+The default match threshold is `0.45`. Use `--match-threshold` only for controlled experiments or policy tuning.
+
+The matching algorithm is not hard-coded to a fixed business domain list. It combines:
+
+- bounded source scanning for files, manifests, dependencies, imports, symbols, docs, logs, and attachments
+- semantic architecture signal extraction from the scanned material and goal
+- Source Profile v2 role inference and recommended target generation
+- candidate retrieval from current Harness packs
+- deterministic scoring against `productBoundary` and `matchPolicy`
+- conflict, uncertainty, and review-gate calculation
+- optional LLM Advisor semantic review through manually configured EvoPilot GLM
+
+Fixtures under `eval/` are release gates for representative unknown-source mistakes. They are not production matching rules and do not force future user projects into a predefined domain.
 
 ## Match Decisions
 
@@ -113,22 +126,49 @@ For example, a Java Spring Data Redis/Jedis wrapper should be classified as `red
 
 ## LLM Advisor
 
-After deterministic auto-match, the optional LLM Advisor can review whether the source project truly belongs to the matched Harness domain.
+After deterministic auto-match, the LLM Advisor can review whether the source project truly belongs to the matched Harness domain. It is optional by default and uses the same GLM as EvoPilot through a manually maintained CodeBuddy-style `models.json`; the CLI only reads this file and never writes model configuration.
 
-Enable it with an OpenAI-compatible provider:
+Inspect the selected model without printing the API key:
 
 ```bash
-export EVOPILOT_HARNESS_LLM_ADVISOR=optional
-export EVOPILOT_HARNESS_LLM_PROVIDER_PRESET=glm
-export EVOPILOT_HARNESS_LLM_API_KEY="<secret>"
+node src/index.mjs llm models --json
+```
 
+`models.json` format:
+
+```json
+{
+  "models": [
+    {
+      "id": "glm-5.1",
+      "name": "EvoPilot GLM",
+      "vendor": "zhipu",
+      "apiKey": "<manual-local-api-key>",
+      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "supportsToolCall": true,
+      "supportsReasoning": true
+    }
+  ]
+}
+```
+
+Use a required Advisor call when semantic review is mandatory:
+
+```bash
 node src/index.mjs evolve \
   --source-project /path/to/source-project \
   --goal "Create or evolve a reusable domain Harness from this project." \
+  --llm-advisor required \
   --json
 ```
 
-The Advisor returns `llmAdvisor.sourceClassification`, `llmAdvisor.recommendation`, `llmAdvisor.alternatives`, `llmAdvisor.reviewWarnings`, and token usage. It is advisory by default: the deterministic `autoMatch` still drives the draft. Add `--apply-llm-advisor` only when a high-confidence recommendation is allowed to change the draft target.
+The Advisor returns `llmAdvisor.sourceClassification`, `llmAdvisor.recommendation`, `llmAdvisor.alternatives`, `llmAdvisor.reviewWarnings`, `llmAdvisor.llmProfileId`, and token usage. It is advisory by default: `autoMatch` still drives the draft. Add `--apply-llm-advisor` only when a high-confidence recommendation is allowed to change the draft target.
+
+Replay stored Advisor cases without model access:
+
+```bash
+node src/index.mjs llm replay --json
+```
 
 ## Draft Output
 
@@ -137,6 +177,7 @@ Draft files are written under:
 ```text
 .evopilot-harness/evolutions/<evolution-id>/draft/
   template.yaml
+  asset.yaml
   README.md
   CHANGELOG.md
   examples/selected-harness-binding.yaml
@@ -160,15 +201,17 @@ Run strict validation before approving or publishing a Harness baseline:
 ```bash
 node src/index.mjs harness validate --source harnesses --strict --json
 node src/index.mjs catalog publish --source harnesses --out published --strict --json
+node src/index.mjs asset validate --source published --json
 ```
 
 ## Publication
 
-Publication copies the draft into `harnesses/<harness-id>/`, republishes `published/`, and updates `CATALOG.md`.
+Publication copies the draft into `harnesses/<harness-id>/`, writes `asset.yaml`, republishes `published/`, and updates `CATALOG.md`.
 
 ```bash
 node src/index.mjs evolution publish <evolution-id> --json
 node src/index.mjs catalog validate --source published --json
+node src/index.mjs asset validate --source published --json
 ```
 
 For corpus publication:
@@ -182,3 +225,14 @@ node src/index.mjs corpus approve <corpus-id> \
 node src/index.mjs corpus publish <corpus-id> --json
 node src/index.mjs catalog validate --source published --json
 ```
+
+## Release Evaluation
+
+Before publishing an `evopilot-harness` release, run:
+
+```bash
+node src/index.mjs eval run --json
+node src/index.mjs llm replay --json
+```
+
+`eval run` validates unknown-source matching decisions and corpus grouping. `llm replay` validates Advisor response parsing and recommendation semantics without calling the live model.

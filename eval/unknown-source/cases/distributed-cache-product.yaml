@@ -1,0 +1,7 @@
+name: distributed-cache-existing-harness
+sourceProject: ../projects/distributed-cache-product
+goal: Generate or evolve a reusable Harness from this unknown source.
+expect:
+  decision: EVOLVE_EXISTING
+  targetHarnessId: distributed-cache-harness
+  reviewGateRequired: false

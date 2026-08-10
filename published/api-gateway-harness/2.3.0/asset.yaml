@@ -1,0 +1,646 @@
+apiVersion: evopilot.dev/v2
+kind: HarnessAsset
+metadata:
+  id: api-gateway-harness
+  name: API Gateway Harness
+  version: 2.3.0
+  domain: api-gateway
+  layer: domain
+  labels:
+    languageFamily: generic
+    scope: platform
+  annotations:
+    evopilot-harness/templateDigest: sha256:f29566d531b6ae94af5420c4fced47cb9cb32668c995db05c86c3c9dafe72167
+    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/api-gateway-harness
+spec:
+  templateSchema: evopilot-harness-template/v2
+  template:
+    schema: evopilot-harness-template/v2
+    id: api-gateway-harness
+    version: 2.3.0
+    name: API Gateway Harness
+    description: Domain baseline for API gateway products.
+    scope: platform
+    languageFamily: generic
+    matchSignals: &a3
+      include:
+        - api gateway
+        - gateway product
+        - ingress controller
+        - traffic proxy
+        - route matching
+        - upstream selection
+        - rate limit
+        - auth policy
+        - plugin lifecycle
+        - filter chain
+        - service mesh gateway
+        - envoy
+        - kong
+        - apisix
+        - 网关
+        - api 网关
+        - 流量网关
+        - 路由匹配
+        - 限流
+      exclude:
+        - gateway timeout from downstream api
+        - api client wrapper
+        - http client
+    capabilities:
+      - id: source-boundary
+        name: Source and workspace boundary
+        boundary: Project source, credentials, tenant, workspace, branch, writeback, and
+          read-only mode are explicit before execution.
+        requiredEvidence:
+          - project-registration
+          - source-readiness-preflight
+          - credential-or-read-only-boundary
+      - id: api-gateway-runtime
+        name: API gateway runtime harness
+        boundary: Gateway boot, config validation, routing, policy, plugin, protocol,
+          load, and readiness commands are declared.
+        requiredEvidence:
+          - config-validation-output
+          - route-contract-output
+          - policy-output
+          - plugin-output
+          - load-output
+      - id: gateway-traffic-boundary
+        name: Gateway traffic boundary
+        boundary: Listener, route matching, upstream selection, retry, circuit breaker,
+          rate limit, auth, and traffic shadowing are explicit.
+        requiredEvidence:
+          - route-table-proof
+          - upstream-selection-proof
+          - retry-policy-proof
+          - rate-limit-proof
+          - auth-policy-proof
+      - id: gateway-extension-boundary
+        name: Gateway extension boundary
+        boundary: Plugin and filter lifecycle, configuration schema, failure isolation,
+          hot reload, and compatibility behavior are governed.
+        requiredEvidence:
+          - plugin-contract
+          - filter-lifecycle-test
+          - hot-reload-proof
+          - extension-failure-proof
+      - id: exception-tracking
+        name: Exception and error tracking
+        boundary: Runtime exceptions, domain errors, dependency failures, retries, and
+          user-facing errors are classified and correlated.
+        requiredEvidence:
+          - error-code-contract
+          - exception-sample
+          - trace-link
+          - owner-next-action
+          - repair-verification
+      - id: test-and-quality
+        name: Test and quality gates
+        boundary: Tests, coverage expectations, interface contracts, and regression
+          scope are proven through command evidence.
+        requiredEvidence:
+          - test-report
+          - coverage-or-risk-acceptance
+          - contract-check
+      - id: failure-diagnostics
+        name: Failure diagnostics
+        boundary: Failures are classified with command, stack/log excerpt, suspected
+          root cause, owner, next action, and verification.
+        requiredEvidence:
+          - failure-classification
+          - root-cause-note
+          - repair-verification
+      - id: observability
+        name: Observability
+        boundary: Health, readiness, logs, metrics, traces, APM signals, and alert
+          routes are bound before Beta/RC/GA claims.
+        requiredEvidence:
+          - health-check
+          - runtime-log
+          - metric-or-trace-proof
+          - alert-route
+      - id: slo-monitoring
+        name: SLO monitoring and alert routing
+        boundary: SLIs, SLOs, dashboards, alert thresholds, routing targets, and error
+          budget status are explicit before RC/GA.
+        requiredEvidence:
+          - sli-definition
+          - slo-dashboard
+          - alert-rule
+          - runbook-link
+          - error-budget-status
+      - id: operational-runbooks
+        name: Operational runbooks
+        boundary: Critical failure modes have symptom-first runbooks with triage
+          queries, mitigation, rollback, owner, and verification.
+        requiredEvidence:
+          - runbook
+          - triage-query
+          - rollback-or-mitigation
+          - oncall-owner
+          - post-repair-verification
+      - id: release-governance
+        name: Release governance
+        boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+          and ReleaseDecision are required before GA.
+        requiredEvidence:
+          - target-evidence-package
+          - phase-package
+          - source-closure
+          - release-decision
+    runtimePatterns:
+      harnessLayer: domain
+      domain: api-gateway
+      domainLabel: API gateway product
+      language: generic
+      compatibilityProfiles:
+        - id: http-gateway
+          role: protocol-baseline
+          scope:
+            - http1
+            - http2
+            - websocket
+            - grpc
+        - id: ingress-compatible
+          role: ecosystem-compatibility
+          scope:
+            - kubernetes-ingress
+            - gateway-api
+            - service-discovery
+        - id: envoy-compatible
+          role: behavioral-reference
+          scope:
+            - xds
+            - filter-chain
+            - traffic-policy
+      architectureProfiles:
+        - id: edge-gateway
+          concerns:
+            - tls
+            - waf
+            - auth
+            - rate-limit
+            - observability
+        - id: service-mesh-gateway
+          concerns:
+            - xds
+            - sidecar
+            - mtls
+            - traffic-split
+            - policy
+        - id: multi-tenant-gateway
+          concerns:
+            - tenant-isolation
+            - plugin-governance
+            - quota
+            - audit
+      runtimeProfiles:
+        - go
+        - rust
+        - java
+        - node
+        - generic
+      architectureStyles:
+        - api-gateway
+        - ingress-controller
+        - traffic-proxy
+        - service-mesh-gateway
+        - plugin-platform
+      defaultCommands:
+        install:
+          - make deps
+        lint:
+          - make lint
+        typecheck:
+          - make build
+        unit:
+          - make test-unit
+        smoke:
+          - make smoke-gateway
+        functional:
+          - make test-routes
+          - make test-policy
+          - make test-load
+      domainExecution:
+        requiredActions:
+          - id: declare-gateway-product-boundary
+            phase: alpha
+            description: Declare the evolved target as the owner's API gateway product and
+              record Envoy, Kong, APISIX, or Gateway API as behavior references
+              only.
+            requiredEvidence:
+              - product-scope-declaration
+              - reference-role-declaration
+            suggestedCommands:
+              - inspect EvoPilot goal plan selectedHarness output
+          - id: map-gateway-control-boundaries
+            phase: alpha
+            description: Map listener, route, upstream, policy, plugin, and protocol
+              boundaries to repository paths and runtime configuration.
+            requiredEvidence:
+              - gateway-boundary-map
+              - route-table
+            suggestedCommands:
+              - make dump-routes
+              - make config-validate
+          - id: bind-route-policy-suite
+            phase: beta
+            description: Bind route matching, upstream selection, retry, circuit breaker,
+              rate limit, auth, and protocol checks to project commands.
+            requiredEvidence:
+              - route-table
+              - policy-matrix
+              - traffic-sample
+            suggestedCommands:
+              - make test-routes
+              - make test-policy
+          - id: bind-plugin-and-load-suite
+            phase: rc
+            description: Bind plugin lifecycle, hot reload, failure isolation, and load
+              regression checks to project commands.
+            requiredEvidence:
+              - plugin-report
+              - load-summary
+            suggestedCommands:
+              - make test-plugin
+              - make test-load
+        moduleBoundaries:
+          - listener
+          - route
+          - upstream
+          - policy
+          - plugin
+          - protocol
+        evidenceAdapters:
+          - artifact: route-table
+            source: gateway route dump
+            commandGroup: functional
+            requiredFor:
+              - beta
+              - rc
+              - ga
+            schemaFields:
+              - routeId
+              - listener
+              - match
+              - upstreamId
+              - priority
+              - tenantId
+          - artifact: policy-matrix
+            source: policy contract command output
+            commandGroup: functional
+            requiredFor:
+              - beta
+              - rc
+              - ga
+            schemaFields:
+              - policyId
+              - routeId
+              - authn
+              - authz
+              - rateLimit
+              - retry
+              - verdict
+          - artifact: plugin-report
+            source: plugin lifecycle command output
+            commandGroup: functional
+            requiredFor:
+              - rc
+              - ga
+            schemaFields:
+              - pluginId
+              - schemaValid
+              - hotReloaded
+              - isolatedFailure
+              - compatibilityProfile
+          - artifact: load-summary
+            source: load regression command output
+            commandGroup: functional
+            requiredFor:
+              - rc
+              - ga
+            schemaFields:
+              - scenario
+              - rps
+              - p95Latency
+              - errorRate
+              - baseline
+              - verdict
+        releaseBlockers:
+          - NO-GO when route-table or policy-matrix is missing before Beta.
+          - NO-GO when plugin-report is missing before RC for a plugin-capable
+            gateway.
+          - NO-GO when load-summary is missing before GA.
+          - NO-GO when Envoy, Kong, APISIX, or Gateway API is treated as the
+            default evolved product instead of a behavior reference.
+    validationBaseline:
+      requiredCommandGroups:
+        - install
+        - lint
+        - typecheck
+        - unit
+        - smoke
+        - functional
+      requiredBoundaries:
+        - routing
+        - upstream
+        - auth-policy
+        - rate-limit
+        - plugin
+        - protocol
+        - observability
+      contractChecks:
+        - route-contract
+        - policy-contract
+        - plugin-contract
+        - protocol-compatibility
+        - load-regression
+      requiredActions:
+        - declare-gateway-product-boundary
+        - map-gateway-control-boundaries
+        - bind-route-policy-suite
+        - bind-plugin-and-load-suite
+      commandEvidenceRequired: true
+      realBoundaryEvidenceRequired: true
+      noMockEvidenceForReleaseClaims: true
+    evidenceContract: &a5
+      format: json
+      requiredArtifacts:
+        - target-evidence-package
+        - phase-package
+        - goal-completion-report
+        - route-table
+        - policy-matrix
+        - plugin-report
+        - load-summary
+      evidenceAdaptersRequired: true
+      correlationFields:
+        - requestId
+        - traceId
+        - commitSha
+    failureTaxonomy:
+      categories:
+        - routing
+        - upstream
+        - policy
+        - plugin
+        - protocol
+        - load
+        - observability
+        - governance
+        - unknown
+    diagnosticsBaseline:
+      requiredSignals:
+        - failing-command
+        - exit-code
+        - route-id
+        - upstream-id
+        - policy-id
+        - plugin-id
+        - trace-id
+        - load-summary
+    observabilityBaseline:
+      requiredSignals:
+        - health
+        - readiness
+        - logs
+        - metrics
+        - traces
+        - alerts
+        - dashboards
+        - slo
+        - runbooks
+    governanceRules:
+      tenantWorkspaceScopeRequired: true
+      targetPlanRequiresApproval: true
+      selectedHarnessBindingRequiresReview: true
+      promotionRequiresReleaseDecision: true
+      sourceClosureRequired: true
+      noSilentSelectedHarnessMutation: true
+    phaseMapping:
+      alpha:
+        - source-boundary
+        - api-gateway-runtime
+        - gateway-traffic-boundary
+        - failure-diagnostics
+      beta:
+        - test-and-quality
+        - gateway-extension-boundary
+        - observability
+        - exception-tracking
+        - slo-monitoring
+      rc:
+        - gateway-traffic-boundary
+        - gateway-extension-boundary
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - release-governance
+      ga:
+        - release-governance
+        - gateway-traffic-boundary
+        - gateway-extension-boundary
+        - observability
+        - slo-monitoring
+        - source-boundary
+    llmDraftPolicy:
+      enabled: true
+      generatedStatus: DRAFT
+      requireUserReview: true
+      activationRequiresAdmin: true
+      allowedToSilentlyModifyActiveProfile: false
+    sourceReferences:
+      - name: Envoy
+        url: https://github.com/envoyproxy/envoy
+        category: github
+        rationale: Gateway and proxy traffic policy, xDS, filters, observability, and
+          reliability reference.
+      - name: Kong
+        url: https://github.com/Kong/kong
+        category: github
+        rationale: API gateway routing, plugins, rate limiting, authentication, and
+          operator experience reference.
+      - name: Kubernetes Gateway API
+        url: https://github.com/kubernetes-sigs/gateway-api
+        category: github
+        rationale: Gateway API route, listener, policy, and conformance model.
+    changelog:
+      - version: 2.3.0
+        changedAt: 2026-08-09T12:00:00.000Z
+        changedBy: evopilot-harness
+        summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1
+          metadata.
+        changes:
+          - Add productBoundary includes/excludes.
+          - Add structured matchPolicy with positive and negative evidence.
+          - Add executionModel and qualityGate for strict validation.
+      - version: 2.2.0
+        changedAt: 2026-08-07T08:00:00.000Z
+        changedBy: evopilot
+        summary: Add executable API gateway domain harness contract.
+        changes:
+          - Add project required actions for gateway boundary mapping, route and
+            policy contracts, plugin lifecycle, and load regression.
+          - Add evidence adapter contracts for route tables, policy matrices,
+            plugin reports, and load summaries.
+          - Keep Envoy, Kong, APISIX, and Gateway API as behavior references
+            only.
+      - version: 2.0.0
+        changedAt: 2026-08-07T00:00:00.000Z
+        changedBy: evopilot
+        summary: Add v2 domain-first API gateway harness.
+        changes:
+          - Define compatibility, architecture, and runtime layers.
+          - Require route, upstream, policy, plugin, protocol, and load evidence.
+    harnessLayer: domain
+    domain: api-gateway
+    productBoundary: &a1
+      includes:
+        - API gateway runtime
+        - listener/route/upstream/policy control
+        - plugin or filter lifecycle
+        - protocol and load evidence
+      excludes:
+        - API client wrapper
+        - ordinary backend service
+        - database product
+        - cache client library
+    matchPolicy: &a2
+      requiredAny:
+        - architecture:api-gateway-product
+        - signal:route matching
+        - signal:upstream selection
+        - signal:plugin lifecycle
+      positive:
+        dependencies:
+          - envoy
+          - kong
+          - apisix
+        imports: []
+        files:
+          - gateway
+          - route
+          - plugin
+        symbols:
+          - Gateway
+          - Route
+          - Plugin
+        architectureSignals:
+          - api-gateway-product
+          - route-matching
+          - upstream-selection
+          - traffic-policy
+          - plugin-platform
+      negative:
+        productBoundaryExcludes:
+          - API client wrapper
+          - ordinary backend service
+          - database product
+          - cache client library
+        signals:
+          - api-client-wrapper
+          - client-or-adapter-not-gateway-product
+    executionModel: &a4
+      phases:
+        - detect
+        - scan
+        - build
+        - unit
+        - integration
+        - diagnostics
+        - release-review
+      requiredCommands:
+        install:
+          - make deps
+        lint:
+          - make lint
+        typecheck:
+          - make build
+        unit:
+          - make test-unit
+        smoke:
+          - make smoke-gateway
+        functional:
+          - make test-routes
+          - make test-policy
+          - make test-load
+      optionalCommands:
+        profile:
+          - evopilot-harness detect --source-project <path> --json
+        strictValidate:
+          - evopilot-harness harness validate <harness-id> --strict --json
+    qualityGate: &a6
+      minTemplateScore: 0.8
+      requireProductBoundary: true
+      requireMatchPolicy: true
+      requireExecutionModel: true
+      requireEvidenceContract: true
+      requireExamples: true
+      requireHumanApproval: true
+    apiVersion: evopilot.dev/v2
+    kind: HarnessTemplate
+    metadata:
+      id: api-gateway-harness
+      name: API Gateway Harness
+      version: 2.3.0
+      domain: api-gateway
+      layer: domain
+    status:
+      phase: draft
+      conditions:
+        - type: TemplateQualityModeled
+          status: "True"
+          reason: RequiredSectionsPresent
+        - type: HumanReviewRequired
+          status: "True"
+          reason: HarnessPublicationGate
+  match:
+    productBoundary: *a1
+    matchPolicy: *a2
+    matchSignals: *a3
+  execution: *a4
+  evidence: *a5
+  qualityGate: *a6
+  lifecycle:
+    status: published
+relations:
+  parents: []
+  sourceReferences:
+    - name: Envoy
+    - name: Kong
+    - name: Kubernetes Gateway API
+status:
+  phase: published
+  observedAt: 2026-08-09T05:24:19.115Z
+  conditions:
+    - type: TemplateQualityValidated
+      status: "True"
+      reason: TemplateQualityComplete
+      message: score=1;missing=none
+    - type: AssetEnvelopeReady
+      status: "True"
+      reason: HarnessAssetV2Generated
+      message: evopilot.dev/v2/HarnessAsset
+  quality:
+    harnessId: api-gateway-harness
+    schema: evopilot-harness-template-quality/v1
+    score: 1
+    present:
+      - productBoundary
+      - matchPolicy
+      - executionModel
+      - evidenceContract
+      - qualityGate
+      - domainExecution
+      - validationBaseline
+      - failureTaxonomy
+      - observabilityBaseline
+      - governanceRules
+    missing: []
+  provenance:
+    generatedBy: evopilot-harness
+    generatedAt: 2026-08-09T05:24:19.115Z
+    sourceTemplateDigest: sha256:637e55ca3683a7e9eb0522ac7e9322575a0b05dad3d8330969f8b332fe205e95
+    assetTemplateDigest: sha256:f29566d531b6ae94af5420c4fced47cb9cb32668c995db05c86c3c9dafe72167
+    sourceReferenceCount: 3

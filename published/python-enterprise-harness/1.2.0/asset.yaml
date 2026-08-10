@@ -1,0 +1,618 @@
+apiVersion: evopilot.dev/v2
+kind: HarnessAsset
+metadata:
+  id: python-enterprise-harness
+  name: Python Enterprise Harness
+  version: 1.2.0
+  layer: runtime
+  labels:
+    languageFamily: python
+    scope: platform
+  annotations:
+    evopilot-harness/templateDigest: sha256:e2c7b2c033272b3a758fb2c99644afff10a71b9f03589452a1ea221ae52fb541
+    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/python-enterprise-harness
+spec:
+  templateSchema: evopilot-harness-template/v2
+  template:
+    schema: evopilot-harness-template/v2
+    id: python-enterprise-harness
+    version: 1.2.0
+    name: Python Enterprise Harness
+    description: Enterprise Python baseline for API services, platform tools, and
+      async workers.
+    scope: platform
+    languageFamily: python
+    capabilities:
+      - id: source-boundary
+        name: Source and workspace boundary
+        boundary: Tenant, workspace, repository, branch, credential, writeback, and
+          read-only boundaries are explicit before execution.
+        requiredEvidence:
+          - project-registration
+          - source-readiness-preflight
+          - credential-or-read-only-boundary
+      - id: python-runtime
+        name: Python runtime harness
+        boundary: Install, lint, typecheck, unit, smoke, package, and readiness commands
+          are declared by the selected Harness binding.
+        requiredEvidence:
+          - install-output
+          - lint-output
+          - typecheck-output
+          - unit-output
+          - smoke-output
+      - id: exception-tracking
+        name: Exception and error tracking
+        boundary: Runtime exceptions, domain errors, dependency failures, retries, and
+          user-facing errors are classified and correlated.
+        requiredEvidence:
+          - error-code-contract
+          - exception-sample
+          - trace-link
+          - owner-next-action
+          - repair-verification
+      - id: test-and-quality
+        name: Test and quality gates
+        boundary: Tests, coverage expectations, interface contracts, and regression
+          scope are proven through command evidence.
+        requiredEvidence:
+          - test-report
+          - coverage-or-risk-acceptance
+          - contract-check
+      - id: failure-diagnostics
+        name: Failure diagnostics
+        boundary: Failures are classified with command, stack/log excerpt, suspected
+          root cause, owner, next action, and verification.
+        requiredEvidence:
+          - failure-classification
+          - root-cause-note
+          - repair-verification
+      - id: observability
+        name: Observability
+        boundary: Health, readiness, logs, metrics, traces, APM signals, and alert
+          routes are bound before Beta/RC/GA claims.
+        requiredEvidence:
+          - health-check
+          - runtime-log
+          - metric-or-trace-proof
+          - alert-route
+      - id: slo-monitoring
+        name: SLO monitoring and alert routing
+        boundary: SLIs, SLOs, dashboards, alert thresholds, routing targets, and error
+          budget status are explicit before RC/GA.
+        requiredEvidence:
+          - sli-definition
+          - slo-dashboard
+          - alert-rule
+          - runbook-link
+          - error-budget-status
+      - id: operational-runbooks
+        name: Operational runbooks
+        boundary: Critical failure modes have symptom-first runbooks with triage
+          queries, mitigation, rollback, owner, and verification.
+        requiredEvidence:
+          - runbook
+          - triage-query
+          - rollback-or-mitigation
+          - oncall-owner
+          - post-repair-verification
+      - id: release-governance
+        name: Release governance
+        boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+          and ReleaseDecision are required before GA.
+        requiredEvidence:
+          - target-evidence-package
+          - phase-package
+          - source-closure
+          - release-decision
+    runtimePatterns:
+      language: python
+      packageManagers:
+        - uv
+        - pip
+        - poetry
+      architectureStyles:
+        - ddd-application-service
+        - api-service
+        - async-worker
+      defaultCommands:
+        install:
+          - uv sync
+          - pip install -e .
+        lint:
+          - ruff check .
+        typecheck:
+          - mypy .
+        unit:
+          - pytest
+        smoke:
+          - pytest -q tests
+      exceptionTracking:
+        handlers:
+          - FastAPI exception handlers
+          - ASGI middleware
+          - domain exception mapper
+        requiredErrorEnvelope:
+          - errorCode
+          - message
+          - requestId
+          - traceId
+          - retryable
+          - userAction
+          - supportReference
+        exceptionAttributes:
+          - exception.type
+          - exception.message
+          - exception.stacktrace
+          - http.route
+          - tenant.id
+          - actor.id
+        regressionTests:
+          - pytest exception mapping
+          - pytest dependency timeout
+          - pytest permission denial
+          - pytest validation error
+      observability:
+        instrumentation:
+          - opentelemetry-instrumentation-fastapi
+          - OpenTelemetry SDK
+          - Prometheus-compatible metrics
+        logs:
+          - timestamp
+          - level
+          - service
+          - requestId
+          - traceId
+          - spanId
+          - tenantId
+          - workspaceId
+          - projectId
+          - actor
+          - errorCode
+        metrics:
+          - http.server.duration
+          - http.server.request.count
+          - python.gc
+          - db.client.duration
+          - worker.job.duration
+        traces:
+          - ASGI inbound request
+          - dependency call
+          - database query
+          - background task
+          - external API call
+        alerts:
+          - high_error_rate
+          - p95_latency_slo_breach
+          - dependency_timeout_spike
+          - worker_failure_rate
+      diagnostics:
+        commands:
+          - python --version
+          - uv pip freeze || pip freeze
+          - pytest -q --maxfail=1
+          - ruff check .
+          - mypy .
+        artifacts:
+          - pytest-report
+          - coverage-report
+          - openapi-schema
+          - dependency-lock
+          - runtime-log-sample
+    validationBaseline:
+      requiredCommandGroups:
+        - install
+        - lint
+        - typecheck
+        - unit
+        - smoke
+      contractChecks:
+        - openapi-or-interface-contract
+        - repository-boundary
+        - dependency-lock
+      commandEvidenceRequired: true
+      realBoundaryEvidenceRequired: true
+      noMockEvidenceForReleaseClaims: true
+    evidenceContract: &a4
+      format: json
+      requiredArtifacts:
+        - target-evidence-package
+        - phase-package
+        - goal-completion-report
+        - incident-or-failure-report
+        - observability-snapshot
+        - command
+        - exit-code
+        - stdout-or-log
+        - changed-files
+      requiredEvidence:
+        - command
+        - exit-code
+        - stdout-or-log
+        - changed-files
+        - ci-status-or-local-proof
+        - api-or-interface-contract
+        - observability-signal
+        - error-code-contract
+        - trace-or-correlation-link
+        - runbook-or-repair-note
+      correlationFields:
+        - requestId
+        - traceId
+        - spanId
+        - tenantId
+        - workspaceId
+        - projectId
+        - actor
+        - environment
+        - release
+        - commitSha
+    failureTaxonomy:
+      categories:
+        - business
+        - validation
+        - permission
+        - dependency
+        - environment
+        - syntax
+        - type
+        - test
+        - contract
+        - security
+        - performance
+        - deploy
+        - observability
+        - governance
+        - data
+        - database
+        - queue
+        - external-api
+        - concurrency
+        - resource-saturation
+        - unknown
+      severityLevels:
+        - debug
+        - info
+        - warn
+        - error
+        - critical
+      exceptionTracking:
+        requiredAttributes:
+          - exception.type
+          - exception.message
+          - exception.stacktrace
+          - errorCode
+          - requestId
+          - traceId
+          - spanId
+          - tenantId
+          - workspaceId
+          - projectId
+          - actor
+          - release
+          - commitSha
+          - retryable
+        groupingKeys:
+          - service
+          - errorCode
+          - exception.type
+          - topStackFrame
+          - release
+    diagnosticsBaseline:
+      requiredSignals:
+        - failing-command
+        - exit-code
+        - stack-trace-or-log
+        - changed-files
+        - runtime-env
+        - dependency-lock
+        - request-id
+        - trace-id
+        - release-or-commit
+        - recent-deploy
+        - ci-job-url
+        - health-status
+        - alert-name
+      rootCauseFields:
+        - symptom
+        - hypothesis
+        - evidence
+        - fix
+        - verification
+        - owner
+        - risk
+        - rollbackOrMitigation
+    observabilityBaseline:
+      requiredSignals:
+        - health
+        - readiness
+        - logs
+        - metrics
+        - traces
+        - apm
+        - alerts
+        - dashboards
+        - slo
+        - runbooks
+      logLevels:
+        - debug
+        - info
+        - warn
+        - error
+      structuredLogs:
+        format: json
+        requiredFields:
+          - timestamp
+          - level
+          - service
+          - environment
+          - requestId
+          - traceId
+          - spanId
+          - tenantId
+          - workspaceId
+          - projectId
+          - actor
+          - event
+          - errorCode
+          - exceptionClass
+          - rootCauseHint
+          - release
+          - commitSha
+        redactionRequired: true
+        errorLogsMustIncludeNextAction: true
+      metrics:
+        red:
+          - request_rate
+          - error_rate
+          - duration_p50_p95_p99
+        dependency:
+          - dependency_latency
+          - dependency_error_rate
+          - timeout_count
+          - circuit_breaker_state
+      traces:
+        requiredSpans:
+          - inbound request
+          - authorization
+          - domain/application service
+          - database query
+          - external dependency
+          - queue publish/consume
+          - background job
+        samplingPolicyMustBeDeclared: true
+    governanceRules:
+      tenantWorkspaceScopeRequired: true
+      targetPlanRequiresApproval: true
+      selectedHarnessBindingRequiresReview: true
+      promotionRequiresReleaseDecision: true
+      sourceClosureRequired: true
+      noSilentSelectedHarnessMutation: true
+      mandatoryGates:
+        - selected-harness-bound
+        - target-plan-user-confirmed
+        - target-evidence-package
+        - phase-package
+        - observability-evidence
+        - slo-or-risk-acceptance
+        - source-closure
+        - release-decision
+      cannotWeaken:
+        - tenantWorkspaceScopeRequired
+        - targetPlanRequiresApproval
+        - selectedHarnessBindingRequiresReview
+        - promotionRequiresReleaseDecision
+        - sourceClosureRequired
+        - noSilentSelectedHarnessMutation
+    phaseMapping:
+      alpha:
+        - source-boundary
+        - python-runtime
+        - exception-tracking
+        - failure-diagnostics
+      beta:
+        - test-and-quality
+        - observability
+        - exception-tracking
+        - slo-monitoring
+        - failure-diagnostics
+      rc:
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - release-governance
+        - test-and-quality
+      ga:
+        - release-governance
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - source-boundary
+    llmDraftPolicy:
+      enabled: true
+      generatedStatus: DRAFT
+      requireUserReview: true
+      activationRequiresAdmin: true
+      reonboardingUsesPreviousActiveProfile: true
+      allowedToSilentlyModifyActiveProfile: false
+      mustExplainTemplateSelection: true
+      mustNotInventEvidence: true
+    sourceReferences:
+      - name: FastAPI
+        url: https://github.com/fastapi/fastapi
+        category: github
+        rationale: Python API service conventions, OpenAPI ergonomics, dependency
+          injection, validation, and testable boundaries.
+      - name: OpenTelemetry Python instrumentation
+        url: https://github.com/open-telemetry/opentelemetry-python-contrib
+        category: github
+        rationale: HTTP, dependency, metrics, traces, and log correlation
+          instrumentation for Python services.
+      - name: Sentry
+        url: https://github.com/getsentry/sentry
+        category: github
+        rationale: Error tracking, issue grouping, stack traces, breadcrumbs, release
+          health, and performance diagnostics.
+    changelog:
+      - version: 1.2.0
+        changedAt: 2026-08-09T12:00:00.000Z
+        changedBy: evopilot-harness
+        summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1
+          metadata.
+        changes:
+          - Add productBoundary includes/excludes.
+          - Add structured matchPolicy with positive and negative evidence.
+          - Add executionModel and qualityGate for strict validation.
+      - version: 1.1.0
+        changedAt: 2026-07-31T06:00:00.000Z
+        changedBy: evopilot
+        summary: Upgrade Python template to enterprise harness knowledge baseline.
+        changes:
+          - Add structured observability, exception tracking, SLO monitoring,
+            alert routing, operational runbooks, and AI repair evidence.
+          - Add Python-specific FastAPI/ASGI/domain exception mapping,
+            OpenTelemetry, Prometheus metrics, and pytest/ruff/mypy diagnostics.
+    harnessLayer: runtime
+    productBoundary: &a1
+      includes:
+        - Python API service or worker
+        - package/test/runtime evidence
+        - exception mapping and diagnostics
+        - OpenTelemetry or structured logs
+      excludes:
+        - non-Python project
+        - frontend-only app
+        - database/cache/gateway product kernel
+    matchPolicy: &a2
+      requiredAny:
+        - file:pyproject.toml
+        - file:requirements.txt
+        - file:.py
+      positive:
+        dependencies:
+          - fastapi
+          - django
+          - flask
+          - pytest
+          - opentelemetry
+        imports:
+          - fastapi
+          - django
+          - pytest
+        files:
+          - pyproject.toml
+          - requirements.txt
+          - .py
+        symbols:
+          - FastAPI
+          - Blueprint
+        architectureSignals:
+          - python-service
+          - async-worker
+          - api-service
+      negative:
+        productBoundaryExcludes:
+          - non-Python project
+          - frontend-only app
+          - database/cache/gateway product kernel
+        signals:
+          - non-python-project
+    executionModel: &a3
+      phases:
+        - detect
+        - scan
+        - build
+        - unit
+        - integration
+        - diagnostics
+        - release-review
+      requiredCommands:
+        install:
+          - uv sync
+          - pip install -e .
+        lint:
+          - ruff check .
+        typecheck:
+          - mypy .
+        unit:
+          - pytest
+        smoke:
+          - pytest -q tests
+      optionalCommands:
+        profile:
+          - evopilot-harness detect --source-project <path> --json
+        strictValidate:
+          - evopilot-harness harness validate <harness-id> --strict --json
+    qualityGate: &a5
+      minTemplateScore: 0.8
+      requireProductBoundary: true
+      requireMatchPolicy: true
+      requireExecutionModel: true
+      requireEvidenceContract: true
+      requireExamples: true
+      requireHumanApproval: true
+    apiVersion: evopilot.dev/v2
+    kind: HarnessTemplate
+    metadata:
+      id: python-enterprise-harness
+      name: Python Enterprise Harness
+      version: 1.2.0
+      domain: python-enterprise
+      layer: runtime
+    status:
+      phase: draft
+      conditions:
+        - type: TemplateQualityModeled
+          status: "True"
+          reason: RequiredSectionsPresent
+        - type: HumanReviewRequired
+          status: "True"
+          reason: HarnessPublicationGate
+  match:
+    productBoundary: *a1
+    matchPolicy: *a2
+  execution: *a3
+  evidence: *a4
+  qualityGate: *a5
+  lifecycle:
+    status: published
+relations:
+  parents: []
+  sourceReferences:
+    - name: FastAPI
+    - name: OpenTelemetry Python instrumentation
+    - name: Sentry
+status:
+  phase: published
+  observedAt: 2026-08-09T05:24:19.115Z
+  conditions:
+    - type: TemplateQualityValidated
+      status: "True"
+      reason: TemplateQualityMissingSections
+      message: score=0.9;missing=domainExecution
+    - type: AssetEnvelopeReady
+      status: "True"
+      reason: HarnessAssetV2Generated
+      message: evopilot.dev/v2/HarnessAsset
+  quality:
+    harnessId: python-enterprise-harness
+    schema: evopilot-harness-template-quality/v1
+    score: 0.9
+    present:
+      - productBoundary
+      - matchPolicy
+      - executionModel
+      - evidenceContract
+      - qualityGate
+      - validationBaseline
+      - failureTaxonomy
+      - observabilityBaseline
+      - governanceRules
+    missing:
+      - domainExecution
+  provenance:
+    generatedBy: evopilot-harness
+    generatedAt: 2026-08-09T05:24:19.115Z
+    sourceTemplateDigest: sha256:99e4e6612dd492941cd6540e779fcf20492e6bfd8bbe17790dd568ffa4ab60c0
+    assetTemplateDigest: sha256:e2c7b2c033272b3a758fb2c99644afff10a71b9f03589452a1ea221ae52fb541
+    sourceReferenceCount: 3

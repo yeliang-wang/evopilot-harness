@@ -48,30 +48,63 @@ The command performs:
 1. source collection
 2. source coverage generation
 3. Source Profile generation
-4. Harness Detect Algorithm v1 matching
-5. optional LLM Advisor semantic review
+4. Unknown Source Decision Aggregator v2 matching
+5. optional-by-default LLM Advisor semantic review
 6. draft generation
 7. Template Quality Standard v1 validation
-8. review stop
+8. Harness Asset v2 validation
+9. review stop
 
 If `--approve-and-publish` is supplied, the command also performs approval and publication. Use that only when real administrator approval has already happened.
 
 ## LLM Advisor Review
 
-The LLM Advisor is disabled by default. It can be enabled for production semantic review with GLM or another OpenAI-compatible endpoint:
+The LLM Advisor is optional by default. It uses deterministic auto-match as the baseline, then calls the same GLM used by EvoPilot through a manually maintained CodeBuddy-style `models.json`. `evopilot-harness` only reads this file; operators edit it manually, and its content should contain only EvoPilot GLM.
+
+Default lookup:
+
+```text
+--llm-models-file <path>
+EVOPILOT_HARNESS_LLM_MODELS_FILE
+./models.json
+built-in evopilot-glm metadata + EVOPILOT_HARNESS_LLM_API_KEY or EVOPILOT_LLM_API_KEY
+```
+
+`models.json` format:
+
+```json
+{
+  "models": [
+    {
+      "id": "glm-5.1",
+      "name": "EvoPilot GLM",
+      "vendor": "zhipu",
+      "apiKey": "<manual-local-api-key>",
+      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "supportsToolCall": true,
+      "supportsReasoning": true
+    }
+  ]
+}
+```
+
+Inspect the selected profile without printing the API key:
 
 ```bash
-export EVOPILOT_HARNESS_LLM_ADVISOR=optional
-export EVOPILOT_HARNESS_LLM_PROVIDER_PRESET=glm
-export EVOPILOT_HARNESS_LLM_API_KEY="<secret>"
+node src/index.mjs llm models --json
+```
 
+Run with required GLM review:
+
+```bash
 node src/index.mjs evolve \
   --source-project /path/to/project \
   --goal "Create or evolve a reusable domain Harness." \
+  --llm-advisor required \
   --json
 ```
 
-Use `--llm-advisor required` or `--require-llm-advisor` when the run must block if model review cannot complete. Use `--apply-llm-advisor` only when a high-confidence Advisor recommendation may change the generated draft target. Explicit `--target-id` still overrides the Advisor.
+Use `--llm-advisor required` or `--require-llm-advisor` when the run must block if model review cannot complete. Use `--no-llm-advisor` for deterministic-only runs. Use `--apply-llm-advisor` only when a high-confidence Advisor recommendation may change the generated draft target. Explicit `--target-id` still overrides the Advisor.
 
 The Advisor returns:
 
@@ -84,6 +117,7 @@ llmAdvisor.reviewWarnings
 llmAdvisor.sensitiveMaterialFindings
 llmAdvisor.provider
 llmAdvisor.model
+llmAdvisor.llmProfileId
 llmAdvisor.usage
 ```
 
@@ -142,11 +176,13 @@ Before approval, verify:
 - production log redaction is acceptable
 - `sourceProfile.primaryRole`, recommended Harness, architecture signals, and negative signals are reasonable
 - `autoMatch.decision`, confidence, target Harness id, parent candidates, and reasons are reasonable
+- `autoMatch.candidateRetrieval`, conflicts, uncertainty, review gate, and decision evidence are understood
 - LLM Advisor classification, recommendation, alternatives, warnings, and token usage are understood when enabled
 - for corpus runs, `groups[].selectedProjects`, `groups[].duplicateProjects`, and every group draft are reasonable
 - target Harness id and version are correct
 - `draft/template.yaml` has clear `productBoundary`, `matchPolicy`, `executionModel`, `evidenceContract`, `qualityGate`, domain actions, evidence adapters, and release blockers
 - `validation.status=VALIDATED`
+- `draft/asset.yaml` validates as Harness Asset v2
 - `validation.blockers` is empty
 - strict validation passes before a source pack or Catalog is published as a release baseline
 - `impactReport` is understood
@@ -157,6 +193,7 @@ Publication mutates:
 
 ```text
 harnesses/<harness-id>/template.yaml
+harnesses/<harness-id>/asset.yaml
 harnesses/<harness-id>/README.md
 harnesses/<harness-id>/CHANGELOG.md
 harnesses/<harness-id>/examples/selected-harness-binding.yaml

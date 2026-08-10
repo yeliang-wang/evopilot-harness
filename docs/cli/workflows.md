@@ -40,7 +40,7 @@ node src/index.mjs evolve \
   --json
 ```
 
-The CLI scans the source project, computes source coverage, builds a Source Profile, runs Harness Detect Algorithm v1, generates a draft pack, validates Template Quality Standard v1, and stops for review when the result is valid.
+The CLI scans the source project, computes source coverage, builds a Source Profile v2, runs Auto-Match v2, generates a draft pack, validates Template Quality Standard v1 and Harness Asset v2, and stops for review when the result is valid.
 
 Expected review fields:
 

@@ -2,6 +2,39 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 2.0.0 - 2026-08-10
+
+### Added
+
+- Added Harness Asset v2 with `apiVersion: evopilot.dev/v2`, `kind: HarnessAsset`, metadata, embedded template, match/execution/evidence/lifecycle sections, quality conditions, relations, and provenance.
+- Added `asset inspect` and `asset validate` for source packs and published Catalog directories.
+- Added Catalog v2 fields for asset paths, asset digests, asset API metadata, quality reports, and publication provenance.
+- Added Source Profile v2 scanner evidence, scanner summary, runtime-log signals, sensitive-material signals, and uncertainty reasons.
+- Added Auto-Match v2 candidate retrieval, conflicts, uncertainty, review gates, and decision evidence.
+- Added unknown-source matching eval fixtures and the `eval run` release gate.
+- Added LLM Advisor replay fixtures and the `llm replay` release gate.
+- Added read-only CodeBuddy-style `models.json` support for LLM Advisor model selection.
+- Added `llm models` inspection output with selected profile metadata, provider/model visibility, and API-key redaction.
+- Added `models.example.json` while ignoring real local `models.json` secrets.
+
+### Changed
+
+- Changed `npm run check` to validate Harness Assets, run unknown-source evals, and replay Advisor cases before docs and node tests.
+- Changed published Catalog output to write `asset.yaml` beside each published `template.yaml`.
+- Changed `asset validate --source published` to support the published `<harness-id>/<version>` directory shape.
+- Changed detect/evolve/corpus responses to expose v2 matching metadata while preserving review and approval gates.
+- Changed LLM Advisor control to optional by default: deterministic matching still runs when no configured model is available, while `--llm-advisor required` blocks on missing or failed model calls.
+- Default model selection now prefers a manually configured GLM profile and falls back to built-in EvoPilot GLM metadata.
+
+### Validation
+
+- `node --check src/index.mjs`
+- `npm test`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 1.4.0 - 2026-08-10
 
 ### Added

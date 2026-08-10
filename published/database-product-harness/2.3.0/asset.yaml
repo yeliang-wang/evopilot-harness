@@ -1,0 +1,690 @@
+apiVersion: evopilot.dev/v2
+kind: HarnessAsset
+metadata:
+  id: database-product-harness
+  name: Database Product Harness
+  version: 2.3.0
+  domain: database-product
+  layer: domain
+  labels:
+    languageFamily: generic
+    scope: platform
+  annotations:
+    evopilot-harness/templateDigest: sha256:8c3a9c02238446156a79d9369e3a69e43e27169e093b9994a175fd5576e8e000
+    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/database-product-harness
+spec:
+  templateSchema: evopilot-harness-template/v2
+  template:
+    schema: evopilot-harness-template/v2
+    id: database-product-harness
+    version: 2.3.0
+    name: Database Product Harness
+    description: Domain baseline for self-developed database products.
+    scope: platform
+    languageFamily: generic
+    matchSignals: &a3
+      include:
+        - database product
+        - self-developed database
+        - dbms
+        - sql engine
+        - storage engine
+        - query optimizer
+        - transaction engine
+        - distributed database
+        - postgres-compatible
+        - mysql-compatible
+        - 自研数据库
+        - 数据库产品
+        - 数据库内核
+        - 查询优化器
+        - 存储引擎
+        - 事务引擎
+      exclude:
+        - database connection
+        - jdbc datasource
+        - orm
+        - crud repository
+        - connect to mysql
+        - connect to postgres
+        - 数据库连接
+        - 数据源
+    capabilities:
+      - id: source-boundary
+        name: Source and workspace boundary
+        boundary: Project source, credentials, tenant, workspace, branch, writeback, and
+          read-only mode are explicit before execution.
+        requiredEvidence:
+          - project-registration
+          - source-readiness-preflight
+          - credential-or-read-only-boundary
+      - id: database-product-runtime
+        name: Database product runtime harness
+        boundary: Build, SQL compatibility, storage, transaction, recovery, upgrade,
+          benchmark, and readiness commands are declared.
+        requiredEvidence:
+          - build-output
+          - sql-compatibility-output
+          - transaction-output
+          - recovery-output
+          - benchmark-output
+      - id: database-product-boundary
+        name: Self-developed database product boundary
+        boundary: The evolved project is the owner's database product; external
+          databases are references and differential oracles only.
+        requiredEvidence:
+          - product-scope-declaration
+          - reference-role-declaration
+          - compatibility-corpus
+          - differential-oracle-report
+      - id: sql-compatibility-boundary
+        name: SQL compatibility boundary
+        boundary: SQL grammar, dialect, protocol, type, transaction isolation, error
+          code, and migration compatibility are versioned and tested.
+        requiredEvidence:
+          - sql-grammar-suite
+          - dialect-compatibility-report
+          - protocol-compatibility-report
+          - error-code-map
+      - id: database-engine-correctness
+        name: Database engine correctness
+        boundary: Storage engine, query optimizer, transaction engine, replication,
+          recovery, consistency, and durability behavior are proven.
+        requiredEvidence:
+          - storage-engine-test
+          - optimizer-plan-proof
+          - transaction-isolation-test
+          - crash-recovery-test
+      - id: exception-tracking
+        name: Exception and error tracking
+        boundary: Runtime exceptions, domain errors, dependency failures, retries, and
+          user-facing errors are classified and correlated.
+        requiredEvidence:
+          - error-code-contract
+          - exception-sample
+          - trace-link
+          - owner-next-action
+          - repair-verification
+      - id: test-and-quality
+        name: Test and quality gates
+        boundary: Tests, coverage expectations, interface contracts, and regression
+          scope are proven through command evidence.
+        requiredEvidence:
+          - test-report
+          - coverage-or-risk-acceptance
+          - contract-check
+      - id: failure-diagnostics
+        name: Failure diagnostics
+        boundary: Failures are classified with command, stack/log excerpt, suspected
+          root cause, owner, next action, and verification.
+        requiredEvidence:
+          - failure-classification
+          - root-cause-note
+          - repair-verification
+      - id: observability
+        name: Observability
+        boundary: Health, readiness, logs, metrics, traces, APM signals, and alert
+          routes are bound before Beta/RC/GA claims.
+        requiredEvidence:
+          - health-check
+          - runtime-log
+          - metric-or-trace-proof
+          - alert-route
+      - id: slo-monitoring
+        name: SLO monitoring and alert routing
+        boundary: SLIs, SLOs, dashboards, alert thresholds, routing targets, and error
+          budget status are explicit before RC/GA.
+        requiredEvidence:
+          - sli-definition
+          - slo-dashboard
+          - alert-rule
+          - runbook-link
+          - error-budget-status
+      - id: operational-runbooks
+        name: Operational runbooks
+        boundary: Critical failure modes have symptom-first runbooks with triage
+          queries, mitigation, rollback, owner, and verification.
+        requiredEvidence:
+          - runbook
+          - triage-query
+          - rollback-or-mitigation
+          - oncall-owner
+          - post-repair-verification
+      - id: release-governance
+        name: Release governance
+        boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+          and ReleaseDecision are required before GA.
+        requiredEvidence:
+          - target-evidence-package
+          - phase-package
+          - source-closure
+          - release-decision
+    runtimePatterns:
+      harnessLayer: domain
+      domain: database-product
+      domainLabel: Self-developed database product
+      language: generic
+      compatibilityProfiles:
+        - id: postgres-compatible
+          role: compatibility-oracle
+          scope:
+            - sql-dialect
+            - wire-protocol
+            - system-catalog
+            - error-code
+          referenceProduct: PostgreSQL
+        - id: mysql-compatible
+          role: compatibility-oracle
+          scope:
+            - sql-dialect
+            - wire-protocol
+            - type-system
+            - error-code
+          referenceProduct: MySQL
+        - id: ansi-sql
+          role: standards-baseline
+          scope:
+            - grammar
+            - semantics
+            - conformance
+      architectureProfiles:
+        - id: single-node
+          concerns:
+            - storage-engine
+            - query-engine
+            - transaction-engine
+            - backup-restore
+        - id: distributed
+          concerns:
+            - replication
+            - sharding
+            - consensus
+            - failover
+            - online-upgrade
+        - id: htap
+          concerns:
+            - oltp
+            - olap
+            - column-store
+            - row-store
+            - workload-isolation
+        - id: mpp
+          concerns:
+            - planner
+            - executor
+            - exchange
+            - distributed-join
+            - resource-governance
+      runtimeProfiles:
+        - java
+        - go
+        - rust
+        - cpp
+        - generic
+      referenceBoundary:
+        allowedRoles:
+          - compatibility corpus
+          - differential oracle
+          - SQL dialect reference
+          - protocol reference
+        forbiddenRoles:
+          - default evolution target
+          - silent upstream fork target
+          - replace the owner's product
+      architectureStyles:
+        - database-product
+        - dbms
+        - sql-engine
+        - storage-engine
+        - distributed-database
+        - htap
+        - mpp
+      defaultCommands:
+        install:
+          - make deps
+        lint:
+          - make lint
+        typecheck:
+          - make build
+        unit:
+          - make test-unit
+        smoke:
+          - make smoke-sql
+        functional:
+          - make test-sql-compat
+          - make test-recovery
+          - make test-upgrade
+      domainExecution:
+        requiredActions:
+          - id: declare-database-product-boundary
+            phase: alpha
+            description: Declare that the evolved target is the owner's self-developed
+              database product and record reference databases as compatibility
+              oracles only.
+            requiredEvidence:
+              - product-scope-declaration
+              - reference-role-declaration
+            suggestedCommands:
+              - inspect EvoPilot goal plan selectedHarness output
+          - id: map-engine-module-boundaries
+            phase: alpha
+            description: Map parser, planner, executor, storage, transaction, replication,
+              and recovery modules to repository paths before goal planning.
+            requiredEvidence:
+              - module-boundary-report
+            suggestedCommands:
+              - find . -maxdepth 3 -type d | sort
+          - id: bind-sql-compatibility-suite
+            phase: beta
+            description: Bind SQL grammar, dialect, wire-protocol, catalog, error-code, and
+              migration compatibility checks to project commands.
+            requiredEvidence:
+              - sql-compatibility-report
+              - protocol-compatibility-report
+              - error-code-map
+            suggestedCommands:
+              - make test-sql-compat
+              - make test-protocol-compat
+          - id: bind-correctness-and-recovery-suite
+            phase: rc
+            description: Bind transaction isolation, crash recovery, replication
+              consistency, upgrade, and benchmark regression checks to project
+              commands.
+            requiredEvidence:
+              - transaction-isolation-test
+              - crash-recovery-log
+              - replication-status
+              - benchmark-summary
+            suggestedCommands:
+              - make test-recovery
+              - make test-upgrade
+              - make benchmark-smoke
+        moduleBoundaries:
+          - parser
+          - planner
+          - executor
+          - storage
+          - transaction
+          - replication
+          - recovery
+        evidenceAdapters:
+          - artifact: sql-compatibility-report
+            source: functional command output
+            commandGroup: functional
+            requiredFor:
+              - beta
+              - rc
+              - ga
+            schemaFields:
+              - compatibilityProfile
+              - suite
+              - passed
+              - failed
+              - queryId
+              - sqlState
+              - referenceProduct
+          - artifact: differential-oracle-report
+            source: compatibility oracle comparison
+            commandGroup: functional
+            requiredFor:
+              - beta
+              - rc
+              - ga
+            schemaFields:
+              - referenceProduct
+              - corpusDigest
+              - queryHash
+              - expected
+              - actual
+              - verdict
+          - artifact: crash-recovery-log
+            source: recovery command output
+            commandGroup: functional
+            requiredFor:
+              - rc
+              - ga
+            schemaFields:
+              - scenario
+              - checkpoint
+              - walOrRedo
+              - dataLoss
+              - recovered
+              - verificationCommand
+          - artifact: benchmark-summary
+            source: benchmark command output
+            commandGroup: functional
+            requiredFor:
+              - rc
+              - ga
+            schemaFields:
+              - workload
+              - baseline
+              - candidate
+              - delta
+              - threshold
+              - verdict
+        releaseBlockers:
+          - NO-GO when the project boundary makes PostgreSQL or MySQL the
+            default evolved product.
+          - NO-GO when product-scope-declaration or reference-role-declaration
+            is missing before Beta.
+          - NO-GO when crash-recovery-log is missing before RC or GA.
+          - NO-GO when benchmark-summary is missing for performance improvement
+            claims.
+    validationBaseline:
+      requiredCommandGroups:
+        - install
+        - lint
+        - typecheck
+        - unit
+        - smoke
+        - functional
+      requiredBoundaries:
+        - product-scope
+        - sql-compatibility
+        - storage-engine
+        - query-engine
+        - transaction-engine
+        - recovery
+        - performance
+        - operations
+      contractChecks:
+        - sql-compatibility
+        - protocol-compatibility
+        - transaction-isolation
+        - crash-recovery
+        - upgrade-compatibility
+        - benchmark-regression
+      requiredActions:
+        - declare-database-product-boundary
+        - map-engine-module-boundaries
+        - bind-sql-compatibility-suite
+        - bind-correctness-and-recovery-suite
+      commandEvidenceRequired: true
+      realBoundaryEvidenceRequired: true
+      noMockEvidenceForReleaseClaims: true
+      referenceProductsAreOraclesOnly: true
+    evidenceContract: &a5
+      format: json
+      requiredArtifacts:
+        - target-evidence-package
+        - phase-package
+        - goal-completion-report
+        - sql-compatibility-report
+        - differential-oracle-report
+        - crash-recovery-log
+        - benchmark-summary
+      evidenceAdaptersRequired: true
+      correlationFields:
+        - requestId
+        - traceId
+        - commitSha
+    failureTaxonomy:
+      categories:
+        - sql
+        - protocol
+        - storage
+        - transaction
+        - replication
+        - recovery
+        - performance
+        - observability
+        - governance
+        - unknown
+    diagnosticsBaseline:
+      requiredSignals:
+        - failing-command
+        - exit-code
+        - sql-state
+        - query-id
+        - transaction-id
+        - trace-id
+        - recovery-log
+        - benchmark-summary
+    observabilityBaseline:
+      requiredSignals:
+        - health
+        - readiness
+        - logs
+        - metrics
+        - traces
+        - alerts
+        - dashboards
+        - slo
+        - runbooks
+    governanceRules:
+      tenantWorkspaceScopeRequired: true
+      targetPlanRequiresApproval: true
+      selectedHarnessBindingRequiresReview: true
+      promotionRequiresReleaseDecision: true
+      sourceClosureRequired: true
+      noSilentSelectedHarnessMutation: true
+    phaseMapping:
+      alpha:
+        - source-boundary
+        - database-product-runtime
+        - database-product-boundary
+        - sql-compatibility-boundary
+        - failure-diagnostics
+      beta:
+        - test-and-quality
+        - database-engine-correctness
+        - observability
+        - exception-tracking
+        - slo-monitoring
+      rc:
+        - database-engine-correctness
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - release-governance
+        - test-and-quality
+      ga:
+        - release-governance
+        - database-engine-correctness
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - source-boundary
+    llmDraftPolicy:
+      enabled: true
+      generatedStatus: DRAFT
+      requireUserReview: true
+      activationRequiresAdmin: true
+      allowedToSilentlyModifyActiveProfile: false
+    sourceReferences:
+      - name: PostgreSQL
+        url: https://github.com/postgres/postgres
+        category: github
+        rationale: Compatibility reference and differential oracle; not the default
+          evolution target.
+      - name: MySQL Server
+        url: https://github.com/mysql/mysql-server
+        category: github
+        rationale: Compatibility reference and differential oracle; not the default
+          evolution target.
+      - name: CockroachDB
+        url: https://github.com/cockroachdb/cockroach
+        category: github
+        rationale: Distributed SQL consistency, replication, and recovery reference.
+    changelog:
+      - version: 2.3.0
+        changedAt: 2026-08-09T12:00:00.000Z
+        changedBy: evopilot-harness
+        summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1
+          metadata.
+        changes:
+          - Add productBoundary includes/excludes.
+          - Add structured matchPolicy with positive and negative evidence.
+          - Add executionModel and qualityGate for strict validation.
+      - version: 2.2.0
+        changedAt: 2026-08-07T08:00:00.000Z
+        changedBy: evopilot
+        summary: Add executable database domain harness contract.
+        changes:
+          - Add project required actions for database product boundary, engine
+            module mapping, SQL compatibility, recovery, upgrade, and benchmark
+            evidence.
+          - Add evidence adapter contracts for SQL compatibility, differential
+            oracle comparison, crash recovery, and benchmark summaries.
+          - Keep PostgreSQL and MySQL as compatibility corpora and differential
+            oracles only.
+      - version: 2.0.0
+        changedAt: 2026-08-07T00:00:00.000Z
+        changedBy: evopilot
+        summary: Add v2 domain-first database product harness.
+        changes:
+          - Define compatibility, architecture, and runtime layers.
+          - Treat PostgreSQL and MySQL as references and differential oracles
+            only.
+          - Require SQL compatibility, engine correctness, recovery, upgrade,
+            and benchmark evidence.
+    harnessLayer: domain
+    domain: database-product
+    productBoundary: &a1
+      includes:
+        - self-developed database product
+        - SQL engine or storage engine
+        - query optimizer
+        - transaction and recovery engine
+      excludes:
+        - JDBC client application
+        - ORM repository service
+        - database migration script only
+        - external database usage
+    matchPolicy: &a2
+      requiredAny:
+        - architecture:database-product
+        - signal:query optimizer
+        - signal:storage engine
+        - signal:transaction engine
+      positive:
+        dependencies: []
+        imports: []
+        files:
+          - storage
+          - optimizer
+          - transaction
+        symbols:
+          - Optimizer
+          - StorageEngine
+          - Transaction
+        architectureSignals:
+          - database-product
+          - sql-engine
+          - storage-engine
+          - query-optimizer
+          - transaction-engine
+      negative:
+        productBoundaryExcludes:
+          - JDBC client application
+          - ORM repository service
+          - database migration script only
+          - external database usage
+        signals:
+          - database-client-not-database-product
+          - jdbc datasource
+          - orm
+    executionModel: &a4
+      phases:
+        - detect
+        - scan
+        - build
+        - unit
+        - integration
+        - diagnostics
+        - release-review
+      requiredCommands:
+        install:
+          - make deps
+        lint:
+          - make lint
+        typecheck:
+          - make build
+        unit:
+          - make test-unit
+        smoke:
+          - make smoke-sql
+        functional:
+          - make test-sql-compat
+          - make test-recovery
+          - make test-upgrade
+      optionalCommands:
+        profile:
+          - evopilot-harness detect --source-project <path> --json
+        strictValidate:
+          - evopilot-harness harness validate <harness-id> --strict --json
+    qualityGate: &a6
+      minTemplateScore: 0.8
+      requireProductBoundary: true
+      requireMatchPolicy: true
+      requireExecutionModel: true
+      requireEvidenceContract: true
+      requireExamples: true
+      requireHumanApproval: true
+    apiVersion: evopilot.dev/v2
+    kind: HarnessTemplate
+    metadata:
+      id: database-product-harness
+      name: Database Product Harness
+      version: 2.3.0
+      domain: database-product
+      layer: domain
+    status:
+      phase: draft
+      conditions:
+        - type: TemplateQualityModeled
+          status: "True"
+          reason: RequiredSectionsPresent
+        - type: HumanReviewRequired
+          status: "True"
+          reason: HarnessPublicationGate
+  match:
+    productBoundary: *a1
+    matchPolicy: *a2
+    matchSignals: *a3
+  execution: *a4
+  evidence: *a5
+  qualityGate: *a6
+  lifecycle:
+    status: published
+relations:
+  parents: []
+  sourceReferences:
+    - name: PostgreSQL
+    - name: MySQL Server
+    - name: CockroachDB
+status:
+  phase: published
+  observedAt: 2026-08-09T05:24:19.115Z
+  conditions:
+    - type: TemplateQualityValidated
+      status: "True"
+      reason: TemplateQualityComplete
+      message: score=1;missing=none
+    - type: AssetEnvelopeReady
+      status: "True"
+      reason: HarnessAssetV2Generated
+      message: evopilot.dev/v2/HarnessAsset
+  quality:
+    harnessId: database-product-harness
+    schema: evopilot-harness-template-quality/v1
+    score: 1
+    present:
+      - productBoundary
+      - matchPolicy
+      - executionModel
+      - evidenceContract
+      - qualityGate
+      - domainExecution
+      - validationBaseline
+      - failureTaxonomy
+      - observabilityBaseline
+      - governanceRules
+    missing: []
+  provenance:
+    generatedBy: evopilot-harness
+    generatedAt: 2026-08-09T05:24:19.115Z
+    sourceTemplateDigest: sha256:0a9c1424c884b75cb9f4460961b395ab699cc45dfb430e7a34ed109df6ca9963
+    assetTemplateDigest: sha256:8c3a9c02238446156a79d9369e3a69e43e27169e093b9994a175fd5576e8e000
+    sourceReferenceCount: 3

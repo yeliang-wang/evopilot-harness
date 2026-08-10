@@ -1,13 +1,13 @@
 # Harness Template Contract
 
-Harness templates are EvoPilot-compatible YAML contracts. Source packs live under `harnesses/<id>/template.yaml`; published copies live under `published/<id>/<version>/template.yaml`.
+Harness templates are EvoPilot-compatible YAML contracts. Source packs live under `harnesses/<id>/template.yaml`; published copies live under `published/<id>/<version>/template.yaml`. v2 publication also writes `asset.yaml`, a Harness Asset envelope that carries provenance, quality, lifecycle, source-reference, and review metadata around the template.
 
 ## Required Fields
 
 Every template should provide:
 
 ```yaml
-schema: evopilot-harness-template/v1
+schema: evopilot-harness-template/v2
 id: database-product-harness
 version: 2.3.0
 name: Database Product Harness
@@ -90,9 +90,9 @@ Runtime templates can omit domain-specific fields when they are language or runt
 
 ## Match Policy
 
-Templates can still provide `matchSignals.include`, but `matchPolicy` and `productBoundary` are the primary matching contract in v1.3.0.
+Templates can still provide `matchSignals.include`, but `matchPolicy` and `productBoundary` are the primary matching contract.
 
-The detector builds a source profile, scores positive evidence, subtracts negative signals, checks product-boundary exclusions, and returns one of:
+The v2 matching path builds a Source Profile from scanner evidence, retrieves candidate Harness packs, scores positive evidence, subtracts negative signals, checks product-boundary exclusions, records uncertainty, and returns one of:
 
 ```text
 EVOLVE_EXISTING
@@ -103,6 +103,53 @@ REVIEW_REQUIRED
 ```
 
 A confident match evolves an existing Harness. A narrow source role, such as a Redis client library, should create a narrow target and reference a broader parent Harness instead of evolving the full distributed cache product Harness.
+
+## Source Profile And Auto-Match v2
+
+`detect`, `evolve`, and corpus planning expose these v2 schemas:
+
+```text
+evopilot-harness-source-profile/v2
+evopilot-harness-auto-match/v2
+evopilot-harness-candidate-retrieval/v2
+evopilot-harness-detect-result/v2
+```
+
+The decision is produced by the deterministic aggregator. LLM Advisor can review or, with `--apply-llm-advisor`, influence target selection when confidence is high, but it never approves publication.
+
+Important review fields:
+
+```text
+sourceProfile.scannerVersion
+sourceProfile.scanners[]
+sourceProfile.scannerSummary
+sourceProfile.uncertainty
+autoMatch.algorithmVersion
+autoMatch.candidateRetrieval
+autoMatch.conflicts
+autoMatch.reviewGate
+autoMatch.decisionEvidence
+```
+
+## Harness Asset v2
+
+Published Harnesses must validate as:
+
+```text
+apiVersion=evopilot.dev/v2
+kind=HarnessAsset
+metadata.id/version/name present
+spec.template present
+status.conditions present
+status.provenance.generatedBy=evopilot-harness
+```
+
+Use:
+
+```bash
+node src/index.mjs asset inspect <harness-id> --source harnesses --json
+node src/index.mjs asset validate --source published --json
+```
 
 ## Template Quality Standard v1
 

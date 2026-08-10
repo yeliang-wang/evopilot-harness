@@ -123,9 +123,34 @@ evopilot-harness-validation-result/v1
 evopilot-harness-deprecate-result/v1
 ```
 
+## Asset
+
+Harness Asset v2 is the professional release envelope around each template. It keeps EvoPilot-compatible `template.yaml` available while adding API version, kind, metadata, provenance, lifecycle, quality status, and source-reference metadata for review and Catalog publication.
+
+Inspect one asset from source packs or a published Catalog directory:
+
+```bash
+node src/index.mjs asset inspect database-product-harness --source harnesses --json
+node src/index.mjs asset inspect database-product-harness --source published --json
+```
+
+Validate all assets. When a source pack does not yet contain `asset.yaml`, validation generates the v2 envelope in memory from `template.yaml`; published Catalog directories validate the written `asset.yaml` files.
+
+```bash
+node src/index.mjs asset validate --source harnesses --json
+node src/index.mjs asset validate --source published --json
+```
+
+JSON schema:
+
+```text
+evopilot-harness-asset-inspect/v2
+evopilot-harness-asset-validation-result/v2
+```
+
 ## Detect
 
-Run deterministic Harness detection before creating an evolution draft:
+Run unknown-source Harness matching before creating an evolution draft:
 
 ```bash
 node src/index.mjs detect \
@@ -156,7 +181,7 @@ Detection options:
 | `--limit <number>` | Maximum batch detections. Default: `50`. |
 | `--max-depth <number>` | Maximum source-root discovery depth. Default: `5`. |
 
-The detector produces a `sourceProfile` from code, manifests, filenames, imports, dependencies, symbols, logs, attachments, and notes. The profile includes:
+The detector produces a Source Profile v2 from code, manifests, filenames, imports, dependencies, symbols, logs, attachments, and notes. The profile includes:
 
 ```text
 sourceProfile.primaryRole
@@ -168,9 +193,13 @@ sourceProfile.architectureSignals[]
 sourceProfile.recommendedHarness
 sourceProfile.negativeSignals[]
 sourceProfile.sensitiveMaterialFindings[]
+sourceProfile.scannerVersion
+sourceProfile.scanners[]
+sourceProfile.scannerSummary
+sourceProfile.uncertainty
 ```
 
-`autoMatch` is the deterministic decision used again by `evolve`:
+`autoMatch` is the decision used again by `evolve`. It is produced by scanner evidence, candidate retrieval, deterministic scoring, conflict detection, and review gates. LLM Advisor can review it later, but approval remains manual.
 
 | Decision | Meaning |
 |---|---|
@@ -183,10 +212,11 @@ sourceProfile.sensitiveMaterialFindings[]
 JSON schema:
 
 ```text
-evopilot-harness-detect-result/v1
+evopilot-harness-detect-result/v2
 evopilot-harness-detect-batch-result/v1
-evopilot-harness-source-profile/v1
-evopilot-harness-auto-match/v1
+evopilot-harness-source-profile/v2
+evopilot-harness-auto-match/v2
+evopilot-harness-candidate-retrieval/v2
 ```
 
 ## Corpus
@@ -249,6 +279,7 @@ Corpus planning writes:
 ```text
 .evopilot-harness/corpora/<corpus-id>/run.json
 .evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/template.yaml
+.evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/asset.yaml
 .evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/README.md
 .evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/CHANGELOG.md
 .evopilot-harness/corpora/<corpus-id>/drafts/<target-harness-id>/examples/selected-harness-binding.yaml
@@ -331,13 +362,16 @@ Accepted source inputs:
 | `--goal <text>` or `--intent <text>` | Evolution objective. |
 | `--target-id <id>` | Force the target Harness id. |
 | `--match-threshold <number>` | Override deterministic detect threshold. Default: `0.45`. |
-| `--llm-advisor [optional|required]` | Run semantic LLM Advisor review after deterministic auto-match. |
+| `--llm-advisor [optional|required]` | Run semantic LLM Advisor review after deterministic auto-match. Default: `optional`. |
 | `--require-llm-advisor` | Block review when the Advisor cannot run successfully. |
+| `--no-llm-advisor` | Disable Advisor and use deterministic auto-match only. |
 | `--apply-llm-advisor` | Use a high-confidence Advisor recommendation for draft target selection. |
-| `--llm-provider-preset glm` | Use GLM-compatible defaults: provider `zhipu`, model `glm-5.2`, base URL `https://open.bigmodel.cn/api/paas/v4`. |
-| `--llm-base-url <url>` | OpenAI-compatible chat completions base URL. |
-| `--llm-model <id>` | Model name for the Advisor. |
-| `--llm-api-key-env <env>` | Environment variable that holds the API key. Default: `EVOPILOT_HARNESS_LLM_API_KEY`. |
+| `--llm-models-file <file>` | CodeBuddy-style model file. Default: `./models.json`. |
+| `--llm-profile <id>` | Select a model entry by `id`, `name`, or `modelName`. Default: GLM profile. |
+| `--llm-provider-preset glm` | Override provider preset. Built-in fallback is EvoPilot GLM: provider `zhipu`, model `glm-5.1`, base URL `https://open.bigmodel.cn/api/coding/paas/v4`. |
+| `--llm-base-url <url>` | Override OpenAI-compatible chat completions base URL. |
+| `--llm-model <id>` | Override model name for the Advisor. |
+| `--llm-api-key-env <env>` | Environment variable that holds the API key when `models.json` does not hold one. Default: `EVOPILOT_HARNESS_LLM_API_KEY`. |
 
 JSON schema:
 
@@ -349,12 +383,40 @@ evopilot-harness-evolution-impact/v1
 
 Evolution responses include the same `sourceProfile` and `autoMatch` that `detect` returns, so administrators can compare preflight detection with the generated draft target.
 
-## LLM Advisor
+## LLM Models And Advisor
 
-The Advisor is off by default. It is a semantic review stage, not an approval gate. It reads redacted source excerpts, deterministic `autoMatch`, and available Harness metadata, then returns `llmAdvisor`:
+`evopilot-harness` reads EvoPilot GLM from a local CodeBuddy-style `models.json`. The file is manually maintained by an operator and ignored by Git. The CLI does not create, update, import, or publish model configuration. The format matches CodeBuddy, but the content should contain only the GLM used by EvoPilot.
+
+Inspect selected model metadata without printing API keys:
+
+```bash
+node src/index.mjs llm models --json
+node src/index.mjs llm models --llm-models-file /path/to/models.json --llm-profile glm-5.1 --json
+```
+
+Expected `models.json` shape:
+
+```json
+{
+  "models": [
+    {
+      "id": "glm-5.1",
+      "name": "EvoPilot GLM",
+      "vendor": "zhipu",
+      "apiKey": "<manual-local-api-key>",
+      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "supportsToolCall": true,
+      "supportsReasoning": true
+    }
+  ]
+}
+```
+
+The Advisor is optional by default. It is a semantic review stage, not an approval gate. It reads redacted source excerpts, deterministic `autoMatch`, and available Harness metadata, then returns `llmAdvisor`:
 
 ```text
 llmAdvisor.status
+llmAdvisor.llmProfileId
 llmAdvisor.sourceClassification
 llmAdvisor.recommendation.action
 llmAdvisor.recommendation.targetHarnessId
@@ -365,19 +427,6 @@ llmAdvisor.model
 llmAdvisor.usage.totalTokens
 ```
 
-Use `optional` when a model outage should not block deterministic evolution:
-
-```bash
-export EVOPILOT_HARNESS_LLM_ADVISOR=optional
-export EVOPILOT_HARNESS_LLM_PROVIDER_PRESET=glm
-export EVOPILOT_HARNESS_LLM_API_KEY="<secret>"
-
-node src/index.mjs evolve \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness." \
-  --json
-```
-
 Use `required` for production policies that demand model review before draft approval:
 
 ```bash
@@ -385,11 +434,44 @@ node src/index.mjs evolve \
   --source-project /path/to/source-project \
   --goal "Create or evolve a reusable domain Harness." \
   --llm-advisor required \
-  --llm-provider-preset glm \
   --json
 ```
 
-Use `--apply-llm-advisor` only when policy allows the Advisor to change the generated draft target. Explicit `--target-id` still wins over Advisor output.
+Use `--no-llm-advisor` for deterministic-only evolution. Use `--apply-llm-advisor` only when policy allows the Advisor to change the generated draft target. Explicit `--target-id` still wins over Advisor output.
+
+Replay stored Advisor responses without calling a model:
+
+```bash
+node src/index.mjs llm replay --json
+node src/index.mjs llm replay --fixture-root eval/llm-replay/cases --json
+```
+
+JSON schema:
+
+```text
+evopilot-harness-llm-models/v1
+evopilot-harness-llm-advisor/v1
+evopilot-harness-llm-replay-report/v2
+```
+
+## Evaluation
+
+Unknown-source eval fixtures are hidden-oracle tests for the matching algorithm. They are not production rules and they do not predefine what a user's future source project must be. They verify that scanner evidence, candidate retrieval, conflict handling, and review gates stay stable for representative ambiguous inputs.
+
+Run the eval suite:
+
+```bash
+node src/index.mjs eval run --json
+node src/index.mjs eval run --fixture-root eval/unknown-source/cases --json
+```
+
+The release gate passes only when all cases pass and the decision matrix contains the expected mix of existing-Harness evolution, new Harness with parent reference, and grouped corpus planning.
+
+JSON schema:
+
+```text
+evopilot-harness-unknown-source-eval-report/v2
+```
 
 ## One-Command Evolve
 

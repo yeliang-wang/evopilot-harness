@@ -7,7 +7,7 @@
 | Component | Responsibility |
 |---|---|
 | Source packs | Human-reviewed Harness templates under `harnesses/<id>/`. |
-| CLI | Catalog publication, source scanning, Harness Detect Algorithm v1, draft generation, strict template validation, review gates, approval, and publication. |
+| CLI | Catalog publication, source scanning, Unknown Source Decision Aggregator v2, draft generation, Harness Asset v2 validation, strict template validation, review gates, approval, and publication. |
 | Evolution store | Local run state under `.evopilot-harness/evolutions/<id>/`. |
 | Published Catalog | `published/CATALOG.md` plus versioned Harness directories. This is the artifact EvoPilot reads. |
 | Harness Hub | Standalone browser UI served from `ui/harness-hub/` and `/api/hub/snapshot`. |
@@ -20,10 +20,11 @@
 flowchart TD
   A["Source project, attachment, production log, note"] --> B["Source coverage"]
   B --> P["Source Profile"]
-  P --> C["Harness Detect Algorithm v1"]
+  P --> C["Unknown Source Decision Aggregator v2"]
   C --> D["Draft Harness pack"]
   D --> E["Template Quality Standard v1 validation"]
-  E --> F["Administrator review"]
+  E --> A2["Harness Asset v2 validation"]
+  A2 --> F["Administrator review"]
   F --> G["Approval"]
   G --> H["Publish source pack and Catalog"]
   H --> I["published/CATALOG.md"]

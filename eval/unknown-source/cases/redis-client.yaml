@@ -1,0 +1,9 @@
+name: redis-client-narrow-harness
+sourceProject: ../projects/redis-client
+goal: Generate or evolve a reusable Harness from this unknown source.
+expect:
+  decision: CREATE_NEW_WITH_PARENT_REFERENCE
+  targetHarnessId: redis-client-harness
+  mustNotTargetHarnessIds:
+    - distributed-cache-harness
+  reviewGateRequired: true

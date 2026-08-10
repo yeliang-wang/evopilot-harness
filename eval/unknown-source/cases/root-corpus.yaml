@@ -1,0 +1,9 @@
+name: unknown-root-corpus-grouping
+sourceRoot: ../projects/root-corpus
+goal: Group this unknown source root into reusable Harness evolution targets.
+expect:
+  minGroups: 3
+  mustIncludeTargets:
+    - redis-client-harness
+    - rpc-framework-harness
+    - generic-management-software-harness

@@ -2,7 +2,7 @@
 
 > Independent Harness Factory, lifecycle CLI, Harness Hub, and published Catalog for EvoPilot-compatible domain templates.
 
-Current release: `1.4.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
+Current release: `2.0.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=22`
 
 [Documentation](docs/README.md) | [CLI](docs/cli/README.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [Registry Contract](docs/reference/registry-contract.md) | [Catalog Contract](docs/reference/catalog-contract.md) | [Source Packs](harnesses/README.md) | [Published Catalog](published/CATALOG.md)
 
@@ -17,12 +17,16 @@ Current release: `1.4.0` | Compatible EvoPilot: `>=3.0.0` | Runtime: Node.js `>=
 | Publish a multi-Catalog Registry | `node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json` |
 | Validate Registry and enabled Catalog roots | `node src/index.mjs registry validate --registry harness-registry.yaml --json` |
 | Inspect and validate source Harness packs | `node src/index.mjs harness validate --strict --json` |
+| Inspect and validate Harness Asset v2 envelopes | `node src/index.mjs asset validate --source harnesses --json` |
 | Detect the best Harness target before evolution | `node src/index.mjs detect --source-project /path/to/project --goal "..." --json` |
 | Batch-detect projects under a source root | `node src/index.mjs detect batch --source-root /path/to/root --include-modules --json` |
 | Plan grouped Harness evolution from a project corpus | `node src/index.mjs corpus plan --source-root /path/to/root --include-modules --json` |
 | Evolve a Harness from a project, attachment, log, or note | `node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
 | One-command corpus evolution with review gates | `node src/index.mjs evolve corpus --source-root /path/to/root --include-modules --json` |
+| Inspect local EvoPilot GLM config | `node src/index.mjs llm models --llm-models-file models.json --json` |
 | Add semantic LLM Advisor review | `EVOPILOT_HARNESS_LLM_ADVISOR=optional node src/index.mjs evolve --source-project /path/to/project --goal "..." --json` |
+| Replay expected LLM Advisor decisions | `node src/index.mjs llm replay --json` |
+| Run unknown-source matching evals | `node src/index.mjs eval run --json` |
 | Review, approve, and publish generated drafts | `node src/index.mjs evolution review <id> --json` |
 | Run the independent Harness Hub | `node src/index.mjs hub serve --catalog published --source harnesses` |
 | Let EvoPilot read published Harnesses | `EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml` |
@@ -59,20 +63,37 @@ node src/index.mjs evolve \
   --json
 ```
 
-For production semantic review with a GLM-compatible endpoint, configure the Advisor through environment variables and keep the API key out of the command line:
+For production semantic review, configure `models.json` manually with the same GLM used by EvoPilot. The file format intentionally matches CodeBuddy-style `models.json`, but the content should contain only EvoPilot GLM:
+
+```json
+{
+  "models": [
+    {
+      "id": "glm-5.1",
+      "name": "EvoPilot GLM",
+      "vendor": "zhipu",
+      "apiKey": "<manual-local-api-key>",
+      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "supportsToolCall": true,
+      "supportsReasoning": true
+    }
+  ]
+}
+```
+
+`models.json` is ignored by Git. `evopilot-harness` reads it but never writes, edits, imports, or publishes it. By default the CLI selects a GLM profile from that file. If no file exists, it falls back to the built-in `evopilot-glm` profile metadata and requires `EVOPILOT_HARNESS_LLM_API_KEY` or `EVOPILOT_LLM_API_KEY` to actually call the model.
 
 ```bash
-export EVOPILOT_HARNESS_LLM_ADVISOR=optional
-export EVOPILOT_HARNESS_LLM_PROVIDER_PRESET=glm
-export EVOPILOT_HARNESS_LLM_API_KEY="<server-side-or-shell-secret>"
+node src/index.mjs llm models --json
 
 node src/index.mjs evolve \
   --source-project /path/to/source-project \
   --goal "Create or evolve a reusable domain Harness from this project." \
+  --llm-advisor required \
   --json
 ```
 
-`llmAdvisor` is advisory by default. It records source classification, target recommendation, alternatives, warnings, provider/model, and token usage, but it does not approve or publish. Add `--apply-llm-advisor` only when a high-confidence Advisor recommendation is allowed to change the generated draft target.
+`llmAdvisor` is optional by default. It records source classification, target recommendation, alternatives, warnings, profile/provider/model, and token usage when a configured model is available, but it does not approve or publish. Use `--llm-advisor required` when a model call must succeed, `--no-llm-advisor` for deterministic-only runs, and `--apply-llm-advisor` only when a high-confidence Advisor recommendation is allowed to change the generated draft target.
 
 Validate template quality before publishing a release baseline:
 
@@ -121,12 +142,13 @@ node src/index.mjs corpus publish <corpus-id> --json
 
 ```mermaid
 flowchart LR
-  Source["Source projects, attachments, logs, notes"] --> Detect["Harness Detect Algorithm v1"]
+  Source["Source projects, attachments, logs, notes"] --> Detect["Unknown Source Decision Aggregator v2"]
   Detect --> Factory["evopilot-harness CLI"]
   Factory --> Draft["Draft Harness pack"]
   Draft --> Quality["Template Quality Standard v1"]
   Quality --> Review["Review and approval"]
-  Review --> Catalog["published/CATALOG.md"]
+  Review --> Asset["Harness Asset v2 envelope"]
+  Asset --> Catalog["published/CATALOG.md"]
   Catalog --> Registry["harness-registry.yaml"]
   Registry --> EvoPilot["EvoPilot goal planning"]
   Catalog --> Hub["Harness Hub UI"]
@@ -141,7 +163,9 @@ The boundary is intentionally strict:
 - EvoPilot dynamically reads the Registry or legacy Catalog directories and records `selectedHarness` evidence.
 - Dashboard can embed the Harness Hub, but it does not own Harness state.
 - Harness definitions are EvoPilot-compatible contracts, not a universal control-plane format.
-- The deterministic detect algorithm chooses between `EVOLVE_EXISTING`, `CREATE_NEW_WITH_PARENT_REFERENCE`, `CREATE_NEW`, `FORK_FROM_MATCH`, and `REVIEW_REQUIRED`; the optional LLM Advisor reviews but does not approve.
+- The matching path uses scanner evidence, candidate retrieval, deterministic decision aggregation, review gates, and optional LLM Advisor review. It chooses between `EVOLVE_EXISTING`, `CREATE_NEW_WITH_PARENT_REFERENCE`, `CREATE_NEW`, `FORK_FROM_MATCH`, and `REVIEW_REQUIRED`; the LLM Advisor reviews through the manually maintained `models.json` and never approves.
+- Published Catalog entries include both the legacy template path and a Harness Asset v2 envelope path with digest, provenance, lifecycle, quality, and source-reference metadata.
+- `eval run` and `llm replay` are release gates for unknown-source matching and Advisor response contracts.
 
 ## Documentation
 
@@ -162,6 +186,9 @@ npm run catalog:publish
 npm run catalog:validate
 npm run registry:publish
 npm run registry:validate
+npm run asset:validate
+npm run eval:run
+npm run llm:replay
 npm run hub:snapshot
 npm run docs:links
 npm test

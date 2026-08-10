@@ -1,0 +1,671 @@
+apiVersion: evopilot.dev/v2
+kind: HarnessAsset
+metadata:
+  id: observability-apm-harness
+  name: Observability APM Harness
+  version: 1.2.0
+  domain: observability-apm
+  layer: domain
+  labels:
+    languageFamily: generic
+    scope: platform
+  annotations:
+    evopilot-harness/templateDigest: sha256:fd9bda5955d20adaa87a197e90a307f96d56ff9fd65b195e97573c7af069caf6
+    evopilot-harness/sourceRoot: /Users/wangyejing/project/harness/evopilot-harness/harnesses/observability-apm-harness
+spec:
+  templateSchema: evopilot-harness-template/v2
+  template:
+    schema: evopilot-harness-template/v2
+    id: observability-apm-harness
+    version: 1.2.0
+    name: Observability APM Harness
+    description: Enterprise baseline for observability platforms, APM systems,
+      telemetry pipelines, and alerting/query surfaces.
+    scope: platform
+    languageFamily: generic
+    capabilities:
+      - id: source-boundary
+        name: Source and workspace boundary
+        boundary: Tenant/workspace/repository/branch/writeback boundaries are explicit.
+        requiredEvidence:
+          - project-registration
+          - source-readiness-preflight
+      - id: telemetry-runtime
+        name: Telemetry runtime harness
+        boundary: Collector, ingestion, storage, query, UI/API, alert, and agent
+          commands are declared by the selected Harness binding.
+        requiredEvidence:
+          - collector-output
+          - ingestion-proof
+          - query-proof
+          - alert-proof
+          - storage-proof
+      - id: telemetry-signal-contract
+        name: Telemetry signal contract
+        boundary: Trace, metric, log, context, resource, sampling, cardinality, and
+          retention behaviors are explicit.
+        requiredEvidence:
+          - trace-sample
+          - metric-sample
+          - log-sample
+          - cardinality-review
+          - retention-policy
+      - id: exception-tracking
+        name: Exception and error tracking
+        boundary: Receiver, processor, exporter, query, storage, alert, and partial
+          ingestion errors are mapped and correlated.
+        requiredEvidence:
+          - error-code-contract
+          - exception-sample
+          - trace-link
+          - repair-verification
+      - id: test-and-quality
+        name: Test and quality gates
+        boundary: Collector, ingestion, query, alert, retention, schema compatibility,
+          and load tests produce evidence.
+        requiredEvidence:
+          - test-report
+          - schema-compatibility-proof
+          - alert-test
+          - retention-proof
+      - id: failure-diagnostics
+        name: Failure diagnostics
+        boundary: Failures include pipeline/component/signal, dropped count, root cause,
+          owner, next action, and verification.
+        requiredEvidence:
+          - failure-classification
+          - telemetry-sample
+          - repair-verification
+      - id: observability
+        name: Observability
+        boundary: The observability system observes itself through logs, metrics,
+          traces, dashboards, alerts, runbooks, and SLOs.
+        requiredEvidence:
+          - health-check
+          - runtime-log
+          - metric-or-trace-proof
+          - alert-route
+      - id: slo-monitoring
+        name: SLO monitoring and alert routing
+        boundary: Ingestion, query, storage, alert delivery, cardinality, and data drop
+          SLOs are explicit before RC/GA.
+        requiredEvidence:
+          - sli-definition
+          - slo-dashboard
+          - alert-rule
+          - runbook-link
+          - error-budget-status
+      - id: operational-runbooks
+        name: Operational runbooks
+        boundary: Pipeline, storage, query, and alert failure modes have triage,
+          mitigation, rollback, owner, and verification.
+        requiredEvidence:
+          - runbook
+          - triage-query
+          - rollback-or-mitigation
+          - oncall-owner
+      - id: release-governance
+        name: Release governance
+        boundary: TargetEvidencePackage, PhasePackage, source closure, release evidence,
+          and ReleaseDecision are required before GA.
+        requiredEvidence:
+          - target-evidence-package
+          - phase-package
+          - source-closure
+          - release-decision
+    runtimePatterns:
+      language: generic
+      architectureStyles:
+        - apm
+        - observability-platform
+        - collector-pipeline
+      defaultCommands:
+        install:
+          - make deps
+          - npm ci
+          - go mod download
+        lint:
+          - make lint
+        typecheck:
+          - make build
+        unit:
+          - make test
+        smoke:
+          - make smoke
+        functional:
+          - make e2e
+      telemetryContracts:
+        signals:
+          - traces
+          - metrics
+          - logs
+          - profiles
+          - events
+        schemaCompatibility:
+          - OpenTelemetry semantic conventions
+          - collector pipeline contracts
+          - query API compatibility
+        cardinalityControls:
+          - bounded labels
+          - tenant cardinality budget
+          - attribute allowlist
+          - high-cardinality detection
+        retentionControls:
+          - hot retention
+          - cold retention
+          - downsampling
+          - delete/export policy
+      exceptionTracking:
+        handlers:
+          - collector receiver error
+          - processor/exporter error
+          - query API error
+          - storage timeout
+          - alert route failure
+        requiredErrorEnvelope:
+          - errorCode
+          - component
+          - pipeline
+          - signal
+          - tenantId
+          - traceId
+          - retryable
+          - droppedCount
+        exceptionAttributes:
+          - exception.type
+          - exception.message
+          - exception.stacktrace
+          - otel.signal
+          - otel.pipeline
+          - storage.backend
+      observability:
+        instrumentation:
+          - OpenTelemetry Collector
+          - SkyWalking
+          - Prometheus
+          - Grafana LGTM-style signals
+        logs:
+          - traceId
+          - spanId
+          - service.name
+          - pipeline
+          - signal
+          - tenantId
+          - errorCode
+          - droppedCount
+        metrics:
+          - ingestion_rate
+          - dropped_spans
+          - dropped_logs
+          - query_latency
+          - storage_latency
+          - alert_delivery_latency
+        traces:
+          - collector receive
+          - processor
+          - exporter
+          - query
+          - storage
+          - alert
+      harnessLayer: domain
+      domain: observability-apm
+      domainExecution:
+        requiredActions:
+          - id: declare-product-boundary
+            action: Declare product boundary, source ownership, runtime commands, and
+              release evidence.
+            evidence:
+              - product-boundary.md
+              - source-profile.json
+          - id: bind-domain-evidence
+            action: Bind domain-specific checks to executable commands and evidence
+              artifacts.
+            evidence:
+              - target-evidence-package
+              - goal-completion-report
+        evidenceAdapters:
+          - id: source-profile
+            artifact: source-profile.json
+            description: Detected source role, dependencies, match evidence, and negative
+              boundary evidence.
+          - id: runtime-log
+            artifact: runtime-log
+            description: Runtime logs with request, trace, error, and owner context.
+        releaseBlockers:
+          - missing product boundary evidence
+          - missing executable command evidence
+          - missing source-profile review
+    validationBaseline:
+      requiredCommandGroups:
+        - install
+        - lint
+        - typecheck
+        - unit
+        - smoke
+      requiredBoundaries:
+        - collector
+        - ingestion
+        - storage
+        - query
+        - alerting
+        - ui-api
+      contractChecks:
+        - trace-contract
+        - metric-contract
+        - log-contract
+        - apm-query-contract
+        - retention
+      commandEvidenceRequired: true
+      realBoundaryEvidenceRequired: true
+      noMockEvidenceForReleaseClaims: true
+    evidenceContract: &a4
+      format: json
+      requiredArtifacts:
+        - target-evidence-package
+        - phase-package
+        - goal-completion-report
+        - incident-or-failure-report
+        - observability-snapshot
+        - command
+        - exit-code
+        - stdout-or-log
+        - changed-files
+      requiredEvidence:
+        - command
+        - exit-code
+        - stdout-or-log
+        - changed-files
+        - ci-status-or-local-proof
+        - telemetry-sample
+        - observability-signal
+        - error-code-contract
+        - trace-or-correlation-link
+        - runbook-or-repair-note
+      correlationFields:
+        - requestId
+        - traceId
+        - spanId
+        - tenantId
+        - workspaceId
+        - projectId
+        - actor
+        - environment
+        - release
+        - commitSha
+    failureTaxonomy:
+      categories:
+        - business
+        - validation
+        - permission
+        - dependency
+        - environment
+        - syntax
+        - type
+        - test
+        - contract
+        - security
+        - performance
+        - deploy
+        - observability
+        - governance
+        - data
+        - database
+        - queue
+        - external-api
+        - concurrency
+        - resource-saturation
+        - unknown
+      severityLevels:
+        - debug
+        - info
+        - warn
+        - error
+        - critical
+      exceptionTracking:
+        requiredAttributes:
+          - exception.type
+          - exception.message
+          - exception.stacktrace
+          - errorCode
+          - requestId
+          - traceId
+          - spanId
+          - tenantId
+          - workspaceId
+          - projectId
+          - actor
+          - release
+          - commitSha
+          - retryable
+    diagnosticsBaseline:
+      requiredSignals:
+        - failing-command
+        - exit-code
+        - stack-trace-or-log
+        - changed-files
+        - runtime-env
+        - dependency-lock
+        - request-id
+        - trace-id
+        - release-or-commit
+        - recent-deploy
+        - ci-job-url
+        - health-status
+        - alert-name
+      rootCauseFields:
+        - symptom
+        - hypothesis
+        - evidence
+        - fix
+        - verification
+        - owner
+        - risk
+        - rollbackOrMitigation
+    observabilityBaseline:
+      requiredSignals:
+        - health
+        - readiness
+        - logs
+        - metrics
+        - traces
+        - apm
+        - alerts
+        - dashboards
+        - slo
+        - runbooks
+      logLevels:
+        - debug
+        - info
+        - warn
+        - error
+      structuredLogs:
+        format: json
+        requiredFields:
+          - timestamp
+          - level
+          - service
+          - environment
+          - requestId
+          - traceId
+          - spanId
+          - tenantId
+          - workspaceId
+          - projectId
+          - actor
+          - event
+          - errorCode
+          - exceptionClass
+          - rootCauseHint
+          - release
+          - commitSha
+        redactionRequired: true
+      metrics:
+        red:
+          - ingestion_rate
+          - error_rate
+          - query_duration_p95
+        dependency:
+          - storage_latency
+          - exporter_error_rate
+          - collector_queue_backlog
+          - dropped_signal_rate
+      traces:
+        requiredSpans:
+          - collector receive
+          - processor
+          - exporter
+          - query
+          - storage
+          - alert delivery
+        samplingPolicyMustBeDeclared: true
+    governanceRules:
+      tenantWorkspaceScopeRequired: true
+      targetPlanRequiresApproval: true
+      selectedHarnessBindingRequiresReview: true
+      promotionRequiresReleaseDecision: true
+      sourceClosureRequired: true
+      noSilentSelectedHarnessMutation: true
+      mandatoryGates:
+        - selected-harness-bound
+        - target-plan-user-confirmed
+        - target-evidence-package
+        - phase-package
+        - observability-evidence
+        - slo-or-risk-acceptance
+        - source-closure
+        - release-decision
+    phaseMapping:
+      alpha:
+        - source-boundary
+        - telemetry-runtime
+        - telemetry-signal-contract
+        - exception-tracking
+        - failure-diagnostics
+      beta:
+        - test-and-quality
+        - observability
+        - telemetry-signal-contract
+        - exception-tracking
+        - slo-monitoring
+      rc:
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - release-governance
+        - test-and-quality
+      ga:
+        - release-governance
+        - observability
+        - slo-monitoring
+        - operational-runbooks
+        - source-boundary
+    llmDraftPolicy:
+      enabled: true
+      generatedStatus: DRAFT
+      requireUserReview: true
+      activationRequiresAdmin: true
+      reonboardingUsesPreviousActiveProfile: true
+      allowedToSilentlyModifyActiveProfile: false
+      mustExplainTemplateSelection: true
+      mustNotInventEvidence: true
+    sourceReferences:
+      - name: OpenTelemetry Specification
+        url: https://github.com/open-telemetry/opentelemetry-specification
+        category: github
+        rationale: Signal definitions for traces
+        metrics: null
+        logs: null
+        baggage: null
+        resources: null
+        and context propagation.: null
+      - name: Apache SkyWalking
+        url: https://github.com/apache/skywalking
+        category: github
+        rationale: APM service topology
+        trace/metric/log analysis: null
+        storage: null
+        query: null
+        and UI concerns.: null
+      - name: Prometheus
+        url: https://github.com/prometheus/prometheus
+        category: github
+        rationale: Metrics
+        alerting: null
+        query: null
+        scrape: null
+        and time-series operational model.: null
+    changelog:
+      - version: 1.2.0
+        changedAt: 2026-08-09T12:00:00.000Z
+        changedBy: evopilot-harness
+        summary: Add Harness Detect Algorithm v1 and Template Quality Standard v1
+          metadata.
+        changes:
+          - Add productBoundary includes/excludes.
+          - Add structured matchPolicy with positive and negative evidence.
+          - Add executionModel and qualityGate for strict validation.
+      - version: 1.1.0
+        changedAt: 2026-07-31T06:00:00.000Z
+        changedBy: evopilot
+        summary: Upgrade Observability/APM template to enterprise harness knowledge
+          baseline.
+        changes:
+          - Add telemetry contracts
+          - collector pipeline failure handling
+          - cardinality and retention controls
+          - self-observability
+          - SLO gates
+          - and release evidence.
+    harnessLayer: domain
+    domain: observability-apm
+    productBoundary: &a1
+      includes:
+        - observability or APM platform
+        - telemetry ingestion/query/alerting
+        - logs/metrics/traces/profiles
+        - self-observability and SLO evidence
+      excludes:
+        - logging SDK only
+        - ordinary application logs
+        - API gateway product
+        - cache product
+    matchPolicy: &a2
+      requiredAny:
+        - architecture:observability-adapter
+        - signal:telemetry
+        - signal:apm
+        - signal:collector
+      positive:
+        dependencies:
+          - opentelemetry
+          - prometheus
+          - logback
+          - slf4j
+        imports:
+          - io.opentelemetry
+          - ch.qos.logback
+          - org.slf4j
+        files:
+          - collector
+          - metrics
+          - logs
+        symbols:
+          - LoggerFactory
+          - Span
+          - Meter
+        architectureSignals:
+          - observability-adapter
+          - telemetry-runtime
+          - apm
+          - collector-pipeline
+      negative:
+        productBoundaryExcludes:
+          - logging SDK only
+          - ordinary application logs
+          - API gateway product
+          - cache product
+        signals:
+          - library-not-observability-platform
+          - not-api-gateway-product
+    executionModel: &a3
+      phases:
+        - detect
+        - scan
+        - build
+        - unit
+        - integration
+        - diagnostics
+        - release-review
+      requiredCommands:
+        install:
+          - make deps
+          - npm ci
+          - go mod download
+        lint:
+          - make lint
+        typecheck:
+          - make build
+        unit:
+          - make test
+        smoke:
+          - make smoke
+        functional:
+          - make e2e
+      optionalCommands:
+        profile:
+          - evopilot-harness detect --source-project <path> --json
+        strictValidate:
+          - evopilot-harness harness validate <harness-id> --strict --json
+    qualityGate: &a5
+      minTemplateScore: 0.8
+      requireProductBoundary: true
+      requireMatchPolicy: true
+      requireExecutionModel: true
+      requireEvidenceContract: true
+      requireExamples: true
+      requireHumanApproval: true
+    apiVersion: evopilot.dev/v2
+    kind: HarnessTemplate
+    metadata:
+      id: observability-apm-harness
+      name: Observability APM Harness
+      version: 1.2.0
+      domain: observability-apm
+      layer: domain
+    status:
+      phase: draft
+      conditions:
+        - type: TemplateQualityModeled
+          status: "True"
+          reason: RequiredSectionsPresent
+        - type: HumanReviewRequired
+          status: "True"
+          reason: HarnessPublicationGate
+  match:
+    productBoundary: *a1
+    matchPolicy: *a2
+  execution: *a3
+  evidence: *a4
+  qualityGate: *a5
+  lifecycle:
+    status: published
+relations:
+  parents: []
+  sourceReferences:
+    - name: OpenTelemetry Specification
+    - name: Apache SkyWalking
+    - name: Prometheus
+status:
+  phase: published
+  observedAt: 2026-08-09T05:24:19.115Z
+  conditions:
+    - type: TemplateQualityValidated
+      status: "True"
+      reason: TemplateQualityComplete
+      message: score=1;missing=none
+    - type: AssetEnvelopeReady
+      status: "True"
+      reason: HarnessAssetV2Generated
+      message: evopilot.dev/v2/HarnessAsset
+  quality:
+    harnessId: observability-apm-harness
+    schema: evopilot-harness-template-quality/v1
+    score: 1
+    present:
+      - productBoundary
+      - matchPolicy
+      - executionModel
+      - evidenceContract
+      - qualityGate
+      - domainExecution
+      - validationBaseline
+      - failureTaxonomy
+      - observabilityBaseline
+      - governanceRules
+    missing: []
+  provenance:
+    generatedBy: evopilot-harness
+    generatedAt: 2026-08-09T05:24:19.115Z
+    sourceTemplateDigest: sha256:bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e
+    assetTemplateDigest: sha256:fd9bda5955d20adaa87a197e90a307f96d56ff9fd65b195e97573c7af069caf6
+    sourceReferenceCount: 3

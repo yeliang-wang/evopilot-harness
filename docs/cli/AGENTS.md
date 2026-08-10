@@ -15,6 +15,7 @@ Read this file first. Then read [quickstart.md](quickstart.md). Use [automation.
 - Do not invent `--confirmed-by` or `--confirmation` values.
 - Stop on `nextAction`, `BLOCKED`, `FAILED`, validation blockers, missing source files, missing Catalog files, approval gates, or non-zero exit codes.
 - Do not pass raw production secrets in `--note`, `--file`, `--attachment`, or `--production-log`.
+- Do not print or rewrite `models.json`; it is a manually maintained CodeBuddy-style local LLM config file.
 - Production logs are redacted for common patterns, but operators must still review inputs before sharing output.
 
 ## Required Local Context
@@ -29,6 +30,14 @@ node src/index.mjs --help
 
 The package requires Node.js 22 or later.
 
+If LLM Advisor review is expected, inspect model readiness without printing keys:
+
+```bash
+node src/index.mjs llm models --json
+```
+
+The Advisor is optional by default. Use `--llm-advisor required` only when a configured model call must succeed before review, and use `--no-llm-advisor` for deterministic-only automation.
+
 ## Safe Command Flow
 
 ```bash
@@ -36,6 +45,9 @@ node src/index.mjs catalog publish --source harnesses --out published --json
 node src/index.mjs catalog validate --source published --json
 node src/index.mjs harness list --source harnesses --json
 node src/index.mjs harness validate --source harnesses --strict --json
+node src/index.mjs asset validate --source harnesses --json
+node src/index.mjs eval run --json
+node src/index.mjs llm replay --json
 node src/index.mjs hub snapshot --catalog published --source harnesses --json
 ```
 
@@ -57,6 +69,9 @@ autoMatch.decision
 autoMatch.targetHarnessId
 autoMatch.parentCandidates
 autoMatch.candidates
+autoMatch.candidateRetrieval
+autoMatch.reviewGate
+autoMatch.decisionEvidence
 nextAction
 ```
 
@@ -79,6 +94,12 @@ validation
 draft.harnessId
 draft.version
 draft.digest
+draft.asset
+llmAdvisor.status
+llmAdvisor.llmProfileId
+llmAdvisor.provider
+llmAdvisor.model
+llmAdvisor.usage
 nextAction
 ```
 

@@ -15,6 +15,9 @@ catalog publish
 catalog validate
 registry publish
 registry validate
+asset validate
+unknown-source eval
+LLM Advisor replay
 hub snapshot
 docs link check
 node tests
@@ -27,6 +30,9 @@ npm run catalog:publish
 npm run catalog:validate
 npm run registry:publish
 npm run registry:validate
+npm run asset:validate
+npm run eval:run
+npm run llm:replay
 npm run hub:snapshot
 npm run docs:links
 npm test
@@ -40,6 +46,9 @@ node src/index.mjs --help
 node src/index.mjs harness list --json
 node src/index.mjs harness validate --strict --json
 node src/index.mjs catalog validate --source published --json
+node src/index.mjs asset validate --source published --json
+node src/index.mjs eval run --json
+node src/index.mjs llm replay --json
 node src/index.mjs hub snapshot --catalog published --source harnesses --json
 ```
 

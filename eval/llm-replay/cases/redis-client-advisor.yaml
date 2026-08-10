@@ -1,0 +1,21 @@
+name: redis-client-advisor-replay
+advisorResponse:
+  sourceClassification: redis-client-library
+  rationale: The source wraps RedisTemplate and JedisConnectionFactory and does not implement cache cluster runtime.
+  recommendation:
+    action: CREATE_NEW_WITH_PARENT_REFERENCE
+    targetHarnessId: redis-client-harness
+    targetDomain: redis-client
+    confidence: 0.94
+    reason: It is a narrow client library boundary, not a distributed cache product.
+  alternatives:
+    - action: EVOLVE_EXISTING
+      targetHarnessId: distributed-cache-harness
+      condition: Only when the source owns cache runtime, failover, replication, or storage engine behavior.
+  reviewWarnings:
+    - Verify hardcoded endpoints before publication.
+expect:
+  sourceClassification: redis-client-library
+  action: CREATE_NEW_WITH_PARENT_REFERENCE
+  targetHarnessId: redis-client-harness
+  minConfidence: 0.9
