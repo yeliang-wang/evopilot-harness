@@ -1,181 +1,117 @@
 # Testing
 
-## v3 Acceptance
+Tests prove contracts, lifecycle gates, safety behavior, and compatibility. They do not prove 100 percent accuracy for unknown future domains.
 
-```bash
-npm test
-npm run v3:check
-npm run check
-```
-
-The v3 gates validate formal schemas, immutable references, Evidence Graph decisions, GLM citations/failure behavior, source types, source-root grouping, migration/rollback, signatures, Catalog/Registry closure, Hub state, and all v2 compatibility tests. See [v3 Acceptance Baseline](v3-acceptance.md).
-
-`eval v3-run` reports `INSUFFICIENT_EVAL_EVIDENCE` until enough reviewed cases exist; do not convert passing contract fixtures into a general accuracy claim.
-
-Use these commands before publishing a Catalog, changing CLI behavior, or preparing a release.
-
-## Full Local Check
+## Complete Local Gate
 
 ```bash
 npm run check
-```
-
-This runs:
-
-```text
-catalog publish
-catalog validate
-registry publish
-registry validate
-asset validate
-unknown-source eval
-LLM Advisor replay
-hub snapshot
-docs link check
-node tests
-```
-
-## Targeted Checks
-
-```bash
-npm run catalog:publish
-npm run catalog:validate
-npm run registry:publish
-npm run registry:validate
-npm run asset:validate
-npm run eval:run
-npm run llm:replay
-npm run hub:snapshot
-npm run docs:links
-npm test
 git diff --check
 ```
 
-## CLI Smoke
-
-```bash
-node src/index.mjs --help
-node src/index.mjs harness list --json
-node src/index.mjs harness validate --strict --json
-node src/index.mjs catalog validate --source published --json
-node src/index.mjs asset validate --source published --json
-node src/index.mjs eval run --json
-node src/index.mjs llm replay --json
-node src/index.mjs hub snapshot --catalog published --source harnesses --json
-```
-
-## Evolution Smoke
-
-Use a temporary source project when validating evolution behavior:
-
-```bash
-tmp="$(mktemp -d)"
-mkdir -p "$tmp/project/docs"
-cat > "$tmp/project/README.md" <<'EOF'
-# Distributed Cache
-
-Self-developed distributed cache with Redis-compatible protocol, TTL, eviction,
-replica failover, slot migration, and hot key diagnostics.
-EOF
-
-node src/index.mjs detect \
-  --source-project "$tmp/project" \
-  --goal "Evolve a distributed cache Harness from this source project." \
-  --json
-```
-
-Expected result:
+`npm run check` runs, in order:
 
 ```text
-status=READY
-sourceProfile.primaryRole=distributed-cache-product
-autoMatch.targetHarnessId=distributed-cache-harness
+legacy Catalog publish and validate
+legacy Registry publish and validate
+legacy Harness Asset validation
+unknown-source evaluation fixtures
+LLM Advisor replay fixtures
+legacy Hub snapshot generation
+documentation link validation
+architecture-boundary verification
+Node test suite
+v3 schema, asset, reasoning, lifecycle, and migration validation
+v3 Hub snapshot generation
 ```
 
-Then run:
+The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Inspect `git status` afterward and include only intentional changes.
+
+## Targeted Commands
+
+| Area | Command |
+|---|---|
+| Documentation links | `npm run docs:links` |
+| Architecture boundaries | `npm run verify:architecture` |
+| Node tests | `npm test` |
+| v3 contracts | `npm run v3:check` |
+| Legacy Catalog | `npm run catalog:publish && npm run catalog:validate` |
+| Legacy Registry | `npm run registry:publish && npm run registry:validate` |
+| Legacy assets | `npm run asset:validate` |
+| Unknown-source fixtures | `npm run eval:run` |
+| Advisor replay | `npm run llm:replay` |
+| Hub snapshots | `npm run hub:snapshot && npm run hub:v3-snapshot` |
+| Release artifacts | `npm run release:artifact && npm run verify:release-artifact` |
+
+## v3 Workspace Smoke
+
+Use a disposable Workspace:
 
 ```bash
-node src/index.mjs evolve \
-  --source-project "$tmp/project" \
-  --goal "Evolve a distributed cache Harness from this source project." \
+export EVOPILOT_HARNESS_HOME="$(mktemp -d)"
+node src/index.mjs workspace init --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs workspace status --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs asset v3-test --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs catalog v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs eval v3-run --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+Expected stop states and `nextAction` values are part of the contract. Do not treat `REVIEW_REQUIRED` or `INSUFFICIENT_EVAL_EVIDENCE` as test infrastructure failures when the scenario intentionally reaches those gates.
+
+## Source-To-Proposal Smoke
+
+Use a fixture or disposable project, never a production source tree that the test may mutate:
+
+```bash
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-project /path/to/fixture-project \
+  --goal "Produce or evolve a reusable Harness asset." \
+  --advisor off \
   --json
 ```
 
-Expected result:
+Verify:
+
+- the source is represented by redacted Evidence Graph nodes and digests;
+- eligibility and candidate decisions cite evidence ids;
+- deterministic factor scores and rejection reasons are present;
+- policy-required Advisor absence remains a Proposal blocker;
+- the run stops before approval and publication;
+- no Built-in or Engine asset is modified.
+
+Use `--source-root` to verify multi-project discovery, nested-module deduplication, independent per-project reasoning, grouping, merged Evidence Graphs, and one Proposal per group. Test projects are evidence fixtures only and must not become published assets.
+
+## GitHub Source Smoke
+
+For deterministic offline tests, point `--github-repo` to a local Git fixture exposed as `file://...`. For a live public repository smoke, verify the resolved commit and do not include credentials in the URL.
+
+Expected evidence includes:
 
 ```text
-status=REVIEW_REQUIRED
-autoMatch.targetHarnessId=distributed-cache-harness
-validation.status=VALIDATED
+source kind = github-repository
+resolved repository revision
+redacted source snapshot digest
+reasoning evidence ids
+review-stage Proposal or explicit stop decision
 ```
 
-## Corpus Smoke
+## GLM Advisor Tests
 
-Use a temporary source root with more than one project when validating corpus behavior:
+Replay fixtures verify output shape, citation closure, token accounting, invalid evidence rejection, failure behavior, and authority limits. A live GLM call is a separate integration layer and requires a manually maintained `models.json` or approved environment-based configuration.
+
+Never print the real model configuration or raw API key. LLM success cannot replace deterministic, schema, evaluation, or human-review gates.
+
+## Harness Hub Browser Gate
 
 ```bash
-node src/index.mjs corpus scan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --json
-
-node src/index.mjs corpus plan \
-  --source-root /path/to/project-root \
-  --include-modules \
-  --max-projects-per-group 5 \
-  --json
+node src/index.mjs hub v3-serve \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --host 127.0.0.1 \
+  --port 4176
 ```
 
-Expected result:
+Verify `/api/health`, `/api/hub/snapshot`, `/api/v3/snapshot`, desktop and mobile layout, assets, proposals, Packs, evaluation state, source types, GLM usage, and the generated `produce` command. Confirm that no secret or unredacted source content is rendered.
 
-```text
-status=REVIEW_REQUIRED
-nextAction=review-approve-corpus-plan
-groups[].targetHarnessId present
-groups[].validation.status=VALIDATED
-validation.status=VALIDATED
-```
-
-Do not publish a corpus smoke into the repository's real `harnesses/` directory unless the generated group drafts have been reviewed and are intended release content.
-
-## GitHub Repository Source Smoke
-
-Use this smoke when validating that a repository source can be cloned or fetched, scanned, matched, and turned into a reviewable draft:
-
-```bash
-node src/index.mjs detect \
-  --github-repo owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
-  --json
-
-node src/index.mjs evolve \
-  --github-repo https://github.com/owner/repo \
-  --github-ref main \
-  --goal "Create or evolve a reusable domain Harness from this GitHub repository." \
-  --json
-```
-
-Expected result:
-
-```text
-sourceCoverage.sources[].type=github-repository
-sourceCoverage.sources[].github.resolvedCommit present
-sourceProfile.sourceTypes includes github-repository
-draft.template.definitionQuality.objective=more accurate, professional, and fine-grained Harness definition
-validation.status=VALIDATED
-```
-
-Do not pass GitHub tokens in `--github-repo`. For offline CI, use a local Git fixture exposed as `file://...`; the product behavior is the same after clone/fetch.
-
-## External Sample Validation
-
-When the local historical project corpus exists, use it only as validation input:
-
-```bash
-node scripts/validate-howbuy-samples.mjs \
-  --source-root /Users/wangyejing/project/howbuy_project \
-  --source harnesses
-```
-
-The script must not copy those projects into `harnesses/` or publish them as fixed templates.
+See [v3 Acceptance Baseline](v3-acceptance.md) for the release-quality interpretation of these checks.

@@ -1,22 +1,34 @@
 # Release Management
 
-`evopilot-harness` releases are independent from EvoPilot and Dashboard releases.
+Engine releases and user Harness publications are different lifecycles.
 
-## When To Release
+| Lifecycle | Versioned unit | Requires GitHub Release |
+|---|---|---|
+| Engine release | CLI, schemas, algorithms, Hub, packaging, or normative operating contract | Yes, when maintainers choose to publish the change. |
+| Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
+| EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Create a new `evopilot-harness` release when any of these change:
+Current Engine release: [`v3.0.2`](../releases/3.0.2.md). Historical notes are indexed in [Release Notes](../releases/README.md).
 
-- CLI behavior
-- Harness Hub behavior
-- Catalog contract
-- Harness template contract
-- source pack content that should be distributed as a tagged baseline
-- release artifacts, Docker image, or deployment assets
-- public README or technical documentation that defines operating behavior
+## Version Policy
 
-README-only or docs-only changes can still justify a patch release when they change the documented operating contract.
+- Patch: backward-compatible fixes or documentation corrections to the current contract.
+- Minor: backward-compatible CLI, source, Hub, schema, or lifecycle capabilities.
+- Major: incompatible asset, Catalog, Registry, CLI, or ownership-boundary changes.
 
-## Local Release Checks
+Asset, Ontology, Policy, Evaluation, and Catalog versions remain independent from this Engine SemVer.
+
+## Prepare A Release
+
+1. Confirm the intended version and release scope.
+2. Update `package.json`, `package-lock.json`, `CHANGELOG.md`, and `docs/releases/<version>.md` together when a new version is authorized.
+3. Run the complete source and documentation gates.
+4. Build and verify release artifacts.
+5. Commit and push the exact validated source.
+6. Create tag `v<package-version>` at that commit.
+7. Let the release workflow publish immutable artifacts and the GitHub Release.
+
+Local gates:
 
 ```bash
 npm run check
@@ -25,48 +37,43 @@ npm run release:artifact
 npm run verify:release-artifact
 ```
 
-Release artifacts are written to:
+## Artifacts
+
+`npm run release:artifact` writes:
 
 ```text
 dist/release/
+  evopilot-harness-<version>-source.tar.gz
+  evopilot-harness-<version>-sbom.spdx.json
+  evopilot-harness-<version>-provenance.json
+  SHA256SUMS
 ```
 
-Required artifacts:
+Artifact verification checks the expected files, checksums, package metadata, and release provenance. Release source must match the tagged commit.
+
+## Tag And Workflow Contract
+
+The Git tag must exactly match `package.json`:
 
 ```text
-evopilot-harness-<version>-source.tar.gz
-evopilot-harness-<version>-sbom.spdx.json
-evopilot-harness-<version>-provenance.json
-SHA256SUMS
+tag v3.0.2 -> package.json version 3.0.2
 ```
 
-## Tag Rule
+`.github/workflows/release-artifacts.yml`:
 
-The release workflow requires the Git tag to match `package.json`:
+1. checks out the requested tag;
+2. installs Node.js 22 dependencies;
+3. rejects a tag/package version mismatch;
+4. runs `npm run check`;
+5. builds and pushes immutable GHCR image tags for version and commit;
+6. builds and verifies source, SBOM, provenance, and checksum artifacts;
+7. creates or updates the GitHub Release from `docs/releases/<version>.md`;
+8. uploads the verified artifacts.
 
-```text
-tag v1.1.0 -> package.json version 1.1.0
-```
+GitHub Release, GHCR publication, and local artifact verification are separate evidence layers. Verify each one before claiming the complete release chain succeeded.
 
-## GitHub Actions
+## Local-First Boundary
 
-The release workflow is `.github/workflows/release-artifacts.yml`. On tag push or manual dispatch, it:
+The default product and release contract is local-first. Docker and Compose are packaging and local operation options. ECS or another production platform is not part of the default release chain and must not be inferred from a GitHub Release or container publication.
 
-1. checks out the tag
-2. installs Node.js 22 dependencies
-3. verifies the tag and package version match
-4. runs `npm run check`
-5. builds and pushes a GHCR image
-6. builds release artifacts
-7. verifies artifacts
-8. creates or updates the GitHub Release
-9. uploads release artifacts
-
-## Version Guidance
-
-- Patch: docs, CLI documentation, small Hub or validation fixes.
-- Minor: new CLI commands, new Hub surfaces, new source types, new template capabilities.
-- Major: Catalog contract break, EvoPilot compatibility break, or lifecycle boundary change.
-
-The Registry upgrade that adds `registry publish`, `registry validate`, and Registry-aware Hub snapshots is released as `1.2.0`. Harness Detect Algorithm v1 and Template Quality Standard v1 are released as `1.3.0`.
-Corpus Lifecycle is released as `1.4.0`. Harness Asset v2, Source Profile v2, Auto-Match v2, unknown-source eval, and LLM Advisor replay are released as `2.0.0`. GitHub repository source evolution and the OpenHands-style Harness operating model guide are released as `2.1.0` without breaking the v2 template, asset, Catalog, or Registry contracts.
+No release action is implied by documentation edits. Commit, push, tag, GitHub Release, registry publication, or deployment requires separate explicit authorization.

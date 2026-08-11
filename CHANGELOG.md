@@ -2,6 +2,15 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.0.2 - 2026-08-11
+
+### Documentation
+
+- Reorganized the public documentation around the current v3 architecture and production lifecycle, with explicit v2 compatibility routes.
+- Added governance, security, contributing, development, Release index, AI-agent discovery, and a real Harness Hub product screenshot.
+- Clarified Engine versus user-asset release independence, local-first release boundaries, fixture limitations, and immutable Bundle consumption.
+- Included root governance and AI-agent discovery files in verified source release archives.
+
 ## 3.0.1 - 2026-08-10
 
 ### Fixed

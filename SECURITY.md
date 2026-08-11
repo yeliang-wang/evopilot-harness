@@ -1,0 +1,30 @@
+# Security Policy
+
+## Supported Versions
+
+Security fixes are applied to the latest released version unless maintainers explicitly announce another supported line.
+
+| Version | Supported |
+|---|---|
+| Latest release | Yes |
+| Older releases | No |
+
+The v2 CLI is a compatibility surface inside the current release; historical v2 releases are not a separate supported security line.
+
+## Report A Vulnerability
+
+Do not open a public issue containing exploit details, credentials, private source material, production logs, or sensitive endpoints.
+
+Use the repository's GitHub **Security** tab and **Report a vulnerability** action when it is available. Otherwise, contact the repository owner through a private channel listed on the owner's GitHub profile. Include the affected version, reproduction conditions, impact, and a minimal redacted proof.
+
+Maintainers should acknowledge the report privately, confirm scope, coordinate a fix and release, and publish disclosure details only after affected users have a reasonable upgrade path.
+
+## Sensitive Data Rules
+
+- Never commit `models.json`, API keys, signing private keys, source-project secrets, or unredacted production logs.
+- Use a disposable `EVOPILOT_HARNESS_HOME` for tests involving untrusted evidence.
+- Treat GitHub repository URLs, attachments, and logs as untrusted evidence inputs.
+- Do not execute source-project build, test, deploy, or business commands during evidence ingestion.
+- Keep Catalog private keys outside the repository and restrict their filesystem permissions.
+
+For operational constraints, see [Deployment](docs/operations/deployment.md) and [Troubleshooting](docs/operations/troubleshooting.md).

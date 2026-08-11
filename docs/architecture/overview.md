@@ -1,54 +1,103 @@
 # Architecture Overview
 
-> v3 primary architecture is documented in [v3 Product Boundary](v3-product-boundary.md), [v3 Asset Model](v3-asset-model.md), and [v3 Reasoning Contract](../reference/v3-reasoning-contract.md). The v2 template architecture below remains as a migration-compatibility reference.
+`evopilot-harness` is an independent Harness production system. It converts explicitly supplied engineering evidence into reviewed, versioned, immutable Harness assets and publishes those assets through user-owned Catalogs.
 
-`evopilot-harness` is the Harness authoring and publication system. It is intentionally separate from EvoPilot runtime execution.
+## System Boundary
 
-## Components
+```mermaid
+flowchart LR
+  Operator["Human or AI-assisted operator"] --> Harness["evopilot-harness"]
+  Sources["Projects, GitHub, documents, logs, notes"] --> Harness
+  Harness --> Catalog["User-owned Registry and Catalogs"]
+  Catalog --> Consumer["Compatible read-only control plane"]
+  Consumer --> Runtime["Goal-loop execution bound to immutable Bundle"]
+```
 
-| Component | Responsibility |
-|---|---|
-| Source packs | Human-reviewed Harness templates under `harnesses/<id>/`. |
-| CLI | Catalog publication, local/GitHub source scanning, Unknown Source Decision Aggregator v2, draft generation, Harness Asset v2 validation, strict template validation, review gates, approval, and publication. |
-| Evolution store | Local run state under `.evopilot-harness/evolutions/<id>/`. |
-| Published Catalog | `published/CATALOG.md` plus versioned Harness directories. This is the artifact EvoPilot reads. |
-| Harness Hub | Standalone browser UI served from `ui/harness-hub/` and `/api/hub/snapshot`. |
-| EvoPilot | Read-only Catalog consumer that binds `selectedHarness` during goal planning. |
-| Dashboard | Optional iframe container for Harness Hub. It does not manage Harness state. |
+`evopilot-harness` owns production and publication. EvoPilot owns project onboarding, project-level matching, goal-loop execution, project evidence, and release decisions. Dashboard may embed Harness Hub but owns no Harness state.
 
-## Flow
+## Production Pipeline
 
 ```mermaid
 flowchart TD
-  A["Source project, GitHub repository, attachment, production log, note"] --> B["Source coverage"]
-  B --> P["Source Profile"]
-  P --> C["Unknown Source Decision Aggregator v2"]
-  C --> D["Draft Harness pack"]
-  D --> E["Template Quality Standard v1 validation"]
-  E --> A2["Harness Asset v2 validation"]
-  A2 --> F["Administrator review"]
-  F --> G["Approval"]
-  G --> H["Publish source pack and Catalog"]
-  H --> I["published/CATALOG.md"]
-  I --> J["EvoPilot goal planning"]
-  J --> K["plan.selectedHarness"]
+  Ingest["Static source ingestion"] --> Snapshot["Redaction and immutable snapshots"]
+  Snapshot --> Graph["Evidence Graph"]
+  Graph --> Eligibility["Harness Eligibility Gate"]
+  Eligibility --> Retrieval["Ontology and BM25 retrieval"]
+  Retrieval --> Scoring["Seven-factor candidate scoring"]
+  Scoring --> Decision["Versioned decision policy"]
+  Decision --> Advisor["Policy-required GLM Advisor"]
+  Advisor --> Proposal["Profile or Bundle Proposal"]
+  Proposal --> Review["Human review and evaluation"]
+  Review --> Publish["Immutable organization asset publication"]
+  Publish --> Catalog["Catalog, Registry, optional signature"]
 ```
 
-## Design Rules
+The deterministic boundary decides eligibility and asset relationship. GLM receives redacted evidence and the deterministic result; it may recommend changes but cannot approve, publish, execute commands, or override gates.
 
-- Harness lifecycle belongs in `evopilot-harness`.
-- EvoPilot reads published Catalog directories and does not mutate them.
-- Dashboard can display Catalog and Hub state, but it does not publish Harnesses.
-- Published templates are versioned and digest-recorded.
-- Existing EvoPilot plans are immutable evidence. New plans can bind newer Harness versions.
+## Modules
 
-## Storage Boundaries
-
-| Path | Owner | Mutability |
+| Layer | Modules | Boundary |
 |---|---|---|
-| `harnesses/` | Harness maintainers | Edited by administrators or evolution publication. |
-| `.evopilot-harness/` | Local evolution workflow | Generated runtime state, ignored by Git. |
-| `.evopilot-harness/github-sources/` | GitHub repository source cache | Generated clone/fetch cache, ignored by Git. |
-| `published/` | Catalog publisher | Generated but tracked as the usable offline Catalog. |
-| `ui/harness-hub/` | Harness Hub | Static UI and optional generated snapshot. |
-| `dist/release/` | Release workflow | Generated release artifacts, not source truth. |
+| Runtime | Engine, Workspace, CLI, Harness Hub | Engine code is read-only; mutable state belongs in the Workspace. |
+| Evidence | Source Ingestion, Snapshot/Redaction, Evidence Graph | Inputs are evidence only and never publication authority. |
+| Reasoning | OntologyPack, MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator | Domain concepts and thresholds are versioned data, not hidden model decisions. |
+| Advisor | AdvisorPolicyPack, GLM Advisor | Evidence-bound advisory output with citations and token metadata. |
+| Assets | HarnessComponent, HarnessProfile, HarnessBundle/Export | Bundle is the immutable execution publication unit. |
+| Governance | EvaluationPack, Proposal Lifecycle, Schema Validator | Review and validation remain mandatory before publication. |
+| Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
+| Compatibility | Migration/Rollback | v2 inputs migrate into v3 without redefining the canonical asset. |
+
+The complete 23-module ownership contract is [ADR 0001](adr/0001-product-and-module-boundaries.md).
+
+## Workspace Boundary
+
+`workspace init` creates the mutable user home:
+
+```text
+EVOPILOT_HARNESS_HOME/
+  config.yaml
+  harness-registry.yaml
+  catalogs/
+    builtin/
+    organization/
+  ontology/
+  policies/
+    matcher/
+    advisor/
+  evidence/
+  evaluations/
+  evolution-runs/
+  cache/github/
+  migrations/
+  keys/
+```
+
+Built-in assets are copied from the Engine into the Workspace's Built-in Catalog during initialization. Evidence-driven production writes only to review run state and, after approval, the Organization Catalog. It must never overwrite Engine assets or the Built-in Catalog.
+
+## Asset And Publication Boundary
+
+- `HarnessComponent` defines one reusable execution capability.
+- `HarnessProfile` binds a domain, role, task class, boundary, Components, evidence, and validators.
+- `HarnessBundle` resolves Profile and Component versions and SHA-256 digests into an immutable executable publication.
+- A Catalog indexes concrete published assets and their digests.
+- A Registry discovers one or more Catalog roots and never duplicates asset entries.
+- Signing is optional under the current contract; schema, digest, approval, and immutability checks are not optional.
+
+Matching can expose Profile metadata. Execution must bind a published Bundle so later asset evolution cannot change historical execution evidence.
+
+## Independent Version Axes
+
+| Axis | Changes when |
+|---|---|
+| Engine | CLI, schemas, algorithms, Hub, or runtime code changes. |
+| Harness Asset | A Component, Profile, or Bundle evolves. |
+| Ontology | Concepts, conflicts, roles, or task relationships change. |
+| Policy | Eligibility, weights, thresholds, risks, or Advisor contract changes. |
+| Evaluation | Reviewed cases or acceptance expectations change. |
+| Catalog | Published membership or metadata changes. |
+
+An asset publication does not require an Engine, EvoPilot, or Dashboard release.
+
+## Compatibility
+
+The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.0.2` retains the v2 CLI and Catalog layer for existing automation; see [v2 Architecture Compatibility](v2-compatibility.md).

@@ -50,7 +50,7 @@ for (const line of checksums) {
 }
 
 const sourceList = execTarList(path.join(outDir, `${projectName}-${version}-source.tar.gz`));
-for (const expectedPath of ["src/index.mjs", "src/v3/reasoning.mjs", "assets/v3/components/engineering-validation/asset.yaml", "schemas/harness-asset-v3.schema.json", "ontology/builtin/software-engineering.yaml", "policies/matcher/default.yaml", "ui/harness-hub/index.html", "published/CATALOG.md", "Dockerfile", "compose.yaml"]) {
+for (const expectedPath of ["src/index.mjs", "src/v3/reasoning.mjs", "assets/v3/components/engineering-validation/asset.yaml", "schemas/harness-asset-v3.schema.json", "ontology/builtin/software-engineering.yaml", "policies/matcher/default.yaml", "ui/harness-hub/index.html", "published/CATALOG.md", "docs/assets/harness-hub.png", "AGENTS.md", "CONTRIBUTING.md", "SECURITY.md", "LICENSE", "llms.txt", "Dockerfile", "compose.yaml"]) {
   assert.ok(sourceList.some((item) => item.endsWith(expectedPath)), `${expectedPath} should be in source archive`);
 }
 

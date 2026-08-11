@@ -1,370 +1,161 @@
 # How Harness Works
 
-> This page describes the v2.1 compatibility model. For v3, start with [v3 Product Boundary](../architecture/v3-product-boundary.md), [v3 Asset Model](../architecture/v3-asset-model.md), [v3 Reasoning Contract](../reference/v3-reasoning-contract.md), and [v3 Production Lifecycle](v3-production-lifecycle.md).
+This guide explains the current v3 lifecycle from evidence input to an immutable, consumable Harness Bundle. For existing v2 automation, use the [v2 compatibility guide](v2-compatibility.md).
 
-> A technical overview of how `evopilot-harness` manages, evolves, matches, publishes, and exposes Harness definitions to EvoPilot-compatible control planes.
+## Operating Model
 
-This guide follows the documentation shape used by mature open-source projects such as [OpenHands](https://github.com/OpenHands/OpenHands): the README is the product front door, quick starts come first, and deeper mechanics live in focused guide and reference pages.
-
-## Fastest Path
-
-Start from an existing project source:
-
-```bash
-node src/index.mjs detect \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
-  --json
-
-node src/index.mjs evolve \
-  --source-project /path/to/source-project \
-  --goal "Create or evolve a reusable domain Harness from this project." \
-  --json
-```
-
-Review the generated draft:
+`evopilot-harness` is the system of record for Harness assets. It manages the complete production lifecycle:
 
 ```text
-.evopilot-harness/evolutions/<evolution-id>/draft/
-  template.yaml
-  asset.yaml
-  README.md
-  CHANGELOG.md
-  examples/selected-harness-binding.yaml
+evidence -> reasoning -> proposal -> review -> approval -> publication -> Catalog
 ```
 
-Approve and publish only after administrator review:
+The Engine is installed read-only. The user's Workspace holds mutable evidence, proposals, organization assets, evaluations, keys, Catalogs, and Registry. Publishing a Harness changes the Workspace Catalog; it does not require a new Engine release.
+
+## 1. How Harnesses Are Managed
+
+Initialize the Workspace once:
 
 ```bash
-node src/index.mjs evolution approve <evolution-id> \
-  --confirmed-by <administrator> \
-  --confirmation "Reviewed source coverage, draft diff, validation, and impact." \
-  --json
-
-node src/index.mjs evolution publish <evolution-id> --json
+export EVOPILOT_HARNESS_HOME="$HOME/.evopilot-harness"
+node src/index.mjs workspace init --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
 
-Validate the result before a control plane consumes it:
+The Workspace separates two Catalogs by default:
 
-```bash
-node src/index.mjs catalog validate --source published --json
-node src/index.mjs registry validate --registry harness-registry.yaml --json
-node src/index.mjs asset validate --source published --json
-```
-
-## Boundary
-
-`evopilot-harness` produces usable Harness definitions. It owns authoring, source-driven evolution, review, approval, versioning, publication, Registry generation, Catalog generation, and the standalone Harness Hub UI.
-
-EvoPilot is a consumer and executor. It reads published Harness definitions at goal-plan time, records the selected Harness as evidence, and executes the project goal loop with that Harness contract. EvoPilot must not write, import, approve, publish, or evolve Harness definitions.
-
-Dashboard can embed the Harness Hub through an iframe-style integration, but Dashboard does not own Harness state.
-
-## 1. Harness Management
-
-Harness source packs live under:
-
-```text
-harnesses/<harness-id>/
-  template.yaml
-  asset.yaml
-  README.md
-  CHANGELOG.md
-  examples/selected-harness-binding.yaml
-```
-
-The source pack is the editable, reviewed Harness baseline. The published Catalog is generated from source packs:
-
-```text
-published/
-  CATALOG.md
-  <harness-id>/<version>/template.yaml
-  <harness-id>/<version>/asset.yaml
-  <harness-id>/<version>/README.md
-  <harness-id>/<version>/CHANGELOG.md
-  <harness-id>/<version>/examples/selected-harness-binding.yaml
-```
-
-Use the lifecycle CLI for management:
-
-```bash
-node src/index.mjs harness list --source harnesses --json
-node src/index.mjs harness inspect <harness-id> --source harnesses --json
-node src/index.mjs harness validate <harness-id> --source harnesses --strict --json
-node src/index.mjs harness deprecate <harness-id> --source harnesses --reason "..." --json
-node src/index.mjs catalog publish --source harnesses --out published --strict --json
-node src/index.mjs registry publish --catalog published --registry harness-registry.yaml --json
-```
-
-The Registry is a discovery file. It points to one or more Catalog roots. It does not duplicate Harness entries.
-
-## 2. Harness Evolution
-
-Harness evolution is a local lifecycle:
-
-```text
-CREATED -> REVIEW_REQUIRED -> APPROVED -> PUBLISHED
-              |
-              v
-           BLOCKED
-```
-
-Single-source evolution uses:
-
-```bash
-node src/index.mjs evolution create --source-project /path/to/project --goal "..." --json
-node src/index.mjs evolution advance <evolution-id> --json
-node src/index.mjs evolution review <evolution-id> --json
-node src/index.mjs evolution approve <evolution-id> --confirmed-by <admin> --confirmation <text> --json
-node src/index.mjs evolution publish <evolution-id> --json
-```
-
-The one-command wrapper runs create, advance, matching, draft generation, validation, and the review stop:
-
-```bash
-node src/index.mjs evolve \
-  --source-project /path/to/project \
-  --goal "Create or evolve a reusable domain Harness." \
-  --json
-```
-
-The generated `autoMatch.decision` determines whether the run upgrades an existing Harness or creates a new one:
-
-| Decision | Effect |
-|---|---|
-| `EVOLVE_EXISTING` | Update an existing source pack and bump its patch version after approval. |
-| `CREATE_NEW_WITH_PARENT_REFERENCE` | Create a narrower Harness and record related existing Harnesses as parent context. |
-| `CREATE_NEW` | Create a new Harness because no confident existing candidate exists. |
-| `FORK_FROM_MATCH` | Use a matched pack as a seed when an explicit different target is requested. |
-| `REVIEW_REQUIRED` | Stop before final target selection because candidates are ambiguous or evidence needs review. |
-
-Publication writes the approved draft into `harnesses/<harness-id>/`, regenerates `published/`, and leaves EvoPilot unchanged. EvoPilot sees the new Harness only on a later planning request when it reads the configured Registry or Catalog.
-
-## 3. Matching And Classification Algorithm
-
-Matching is not a single LLM decision. The default path is deterministic and reviewable, with an optional LLM Advisor after auto-match.
-
-The algorithm is:
-
-```text
-bounded source scan
--> sourceCoverage
--> Source Profile v2
--> candidate retrieval from current Harness packs
--> deterministic scoring
--> conflict, uncertainty, and review-gate calculation
--> optional LLM Advisor semantic review
--> draft generation
-```
-
-`sourceCoverage` records each input source, digest, source type, GitHub metadata when available, redaction state, sensitive-material findings, and source-specific actions.
-
-`sourceProfile` extracts:
-
-```text
-sourceProfile.primaryRole
-sourceProfile.languages[]
-sourceProfile.buildTools[]
-sourceProfile.frameworks[]
-sourceProfile.dependencies[]
-sourceProfile.imports[]
-sourceProfile.symbols[]
-sourceProfile.architectureSignals[]
-sourceProfile.recommendedHarness
-sourceProfile.negativeSignals[]
-sourceProfile.scannerSummary
-sourceProfile.uncertainty
-sourceProfile.githubRepositories[]
-```
-
-Candidate scoring uses each existing Harness pack's contract:
-
-```text
-productBoundary.includes
-productBoundary.excludes
-matchPolicy.requiredAny
-matchPolicy.positive.dependencies
-matchPolicy.positive.imports
-matchPolicy.positive.files
-matchPolicy.positive.symbols
-matchPolicy.positive.architectureSignals
-matchPolicy.negative.productBoundaryExcludes
-matchPolicy.negative.signals
-roleFit
-boundaryFit
-```
-
-The default `--match-threshold` is `0.45`. Catalog priority is only a tie breaker when scores are otherwise equivalent.
-
-The matcher is intentionally narrow-boundary aware. For example, a Redis client wrapper should become or evolve a Redis client Harness and may reference `distributed-cache-harness` as parent context. It should not evolve the full distributed cache product Harness unless the source owns cache-server runtime, clustering, replication, failover, persistence, eviction, and release evidence.
-
-The LLM Advisor can run after deterministic auto-match:
-
-```bash
-node src/index.mjs evolve \
-  --source-project /path/to/project \
-  --goal "Create or evolve a reusable domain Harness." \
-  --llm-advisor required \
-  --json
-```
-
-The Advisor reads redacted source excerpts, deterministic matching output, and available Harness metadata. It returns source classification, recommendation, alternatives, review warnings, definition-quality advice, provider/model metadata, and token usage. It does not approve or publish. Use `--apply-llm-advisor` only when policy allows a high-confidence Advisor recommendation to change the generated draft target.
-
-## 4. Supported Sources
-
-Supported source inputs:
-
-| Source | CLI option | Purpose |
+| Catalog | Content | Mutation rule |
 |---|---|---|
-| Local project | `--source-project <path>` | Scan code, architecture docs, manifests, tests, and runbooks. |
-| GitHub or git repository | `--github-repo <url-or-owner/repo>` | Clone or fetch into local cache, then scan as project source. |
-| Source corpus | `--source-root <path>` | Discover many project roots, group by target Harness, dedupe nested modules, and generate grouped drafts. |
-| Supporting file | `--file <path>` | Add text source material or binary attachment digest. |
-| Attachment | `--attachment <path>` | Add PPT, PDF, Word, spreadsheet, Markdown, text, or binary material as supporting evidence. |
-| Production log | `--production-log <path>` | Add redacted runtime logs, incident diagnostics, failures, latency, request, trace, or correlation evidence. |
-| Administrator note | `--note <text>` | Add human context, constraints, or domain intent. |
-| Goal or intent | `--goal <text>` or `--intent <text>` | State the evolution objective. |
+| Built-in | Assets distributed with the Engine | Synchronized from Engine; evidence cannot overwrite it. |
+| Organization | User-produced Components, Profiles, Bundles, and proposals | Written only after review, approval, and validation. |
 
-GitHub repository sources support:
+Supporting Ontology, Matcher Policy, Advisor Policy, and Evaluation Packs are independently versioned. The Registry lists Catalog roots in priority order; each Catalog remains responsible for its own asset index.
 
-```text
-owner/repo
-https://github.com/owner/repo
-git@github.com:owner/repo.git
-other git URL reachable by local git
-```
-
-Do not put raw GitHub tokens in `--github-repo`. Use public HTTPS, local Git credentials, or SSH.
-
-Corpus flow is for unknown historical project collections:
+Inspect the current state with JSON output:
 
 ```bash
-node src/index.mjs corpus scan --source-root /path/to/project-root --include-modules --json
-node src/index.mjs corpus plan --source-root /path/to/project-root --include-modules --json
-node src/index.mjs corpus review <corpus-id> --json
+node src/index.mjs workspace status --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs asset v3-inspect --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs catalog v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
 
-The corpus flow uses projects as input material. It does not copy source projects into Harness templates.
+Harness Hub provides a standalone read-only operational view of assets, proposals, governance Packs, evaluation status, evidence-source types, and Advisor token usage.
 
-## 5. Published Harness Definition
+## 2. How Harnesses Evolve
 
-The execution contract is `template.yaml`:
+The main command is `produce`. It builds evidence and reasoning, then stops at a Proposal review gate:
 
-```yaml
-schema: evopilot-harness-template/v2
-id: distributed-cache-harness
-version: 0.2.0
-name: Distributed Cache Harness
-domain: distributed-cache
-harnessLayer: domain
-productBoundary: {}
-matchPolicy: {}
-runtimePatterns:
-  domainExecution: {}
-executionModel: {}
-validationBaseline: {}
-evidenceContract: {}
-qualityGate: {}
-definitionQuality: {}
-sourceReferences: []
-changelog: []
+```bash
+node src/index.mjs produce \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --source-project /path/to/project \
+  --goal "Produce or evolve a reusable Harness asset for this engineering task." \
+  --json
 ```
 
-Important sections:
+Reasoning selects one of six outcomes:
 
-| Section | Meaning |
+| Decision | Result |
 |---|---|
-| `productBoundary` | What this Harness owns and explicitly excludes. |
-| `matchPolicy` | Deterministic matching rules and negative signals. |
-| `runtimePatterns.domainExecution` | Domain-specific required actions, evidence adapters, and release blockers. |
-| `executionModel` | Expected phases and command groups. |
-| `validationBaseline` | Required validation behavior and evidence rules. |
-| `evidenceContract` | Required artifact format and correlation fields. |
-| `qualityGate` | Minimum template-quality score and review requirements. |
-| `definitionQuality` | The evolution objective: more accurate, professional, and fine-grained Harness definitions. |
-| `sourceReferences` | Source material digests and provenance used by evolution. |
-| `changelog` | Structured version history. |
+| `EVOLVE_EXISTING` | Propose a new version of the selected Profile with evidence-backed boundary or acceptance changes. |
+| `COMPOSE_NEW_BUNDLE` | Propose a Bundle when evidence spans multiple strong Profile relationships. |
+| `PROPOSE_NEW_PROFILE` | Propose a new Profile and its Ontology, Policy, and Evaluation implications. |
+| `REVIEW_REQUIRED` | Stop because candidates are ambiguous or thresholds are not decisive. |
+| `INSUFFICIENT_EVIDENCE` | Stop and request stronger evidence. |
+| `NOT_HARNESS_ELIGIBLE` | Stop because the material is not reusable Harness execution knowledge. |
 
-The publication envelope is `asset.yaml`:
-
-```yaml
-apiVersion: evopilot.dev/v2
-kind: HarnessAsset
-metadata:
-  id: distributed-cache-harness
-  name: Distributed Cache Harness
-  version: 0.2.0
-  domain: distributed-cache
-  layer: domain
-spec:
-  templateSchema: evopilot-harness-template/v2
-  template: {}
-  match: {}
-  execution: {}
-  evidence: {}
-  qualityGate: {}
-  lifecycle:
-    status: published
-relations:
-  parents: []
-  sourceReferences: []
-status:
-  phase: published
-  conditions: []
-  provenance:
-    generatedBy: evopilot-harness
-```
-
-The Catalog index is `published/CATALOG.md`. It contains a fenced `yaml evopilot-harness-catalog` block with version, compatibility, quality report, entries, template digests, asset digests, and provenance.
-
-The Registry is `harness-registry.yaml`. It contains enabled Catalog roots, priority, release, and optional expected Catalog digest. It is not a Harness index.
-
-## 6. Control-Plane Consumption
-
-A control plane such as EvoPilot reads the published Harnesses dynamically:
+No decision publishes automatically. Review the Proposal and its evidence closure:
 
 ```bash
-EVOPILOT_HARNESS_REGISTRY_CONFIG=/path/to/evopilot-harness/harness-registry.yaml
+node src/index.mjs proposal review <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
 ```
 
-End-to-end consumption:
+Approval requires a real reviewer, a review statement, resolved blockers, and evaluation review where required. Publication rejects an existing immutable version rather than overwriting it.
+
+## 3. How Classification And Matching Are Decided
+
+Matching is not delegated to an LLM. The decision path is:
+
+1. Statically ingest only the sources explicitly supplied by the operator.
+2. Redact common credentials, personal identifiers, and private endpoints.
+3. Write immutable snapshots and an Evidence Graph with stable `evidenceId` values.
+4. Gate on evidence for a repeatable engineering task, model-external actions, constraints, evidence, or validators.
+5. Map terms to concepts and roles in the versioned `OntologyPack`.
+6. Retrieve published Profile candidates with BM25 and structured concept matches.
+7. Score role, boundary, capability, execution, evidence coverage, negative conflict, and novelty.
+8. Apply thresholds and risk rules from the versioned `MatchPolicyPack`.
+9. Call GLM only where the policy requires semantic review.
+10. Produce a human-reviewable Profile or Bundle Proposal.
+
+Every candidate includes factor scores, rejection reasons, and supporting evidence ids. Strong negative conflicts cannot be treated as normal evolution. Shared concepts such as `executable-engineering` establish eligibility but do not manufacture a domain classification.
+
+GLM receives redacted evidence, the deterministic result, relevant Packs, and a strict response contract. It may recommend a decision or asset delta and must cite valid evidence ids. It cannot change the deterministic decision, approve, publish, execute source commands, mutate configuration, or invent evidence.
+
+The Engine records provider, model, token usage, prompt and response digests, Pack versions, validation state, and replay evidence without returning raw API keys.
+
+## 4. Which Evidence Sources Are Supported
+
+| Source | Option | Use |
+|---|---|---|
+| Local project | `--source-project <path>` | Code, manifests, architecture, tests, and runbook evidence. |
+| Project root | `--source-root <path>` | Discover, deduplicate, reason about, and group multiple projects into review-stage proposals. |
+| GitHub or Git repository | `--github-repo <repo>` | Resolve a repository revision into local static evidence. |
+| Attachment | `--attachment <file>` | PDF, PPTX, DOCX, text, and other supporting material. |
+| Production log | `--production-log <file>` | Redacted runtime behavior, failure, latency, trace, and incident evidence. |
+| Historical Harness | `--historical-harness <file>` | Prior asset intent and evolution context. |
+| Operator note | `--note <text>` | Human constraints and task intent. |
+| Research | `--research-url <https-url>` with `--allow-internet-research` | Supplemental cited public evidence. |
+
+Source projects and project roots are material for reasoning; they are not copied into the Harness asset library. Internet research and historical Harnesses are supplemental and cannot independently satisfy local engineering-evidence eligibility.
+
+The default source path is static. The Engine does not run project builds, tests, deployments, or business commands. Any future Evidence Runner requires a separate sandbox, explicit authorization, and a new reviewed contract.
+
+## 5. What Gets Published
+
+The v3 hierarchy is:
 
 ```text
-EvoPilot receives project onboarding and goal-loop target
--> reads harness-registry.yaml
--> resolves enabled Catalog roots
--> reads each Catalog's CATALOG.md
--> selects a Harness using goal and project metadata
--> reads entries[].path template.yaml and, when v2-aware, entries[].assetPath asset.yaml
--> records selectedHarness with harness id, version, domain, Catalog digest, entry path, and entry digest
--> runs the goal loop using the selected Harness execution and evidence contract
+HarnessComponent -> HarnessProfile -> HarnessBundle
 ```
 
-`selectedHarness` is written by EvoPilot, not by `evopilot-harness`.
+### Component
 
-Existing EvoPilot plans keep the selected Harness digest they used. Republishing a Catalog does not rewrite old plans. New or regenerated plans can bind newer Harness versions.
+Defines an atomic environment and action capability, including required tools and services, allowed executors, inputs, outputs, timeouts, network policy, constraints, evidence artifacts, and validators.
 
-## Validation Gates
+### Profile
 
-Before publication or release, run:
+Defines one domain, role, and repeatable task class. It contains explicit in-scope and out-of-scope boundaries, positive and negative matching concepts, required evidence kinds, immutable Component references, acceptance evidence, blocking validators, and an Evaluation Pack reference.
 
-```bash
-node --check src/index.mjs
-npm run check
-npm run release:artifact
-npm run verify:release-artifact
-git diff --check
+### Bundle
+
+Pins a Profile and all resolved Components by id, version, and SHA-256 digest. It contains the stable execution plan, aggregate constraints, evidence contract, validators, and optional control-plane exports. The Bundle is the executable publication unit.
+
+A published asset records provenance, source digests, Ontology and Policy versions, lifecycle state, and validation closure. Organization Catalog publication cannot overwrite an existing asset version. Catalog signing is optional under the current cross-project contract; digest and schema validation remain required.
+
+## 6. How A Control Plane Uses A Published Harness
+
+A compatible control plane reads the Registry and enabled Catalogs without importing or copying Harness lifecycle state:
+
+```text
+Registry -> Catalog roots -> published Profile metadata -> project match
+         -> immutable Bundle resolution -> digest validation -> execution binding
 ```
 
-`npm run check` publishes and validates Catalog and Registry, validates Harness Assets, runs unknown-source matching evals, replays LLM Advisor fixtures, builds the Harness Hub snapshot, checks documentation links, and runs node tests.
+Project matching may inspect Profile metadata, boundaries, and evidence requirements. Before execution, the control plane must resolve and bind a published immutable Bundle with pinned dependencies and digests. It records that selection in project evidence so later Harness evolution cannot rewrite a historical run.
 
-## Related Docs
+For EvoPilot, the ownership line remains strict:
 
-- [CLI Quickstart](../cli/quickstart.md)
-- [CLI Commands](../cli/commands.md)
-- [Source To Harness](source-to-harness.md)
-- [Harness Evolution](harness-evolution.md)
-- [Template Schema](../reference/template-schema.md)
-- [Catalog Contract](../reference/catalog-contract.md)
-- [Registry Contract](../reference/registry-contract.md)
-- [Selected Harness Binding](../reference/selected-harness-binding.md)
+- `evopilot-harness` produces, reviews, approves, evaluates, and publishes Harness assets.
+- EvoPilot onboards projects, matches a project to published assets, binds a Bundle for a goal loop, collects project evidence, and decides project release readiness.
+- Dashboard may embed Harness Hub but does not own or mutate Harness state.
+
+The canonical v3 asset remains product-neutral. An `exports/evopilot/template.yaml` file is an optional projection for a compatible EvoPilot consumer, not the Harness source of truth.
+
+## Next Steps
+
+- Follow the [v3 Production Lifecycle](v3-production-lifecycle.md).
+- Review the [v3 Reasoning Contract](../reference/v3-reasoning-contract.md).
+- Inspect the [v3 Asset Model](../architecture/v3-asset-model.md).
+- Use [CLI Agent Instructions](../cli/AGENTS.md) for automation.

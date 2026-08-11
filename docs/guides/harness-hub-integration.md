@@ -1,56 +1,60 @@
-# Harness Hub Integration
+# Harness Hub
 
-## v3 Standalone Mode
+Harness Hub is the standalone browser UI owned by `evopilot-harness`. It reads server-derived Workspace state and can run without EvoPilot or Dashboard.
+
+![Harness Hub v3 assets, proposals, policy packs, and evaluation status](../assets/harness-hub.png)
+
+## Run v3 Locally
 
 ```bash
+export EVOPILOT_HARNESS_HOME="$HOME/.evopilot-harness"
+node src/index.mjs workspace init --workspace "$EVOPILOT_HARNESS_HOME" --json
+
 node src/index.mjs hub v3-serve \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --host 127.0.0.1 \
   --port 4176
 ```
 
-The v3 Hub reads the writable Workspace and exposes `/api/health`, `/api/hub/snapshot`, and `/api/v3/snapshot`. It shows Component/Profile/Bundle assets, Profile Proposals, Ontology and Policy versions, Evaluation status, GLM token usage, source types, and a review-safe `produce` command. It does not approve or publish from browser-local state.
+Open `http://127.0.0.1:4176`.
 
-The sections below describe the legacy v2 snapshot mode retained for compatibility.
-
-Harness Hub is the standalone browser UI owned by `evopilot-harness`.
-
-## Run Locally
-
-```bash
-node src/index.mjs hub serve --catalog published --source harnesses
-```
-
-Open:
-
-```text
-http://127.0.0.1:4176
-```
-
-The Hub serves:
+The Hub exposes:
 
 ```text
 GET /
+GET /api/health
 GET /api/hub/snapshot
+GET /api/v3/snapshot
 ```
 
-## Snapshot
+## What The Hub Shows
 
-Generate a static snapshot:
+- Component, Profile, and Bundle inventory;
+- Profile and Bundle Proposals waiting for review;
+- Ontology, Matcher Policy, Advisor Policy, and Evaluation Pack versions;
+- Catalog status, digest, and Workspace location;
+- evidence-source types;
+- GLM Advisor run count and server-derived token usage;
+- a review-safe `produce` command for the next source input.
+
+The browser is not an independent state store. It does not gain approval or publication authority from browser-local state. Use the CLI and server-side Workspace lifecycle for review, approval, validation, signing, and publication.
+
+## Snapshot For Automation
+
+Write a v3 snapshot without starting the UI:
 
 ```bash
-node src/index.mjs hub snapshot \
-  --catalog published \
-  --source harnesses \
-  --out ui/harness-hub/catalog-snapshot.json \
+node src/index.mjs hub v3-snapshot \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --out "$EVOPILOT_HARNESS_HOME/cache/hub-snapshot.json" \
   --json
 ```
 
-The UI first tries `/api/hub/snapshot`. If that request fails, it can read `catalog-snapshot.json`.
+Automation should read JSON fields and stop on `nextAction`, review, blocker, evaluation, policy, or approval requirements.
 
 ## Dashboard Embedding
 
-Dashboard can embed the independent Hub in an iframe:
+Another application may embed the standalone Hub:
 
 ```html
 <iframe
@@ -59,29 +63,14 @@ Dashboard can embed the independent Hub in an iframe:
 ></iframe>
 ```
 
-Recommended production shape:
+The embedding application owns navigation and frame layout only. It must not copy Workspace state, implement a second approval path, or mutate Harness assets. EvoPilot project selection and execution evidence still come from EvoPilot, not from the embedded frame.
 
-```text
-/                  -> evopilot-dashboard
-/api/*             -> evopilot-api
-/harness-hub/*     -> evopilot-harness-hub
-```
+## Exposure And Security
 
-Dashboard should only provide navigation and frame layout. Harness UI state belongs to `evopilot-harness`.
+The default host is loopback. The current standalone server does not establish a shared authentication or tenant boundary for an embedding product. Before binding to a non-loopback interface, place the Hub behind an operator-controlled access boundary and protect the Workspace filesystem.
 
-## Environment
+Do not display or return raw API keys, Catalog private keys, unredacted production logs, or private source excerpts. See [Security](../../SECURITY.md).
 
-```bash
-EVOPILOT_HARNESS_HUB_HOST=0.0.0.0
-EVOPILOT_HARNESS_HUB_PORT=4176
-EVOPILOT_HARNESS_CATALOG_ROOT=published
-EVOPILOT_HARNESS_SOURCE_ROOT=harnesses
-```
+## v2 Compatibility
 
-## Boundaries
-
-- The Hub can run without EvoPilot.
-- The Hub can run without Dashboard.
-- The Hub does not call EvoPilot APIs.
-- Dashboard must not read local Harness files directly.
-- EvoPilot selected Harness evidence should still come from EvoPilot planning responses.
+The legacy `hub serve` and `hub snapshot` commands remain available for v2 Catalog automation. Use the [v2 compatibility guide](v2-compatibility.md) rather than mixing v2 snapshot state into v3 Workspace publication.

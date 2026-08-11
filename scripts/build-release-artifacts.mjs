@@ -122,9 +122,15 @@ run("tar", [
   ".dockerignore",
   ".github",
   ".gitignore",
+  "AGENTS.md",
   "CHANGELOG.md",
+  "CODE_OF_CONDUCT.md",
+  "CONTRIBUTING.md",
   "Dockerfile",
+  "LICENSE",
+  "NOTICE",
   "README.md",
+  "SECURITY.md",
   "assets",
   "compose.yaml",
   "docs",
@@ -139,7 +145,8 @@ run("tar", [
   "scripts",
   "src",
   "tests",
-  "ui"
+  "ui",
+  "llms.txt"
 ], { stdio: "inherit" });
 
 const sbomPath = path.join(outDir, `${projectName}-${version}-sbom.spdx.json`);

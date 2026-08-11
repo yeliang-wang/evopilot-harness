@@ -1,28 +1,37 @@
 # EvoPilot Harness
 
+[![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.0.2)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](package.json)
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+
 > A user-owned Harness asset factory for turning model-external execution environments, actions, constraints, evidence, and validators into reusable production assets.
 
-Current version: `3.0.1` | Runtime: Node.js `>=22` | License: Apache-2.0
+`evopilot-harness` ingests project and operational evidence, determines whether it belongs in a Harness, proposes a new or evolved asset, enforces human review, and publishes immutable assets and executable Bundles through user-owned Catalogs. It runs independently from EvoPilot and Dashboard.
 
-[Documentation](docs/README.md) | [Quickstart](docs/cli/quickstart.md) | [Asset Model](docs/architecture/v3-asset-model.md) | [Reasoning Contract](docs/reference/v3-reasoning-contract.md) | [Harness Hub](docs/guides/harness-hub-integration.md) | [v3 Release](docs/releases/3.0.1.md)
+![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 
-`evopilot-harness` is an independent Harness producer. It owns source ingestion, Evidence Graphs, eligibility and matching, GLM Advisor review, asset drafting, human approval, signing, evaluation, and Catalog publication. It does not onboard third-party projects into EvoPilot and does not run EvoPilot goal loops.
+[Documentation](docs/README.md) | [Quickstart](docs/cli/quickstart.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [CLI Reference](docs/cli/commands.md) | [Release Notes](docs/releases/README.md)
 
-## Asset Model
+## What A Harness Is
 
-| Asset | Purpose |
+A Harness is a versioned executable asset package for one class of repeatable engineering task. It defines what a model may act on, what it must not do, which evidence it must produce, and which validators decide whether the work is acceptable.
+
+| Asset | Responsibility |
 |---|---|
-| `HarnessComponent` | Atomic reusable execution capability with environment, actions, constraints, evidence, and validators. |
-| `HarnessProfile` | Domain, role, and repeatable-task composition built from Components. |
-| `HarnessBundle` | Immutable resolved executable publication with pinned Component digests. |
-| `OntologyPack` | Versioned concepts and role relationships used by the matcher. |
-| `MatchPolicyPack` | Versioned eligibility, BM25 retrieval, scoring, thresholds, and risk rules. |
-| `AdvisorPolicyPack` | Evidence-bound GLM prompt, output contract, and authority limits. |
-| `EvaluationPack` | Reviewed regression cases and explicit evidence-sufficiency status. |
+| `HarnessComponent` | Atomic environment, action, constraint, evidence, and validator capability. |
+| `HarnessProfile` | Domain, role, and task composition built from Components. |
+| `HarnessBundle` | Immutable execution publication with pinned Profile and Component digests. |
+| `OntologyPack` | Versioned concepts and role relationships used for reasoning. |
+| `MatchPolicyPack` | Eligibility, retrieval, scoring, thresholds, and risk rules. |
+| `AdvisorPolicyPack` | Evidence-bound GLM output contract and authority limits. |
+| `EvaluationPack` | Reviewed decision cases and explicit evidence-sufficiency status. |
 
-A Harness is not a broad software category description. It is a versioned executable asset package for one class of repeatable engineering task.
+This is intentionally narrower than general software classification. Unknown domains become review-stage proposals; they are not silently turned into published assets.
 
 ## Quick Start
+
+Requires Node.js 22 or newer.
 
 ```bash
 npm install
@@ -35,7 +44,7 @@ node src/index.mjs hub v3-serve --workspace "$EVOPILOT_HARNESS_HOME"
 
 Open `http://127.0.0.1:4176` for the standalone Harness Hub.
 
-Produce a proposal from one local project:
+Produce one review-stage proposal from a local project:
 
 ```bash
 node src/index.mjs produce \
@@ -45,21 +54,24 @@ node src/index.mjs produce \
   --json
 ```
 
-Produce grouped proposals from all valid projects under a root:
+The same command accepts a project root, GitHub repository, attachments, production logs, historical Harnesses, operator notes, and explicitly enabled research. Source ingestion is static: it does not run project build, test, deploy, or business commands.
 
-```bash
-node src/index.mjs produce \
-  --workspace "$EVOPILOT_HARNESS_HOME" \
-  --source-root /path/to/project-root \
-  --goal "Produce reusable Harness assets from this project corpus." \
-  --json
+## Reasoning And Review
+
+The v3 pipeline combines deterministic controls with evidence-bound model advice:
+
+```mermaid
+flowchart LR
+  Sources["Projects, GitHub, attachments, logs, notes"] --> Graph["Redacted Evidence Graph"]
+  Graph --> Gate["Harness Eligibility Gate"]
+  Gate --> Match["Ontology + BM25 + factor scoring"]
+  Match --> Advisor["Policy-required GLM Advisor"]
+  Advisor --> Proposal["Profile or Bundle Proposal"]
+  Proposal --> Review["Human review + evaluation"]
+  Review --> Catalog["Immutable assets + Catalog"]
 ```
 
-Supported evidence sources are local projects, project roots, GitHub repositories, PDF/PPTX/DOCX/text attachments, production logs, historical Harness files, and operator notes. Controlled internet research requires both `--research-url` and `--allow-internet-research`; it is supplemental evidence and cannot override local source or log facts.
-
-## Decision Contract
-
-The v3 matcher emits one of these decisions:
+The deterministic boundary emits:
 
 - `EVOLVE_EXISTING`
 - `COMPOSE_NEW_BUNDLE`
@@ -68,11 +80,9 @@ The v3 matcher emits one of these decisions:
 - `NOT_HARNESS_ELIGIBLE`
 - `REVIEW_REQUIRED`
 
-Unknown domains become reviewed Profile Proposals. They are not silently converted into published Harnesses. Ambiguous and new-Profile decisions require GLM Advisor review plus human approval. The model may recommend; it cannot approve, publish, execute arbitrary code, mutate `models.json`, or override deterministic gates.
+GLM may explain ambiguity and recommend deltas, but it cannot approve, publish, execute source code, mutate `models.json`, invent evidence, or override schema, policy, evaluation, signature, and human-review gates.
 
-## Review And Publish
-
-Every `produce` run stops at review. Inspect `reasoning`, candidate factor scores, `evidenceIds`, Advisor citations, proposed asset diff, schema validation, blockers, and evaluation status.
+Every `produce` run stops at review:
 
 ```bash
 node src/index.mjs proposal review <proposal-id> \
@@ -91,46 +101,27 @@ node src/index.mjs proposal publish <proposal-id> \
   --json
 ```
 
-Configure GLM manually in a CodeBuddy-style `models.json`. The application reads this file but never writes it. Only a Zhipu GLM profile is eligible in v3.
+## Ownership Boundary
 
-```bash
-node src/index.mjs llm v3-models \
-  --workspace "$EVOPILOT_HARNESS_HOME" \
-  --models-file /path/to/models.json \
-  --json
-```
+| System | Owns |
+|---|---|
+| `evopilot-harness` | Evidence ingestion, reasoning, authoring, evolution, review, approval, evaluation, publication, Catalog/Registry, CLI, and Harness Hub. |
+| EvoPilot | Project onboarding, project-to-Harness matching, goal-loop execution, project evidence, and release decisions. |
+| Dashboard | Navigation and optional Harness Hub embedding; no Harness lifecycle state. |
 
-## Architecture
+The canonical v3 asset uses `harness.evopilot.io/v3` and is product-neutral. A Bundle may include `exports/evopilot/template.yaml`, but that projection is not the source of truth. A compatible control plane may read Profile metadata while matching; execution must bind a published immutable Bundle.
 
-```mermaid
-flowchart LR
-  Sources["Projects, GitHub, attachments, logs, notes"] --> Snapshot["Redacted Evidence Graph"]
-  Snapshot --> Gate["Harness Eligibility Gate"]
-  Gate --> Matcher["Ontology + BM25 + multi-factor matcher"]
-  Matcher --> Advisor["Policy-required GLM Advisor"]
-  Advisor --> Proposal["Profile or Bundle Proposal"]
-  Proposal --> Review["Human review and evaluation"]
-  Review --> Assets["Component / Profile / Bundle"]
-  Assets --> Catalog["Signed CATALOG.md"]
-  Catalog --> Registry["Registry lists Catalog roots"]
-```
+## Independent Versions
 
-The Engine installation is treated as read-only. Mutable user assets, evidence, policies, runs, evaluations, keys, and Catalogs live under `EVOPILOT_HARNESS_HOME`. Engine release `3.0.1` and user asset versions are independent.
+Engine, Harness assets, Ontology, Policy, Evaluation, and Catalog each have their own version or digest. Publishing or evolving a user Harness does not require an Engine, EvoPilot, or Dashboard release.
 
-The canonical v3 asset is product-neutral. A Bundle may contain an optional `exports/evopilot/template.yaml` projection, but the canonical asset is not defined by EvoPilot's legacy template format.
+The Engine checkout is read-only during production. User assets, evidence, policies, runs, evaluations, keys, and Catalogs live under `EVOPILOT_HARNESS_HOME`.
 
 ## Compatibility
 
-The v2 commands remain available as a compatibility layer for existing automation. Use `migrate v2-to-v3` for a non-mutating dry run or `--apply` to create v3 Profiles, Bundles, and optional EvoPilot exports in the writable Workspace. Migration journals support rollback.
+Engine `3.0.2` retains v2 CLI and Catalog compatibility. New work should use v3 assets and `produce`; existing automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md) or run a reviewed `migrate v2-to-v3` flow.
 
-```bash
-node src/index.mjs migrate v2-to-v3 \
-  --workspace "$EVOPILOT_HARNESS_HOME" \
-  --source harnesses \
-  --json
-```
-
-## Validation
+## Validate
 
 ```bash
 npm test
@@ -138,19 +129,18 @@ npm run v3:check
 npm run check
 ```
 
-`eval v3-run` validates contracts and safety regressions. Unless enough reviewed cases exist, it reports `INSUFFICIENT_EVAL_EVIDENCE`; passing fixtures is not presented as open-domain matching accuracy.
+Evaluation reports `INSUFFICIENT_EVAL_EVIDENCE` until enough independently reviewed cases exist. Passing fixtures proves contract behavior, not open-domain matching accuracy.
 
-## Repository Layout
+## Documentation
 
-```text
-assets/v3/          Built-in Component, Profile, Bundle, and export assets
-ontology/           Versioned Ontology Packs
-policies/           Versioned Matcher and Advisor Policy Packs
-schemas/            Formal JSON Schemas
-src/v3/             Workspace, reasoning, Advisor, lifecycle, Catalog, and Hub modules
-harnesses/          Legacy v2 source packs retained for compatibility and migration
-ui/harness-hub/     Standalone Harness Hub
-docs/               Human and AI-agent documentation
-eval/               Contract, safety, and replay fixtures
-tests/              v2 compatibility and v3 end-to-end tests
-```
+- [Documentation index](docs/README.md)
+- [CLI quickstart](docs/cli/quickstart.md)
+- [v3 production lifecycle](docs/guides/v3-production-lifecycle.md)
+- [v3 asset model](docs/architecture/v3-asset-model.md)
+- [v3 reasoning contract](docs/reference/v3-reasoning-contract.md)
+- [Harness Hub integration](docs/guides/harness-hub-integration.md)
+- [Development](docs/development.md)
+- [Security](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+
+Licensed under [Apache License 2.0](LICENSE).

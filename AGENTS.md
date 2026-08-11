@@ -2,6 +2,8 @@
 
 This repository is the independent Harness producer for the EvoPilot series. CLI operators should also read [docs/cli/AGENTS.md](docs/cli/AGENTS.md).
 
+Use [llms.txt](llms.txt) for the shortest machine-readable documentation map and [docs/README.md](docs/README.md) for the human documentation index.
+
 ## Accepted Product Boundary
 
 - `evopilot-harness` owns Harness evidence ingestion, reasoning, authoring, evolution, review, approval, evaluation, publication, Catalog/Registry, CLI, and Harness Hub.
@@ -44,3 +46,12 @@ git diff --check
 ```
 
 Treat [ADR 0001](docs/architecture/adr/0001-product-and-module-boundaries.md) as accepted. Crossing it requires an explicit replacement ADR, migration impact, executable guard updates, and user approval.
+
+## Documentation Rules
+
+- Keep `README.md` as a concise product entry; route operating detail to `docs/`.
+- Keep generic architecture and lifecycle pages current for v3. Route legacy commands and models through explicit v2 compatibility pages.
+- Verify commands, paths, versions, defaults, and response fields against source and tests before documenting them.
+- Do not describe fixture results as general matching accuracy or production-readiness evidence.
+- Do not expose `models.json`, credentials, signing private keys, source-project secrets, or unredacted logs.
+- Do not add comparison or equivalence claims about an external reference project to public documentation.

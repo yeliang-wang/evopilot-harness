@@ -1,0 +1,41 @@
+# EvoPilot Harness
+
+> Independent, user-owned Harness asset producer for turning source evidence into reviewed, immutable execution assets.
+
+## Start Here
+
+- [Product documentation](docs/README.md)
+- [Quickstart](docs/cli/quickstart.md)
+- [How Harness works](docs/guides/how-harness-works.md)
+- [Current v3 architecture](docs/architecture/overview.md)
+- [v3 production lifecycle](docs/guides/v3-production-lifecycle.md)
+- [CLI instructions for AI agents](docs/cli/AGENTS.md)
+- [CLI command reference](docs/cli/commands.md)
+
+## Contracts
+
+- [Product and module boundaries](docs/architecture/adr/0001-product-and-module-boundaries.md)
+- [v3 asset model](docs/architecture/v3-asset-model.md)
+- [v3 reasoning contract](docs/reference/v3-reasoning-contract.md)
+- [Catalog contract](docs/reference/catalog-contract.md)
+- [Registry contract](docs/reference/registry-contract.md)
+- [v2 compatibility](docs/guides/v2-compatibility.md)
+
+## Operations
+
+- [Workspace and migration](docs/operations/v3-workspace.md)
+- [Testing](docs/operations/testing.md)
+- [Release management](docs/operations/release-management.md)
+- [Troubleshooting](docs/operations/troubleshooting.md)
+- [Security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+
+## Agent Safety
+
+- Use `--json` for automation.
+- Stop on `nextAction`, blockers, review, approval, policy, or evidence requirements.
+- Never expose `models.json`, API keys, Catalog private keys, private source, or unredacted logs.
+- Source inputs are evidence only; they are not publication authority.
+- GLM Advisor is advisory only.
+- Publishing requires schema validation, human approval, and immutable version checks.
+- EvoPilot is a separate read-only consumer and goal-loop control plane.
