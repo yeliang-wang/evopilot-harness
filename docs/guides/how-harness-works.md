@@ -7,7 +7,7 @@ This guide explains the current v3 lifecycle from evidence input to an immutable
 `evopilot-harness` is the system of record for Harness assets. It manages the complete production lifecycle:
 
 ```text
-evidence -> reasoning -> proposal -> review -> approval -> publication -> Catalog
+evidence -> reasoning -> proposal -> independent Review Engine -> human approval -> publication -> Catalog
 ```
 
 The Engine is installed read-only. The user's Workspace holds mutable evidence, proposals, organization assets, evaluations, keys, Catalogs, and Registry. Publishing a Harness changes the Workspace Catalog; it does not require a new Engine release.
@@ -64,15 +64,16 @@ Reasoning selects one of six outcomes:
 | `INSUFFICIENT_EVIDENCE` | Stop and request stronger evidence. |
 | `NOT_HARNESS_ELIGIBLE` | Stop because the material is not reusable Harness execution knowledge. |
 
-No decision publishes automatically. Review the Proposal and its evidence closure:
+No decision publishes automatically. `proposal inspect` reads the generated draft. `proposal review` performs a new, independent assessment using deterministic gates and an evidence-bound semantic reviewer:
 
 ```bash
 node src/index.mjs proposal review <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
+  --models-file /path/to/models.json \
   --json
 ```
 
-Approval requires a real reviewer, a review statement, resolved blockers, and evaluation review where required. Publication rejects an existing immutable version rather than overwriting it.
+The Review Engine checks source/corpus coherence, each project membership, product-versus-dependency boundaries, new-versus-existing asset relationships, Profile/Bundle definition quality, evidence closure, and evaluation sufficiency. It returns `READY_FOR_HUMAN_APPROVAL`, `REVISE`, `SPLIT`, `REJECT`, or `NEED_MORE_EVIDENCE`, with reasons, citations, findings, actions, blockers, and Reviewer usage. Approval requires a current `READY_FOR_HUMAN_APPROVAL` report, a real reviewer, a review statement, resolved blockers, and evaluation review where required. Publication rejects an existing immutable version rather than overwriting it.
 
 ## 3. How Classification And Matching Are Decided
 
@@ -88,7 +89,9 @@ Matching is not delegated to an LLM. The decision path is:
 8. Apply thresholds and risk rules from the versioned `MatchPolicyPack`.
 9. Call GLM only where the policy or operator requires semantic review.
 10. Persist a redacted Advisor Run for success, failure, rejection, unavailable, or skipped outcomes.
-11. Produce a human-reviewable Profile or Bundle Proposal, or a blocked diagnostic Proposal when required review failed.
+11. Produce a human-reviewable Profile or Bundle Proposal, or a blocked diagnostic Proposal when required advice failed.
+12. Independently review the Proposal with deterministic gates and a second evidence-bound semantic contract.
+13. Persist a Review Report and stop for a separate human decision.
 
 Every candidate includes factor scores, rejection reasons, and supporting evidence ids. Strong negative conflicts cannot be treated as normal evolution. Shared concepts such as `executable-engineering` establish eligibility but do not manufacture a domain classification.
 

@@ -11,10 +11,10 @@ node src/index.mjs produce \
   --source-project /path/to/project \
   --goal "Produce or evolve a reusable Harness asset." \
   --json
-node src/index.mjs proposal review <proposal-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs proposal review <proposal-id> --workspace "$EVOPILOT_HARNESS_HOME" --models-file /path/to/models.json --json
 ```
 
-Stop at review. After a real reviewer approves evidence, candidate reasoning, Advisor citations, asset boundary, and Evaluation Pack:
+For a Source Root, execute `proposal review` for every returned Proposal and present every report. Stop after review. Only when the CLI returns `verdict=READY_FOR_HUMAN_APPROVAL` may a real reviewer separately approve evidence, candidate reasoning, Advisor citations, asset boundary, Review Report, and Evaluation Pack:
 
 ```bash
 node src/index.mjs proposal approve <proposal-id> \

@@ -15,7 +15,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [v3 Production Lifecycle](guides/v3-production-lifecycle.md) - single project, project root, GitHub, attachments, logs, review, approval, and publication.
 - [CLI Commands](cli/commands.md) - complete atomic command reference.
 - [Harness Hub](guides/harness-hub-integration.md) - standalone UI and optional iframe integration.
-- [v3 Reasoning Contract](reference/v3-reasoning-contract.md) - eligibility, retrieval, scoring, decisions, and GLM authority.
+- [v3 Reasoning Contract](reference/v3-reasoning-contract.md) - eligibility, retrieval, scoring, decisions, Proposal Review Engine, and GLM authority.
 
 ## Integrate A Consumer
 

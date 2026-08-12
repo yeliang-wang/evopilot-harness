@@ -465,7 +465,7 @@ def validate_command(args: argparse.Namespace) -> int:
         raise GuardError("Operator command must request --json")
     configured_models = option_value(cli, "--models-file")
     advisor_mode = (option_value(cli, "--advisor") or "auto").lower()
-    models_required = family == "llm" or (family == "produce" and advisor_mode not in {"off", "disabled"})
+    models_required = family == "llm" or (family == "produce" and advisor_mode not in {"off", "disabled"}) or (family == "proposal" and action == "review")
     reviewed_models = state.get("modelsFile")
     if models_required and not configured_models:
         raise GuardError("This operator command must explicitly bind the reviewed --models-file")

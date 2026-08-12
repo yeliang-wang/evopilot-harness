@@ -74,6 +74,8 @@ test("v3 workspace keeps the Engine read-only and installs complete versioned bo
   assert.equal(catalog.status, "VALIDATED");
   const registry = runJson(["registry", "v3-validate", "--workspace", home, "--json"]);
   assert.equal(registry.status, "VALIDATED");
+  const advisorPolicies = runJson(["policy", "inspect", "--workspace", home, "--type", "advisor", "--json"]);
+  assert.ok(advisorPolicies.packs.some((pack) => pack.document.metadata.version === "1.2.0" && pack.document.spec.reviewContract));
 });
 
 test("v3 formal schemas reject incomplete assets and validate governance packs", () => {
@@ -134,7 +136,7 @@ test("Redis client evidence proposes a new Profile instead of evolving a distrib
   assert.ok(result.proposal.blockers.includes("new-profile-evaluation-review-required"));
   assert.ok(result.reasoning.evidenceIds.every((id) => /^evidence-\d{4}$/.test(id)));
   assert.equal(result.proposal.evaluationStatus, "INSUFFICIENT_EVAL_EVIDENCE");
-  const proposal = runJson(["proposal", "review", result.runId, "--workspace", home, "--json"]);
+  const proposal = runJson(["proposal", "inspect", result.runId, "--workspace", home, "--json"]);
   const profile = proposal.proposedAssets[0];
   assert.equal(profile.spec.classification.domain, "redis-client");
   assert.equal(profile.spec.classification.role, "redis-client-library");
@@ -151,7 +153,7 @@ test("existing Profile evolution adds evidence-backed contract coverage instead 
   const result = runJson(["produce", "--workspace", home, "--source-project", project, "--goal", "Evolve the reusable distributed cache product Harness asset.", "--advisor", "off", "--json"]);
   assert.equal(result.reasoning.decision, "EVOLVE_EXISTING");
   assert.equal(result.reasoning.targetProfile.id, "distributed-cache-product");
-  const proposal = runJson(["proposal", "review", result.runId, "--workspace", home, "--json"]);
+  const proposal = runJson(["proposal", "inspect", result.runId, "--workspace", home, "--json"]);
   const profile = proposal.proposedAssets[0];
   assert.equal(profile.metadata.version, "1.0.1");
   assert.ok(profile.spec.match.requiredEvidenceKinds.includes("architecture-document"));
@@ -180,16 +182,21 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
     request.on("data", (chunk) => chunks.push(chunk));
     request.on("end", () => {
       requests.push({ authorization: request.headers.authorization, body: Buffer.concat(chunks).toString("utf8") });
-      response.writeHead(200, { "content-type": "application/json" });
-      response.end(JSON.stringify({
-        model: "glm-5.1",
-        choices: [{ message: { content: JSON.stringify({
+      const requestBody = JSON.parse(requests.at(-1).body);
+      const prompt = JSON.parse(requestBody.messages[1].content);
+      const content = prompt.task?.startsWith("Independently review")
+        ? readyReviewAssessment(prompt)
+        : {
           recommendation: "PROPOSE_NEW_PROFILE",
           rationale: "The evidence describes a client library rather than a cache server product.",
           evidenceIds: ["evidence-0001"],
           risks: ["Review the client/server boundary."],
           proposedDeltas: ["Add a redis-client Ontology role and Profile proposal."]
-        }) } }],
+        };
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        model: "glm-5.1",
+        choices: [{ message: { content: JSON.stringify(content) } }],
         usage: { prompt_tokens: 21, completion_tokens: 9, total_tokens: 30 }
       }));
     });
@@ -214,8 +221,20 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
   assert.equal(requests[0].authorization, "Bearer test-secret");
   assert.match(requests[0].body, /evidence-0001/);
   assert.doesNotMatch(JSON.stringify(produced), /test-secret/);
-  const proposal = runJson(["proposal", "review", produced.runId, "--workspace", home, "--json"]);
+  const proposal = runJson(["proposal", "inspect", produced.runId, "--workspace", home, "--json"]);
   assert.equal(proposal.proposedAssets[0].provenance.advisorRunDigest, produced.advisor.responseDigest);
+
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.status, "REVIEWED", JSON.stringify(review.deterministicGates));
+  assert.equal(review.verdict, "READY_FOR_HUMAN_APPROVAL");
+  assert.equal(review.reviewer.status, "SUCCEEDED");
+  assert.equal(review.reviewer.authority.mayApprove, false);
+  assert.equal(review.humanDecisionRequired, true);
+  assert.equal(review.nextAction, "proposal-approve");
+  assert.ok(review.remainingBlockers.includes("new-profile-evaluation-review-required"));
+  assert.ok(fs.existsSync(review.reportPath));
+  assert.ok(review.findings.some((finding) => finding.dimension === "product-boundary"));
+  assert.equal(requests.length, 2);
 
   const approved = runJson(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed evidence, reasoning, Advisor citations, Profile boundary, and evaluation case.", "--evaluation-reviewed", "--json"]);
   assert.equal(approved.status, "APPROVED");
@@ -226,6 +245,55 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
   assert.equal(published.catalog.status, "PUBLISHED");
   const catalog = runJson(["catalog", "v3-validate", "--workspace", home, "--json"]);
   assert.equal(catalog.status, "VALIDATED");
+});
+
+test("proposal approval is blocked without a current READY Review Report", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t, { verdict: "REVISE" });
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "review-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--json"]);
+
+  const missingReview = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
+  assert.deepEqual(missingReview.blockers, ["proposal-review-required"]);
+
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.status, "ACTION_REQUIRED");
+  assert.equal(review.verdict, "REVISE");
+  assert.equal(review.nextAction, "revise-proposal");
+  assert.ok(review.findings.some((finding) => finding.severity === "blocking"));
+  const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
+  assert.ok(blocked.blockers.includes("proposal-review-verdict:revise"));
+  assert.equal(blocked.nextAction, "revise-proposal");
+  assert.doesNotMatch(JSON.stringify([review, blocked]), /review-secret/);
+});
+
+test("proposal approval rejects a Review Report after the Proposal changes", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "stale-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--json"]);
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.verdict, "READY_FOR_HUMAN_APPROVAL");
+  const proposalFile = path.join(home, "evolution-runs", produced.runId, "proposal.yaml");
+  fs.appendFileSync(proposalFile, "\noperatorNote: changed after review\n");
+  const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
+  assert.ok(blocked.blockers.includes("proposal-review-stale"));
+  assert.doesNotMatch(JSON.stringify(blocked), /stale-secret/);
+});
+
+test("proposal review blocks when the independent semantic reviewer is unavailable", () => {
+  const home = initializedHome();
+  const project = createDistributedCacheProduct(path.join(home, "fixtures/distributed-cache"));
+  const produced = runJson(["produce", "--workspace", home, "--source-project", project, "--goal", "Evolve a reusable Harness asset.", "--advisor", "off", "--json"]);
+  const result = runJsonFailure(["proposal", "review", produced.runId, "--workspace", home, "--models-file", path.join(home, "missing-models.json"), "--json"]);
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.verdict, "NEED_MORE_EVIDENCE");
+  assert.ok(result.remainingBlockers.includes("semantic-proposal-review-required"));
+  assert.equal(result.nextAction, "repair-reviewer-and-rerun");
 });
 
 test("a required Advisor transport failure remains review-blocking and never changes the deterministic decision", async () => {
@@ -443,6 +511,7 @@ test("Harness Hub v3 snapshot exposes assets, proposals, governance packs, evalu
   assert.ok(result.governancePacks.some((pack) => pack.kind === "AdvisorPolicyPack"));
   assert.equal(result.evaluation.packCount, 0);
   assert.equal(result.llmUsage.totalTokens, 0);
+  assert.equal(result.llmUsage.reviewRunCount, 0);
   assert.ok(fs.existsSync(out));
 });
 
@@ -561,6 +630,62 @@ async function createModelService(t, { evidenceId = "evidence-0001" } = {}) {
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   t.after(() => server.close());
   return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
+}
+
+async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPROVAL" } = {}) {
+  const requests = [];
+  const server = http.createServer((request, response) => {
+    const chunks = [];
+    request.on("data", (chunk) => chunks.push(chunk));
+    request.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8");
+      requests.push({ authorization: request.headers.authorization, body });
+      const envelope = JSON.parse(body);
+      const prompt = JSON.parse(envelope.messages[1].content);
+      const content = prompt.task?.startsWith("Independently review")
+        ? readyReviewAssessment(prompt, verdict)
+        : {
+          recommendation: "PROPOSE_NEW_PROFILE",
+          rationale: "The cited evidence supports a bounded reusable engineering Profile proposal.",
+          evidenceIds: ["evidence-0001"],
+          risks: ["Human review remains required."],
+          proposedDeltas: ["Review the proposed boundary and evidence contract."]
+        };
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ model: "glm-5.1", choices: [{ message: { content: JSON.stringify(content) } }], usage: { prompt_tokens: 8, completion_tokens: 4, total_tokens: 12 } }));
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => server.close());
+  return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
+}
+
+function readyReviewAssessment(prompt, verdict = "READY_FOR_HUMAN_APPROVAL") {
+  const evidenceId = prompt.evidenceGraph?.[0]?.evidenceId ?? "evidence-0001";
+  const sources = prompt.sources ?? [];
+  const ready = verdict === "READY_FOR_HUMAN_APPROVAL";
+  return {
+    verdict,
+    summary: ready ? "The Proposal is sufficiently bounded for a separate human approval decision." : "The Proposal boundary must be revised before human approval.",
+    findings: [{
+      id: "product-boundary-review",
+      severity: ready ? "info" : "blocking",
+      dimension: "product-boundary",
+      conclusion: ready ? "The proposed client-library boundary matches the cited evidence." : "The proposed boundary is broader than the cited source ownership.",
+      reasons: [ready ? "The evidence identifies a reusable client-library engineering task." : "Dependencies do not prove ownership of the depended-on product."],
+      evidenceIds: [evidenceId],
+      suggestedActions: ready ? ["Proceed to a separate human approval decision."] : ["Narrow the domain, role, and negative boundary, then regenerate the Proposal."]
+    }],
+    reasons: [ready ? "Independent semantic review found no blocking boundary conflict." : "The product-versus-usage distinction is unresolved."],
+    groupCoherence: { status: sources.length > 1 ? "COHERENT" : "NOT_APPLICABLE", rationale: sources.length > 1 ? "All supplied sources support one reusable boundary." : "One source does not require corpus grouping.", evidenceIds: [evidenceId] },
+    projectMembership: sources.map((source) => ({ sourceId: source.sourceId, sourceType: source.sourceType, sourceRef: source.sourceRef, status: "IN_SCOPE", rationale: "The source contributes cited evidence to this Proposal.", evidenceIds: source.evidenceIds.length ? [source.evidenceIds[0]] : [evidenceId] })),
+    boundaryAssessment: { status: ready ? "PASS" : "FAIL", rationale: ready ? "In-scope and out-of-scope boundaries are specific enough for human review." : "The proposed role overstates product ownership.", evidenceIds: [evidenceId] },
+    existingAssetOverlap: { status: "NONE", rationale: "No published asset duplicates the proposed client-library role.", candidates: [], evidenceIds: [evidenceId] },
+    definitionQuality: { status: ready ? "PASS" : "FAIL", score: ready ? 0.9 : 0.45, rationale: ready ? "The definition includes classification, boundaries, evidence, components, and validators." : "The definition needs a narrower boundary.", checks: [{ id: "semantic-boundary", status: ready ? "PASS" : "FAIL" }], evidenceIds: [evidenceId] },
+    evaluationSufficiency: { status: ready ? "PASS" : "FAIL", rationale: ready ? "The evaluation case is ready for explicit human review." : "The evaluation expectation encodes the disputed boundary.", evidenceIds: [evidenceId] },
+    advisorAssessment: { status: ready ? "CONSISTENT" : "CONFLICTED", rationale: ready ? "The original Advisor is consistent with the independent review." : "The original Advisor did not resolve the product-ownership boundary.", evidenceIds: [evidenceId] },
+    suggestedActions: ready ? ["Present this Review Report to the human reviewer."] : ["Revise the Proposal and rerun proposal review."]
+  };
 }
 
 function cleanEnv() {

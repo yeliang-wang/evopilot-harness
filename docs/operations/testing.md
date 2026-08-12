@@ -34,7 +34,8 @@ The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Ins
 | Documentation links | `npm run docs:links` |
 | Architecture boundaries | `npm run verify:architecture` |
 | Node tests | `npm test` |
-| v3 contracts | `npm run v3:check` |
+| v3 contracts | `node --test tests/v3.test.mjs && npm run v3:check` |
+| Guided Operator Guard | `python3 .agents/skills/evopilot-harness-guided-operator/scripts/self_test.py` |
 | Legacy Catalog | `npm run catalog:publish && npm run catalog:validate` |
 | Legacy Registry | `npm run registry:publish && npm run registry:validate` |
 | Legacy assets | `npm run asset:validate` |
@@ -81,6 +82,8 @@ Verify:
 - the run stops before approval and publication;
 - no Built-in or Engine asset is modified.
 
+Then use a test model service or authorized GLM profile to run `proposal review`. Verify report Schema, verdict, citations, every source membership, model/usage, report digest, and the approval gate. A missing or non-ready report must block `proposal approve`.
+
 Use `--source-root` to verify multi-project discovery, nested-module deduplication, independent per-project reasoning, grouping, merged Evidence Graphs, and one Proposal per group. Test projects are evidence fixtures only and must not become published assets.
 
 ## GitHub Source Smoke
@@ -101,7 +104,7 @@ review-stage Proposal or explicit stop decision
 
 Replay fixtures verify output shape, citation closure, token accounting, invalid evidence rejection, failure behavior, and authority limits. A live GLM call is a separate integration layer and requires a manually maintained `models.json` or approved environment-based configuration.
 
-Never print the real model configuration or raw API key. LLM success cannot replace deterministic, schema, evaluation, or human-review gates.
+Never print the real model configuration or raw API key. LLM success cannot replace deterministic, schema, evaluation, or human-review gates. The original Advisor and the independent Proposal semantic reviewer are separate calls with separate persisted results and token usage.
 
 ## Harness Hub Browser Gate
 

@@ -28,6 +28,7 @@ The current v3 suite covers:
 - protection against assigning a domain from shared execution-only concepts;
 - evidence-backed existing-Profile evolution and cross-Profile Bundle composition;
 - GLM citations, token accounting, replay, transport failure, and authority limits;
+- independent Proposal Review verdicts, schema, evidence/source citation closure, product-boundary and corpus-membership output, report persistence, stale-report rejection, and approval blocking;
 - attachment, runtime-log, note, local project, project-root, and GitHub evidence;
 - nested-module deduplication, per-project reasoning, grouping, and merged Evidence Graphs;
 - Catalog and Registry validation, immutable publication, optional signing, and tamper rejection;
@@ -63,6 +64,7 @@ Acceptance also requires a clean ownership audit:
 - evidence and tests did not generate or overwrite Built-in assets;
 - source ingestion did not execute project commands;
 - GLM did not approve, publish, mutate configuration, or override deterministic decisions;
+- Proposal Review Engine did not approve, publish, execute source code, invent evidence, or override failed deterministic gates;
 - immutable published versions were not overwritten;
 - EvoPilot or Dashboard behavior was not added to this repository;
 - external validation corpora were not copied into the Harness asset library;

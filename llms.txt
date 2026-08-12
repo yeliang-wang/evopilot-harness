@@ -16,7 +16,7 @@
 
 - [Product and module boundaries](docs/architecture/adr/0001-product-and-module-boundaries.md)
 - [v3 asset model](docs/architecture/v3-asset-model.md)
-- [v3 reasoning contract](docs/reference/v3-reasoning-contract.md)
+- [v3 reasoning and Proposal Review contract](docs/reference/v3-reasoning-contract.md)
 - [Catalog contract](docs/reference/catalog-contract.md)
 - [Registry contract](docs/reference/registry-contract.md)
 - [v2 compatibility](docs/guides/v2-compatibility.md)
@@ -37,5 +37,7 @@
 - Never expose `models.json`, API keys, Catalog private keys, private source, or unredacted logs.
 - Source inputs are evidence only; they are not publication authority.
 - GLM Advisor is advisory only.
+- Proposal Review verdicts, reasons, and suggestions come from the CLI Review Engine, not the operating Skill.
+- Run and present every Proposal Review Report after production; approval requires a current `READY_FOR_HUMAN_APPROVAL` report plus separate human confirmation.
 - Publishing requires schema validation, human approval, and immutable version checks.
 - EvoPilot is a separate read-only consumer and goal-loop control plane.

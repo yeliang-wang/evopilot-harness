@@ -14,6 +14,8 @@ The v3 reasoning pipeline is deterministic at its decision boundary:
 8. Apply versioned thresholds and risk policy.
 9. Call GLM only for ambiguity, conflict, or new-Profile decisions.
 10. Produce a review-stage Profile or Bundle proposal and supporting Evaluation Pack.
+11. Run deterministic Proposal gates plus an independent evidence-bound semantic review.
+12. Synthesize and persist a structured Review Report, then stop for human decision.
 
 ## Eligibility
 
@@ -72,6 +74,20 @@ A new Profile proposal is assembled from deterministic intent and the Evidence G
 
 An existing-Profile evolution must change evidence-backed matching or acceptance coverage in addition to version and provenance metadata. All such deltas remain review-stage until human approval.
 
+## Proposal Review Contract
+
+`proposal inspect` reads the draft and does not perform a review. `proposal review` loads the immutable Evidence Graph and reasoning result, the generated Proposal, current Catalog relationships, Advisor Policy, and a manually maintained GLM profile. It emits `evopilot-harness-proposal-review/v1` with one verdict:
+
+- `READY_FOR_HUMAN_APPROVAL`
+- `REVISE`
+- `SPLIT`
+- `REJECT`
+- `NEED_MORE_EVIDENCE`
+
+Deterministic gates validate Proposal shape, evidence/reasoning digests, required Advisor completion, definition-contract completeness, and Evaluation Pack presence. The semantic reviewer independently evaluates product ownership versus dependency/use, corpus coherence and every source membership, new-versus-existing asset relationships, boundary quality, professional definition completeness, and evaluation sufficiency. Synthesis cannot turn a failed blocking gate into `READY_FOR_HUMAN_APPROVAL`.
+
+The Review Report records findings, reasons, evidence ids, actions, original Proposal blockers, Review blockers, model and token usage, attempts, policy and algorithm versions, Proposal/report digests, and `nextAction`. It is advisory to the human lifecycle gate: neither the Review Engine nor `READY_FOR_HUMAN_APPROVAL` is approval. `proposal approve` rejects a missing, invalid, stale, blocked, or non-ready report.
+
 ## LLM Boundary
 
 GLM receives only a Policy-budgeted projection of the redacted Evidence Graph, the deterministic result, Ontology Pack, relevant Match Policy fields, and Advisor output contract. Projection preserves deterministic reasoning citations first and then source/kind diversity; it records Graph and projection digests plus coverage counts. Every conclusion must cite an `evidenceId` present in that projection. Advisor Policy may authorize one repair attempt after invalid JSON or citation validation failure. The repair receives the exact projected ids and failed checks, may repair only structure/citations, and cannot replace deterministic reasoning or bypass final validation.
@@ -90,6 +106,8 @@ GLM may not:
 - invent evidence IDs;
 - override eligibility, signature, schema, or human-approval gates;
 - use self-reported confidence as the final deterministic decision.
+
+The Proposal semantic reviewer has the same authority limits. It may produce a structured review verdict, but it cannot approve or publish.
 
 The run stores provider, model, input/output/total tokens, prompt and response digests, Ontology and Policy versions, validation, and a replay record. Raw API keys are never returned.
 

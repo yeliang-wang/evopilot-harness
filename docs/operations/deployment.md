@@ -60,7 +60,7 @@ docker compose ps
 Default image:
 
 ```text
-ghcr.io/yeliang-wang/evopilot-harness:3.1.0
+ghcr.io/yeliang-wang/evopilot-harness:3.2.0
 ```
 
 Override image and port:

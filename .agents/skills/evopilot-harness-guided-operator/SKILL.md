@@ -23,7 +23,8 @@ $evopilot-harness-guided-operator
 $evopilot-harness-guided-operator
 
 使用 /absolute/path/to/project 作为只读 source project，
-引导我生成 Harness Proposal，只执行到人工评审阶段。
+引导我生成 Harness Proposal，自动执行并展示正式 Proposal Review，
+然后停在人工决策阶段。
 ```
 
 调用后，先报告 Release、已读取文档、可用场景和推荐 Workspace，再每次只询问
@@ -153,13 +154,16 @@ python3 scripts/operator_guard.py validate-command \
 
 只有 `status=ALLOWED` 才能执行。命令从 Release 根目录运行，保留 JSON 输出，并在
 解释时保留标识符、digest、blocker、Advisor 模型/用量和 `nextAction`。
-`llm` 命令以及未显式关闭 Advisor 的 `produce` 必须通过 `--models-file` 绑定
+`llm`、`proposal review` 以及未显式关闭 Advisor 的 `produce` 必须通过 `--models-file` 绑定
 Preflight 已登记的同一份只读配置；Skill 只校验路径与摘要，不输出或复制配置内容。
 
 ### 5. 人工门禁
 
-- `produce` 后必须停止并展示证据、推理、候选/拒绝项、Proposal 和 `nextAction`；
-- `proposal review` 需要用户选择查看；
+- `produce` 返回 Proposal 后，自动对每个 Proposal 执行 `proposal review`；这仍属于本阶段，不需要用户再次选择是否查看；
+- 必须向用户展示每份 CLI Review Report 的 `verdict`、摘要、findings、原因、证据引用、分组一致性、项目成员、资产边界、Catalog 重叠、定义质量、评估充分性、建议动作、剩余 blocker、Reviewer 模型/用量和 `nextAction`；
+- 不得用 Skill 自己的业务判断替代、补写或改写 CLI 的 Review Report；Skill 可以解释字段，但必须清楚标注解释不是产品评审结论；
+- `proposal inspect` 只读取原 Proposal，不得称为草稿评审；`proposal review-inspect` 只读取已有 Review Report；
+- 所有 Review Report 展示完成后必须停止，等待用户选择退回修改、拆分、拒绝、补充证据、明确批准或结束；
 - `proposal approve` 需要用户提供真实 reviewer 信息并明确批准；
 - `proposal publish` 需要一次独立的发布确认；
 - 模型建议、"继续"、Execution Brief 确认和 review 都不是批准或发布授权。
@@ -175,7 +179,7 @@ python3 scripts/operator_guard.py postflight \
 
 只有 Release、Policy 和 source 完整性全部通过，且生成状态都位于外部 Workspace，
 任务才能成功。最终报告必须包含 Release、场景、source、Workspace、命令结果、
-`runId`、Evidence Graph digest、Proposal 状态、LLM 模型/用量、发布资产、
+`runId`、Evidence Graph digest、Proposal 状态、Review verdict/report digest、LLM 模型/用量、发布资产、
 `nextAction`、blocker、完整性结果和明确跳过的阶段。
 
 ## 阻塞输出

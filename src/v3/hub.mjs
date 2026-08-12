@@ -17,6 +17,10 @@ export function buildHubSnapshot(home) {
     assetCount: proposal.proposedAssets?.length ?? 0,
     blockers: proposal.blockers ?? [],
     advisorStatus: proposal.advisor?.status,
+    reviewStatus: proposal.review?.status,
+    reviewVerdict: proposal.review?.verdict,
+    reviewReportDigest: proposal.review?.reportDigest,
+    reviewReportPath: proposal.review?.reportPath,
     path: file
   }));
   const catalogRoot = fs.existsSync(path.join(home, "catalogs/organization/CATALOG.md")) ? path.join(home, "catalogs/organization") : path.join(home, "catalogs/builtin");
@@ -30,7 +34,10 @@ export function buildHubSnapshot(home) {
   const advisorRuns = walkFiles(path.join(home, "evolution-runs"), (file) => path.basename(file) === "advisor-result.json").map((file) => {
     try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return null; }
   }).filter(Boolean);
-  const usage = advisorRuns.reduce((result, run) => ({ inputTokens: result.inputTokens + Number(run.usage?.inputTokens ?? 0), outputTokens: result.outputTokens + Number(run.usage?.outputTokens ?? 0), totalTokens: result.totalTokens + Number(run.usage?.totalTokens ?? 0) }), { inputTokens: 0, outputTokens: 0, totalTokens: 0 });
+  const reviewRuns = walkFiles(path.join(home, "evolution-runs"), (file) => path.basename(file) === "semantic-review-result.json").map((file) => {
+    try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return null; }
+  }).filter(Boolean);
+  const usage = [...advisorRuns, ...reviewRuns].reduce((result, run) => ({ inputTokens: result.inputTokens + Number(run.usage?.inputTokens ?? 0), outputTokens: result.outputTokens + Number(run.usage?.outputTokens ?? 0), totalTokens: result.totalTokens + Number(run.usage?.totalTokens ?? 0) }), { inputTokens: 0, outputTokens: 0, totalTokens: 0 });
   const records = assets.map((record) => ({ kind: record.asset.kind, id: record.asset.metadata.id, name: record.asset.metadata.name, version: record.asset.metadata.version, lifecycle: record.asset.metadata.lifecycle, description: record.asset.metadata.description, domain: record.asset.spec.classification?.domain, digest: record.digest, file: record.file }));
   return {
     schema: "evopilot-harness-hub-snapshot/v3",
@@ -49,9 +56,9 @@ export function buildHubSnapshot(home) {
     assets: records,
     harnesses: records.filter((record) => record.kind === "HarnessProfile").map((record) => ({ ...record, lifecycleStatus: record.lifecycle, commands: { evolve: `evopilot-harness produce --source-project /path/to/project --workspace ${home} --json` } })),
     proposals,
-    evolutions: proposals.map((proposal) => ({ evolutionId: proposal.proposalId, status: proposal.status, targetHarnessId: proposal.decision, nextAction: proposal.blockers.length ? proposal.blockers[0] : "review" })),
+    evolutions: proposals.map((proposal) => ({ evolutionId: proposal.proposalId, status: proposal.status, targetHarnessId: proposal.decision, reviewStatus: proposal.reviewStatus, reviewVerdict: proposal.reviewVerdict, reviewReportDigest: proposal.reviewReportDigest, nextAction: proposal.reviewVerdict === "READY_FOR_HUMAN_APPROVAL" ? "proposal-approve" : proposal.reviewVerdict ? `review:${proposal.reviewVerdict.toLowerCase()}` : proposal.blockers.length ? proposal.blockers[0] : "proposal-review" })),
     governancePacks: packs,
-    llmUsage: { runCount: advisorRuns.length, ...usage },
+    llmUsage: { runCount: advisorRuns.length + reviewRuns.length, advisorRunCount: advisorRuns.length, reviewRunCount: reviewRuns.length, ...usage },
     evaluation: evaluationSummary(home),
     sourceTypes: [
       { id: "source-project", label: "Source project", description: "Local project code, manifests, architecture, and design files." },
@@ -61,7 +68,7 @@ export function buildHubSnapshot(home) {
       { id: "runtime-log", label: "Production log", description: "Redacted runtime evidence correlated to Harness decisions." },
       { id: "operator-note", label: "Operator note", description: "Goal or contextual note; never sufficient by itself for publication." }
     ],
-    lifecycleCommands: ["workspace init", "produce", "proposal review", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
+    lifecycleCommands: ["workspace init", "produce", "proposal inspect", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
     nextAction: proposals.some((proposal) => proposal.status === "REVIEW_REQUIRED") ? "review-proposals" : "produce-or-review-assets"
   };
 }

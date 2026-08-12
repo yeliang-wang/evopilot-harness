@@ -27,6 +27,7 @@
         "allowedProvider": { "const": "zhipu" },
         "requiredCitations": { "const": true },
         "systemPrompt": { "type": "string", "minLength": 40 },
+        "reviewSystemPrompt": { "type": "string", "minLength": 40 },
         "outputContract": {
           "type": "object",
           "additionalProperties": false,
@@ -56,6 +57,29 @@
                   "uniqueItems": true,
                   "items": { "enum": ["INVALID_RESPONSE_JSON", "CONTRACT_REJECTED"] }
                 }
+              }
+            }
+          }
+        },
+        "reviewContract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["requiredFields", "allowedVerdicts", "repair"],
+          "properties": {
+            "requiredFields": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+            "allowedVerdicts": {
+              "type": "array",
+              "minItems": 5,
+              "uniqueItems": true,
+              "items": { "enum": ["READY_FOR_HUMAN_APPROVAL", "REVISE", "SPLIT", "REJECT", "NEED_MORE_EVIDENCE"] }
+            },
+            "repair": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["maxAttempts", "retryOn"],
+              "properties": {
+                "maxAttempts": { "type": "integer", "minimum": 0, "maximum": 1 },
+                "retryOn": { "type": "array", "uniqueItems": true, "items": { "enum": ["INVALID_RESPONSE_JSON", "CONTRACT_REJECTED"] } }
               }
             }
           }

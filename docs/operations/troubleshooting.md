@@ -1,5 +1,22 @@
 # Troubleshooting
 
+## v3 `proposal approve` Is Blocked
+
+Inspect the draft and run the independent Review Engine:
+
+```bash
+node src/index.mjs proposal inspect <proposal-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs proposal review <proposal-id> --workspace "$EVOPILOT_HARNESS_HOME" --models-file /path/to/models.json --json
+```
+
+- `proposal-review-required`: no formal report exists.
+- `proposal-review-invalid`: the persisted report failed Schema validation.
+- `proposal-review-stale`: the Proposal changed after review; rerun review.
+- `proposal-review-verdict:*`: follow the report's `suggestedActions` and `nextAction`; do not approve.
+- `semantic-proposal-review-required`: repair model configuration/connectivity or response-contract failure and rerun review.
+
+Only `status=REVIEWED` and `verdict=READY_FOR_HUMAN_APPROVAL` permit a separate human approval. The verdict itself is not approval.
+
 ## `catalog validate` Fails With Missing `CATALOG.md`
 
 Cause: the Catalog was not published or the wrong directory was passed.

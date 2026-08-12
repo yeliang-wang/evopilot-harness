@@ -58,7 +58,7 @@ export function syncBuiltin(home, force = false) {
   copyTree(path.join(PACKAGE_ROOT, "assets/v3"), assetsRoot);
   copyTree(path.join(PACKAGE_ROOT, "ontology/builtin"), path.join(home, "ontology/builtin"));
   copyTree(path.join(PACKAGE_ROOT, "policies/matcher"), path.join(home, "policies/matcher"));
-  copyTree(path.join(PACKAGE_ROOT, "policies/advisor"), path.join(home, "policies/advisor"));
+  syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/advisor"), path.join(home, "policies/advisor"), force);
   const catalogFile = path.join(builtinRoot, "catalog.yaml");
   writeYaml(catalogFile, {
     schema: CATALOG_SCHEMA,
@@ -69,6 +69,17 @@ export function syncBuiltin(home, force = false) {
   });
   const publication = publishCatalog({ roots: [assetsRoot], out: builtinRoot, catalogId: "builtin", generatedAt: "2026-08-10T00:00:00.000Z" });
   if (publication.status !== "PUBLISHED") throw new Error(`Built-in Catalog publication failed: ${JSON.stringify(publication.validation?.failures ?? publication)}`);
+}
+
+function syncVersionedPacks(source, target, force) {
+  fs.mkdirSync(target, { recursive: true });
+  for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const sourceFile = path.join(source, entry.name);
+    const document = readYaml(sourceFile);
+    const targetFile = path.join(target, `${document.metadata.id}@${document.metadata.version}.yaml`);
+    if (force || !fs.existsSync(targetFile)) fs.copyFileSync(sourceFile, targetFile);
+  }
 }
 
 export function workspaceStatus(home) {

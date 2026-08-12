@@ -119,6 +119,7 @@ run("tar", [
   "--exclude", "dist/release",
   "-czf",
   sourceArchivePath,
+  ".agents",
   ".dockerignore",
   ".github",
   ".gitignore",

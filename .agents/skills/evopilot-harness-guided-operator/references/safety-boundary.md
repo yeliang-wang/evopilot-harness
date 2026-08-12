@@ -30,6 +30,7 @@ Workspace 不得是 Release/source 本身、其子目录或其祖先目录。
 - 修改、打印、导入或发布模型配置和原始凭据；
 - 自动 approve、自动 publish、`--force` 或跳过门禁；
 - 把 LLM 结论当作 reviewer 或发布授权。
+- 由 Skill 自行发明、替换或隐藏 CLI Proposal Review 的 verdict、原因或建议。
 
 ## 双重允许规则
 

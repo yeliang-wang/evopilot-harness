@@ -117,7 +117,8 @@ function renderEvolutions(evolutions) {
     const item = document.createElement("article");
     item.innerHTML = `
       <strong>${escapeHtml(run.evolutionId)}</strong>
-      <small>${escapeHtml(run.status)} · ${escapeHtml(run.targetHarnessId ?? "target pending")} · ${escapeHtml(run.nextAction ?? "review")}</small>
+      <small>${escapeHtml(run.status)} · ${escapeHtml(run.targetHarnessId ?? "target pending")} · ${escapeHtml(run.reviewVerdict ?? "not-reviewed")} · ${escapeHtml(run.nextAction ?? "review")}</small>
+      <small>${escapeHtml(run.reviewReportDigest ?? "review report pending")}</small>
       <small>${escapeHtml(run.goal ?? "")}</small>
     `;
     elements.evolutionList.append(item);
@@ -162,7 +163,7 @@ function renderGovernance(packs, evaluation, usage) {
   evalItem.innerHTML = `<strong>Evaluation Packs · ${evaluation.packCount ?? 0}</strong><small>ready=${evaluation.readyCount ?? 0} insufficient=${evaluation.insufficientCount ?? 0}</small>`;
   elements.llmUsage.append(evalItem);
   const usageItem = document.createElement("article");
-  usageItem.innerHTML = `<strong>GLM Advisor Runs · ${usage.runCount ?? 0}</strong><small>input=${usage.inputTokens ?? 0} output=${usage.outputTokens ?? 0} total=${usage.totalTokens ?? 0}</small>`;
+  usageItem.innerHTML = `<strong>GLM Runs · ${usage.runCount ?? 0}</strong><small>advisor=${usage.advisorRunCount ?? usage.runCount ?? 0} proposal-review=${usage.reviewRunCount ?? 0} · input=${usage.inputTokens ?? 0} output=${usage.outputTokens ?? 0} total=${usage.totalTokens ?? 0}</small>`;
   elements.llmUsage.append(usageItem);
 }
 

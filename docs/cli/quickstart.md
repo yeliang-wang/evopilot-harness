@@ -122,19 +122,28 @@ nextAction
 
 For `--source-root`, also report `advisorSummary` and every `proposals[].advisor` result. These fields use the same Advisor Run Contract as local projects, Git repositories, attachments, logs, and mixed evidence.
 
-Then inspect the full proposal:
+Inspect the generated draft without running a review:
 
 ```bash
-node src/index.mjs proposal review <proposal-id> \
+node src/index.mjs proposal inspect <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
 
-Stop if any blocker remains.
+Then run the independent Proposal Review Engine. It applies deterministic gates and a separate evidence-bound semantic review; it does not merely return `proposal.yaml`:
+
+```bash
+node src/index.mjs proposal review <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --models-file /path/to/models.json \
+  --json
+```
+
+Report `verdict`, `summary`, `findings`, `reasons`, `evidenceIds`, `groupCoherence`, every `projectMembership` item, `boundaryAssessment`, `existingAssetOverlap`, `definitionQuality`, `evaluationSufficiency`, `advisorAssessment`, `suggestedActions`, `remainingBlockers`, Reviewer model/usage, `reportDigest`, and `nextAction`. Stop after presenting every Review Report. Only `verdict=READY_FOR_HUMAN_APPROVAL` may enter a separate human approval decision; it is not approval itself.
 
 ## 6. Approve And Publish
 
-Use real reviewer values. An AI agent must not invent them.
+Use real reviewer values. An AI agent must not invent them. Approval is blocked unless a current, schema-valid Review Report has `status=REVIEWED` and `verdict=READY_FOR_HUMAN_APPROVAL`.
 
 ```bash
 node src/index.mjs proposal approve <proposal-id> \

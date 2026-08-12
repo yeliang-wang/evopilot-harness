@@ -26,12 +26,12 @@ Use [llms.txt](llms.txt) for the shortest machine-readable documentation map and
 
 ## Module Ownership
 
-The 23 accepted module boundaries are defined in [ADR 0001](docs/architecture/adr/0001-product-and-module-boundaries.md):
+The 24 accepted module boundaries are defined in [ADR 0001](docs/architecture/adr/0001-product-and-module-boundaries.md):
 
 1. Engine; 2. Workspace; 3. CLI; 4. Harness Hub; 5. Source Ingestion; 6. Snapshot/Redaction; 7. Evidence Graph.
 8. OntologyPack; 9. MatchPolicyPack; 10. Eligibility Gate; 11. Candidate Retrieval/Scoring; 12. Decision Aggregator; 13. AdvisorPolicyPack; 14. GLM Advisor.
-15. HarnessComponent; 16. HarnessProfile; 17. HarnessBundle/Export; 18. EvaluationPack; 19. Proposal Lifecycle; 20. Schema Validator.
-21. Catalog Publisher/Optional Signing; 22. Registry; 23. Migration/Rollback.
+15. Proposal Review Engine; 16. HarnessComponent; 17. HarnessProfile; 18. HarnessBundle/Export; 19. EvaluationPack; 20. Proposal Lifecycle; 21. Schema Validator.
+22. Catalog Publisher/Optional Signing; 23. Registry; 24. Migration/Rollback.
 
 No module may bypass Proposal approval, write Built-in assets from evidence, give LLM authority, execute source-project commands, or make Engine source files the runtime state store.
 

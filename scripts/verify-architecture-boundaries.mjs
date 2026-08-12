@@ -23,6 +23,7 @@ const anchors = [
   ["schemas/harness-asset-v3.schema.json", "HarnessProfile", "HarnessProfile"],
   ["schemas/harness-asset-v3.schema.json", "HarnessBundle", "HarnessBundle/Export"],
   ["src/v3/lifecycle.mjs", "buildEvaluationPack", "EvaluationPack"],
+  ["src/v3/review.mjs", "reviewProposal", "Proposal Review Engine"],
   ["src/v3/lifecycle.mjs", "approveProposal", "Proposal Lifecycle"],
   ["src/v3/schema.mjs", "validateDocument", "Schema Validator"],
   ["src/v3/catalog.mjs", "publishCatalog", "Catalog Publisher/Optional Signing"],
@@ -32,7 +33,7 @@ const anchors = [
 
 for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
-mustContain("AGENTS.md", "The 23 accepted module boundaries", "root agent instructions must reference all module boundaries");
+mustContain("AGENTS.md", "The 24 accepted module boundaries", "root agent instructions must reference all module boundaries");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
 mustContain("src/v3/workspace.mjs", 'mode: "read-only"', "Engine must remain read-only");
 mustContain("src/v3/workspace.mjs", "mutationAllowed: false", "Engine mutation must remain forbidden");
@@ -41,12 +42,16 @@ mustContain("src/v3/reasoning.mjs", "EVIDENCE_EXTRACTION_COMMANDS", "source evid
 mustContain("src/v3/lifecycle.mjs", 'proposal.status !== "APPROVED"', "publication must require an approved Proposal");
 mustContain("src/v3/lifecycle.mjs", '"catalogs/organization/assets"', "publication must target Organization Catalog assets");
 mustContain("src/v3/advisor.mjs", "deterministicDecisionPreserved: true", "Advisor must preserve the deterministic decision");
+mustContain("src/v3/review.mjs", "mayApprove: false", "Proposal Review Engine must not approve Proposals");
 mustContain("package.json", '"verify:architecture"', "package scripts must expose architecture verification");
 mustContain("package.json", "npm run verify:architecture", "npm run check must execute architecture verification");
 
 mustNotContain("src/v3/advisor.mjs", "approveProposal", "Advisor must not approve Proposals");
 mustNotContain("src/v3/advisor.mjs", "publishProposal", "Advisor must not publish Proposals");
 mustNotMatch("src/v3/advisor.mjs", /\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "Advisor must not execute commands");
+mustNotContain("src/v3/review.mjs", "approveProposal", "Proposal Review Engine must not approve Proposals");
+mustNotContain("src/v3/review.mjs", "publishProposal", "Proposal Review Engine must not publish Proposals");
+mustNotMatch("src/v3/review.mjs", /\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "Proposal Review Engine must not execute commands");
 mustNotMatch("src/v3/reasoning.mjs", /\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "source ingestion must not use shell or process execution outside the reviewed tool path");
 mustNotMatch("src/v3/lifecycle.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/builtin/, "Proposal lifecycle must not write Built-in Catalog assets");
 mustNotMatch("src/v3/migration.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/builtin/, "migration must not write Built-in Catalog assets");
@@ -72,7 +77,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/23 module anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/24 module anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);

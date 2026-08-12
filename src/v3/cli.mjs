@@ -8,6 +8,7 @@ import { approveProposal, createProposal, inspectProposal, publishProposal } fro
 import { serveHubV3, writeHubSnapshot } from "./hub.mjs";
 import { applyV2Migration, planV2Migration, rollbackMigration } from "./migration.mjs";
 import { collectEvidence, reasonCorpus, reasonEvidence } from "./reasoning.mjs";
+import { inspectProposalReview, reviewProposal } from "./review.mjs";
 import { validateDocument, validateFile, validateTree } from "./schema.mjs";
 import { booleanOption, digest, option, parseCli, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { defaultHarnessHome } from "./constants.mjs";
@@ -104,7 +105,12 @@ async function dispatch(args, group, action, id) {
   }
   if (group === "migrate" && action === "rollback") return output(args, rollbackMigration(home, id ?? requiredOption(args, "migration-id")));
   if (group === "produce") return produce(args, home);
-  if (group === "proposal" && action === "review") return output(args, inspectProposal(home, id ?? requiredOption(args, "proposal-id")));
+  if (group === "proposal" && action === "inspect") return output(args, inspectProposal(home, id ?? requiredOption(args, "proposal-id")));
+  if (group === "proposal" && action === "review") {
+    const result = await reviewProposal(home, id ?? requiredOption(args, "proposal-id"), args);
+    return output(args, result, result.status === "BLOCKED" ? 2 : 0);
+  }
+  if (group === "proposal" && action === "review-inspect") return output(args, inspectProposalReview(home, id ?? requiredOption(args, "proposal-id")));
   if (group === "proposal" && action === "approve") {
     const result = approveProposal(home, id ?? requiredOption(args, "proposal-id"), { confirmedBy: option(args, "confirmed-by"), confirmation: option(args, "confirmation"), evaluationReviewed: booleanOption(args, "evaluation-reviewed") });
     return output(args, result, result.status === "APPROVED" ? 0 : 2);
@@ -131,7 +137,7 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|review|review-inspect|approve|publish, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
 }
 
 async function produce(args, home) {
@@ -278,7 +284,13 @@ function runV3Evaluation(home) {
   for (const file of fixtures) {
     const fixture = JSON.parse(fs.readFileSync(file, "utf8"));
     if (fixture.type === "advisor-contract") {
-      const policy = readYaml(path.join(home, "policies/advisor/default.yaml"));
+      const policyFile = packFiles(path.join(home, "policies/advisor"), "AdvisorPolicyPack").sort((left, right) => {
+        const leftVersion = readYaml(left).metadata.version;
+        const rightVersion = readYaml(right).metadata.version;
+        return String(rightVersion).localeCompare(String(leftVersion), undefined, { numeric: true });
+      })[0];
+      if (!policyFile) throw new Error("No published AdvisorPolicyPack is installed.");
+      const policy = readYaml(policyFile);
       const result = validateRecommendation(fixture.response, fixture.graph, policy);
       cases.push({ id: fixture.id, expected: fixture.expectedStatus, actual: result.status, passed: result.status === fixture.expectedStatus });
     } else if (fixture.type === "asset-schema") {

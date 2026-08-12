@@ -42,15 +42,16 @@ The source domain is intentionally open, so ownership must be stricter than the 
 | 12 | Decision Aggregator | `EVOLVE_EXISTING`, `COMPOSE_NEW_BUNDLE`, `PROPOSE_NEW_PROFILE`, stop/review decisions | Human approval |
 | 13 | AdvisorPolicyPack | LLM input projection, output, repair, citation, recommendation, and authority contract | Model configuration secrets |
 | 14 | GLM Advisor | Evidence-bound ambiguity/risk/delta advice, per-attempt token and replay evidence | Execute, approve, publish, mutate configuration, override deterministic gates |
-| 15 | HarnessComponent | Atomic environment, action, constraint, evidence, validator contract | Domain-wide classification |
-| 16 | HarnessProfile | Domain/role/task composition, positive/negative boundary, Component references | Mutable dependency resolution at execution time |
-| 17 | HarnessBundle/Export | Immutable resolved publication with pinned Profile/Components and optional consumer exports | Treat an EvoPilot export as canonical source truth |
-| 18 | EvaluationPack | Reviewed cases, expected decisions, minimum evidence and readiness | Claim accuracy from contract tests alone |
-| 19 | Proposal Lifecycle | Review, explicit approval, immutable publication into Organization Catalog | Produce-and-publish in one step or write Built-in assets |
-| 20 | Schema Validator | Asset/Pack shape and cross-reference validation | Business approval |
-| 21 | Catalog Publisher/Optional Signing | Catalog index/lock/digests and optional signing/verification | Registry asset duplication or mandatory consumer trust policy |
-| 22 | Registry | Enabled Catalog roots, priority, release and optional digest metadata | Concrete Harness asset entries |
-| 23 | Migration/Rollback | Non-mutating source migration plan, journaled apply and created-file rollback | Destructive source rewrite or unjournaled deletion |
+| 15 | Proposal Review Engine | Deterministic review gates, independent evidence-bound semantic assessment, structured verdict synthesis, and auditable Review Reports | Human approval, publication, source execution, or replacing the original reasoning record |
+| 16 | HarnessComponent | Atomic environment, action, constraint, evidence, validator contract | Domain-wide classification |
+| 17 | HarnessProfile | Domain/role/task composition, positive/negative boundary, Component references | Mutable dependency resolution at execution time |
+| 18 | HarnessBundle/Export | Immutable resolved publication with pinned Profile/Components and optional consumer exports | Treat an EvoPilot export as canonical source truth |
+| 19 | EvaluationPack | Reviewed cases, expected decisions, minimum evidence and readiness | Claim accuracy from contract tests alone |
+| 20 | Proposal Lifecycle | Inspect, explicit approval, immutable publication into Organization Catalog | Produce-and-publish in one step or write Built-in assets |
+| 21 | Schema Validator | Asset/Pack and Review Report shape plus cross-reference validation | Business approval |
+| 22 | Catalog Publisher/Optional Signing | Catalog index/lock/digests and optional signing/verification | Registry asset duplication or mandatory consumer trust policy |
+| 23 | Registry | Enabled Catalog roots, priority, release and optional digest metadata | Concrete Harness asset entries |
+| 24 | Migration/Rollback | Non-mutating source migration plan, journaled apply and created-file rollback | Destructive source rewrite or unjournaled deletion |
 
 ## Dependency Direction
 
@@ -59,7 +60,7 @@ Evidence Sources
   -> Source Ingestion -> Snapshot/Redaction -> Evidence Graph
   -> Ontology + Match Policy -> Eligibility -> Retrieval/Scoring -> Aggregator
   -> Advisor Policy + GLM Advisor
-  -> Proposal -> Component/Profile/Bundle + Evaluation
+  -> Proposal -> Proposal Review Engine -> Component/Profile/Bundle + Evaluation
   -> Human Review/Approval -> Organization Catalog -> Registry discovery
   -> downstream read-only consumer
 ```

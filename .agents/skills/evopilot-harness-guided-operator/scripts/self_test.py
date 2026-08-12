@@ -22,7 +22,9 @@ node src/index.mjs registry v3-validate
 node src/index.mjs llm v3-models
 node src/index.mjs llm v3-doctor
 node src/index.mjs produce
+node src/index.mjs proposal inspect
 node src/index.mjs proposal review
+node src/index.mjs proposal review-inspect
 node src/index.mjs proposal approve
 node src/index.mjs proposal publish
 node src/index.mjs catalog v3-validate
@@ -71,7 +73,7 @@ def create_release(root: Path) -> None:
     (root / "src").mkdir(parents=True)
     (root / "src/index.mjs").write_text("// test entrypoint\n", encoding="utf-8")
     (root / "package.json").write_text(
-        json.dumps({"name": "evopilot-harness", "version": "3.1.0"}) + "\n",
+        json.dumps({"name": "evopilot-harness", "version": "3.2.0"}) + "\n",
         encoding="utf-8",
     )
     for relative in REQUIRED_DOCS:
@@ -126,7 +128,7 @@ def main() -> int:
             "--state-file",
             str(state),
             "--expected-version",
-            "3.1.0",
+            "3.2.0",
             "--source-project",
             str(source),
             "--evidence-path",
@@ -152,6 +154,32 @@ def main() -> int:
         )
         expect("documented produce", allowed, 0, "ALLOWED")
         checks.append("documented command and policy intersection")
+
+        review = run(
+            *guard_base(release, workspace, state),
+            "proposal",
+            "review",
+            "proposal-1",
+            "--models-file",
+            str(models),
+            "--workspace",
+            str(workspace),
+            "--json",
+        )
+        expect("documented proposal review", review, 0, "ALLOWED")
+        checks.append("proposal review binds reviewed models file")
+
+        review_without_models = run(
+            *guard_base(release, workspace, state),
+            "proposal",
+            "review",
+            "proposal-1",
+            "--workspace",
+            str(workspace),
+            "--json",
+        )
+        expect("proposal review without models", review_without_models, 2, "BLOCKED")
+        checks.append("proposal review without reviewed models file blocked")
 
         doctor = run(
             *guard_base(release, workspace, state),

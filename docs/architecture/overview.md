@@ -27,8 +27,9 @@ flowchart TD
   Scoring --> Decision["Versioned decision policy"]
   Decision --> Advisor["Policy-required GLM Advisor"]
   Advisor --> Proposal["Profile or Bundle Proposal"]
-  Proposal --> Review["Human review and evaluation"]
-  Review --> Publish["Immutable organization asset publication"]
+  Proposal --> Review["Proposal Review Engine"]
+  Review --> Human["Human approval and evaluation"]
+  Human --> Publish["Immutable organization asset publication"]
   Publish --> Catalog["Catalog, Registry, optional signature"]
 ```
 
@@ -41,13 +42,13 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Runtime | Engine, Workspace, CLI, Harness Hub | Engine code is read-only; mutable state belongs in the Workspace. |
 | Evidence | Source Ingestion, Snapshot/Redaction, Evidence Graph | Inputs are evidence only and never publication authority. |
 | Reasoning | OntologyPack, MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator | Domain concepts and thresholds are versioned data, not hidden model decisions. |
-| Advisor | AdvisorPolicyPack, GLM Advisor | Evidence projection, bounded contract repair, citations, attempts, and token metadata are Policy-governed and auditable. |
+| Advisor | AdvisorPolicyPack, GLM Advisor, Proposal Review Engine | Evidence projection, independent Proposal assessment, bounded contract repair, citations, attempts, verdicts, and token metadata are Policy-governed and auditable. |
 | Assets | HarnessComponent, HarnessProfile, HarnessBundle/Export | Bundle is the immutable execution publication unit. |
-| Governance | EvaluationPack, Proposal Lifecycle, Schema Validator | Review and validation remain mandatory before publication. |
+| Governance | EvaluationPack, Proposal Lifecycle, Schema Validator | A current ready Review Report, human approval, and validation remain mandatory before publication. |
 | Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
 | Compatibility | Migration/Rollback | v2 inputs migrate into v3 without redefining the canonical asset. |
 
-The complete 23-module ownership contract is [ADR 0001](adr/0001-product-and-module-boundaries.md).
+The complete 24-module ownership contract is [ADR 0001](adr/0001-product-and-module-boundaries.md).
 
 ## Workspace Boundary
 
@@ -100,4 +101,4 @@ An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
 ## Compatibility
 
-The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.1.0` retains the v2 CLI and Catalog layer for existing automation; see [v2 Architecture Compatibility](v2-compatibility.md).
+The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.2.0` retains the v2 CLI, Asset v3, Catalog, and Registry layer for existing automation; v3 approval now requires a current Proposal Review Report. See [v2 Architecture Compatibility](v2-compatibility.md).

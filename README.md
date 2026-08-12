@@ -1,7 +1,7 @@
 # EvoPilot Harness
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.1.0)
+[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.2.0)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -68,8 +68,9 @@ flowchart LR
   Gate --> Match["Ontology + BM25 + factor scoring"]
   Match --> Advisor["Evidence-bound GLM Advisor Run"]
   Advisor --> Proposal["Profile or Bundle Proposal"]
-  Proposal --> Review["Human review + evaluation"]
-  Review --> Catalog["Immutable assets + Catalog"]
+  Proposal --> Review["Proposal Review Engine"]
+  Review --> Human["Human approval + evaluation"]
+  Human --> Catalog["Immutable assets + Catalog"]
 ```
 
 The deterministic boundary emits:
@@ -83,11 +84,12 @@ The deterministic boundary emits:
 
 GLM may explain ambiguity and recommend deltas, but it cannot approve, publish, execute source code, mutate `models.json`, invent evidence, or override schema, policy, evaluation, signature, and human-review gates. Every Advisor attempt, including failure and skip states, is persisted as a redacted Advisor Run. Large Evidence Graphs pass through a deterministic, Policy-budgeted projection that preserves reasoning citations and source/kind coverage while retaining the complete Graph for audit. Advisor Policy may also permit one structure/citation-only repair after a rejected response; both attempts remain validated, metered, and auditable. `llm v3-models` checks configuration only; `llm v3-doctor` proves live connectivity.
 
-Every `produce` run stops at review or returns `BLOCKED`. A required Advisor failure keeps the evidence and Proposal for diagnosis, returns a non-zero exit code, and cannot proceed to approval:
+Every `produce` run stops before review or returns `BLOCKED`. A required Advisor failure keeps the evidence and Proposal for diagnosis, returns a non-zero exit code, and cannot proceed. `proposal review` runs deterministic gates plus an independent evidence-bound semantic reviewer and persists a structured report:
 
 ```bash
 node src/index.mjs proposal review <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
+  --models-file /path/to/models.json \
   --json
 
 node src/index.mjs proposal approve <proposal-id> \
@@ -120,7 +122,7 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-Engine `3.1.0` retains v2 CLI and Catalog compatibility. New work should use v3 assets and `produce`; existing automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md) or run a reviewed `migrate v2-to-v3` flow.
+Engine `3.2.0` retains v2 CLI, Asset v3, Catalog, and Registry compatibility. New v3 approval automation must run the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
 ## Validate
 

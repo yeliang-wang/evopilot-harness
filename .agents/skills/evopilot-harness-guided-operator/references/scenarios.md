@@ -5,10 +5,10 @@
 
 | 场景 | 初始输入 | 默认停止点 |
 |---|---|---|
-| 本地单项目生产 | source project 绝对路径 | Proposal review |
-| 本地项目根目录生产 | source root 绝对路径 | 分组 Proposal review |
-| GitHub 项目生产 | repository URL/owner-repo，可选 ref | Proposal review |
-| 补充证据生产 | 项目加附件、日志、历史 Harness 或备注 | Proposal review |
+| 本地单项目生产 | source project 绝对路径 | 展示正式 Review Report 后的用户决策 |
+| 本地项目根目录生产 | source root 绝对路径 | 展示全部分组 Review Report 后的用户决策 |
+| GitHub 项目生产 | repository URL/owner-repo，可选 ref | 展示正式 Review Report 后的用户决策 |
+| 补充证据生产 | 项目加附件、日志、历史 Harness 或备注 | 展示正式 Review Report 后的用户决策 |
 | 恢复 Proposal 评审 | Workspace 和 Proposal id | 用户决策 |
 | 批准已评审 Proposal | Proposal id 和真实 reviewer 信息 | 发布确认 |
 | 发布已批准 Proposal | 已批准 Proposal id | Catalog validation |
@@ -43,7 +43,10 @@
 ## Proposal 生命周期边界
 
 - `produce` 只形成等待评审的结果；
-- review 不等于 approve；
+- 新生产场景必须自动运行和展示每个 `proposal review`；
+- `proposal inspect` 是原始草稿读取，`proposal review` 才是产品 Review Engine，`proposal review-inspect` 是已有报告读取；
+- Review Engine 的 verdict、原因和建议来自 CLI，不由 Skill 发明；
+- review 不等于 approve，`READY_FOR_HUMAN_APPROVAL` 也不等于 approve；
 - LLM Advisor 结论不等于人工批准；
 - approve 不等于 publish；
 - publish 只能在单独的用户确认后执行。

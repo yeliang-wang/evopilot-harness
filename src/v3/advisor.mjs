@@ -32,7 +32,7 @@ export async function runAdvisor({ args, home, graph, reasoning, knowledge, runR
   const advisorPolicy = readYaml(advisorPolicyFile);
   const modelsFile = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
   const profileId = option(args, "model", process.env.EVOPILOT_HARNESS_LLM_PROFILE_ID);
-  const model = loadModel(modelsFile, profileId);
+  const model = loadConfiguredModel(modelsFile, profileId);
   if (!model) return complete("UNAVAILABLE", { failureType: "MODEL_NOT_CONFIGURED", reason: `No usable Zhipu GLM profile is configured in the manually maintained file ${modelsFile}.`, modelsFile });
 
   const evidenceProjection = projectAdvisorEvidence(graph, reasoning, advisorPolicy);
@@ -235,7 +235,7 @@ async function requestAdvisorAttempt({ model, requestBody, timeoutMs, graph, adv
   });
   let response;
   try {
-    response = await fetch(endpoint(model.url), {
+    response = await fetch(modelEndpoint(model.url), {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${model.apiKey}` },
       body: JSON.stringify(requestBody),
@@ -381,7 +381,7 @@ export function inspectModels(modelsFile, selectedId) {
 export async function diagnoseModel(modelsFile, selectedId, timeoutMs = DEFAULT_DOCTOR_TIMEOUT_MS) {
   const started = Date.now();
   const requestId = `llm-doctor-${started.toString(36)}`;
-  const model = loadModel(path.resolve(modelsFile), selectedId);
+  const model = loadConfiguredModel(path.resolve(modelsFile), selectedId);
   const complete = (status, extra = {}) => ({
     schema: "evopilot-harness-llm-doctor/v3",
     status,
@@ -403,7 +403,7 @@ export async function diagnoseModel(modelsFile, selectedId, timeoutMs = DEFAULT_
   };
   let response;
   try {
-    response = await fetch(endpoint(model.url), {
+    response = await fetch(modelEndpoint(model.url), {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${model.apiKey}` },
       body: JSON.stringify(requestBody),
@@ -456,7 +456,7 @@ export async function diagnoseModel(modelsFile, selectedId, timeoutMs = DEFAULT_
   }
 }
 
-function loadModel(modelsFile, selectedId) {
+export function loadConfiguredModel(modelsFile, selectedId) {
   if (!fs.existsSync(modelsFile)) return null;
   let parsed;
   try { parsed = JSON.parse(fs.readFileSync(modelsFile, "utf8")); } catch { return null; }
@@ -466,22 +466,22 @@ function loadModel(modelsFile, selectedId) {
   return { id: model.id, name: model.name, vendor: model.vendor, modelName: model.modelName ?? model.id, apiKey: model.apiKey, url: model.url };
 }
 
-function publicModel(model) {
+export function publicModel(model) {
   return { id: model.id, name: model.name, provider: model.vendor, model: model.modelName, url: model.url, apiKeyConfigured: true };
 }
 
-function parseJsonContent(content) {
+export function parseJsonContent(content) {
   if (typeof content === "object" && content) return content;
   const text = String(content ?? "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   return JSON.parse(text);
 }
 
-function endpoint(base) {
+export function modelEndpoint(base) {
   const normalized = String(base).replace(/\/+$/, "");
   return normalized.endsWith("/chat/completions") ? normalized : `${normalized}/chat/completions`;
 }
 
-function normalizeUsage(usage = {}) {
+export function normalizeUsage(usage = {}) {
   return {
     inputTokens: Number(usage.prompt_tokens ?? usage.input_tokens ?? 0),
     outputTokens: Number(usage.completion_tokens ?? usage.output_tokens ?? 0),

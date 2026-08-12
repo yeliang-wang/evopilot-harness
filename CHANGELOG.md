@@ -2,6 +2,32 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.2.0 - 2026-08-12
+
+### Added
+
+- Added a formal Proposal Review Engine with deterministic gates, independent evidence-bound GLM review, structured verdict synthesis, persisted reports, Schema validation, digests, model usage, and authority limits.
+- Added `proposal inspect` and `proposal review-inspect` to separate raw draft inspection, review execution, and report inspection.
+- Added Hub Review status, verdict, report digest, and review-driven next-action fields.
+
+### Changed
+
+- `proposal review` now executes product review instead of returning `proposal.yaml`.
+- `proposal approve` now requires a current, valid `READY_FOR_HUMAN_APPROVAL` report and still requires separate human approval.
+- Guided Operator automatically executes and presents every Proposal Review Report after production; it no longer asks whether the user wants to view reviews and cannot invent business conclusions.
+- Advisor Policy `1.2.0` adds a separate Proposal Review Contract while preserving LLM authority limits.
+
+### Validation
+
+- `python3 .agents/skills/evopilot-harness-guided-operator/scripts/self_test.py`
+- `node --test tests/v3.test.mjs`
+- `npm test`
+- `npm run v3:check`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 3.1.0 - 2026-08-12
 
 ### Added

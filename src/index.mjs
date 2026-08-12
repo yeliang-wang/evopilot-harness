@@ -4680,7 +4680,7 @@ function printHelp() {
 Usage:
   evopilot-harness workspace init|status [--workspace <dir>] [--json]
   evopilot-harness produce --source-project <path>|--source-root <path>|--github-repo <repo> [--attachment <file>] [--production-log <file>] [--goal <text>] [--workspace <dir>] [--json]
-  evopilot-harness proposal review|approve|publish <proposal-id> [--workspace <dir>] [--json]
+  evopilot-harness proposal inspect|review|review-inspect|approve|publish <proposal-id> [--models-file models.json] [--workspace <dir>] [--json]
   evopilot-harness asset v3-inspect|v3-validate|v3-test|v3-sign|v3-verify [asset-id] [--workspace <dir>] [--json]
   evopilot-harness catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify [--workspace <dir>] [--json]
   evopilot-harness registry v3-validate|v3-sign|v3-verify [--workspace <dir>] [--json]

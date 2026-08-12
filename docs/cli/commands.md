@@ -10,7 +10,10 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 |---|---|
 | `workspace init|status` | Create or inspect the writable v3 Workspace. |
 | `produce` | Build Evidence Graph, reason, call Advisor when required, and stop at proposal review. |
-| `proposal review|approve|publish` | Atomic human-gated proposal lifecycle. |
+| `proposal inspect` | Read the generated Proposal without claiming an independent review. |
+| `proposal review` | Run deterministic gates plus independent evidence-bound semantic review and persist a structured Review Report. |
+| `proposal review-inspect` | Read the latest persisted Review Report without rerunning the reviewer. |
+| `proposal approve|publish` | Human-gated approval and immutable publication. Approval requires a current `READY_FOR_HUMAN_APPROVAL` Review Report. |
 | `asset v3-inspect|v3-validate|v3-test|v3-sign|v3-verify` | Inspect, validate, test, sign, or verify v3 assets. |
 | `catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify` | Publish and verify v3 Catalogs. |
 | `registry v3-validate|v3-sign|v3-verify` | Validate Catalog-root discovery and Registry signatures. |
@@ -41,6 +44,20 @@ Primary `produce` options:
 | `--advisor auto|on|off|required` | Advisor risk mode. `auto` follows Policy. |
 | `--models-file <file>` | Manual read-only CodeBuddy-style GLM configuration. |
 | `--advisor-timeout-ms <number>` | Full production Advisor request timeout. Default: `180000`. |
+
+`proposal review` requires the Proposal id, the same external Workspace, and a manually maintained `--models-file`. `--review-timeout-ms <number>` overrides its semantic-review timeout; otherwise it uses `--advisor-timeout-ms` or `180000`.
+
+Review verdicts:
+
+| Verdict | Meaning |
+|---|---|
+| `READY_FOR_HUMAN_APPROVAL` | The Engine found no remaining review blocker; a human must still separately approve. |
+| `REVISE` | Revise the Proposal boundary or definition and review again. |
+| `SPLIT` | The corpus or proposed boundary contains multiple reusable assets and must be split. |
+| `REJECT` | The Proposal should not advance as the proposed Harness asset. |
+| `NEED_MORE_EVIDENCE` | Evidence or an independent reviewer result is insufficient. |
+
+The report schema is `evopilot-harness-proposal-review/v1`. It includes deterministic gates, findings, reasons, evidence citations, corpus coherence and membership, product boundary, existing-asset overlap, definition quality, evaluation sufficiency, original Advisor assessment, actions, blockers, Reviewer identity/usage, algorithm version, and `nextAction`.
 
 `llm v3-doctor` accepts `--timeout-ms <number>` for its minimal live request. Its default is `60000`; it is intentionally separate from the full production Advisor timeout.
 

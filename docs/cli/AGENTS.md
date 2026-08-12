@@ -25,6 +25,9 @@ Read [quickstart.md](quickstart.md), [automation.md](automation.md), [commands.m
 - Do not print, edit, import, or publish `models.json`.
 - Treat internet research as supplemental cited evidence. It cannot override local source or runtime logs.
 - Treat LLM recommendations as advisory. Model confidence does not override deterministic decisions.
+- After `produce`, run `proposal review` for every Proposal with the reviewed `models.json`, present every Review Report, and stop for a human decision. Do not ask whether the user wants to see the reports.
+- Do not invent a Proposal review conclusion. The CLI Review Report owns verdict, reasons, evidence, and suggested actions.
+- Do not call `proposal inspect` a review. Approval requires a current `READY_FOR_HUMAN_APPROVAL` Review Report.
 - Do not claim matching accuracy when `accuracyClaim=INSUFFICIENT_EVAL_EVIDENCE`.
 
 ## Required Start
@@ -95,6 +98,17 @@ proposal.evaluationStatus
 nextAction
 ```
 
+For every Proposal, run:
+
+```bash
+node src/index.mjs proposal review <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --models-file /path/to/models.json \
+  --json
+```
+
+Report every Review Report field required by [quickstart.md](quickstart.md), including verdict, findings, project membership, definition quality, blockers, model/usage, digest, and `nextAction`. Stop after presentation; review is not approval.
+
 If the decision is `PROPOSE_NEW_PROFILE`, confirm that:
 
 - a Profile Proposal was produced rather than an automatically published Harness;
@@ -107,7 +121,7 @@ Advisor Policy may permit one invalid-JSON or citation-contract repair. Confirm 
 
 ## Approval Flow
 
-Only after the user supplies real approval values:
+Only after the CLI returns a current `READY_FOR_HUMAN_APPROVAL` Review Report and the user separately supplies real approval values:
 
 ```bash
 node src/index.mjs proposal approve <proposal-id> \

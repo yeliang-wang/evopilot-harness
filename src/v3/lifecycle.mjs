@@ -4,6 +4,7 @@ import { API_VERSION } from "./constants.mjs";
 import { discoverAssets, publishCatalog } from "./catalog.mjs";
 import { validateDocument } from "./schema.mjs";
 import { bumpPatch, digest, readYaml, safeId, unique, writeJson, writeYaml } from "./utils.mjs";
+import { inspectProposalReview, reviewInputDigest, validateProposalReview } from "./review.mjs";
 
 export function createProposal({ home, runRoot, graph, reasoning, advisor }) {
   if (["NOT_HARNESS_ELIGIBLE", "INSUFFICIENT_EVIDENCE"].includes(reasoning.decision)) {
@@ -42,7 +43,7 @@ export function createProposal({ home, runRoot, graph, reasoning, advisor }) {
     decision: reasoning.decision,
     createdAt: new Date().toISOString(),
     evidenceGraphDigest: graph.graphDigest,
-    reasoningDigest: digest(reasoning),
+    reasoningDigest: digest(JSON.parse(JSON.stringify(reasoning))),
     advisor,
     humanApprovalRequired: true,
     proposedAssets,
@@ -79,10 +80,25 @@ export function approveProposal(home, proposalId, { confirmedBy, confirmation, e
   if (!confirmedBy || !confirmation) throw new Error("Approval requires --confirmed-by and --confirmation.");
   const file = proposalFile(home, proposalId);
   const proposal = inspectProposal(home, proposalId);
+  let review;
+  try { review = inspectProposalReview(home, proposalId); } catch {
+    return { schema: "evopilot-harness-proposal-approval/v3", status: "BLOCKED", proposalId, blockers: ["proposal-review-required"], nextAction: "proposal-review" };
+  }
+  const reviewValidation = validateProposalReview(review, review.reportPath);
+  const reviewCurrent = review.proposalDigest === reviewInputDigest(proposal);
+  if (!reviewValidation.valid || !reviewCurrent || review.status !== "REVIEWED" || review.verdict !== "READY_FOR_HUMAN_APPROVAL") {
+    const blockers = [
+      ...(!reviewValidation.valid ? ["proposal-review-invalid"] : []),
+      ...(!reviewCurrent ? ["proposal-review-stale"] : []),
+      ...(review.status !== "REVIEWED" ? [`proposal-review-status:${String(review.status).toLowerCase()}`] : []),
+      ...(review.verdict !== "READY_FOR_HUMAN_APPROVAL" ? [`proposal-review-verdict:${String(review.verdict).toLowerCase()}`] : [])
+    ];
+    return { schema: "evopilot-harness-proposal-approval/v3", status: "BLOCKED", proposalId, blockers: unique(blockers), review: { reviewId: review.reviewId, status: review.status, verdict: review.verdict, reportDigest: review.reportDigest }, nextAction: review.nextAction ?? "proposal-review" };
+  }
   const blockers = [...(proposal.blockers ?? [])].filter((blocker) => blocker !== "new-profile-evaluation-review-required" || !evaluationReviewed);
   if (blockers.length) return { schema: "evopilot-harness-proposal-approval/v3", status: "BLOCKED", proposalId, blockers, nextAction: blockers.includes("policy-required-advisor-review-missing") ? "run-required-advisor" : "repair-proposal" };
   proposal.status = "APPROVED";
-  proposal.approval = { confirmedBy, confirmation, evaluationReviewed, approvedAt: new Date().toISOString() };
+  proposal.approval = { confirmedBy, confirmation, evaluationReviewed, reviewId: review.reviewId, reviewReportDigest: review.reportDigest, approvedAt: new Date().toISOString() };
   if (evaluationReviewed) {
     proposal.evaluationPack.metadata.lifecycle = "approved";
     proposal.evaluationPack.spec.cases = proposal.evaluationPack.spec.cases.map((item) => ({ ...item, reviewStatus: "approved" }));

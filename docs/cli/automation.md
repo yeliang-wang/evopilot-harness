@@ -12,6 +12,9 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 - Use JSON output whenever available.
 - Do not parse human-readable CLI output for automation.
 - Treat `status`, `blockers`, and `nextAction` as control-flow fields.
+- `proposal inspect` is read-only draft inspection. `proposal review` executes the Review Engine. `proposal review-inspect` reads its latest report.
+- Automatically run and present `proposal review` for every Proposal returned by a confirmed production stage, then stop. Never invent or hide a Review Report conclusion.
+- Continue to approval only for a current `status=REVIEWED`, `verdict=READY_FOR_HUMAN_APPROVAL` report and separate user-supplied approval.
 - Stop on `BLOCKED`, `FAILED`, validation blockers, missing files, missing Catalog blocks, approval gates, or non-zero exit codes.
 - Treat `llm v3-models` as configuration-only. Require `llm v3-doctor` when a workflow requires live Advisor connectivity.
 - Parse the persisted Advisor Run Contract for `status`, `required`, `failureType`, `reason`, `model`, aggregate `usage`, `validation`, `requestId`, `evidenceProjection`, `attemptCount`, `repairAttempted`, `attempts[]`, digests, timing, and `resultPath`.

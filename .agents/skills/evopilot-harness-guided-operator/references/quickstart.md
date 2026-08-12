@@ -30,7 +30,8 @@ Skill 会先发现 Release 文档和当前可用场景，然后每次询问一�
 $evopilot-harness-guided-operator
 
 使用 /absolute/path/to/source-project 作为只读项目源，
-目标是形成可复用 Harness，只执行到 Proposal 人工评审阶段。
+目标是形成可复用 Harness，自动生成并展示正式 Proposal Review，
+只执行到人工决策阶段。
 ```
 
 ## 本地多项目根目录
@@ -64,13 +65,16 @@ $evopilot-harness-guided-operator
 
 一次 Execution Brief 确认只授权到下一个停止点：
 
-1. `produce` 后停止；
-2. review 后停止；
+1. `produce` 后自动执行所有 `proposal review`；
+2. 向用户展示所有 Review Report 后停止；
 3. approve 前需要真实 reviewer 和明确批准；
 4. publish 前再次单独确认。
 
 任何能力、文档、凭据、验证或完整性问题都会返回 `BLOCKED`，不会自动进入开发或
 发布流程。
+
+Review Report 的 verdict、原因和建议由 `evopilot-harness` Review Engine 产生。
+Skill 负责调用、展示、解释和守门，不负责创造业务评审结论。
 
 ## 只读诊断示例
 
