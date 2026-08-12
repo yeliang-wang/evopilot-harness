@@ -13,6 +13,10 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 - Do not parse human-readable CLI output for automation.
 - Treat `status`, `blockers`, and `nextAction` as control-flow fields.
 - Stop on `BLOCKED`, `FAILED`, validation blockers, missing files, missing Catalog blocks, approval gates, or non-zero exit codes.
+- Treat `llm v3-models` as configuration-only. Require `llm v3-doctor` when a workflow requires live Advisor connectivity.
+- Parse the persisted Advisor Run Contract for `status`, `required`, `failureType`, `reason`, `model`, aggregate `usage`, `validation`, `requestId`, `evidenceProjection`, `attemptCount`, `repairAttempted`, `attempts[]`, digests, timing, and `resultPath`.
+- Treat `evidenceProjection.graphDigest`, `projectionDigest`, total/selected/omitted counts, character budget, selected ids/kinds, and source coverage as LLM-input evidence. The complete Evidence Graph remains the deterministic and audit source of record.
+- A Policy-bounded repair may retry one invalid JSON or citation-contract response. It repairs structure/citations only, preserves the deterministic decision, and remains `BLOCKED` if the repaired response is invalid.
 - Do not invent administrator confirmations.
 - Do not send raw secrets in source material. Redaction is a safety layer, not permission to include secrets.
 - Do not pass raw GitHub tokens in `--github-repo`; use public HTTPS, local Git credentials, or SSH.
@@ -21,6 +25,10 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 
 | Command | Required Fields |
 |---|---|
+| `llm v3-models --json` | `status`, `readinessScope`, `connectionVerified`, `selected`, `nextAction` |
+| `llm v3-doctor --json` | `status`, `requestId`, `readinessScope`, `connectionVerified`, `model`, `usage`, `failureType`, `reason` |
+| `produce --json` | `status`, Evidence Graph/reasoning, `advisor`, `proposal`, `blockers`, `nextAction` |
+| `produce --source-root --json` | `status`, `discoveredProjectCount`, `groupCount`, `groups[]`, `advisorSummary`, `proposals[].advisor`, `blockers`, `nextAction` |
 | `catalog publish --json` | `status`, `catalogId`, `out`, `templateCount`, `entries[]`, `catalogDigest` |
 | `catalog validate --json` | `status`, `source`, `entryCount`, `checks[]`, `blockers[]` |
 | `harness list --json` | `status`, `source`, `count`, `harnesses[]`, `nextAction` |

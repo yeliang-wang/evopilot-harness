@@ -8,7 +8,7 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current Engine release: [`v3.0.2`](../releases/3.0.2.md). Historical notes are indexed in [Release Notes](../releases/README.md).
+Current Engine release candidate: [`v3.1.0`](../releases/3.1.0.md). It becomes a published Engine release only after commit, tag, GitHub Release, and artifact verification. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Version Policy
 
@@ -56,7 +56,7 @@ Artifact verification checks the expected files, checksums, package metadata, an
 The Git tag must exactly match `package.json`:
 
 ```text
-tag v3.0.2 -> package.json version 3.0.2
+tag v3.1.0 -> package.json version 3.1.0
 ```
 
 `.github/workflows/release-artifacts.yml`:

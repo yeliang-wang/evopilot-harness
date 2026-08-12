@@ -2,7 +2,7 @@ apiVersion: harness.evopilot.io/v1
 kind: AdvisorPolicyPack
 metadata:
   id: default-advisor
-  version: 1.0.0
+  version: 1.1.0
   lifecycle: published
   description: Evidence-bound GLM review contract for ambiguous and high-risk Harness asset decisions.
 spec:
@@ -17,6 +17,14 @@ spec:
   outputContract:
     requiredFields: [recommendation, rationale, evidenceIds, risks, proposedDeltas]
     allowedRecommendations: [EVOLVE_EXISTING, COMPOSE_NEW_BUNDLE, PROPOSE_NEW_PROFILE, INSUFFICIENT_EVIDENCE, NOT_HARNESS_ELIGIBLE, REVIEW_REQUIRED]
+    evidenceProjection:
+      algorithm: reasoning-source-kind-round-robin/v1
+      maxNodes: 48
+      maxCharacters: 96000
+      maxExcerptCharacters: 2000
+    repair:
+      maxAttempts: 1
+      retryOn: [INVALID_RESPONSE_JSON, CONTRACT_REJECTED]
   authority:
     mayRecommend: true
     mayApprove: false

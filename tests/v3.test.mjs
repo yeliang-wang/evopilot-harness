@@ -7,9 +7,50 @@ import path from "node:path";
 import test from "node:test";
 import { spawn, spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { DEFAULT_ADVISOR_TIMEOUT_MS, DEFAULT_DOCTOR_TIMEOUT_MS, projectAdvisorEvidence } from "../src/v3/advisor.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const cli = path.join(root, "src/index.mjs");
+
+test("Advisor and doctor use separate production defaults", () => {
+  assert.equal(DEFAULT_ADVISOR_TIMEOUT_MS, 180_000);
+  assert.equal(DEFAULT_DOCTOR_TIMEOUT_MS, 60_000);
+});
+
+test("Advisor evidence projection is deterministic, bounded, and source-diverse", () => {
+  const sources = ["/corpus/alpha", "/corpus/beta", "/corpus/gamma"].map((input) => ({ type: "source-project", input }));
+  const nodes = Array.from({ length: 180 }, (_, index) => {
+    const source = sources[index % sources.length].input;
+    return {
+      evidenceId: `evidence-${String(index + 1).padStart(4, "0")}`,
+      kind: index % 7 === 0 ? "build-manifest" : "source-code",
+      label: `file-${index}.txt`,
+      sourceType: "source-project",
+      sourceRef: `${source}/file-${index}.txt`,
+      concepts: index % 5 === 0 ? ["database-product"] : ["executable-engineering"],
+      excerpt: "x".repeat(4000)
+    };
+  });
+  const graph = { graphDigest: "sha256:graph", sources, nodes };
+  const reasoning = { evidenceIds: ["evidence-0179", "evidence-0180"] };
+  const policy = { spec: { outputContract: { evidenceProjection: {
+    algorithm: "reasoning-source-kind-round-robin/v1",
+    maxNodes: 12,
+    maxCharacters: 12_000,
+    maxExcerptCharacters: 1000
+  } } } };
+
+  const first = projectAdvisorEvidence(graph, reasoning, policy);
+  const second = projectAdvisorEvidence(graph, reasoning, policy);
+  assert.equal(first.summary.selectedNodeCount, 12);
+  assert.equal(first.summary.omittedNodeCount, 168);
+  assert.equal(first.summary.selectedCharacterCount, 12_000);
+  assert.equal(first.summary.selectedSourceCount, 3);
+  assert.deepEqual(first.summary.selectedEvidenceIds.slice(0, 2), reasoning.evidenceIds);
+  assert.equal(first.summary.projectionDigest, second.summary.projectionDigest);
+  assert.ok(first.nodes.every((node) => node.excerpt.length <= 1000));
+  assert.ok(first.nodes.every((node) => !Object.hasOwn(node, "sourceRef")));
+});
 
 test("v3 workspace keeps the Engine read-only and installs complete versioned bootstrap assets", () => {
   const home = temporaryHome();
@@ -79,8 +120,8 @@ test("v2 migration is non-mutating, validates 9 templates, and rolls back from i
 test("Redis client evidence proposes a new Profile instead of evolving a distributed-cache product", () => {
   const home = initializedHome();
   const project = createRedisClient(path.join(home, "fixtures/redisclient"));
-  const result = runJson(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable engineering Harness asset.", "--advisor", "off", "--json"]);
-  assert.equal(result.status, "REVIEW_REQUIRED");
+  const result = runJsonFailure(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable engineering Harness asset.", "--advisor", "off", "--json"]);
+  assert.equal(result.status, "BLOCKED");
   assert.equal(result.reasoning.eligibility.decision, "ELIGIBLE");
   assert.equal(result.reasoning.decision, "PROPOSE_NEW_PROFILE");
   assert.equal(result.reasoning.proposedProfile.domain, "redis-client");
@@ -122,7 +163,7 @@ test("existing Profile evolution adds evidence-backed contract coverage instead 
 test("shared executable-engineering evidence never assigns an arbitrary domain role", () => {
   const home = initializedHome();
   const project = createGenericEngineeringTool(path.join(home, "fixtures/generic-tool"));
-  const result = runJson(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable engineering Harness asset.", "--advisor", "off", "--json"]);
+  const result = runJsonFailure(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable engineering Harness asset.", "--advisor", "off", "--json"]);
   assert.equal(result.reasoning.decision, "PROPOSE_NEW_PROFILE");
   assert.equal(result.reasoning.proposedProfile.domain, "unclassified-engineering");
   assert.equal(result.reasoning.proposedProfile.role, "unclassified-engineering");
@@ -160,7 +201,12 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
 
   const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--json"]);
   assert.equal(produced.advisor.status, "SUCCEEDED");
+  assert.equal(produced.advisor.required, true);
+  assert.equal(produced.advisor.mode, "auto");
   assert.equal(produced.advisor.usage.totalTokens, 30);
+  assert.equal(produced.advisor.evidenceProjection.selectedNodeCount, produced.advisor.evidenceProjection.totalNodeCount);
+  assert.equal(produced.advisor.evidenceProjection.omittedNodeCount, 0);
+  assert.ok(fs.existsSync(produced.advisor.resultPath));
   assert.equal(produced.reasoning.decision, "PROPOSE_NEW_PROFILE");
   assert.equal(produced.proposal.blockers.length, 1);
   assert.equal(produced.proposal.blockers[0], "new-profile-evaluation-review-required");
@@ -187,36 +233,134 @@ test("a required Advisor transport failure remains review-blocking and never cha
   const project = createRedisClient(path.join(home, "fixtures/redisclient"));
   const modelsFile = path.join(home, "models.json");
   fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "unreachable-secret", url: "http://127.0.0.1:1/v4" }] }));
-  const result = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--advisor-timeout-ms", "500", "--json"]);
+  const result = await runJsonAsyncFailure(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--advisor-timeout-ms", "500", "--json"]);
+  assert.equal(result.status, "BLOCKED");
   assert.equal(result.reasoning.decision, "PROPOSE_NEW_PROFILE");
   assert.equal(result.advisor.status, "FAILED");
   assert.equal(result.advisor.required, true);
+  assert.equal(result.advisor.failureType, "TRANSPORT_ERROR");
+  assert.match(result.advisor.reason, /fetch failed/i);
+  assert.ok(fs.existsSync(result.advisor.resultPath));
   assert.ok(result.proposal.blockers.includes("policy-required-advisor-review-missing"));
+  assert.equal(result.nextAction, "repair-advisor-and-rerun");
   assert.doesNotMatch(JSON.stringify(result), /unreachable-secret/);
 });
 
-test("attachments, logs, notes, and GitHub repositories produce redacted traceable Evidence Graph nodes", () => {
+test("Advisor performs one policy-bounded contract repair and records both attempts", async (t) => {
   const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  let attempt = 0;
+  const requests = [];
+  const server = http.createServer((request, response) => {
+    const chunks = [];
+    request.on("data", (chunk) => chunks.push(chunk));
+    request.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8");
+      requests.push(body);
+      attempt += 1;
+      const content = {
+        recommendation: "PROPOSE_NEW_PROFILE",
+        rationale: "The cited evidence supports a bounded Profile proposal.",
+        evidenceIds: [attempt === 1 ? "evidence-0001X" : "evidence-0001"],
+        risks: ["Human review remains required."],
+        proposedDeltas: ["Review the proposed Profile boundary."]
+      };
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        choices: [{ message: { content: JSON.stringify(content) } }],
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 }
+      }));
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => server.close());
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "repair-secret", url: `http://127.0.0.1:${server.address().port}/v4` }] }));
+
+  const result = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--advisor", "required", "--models-file", modelsFile, "--json"]);
+  assert.equal(result.status, "REVIEW_REQUIRED");
+  assert.equal(result.advisor.status, "SUCCEEDED");
+  assert.equal(result.advisor.attemptCount, 2);
+  assert.equal(result.advisor.repairAttempted, true);
+  assert.equal(result.advisor.attempts[0].failureType, "CONTRACT_REJECTED");
+  assert.equal(result.advisor.attempts[1].status, "SUCCEEDED");
+  assert.equal(result.advisor.usage.totalTokens, 30);
+  assert.match(requests[1], /allowedEvidenceIds/);
+  assert.match(requests[1], /evidence-0001X/);
+  assert.doesNotMatch(JSON.stringify(result), /repair-secret/);
+});
+
+test("Advisor remains BLOCKED when the bounded repair also violates citations", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createModelService(t, { evidenceId: "evidence-9999" });
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "rejected-secret", url: service.url }] }));
+
+  const result = await runJsonAsyncFailure(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--advisor", "required", "--models-file", modelsFile, "--json"]);
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.advisor.status, "REJECTED");
+  assert.equal(result.advisor.attemptCount, 2);
+  assert.equal(result.advisor.repairAttempted, true);
+  assert.ok(result.advisor.attempts.every((item) => item.failureType === "CONTRACT_REJECTED"));
+  assert.equal(service.requests.length, 2);
+  assert.equal(result.nextAction, "repair-advisor-and-rerun");
+  assert.doesNotMatch(JSON.stringify(result), /rejected-secret/);
+});
+
+test("models inspection is configuration-only and llm v3-doctor proves live connectivity", async (t) => {
+  const home = initializedHome();
+  const service = await createModelService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "doctor-secret", url: service.url }] }));
+
+  const models = runJson(["llm", "v3-models", "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(models.status, "READY");
+  assert.equal(models.readinessScope, "CONFIGURATION_ONLY");
+  assert.equal(models.connectionVerified, false);
+  assert.equal(models.nextAction, "llm-v3-doctor");
+
+  const doctor = await runJsonAsync(["llm", "v3-doctor", "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(doctor.status, "READY");
+  assert.equal(doctor.readinessScope, "LIVE_CONNECTIVITY");
+  assert.equal(doctor.connectionVerified, true);
+  assert.equal(doctor.usage.totalTokens, 3);
+  assert.doesNotMatch(JSON.stringify(doctor), /doctor-secret/);
+});
+
+test("attachments, logs, notes, and GitHub repositories share the Advisor Run Contract", async (t) => {
+  const home = initializedHome();
+  const service = await createModelService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "cross-source-secret", url: service.url }] }));
   const attachment = path.join(home, "input.txt");
   const log = path.join(home, "production.log");
   fs.writeFileSync(attachment, "Architecture and build test plan for a repeatable migration validator.");
   fs.writeFileSync(log, "authorization: Bearer live-secret\nvalidate migrate rollback failed request=42\n");
-  const material = runJson(["produce", "--workspace", home, "--attachment", attachment, "--production-log", log, "--note", "Review a reusable migration validation task.", "--advisor", "off", "--json"]);
+  const material = await runJsonAsync(["produce", "--workspace", home, "--attachment", attachment, "--production-log", log, "--note", "Review a reusable migration validation task.", "--advisor", "required", "--models-file", modelsFile, "--json"]);
   const graph = JSON.parse(fs.readFileSync(material.evidenceGraph.path, "utf8"));
   assert.ok(graph.sources.some((source) => source.type === "attachment"));
   assert.ok(graph.sources.some((source) => source.type === "runtime-log"));
   assert.ok(graph.sources.some((source) => source.type === "operator-note"));
   assert.doesNotMatch(JSON.stringify(graph), /live-secret/);
   assert.match(JSON.stringify(graph), /\[REDACTED\]/);
+  assert.equal(material.advisor.status, "SUCCEEDED");
+  assert.ok(fs.existsSync(material.advisor.resultPath));
 
   const repository = createGitRepository(path.join(home, "fixtures/github-source"));
-  const github = runJson(["produce", "--workspace", home, "--github-repo", pathToFileURL(repository).href, "--github-ref", "main", "--goal", "Produce a reusable Harness asset.", "--advisor", "off", "--json"]);
+  const github = await runJsonAsync(["produce", "--workspace", home, "--github-repo", pathToFileURL(repository).href, "--github-ref", "main", "--goal", "Produce a reusable Harness asset.", "--advisor", "required", "--models-file", modelsFile, "--json"]);
   const githubGraph = JSON.parse(fs.readFileSync(github.evidenceGraph.path, "utf8"));
   assert.ok(githubGraph.sources.some((source) => source.type === "github-repository" && /^[a-f0-9]{40}$/.test(source.github.resolvedCommit)));
+  assert.equal(github.advisor.status, "SUCCEEDED");
+  assert.equal(github.advisor.schema, material.advisor.schema);
+  assert.doesNotMatch(JSON.stringify([material, github]), /cross-source-secret/);
 });
 
-test("source-root production discovers, deduplicates nested modules, groups decisions, and emits proposals", () => {
+test("source-root production deduplicates, groups, and returns successful Advisor runs", async (t) => {
   const home = initializedHome();
+  const service = await createModelService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "corpus-secret", url: service.url }] }));
   const corpus = path.join(home, "corpus");
   createRedisClient(path.join(corpus, "redisclient"));
   const parent = path.join(corpus, "scheduler-platform");
@@ -225,7 +369,7 @@ test("source-root production discovers, deduplicates nested modules, groups deci
   fs.writeFileSync(path.join(parent, "README.md"), "Scheduler task dispatch worker queue build test rollback.");
   fs.writeFileSync(path.join(parent, "module-a", "package.json"), JSON.stringify({ name: "module-a" }));
 
-  const result = runJson(["produce", "--workspace", home, "--source-root", corpus, "--goal", "Produce reusable Harness assets from this corpus.", "--advisor", "off", "--json"]);
+  const result = await runJsonAsync(["produce", "--workspace", home, "--source-root", corpus, "--goal", "Produce reusable Harness assets from this corpus.", "--advisor", "required", "--models-file", modelsFile, "--json"]);
   assert.equal(result.status, "REVIEW_REQUIRED");
   assert.equal(result.discoveredProjectCount, 2);
   assert.equal(result.groupCount, 2);
@@ -235,6 +379,31 @@ test("source-root production discovers, deduplicates nested modules, groups deci
   assert.ok(result.groups.some((group) => group.proposedProfile?.role === "redis-client-library"));
   assert.ok(result.groups.some((group) => group.proposedProfile?.role === "scheduler-platform"));
   assert.ok(result.runs.every((run) => run.reasoning.schema === "evopilot-harness-reasoning-result/v3"));
+  assert.equal(result.advisorSummary.runCount, 2);
+  assert.equal(result.advisorSummary.succeededCount, 2);
+  assert.equal(result.advisorSummary.failedCount, 0);
+  assert.ok(result.proposals.every((proposal) => proposal.advisor.status === "SUCCEEDED"));
+  assert.ok(result.proposals.every((proposal) => fs.existsSync(proposal.advisor.resultPath)));
+  assert.doesNotMatch(JSON.stringify(result), /corpus-secret/);
+});
+
+test("source-root required Advisor failures are persisted and aggregate to BLOCKED", async () => {
+  const home = initializedHome();
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "failed-corpus-secret", url: "http://127.0.0.1:1/v4" }] }));
+  const corpus = path.join(home, "corpus");
+  createRedisClient(path.join(corpus, "redisclient"));
+  createGenericEngineeringTool(path.join(corpus, "engineering-tool"));
+
+  const result = await runJsonAsyncFailure(["produce", "--workspace", home, "--source-root", corpus, "--goal", "Produce reusable Harness assets from this corpus.", "--advisor", "required", "--models-file", modelsFile, "--advisor-timeout-ms", "500", "--json"]);
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.nextAction, "repair-advisor-and-rerun");
+  assert.equal(result.advisorSummary.failedCount, result.groupCount);
+  assert.ok(result.proposals.every((proposal) => proposal.status === "BLOCKED"));
+  assert.ok(result.proposals.every((proposal) => proposal.advisor.failureType === "TRANSPORT_ERROR"));
+  assert.ok(result.proposals.every((proposal) => fs.existsSync(proposal.advisor.resultPath)));
+  assert.ok(result.proposals.every((proposal) => proposal.blockers.includes("policy-required-advisor-review-missing")));
+  assert.doesNotMatch(JSON.stringify(result), /failed-corpus-secret/);
 });
 
 test("Catalog and Registry support Ed25519 signatures and reject tampering", () => {
@@ -341,6 +510,19 @@ function runJsonFailure(args) {
 }
 
 async function runJsonAsync(args) {
+  const run = await runJsonProcess(args);
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.equal(run.stderr, "");
+  return JSON.parse(run.stdout);
+}
+
+async function runJsonAsyncFailure(args) {
+  const run = await runJsonProcess(args);
+  assert.notEqual(run.status, 0, run.stderr || run.stdout);
+  return JSON.parse(run.stdout);
+}
+
+async function runJsonProcess(args) {
   const child = spawn(process.execPath, [cli, ...args], { env: cleanEnv() });
   let stdout = "";
   let stderr = "";
@@ -349,9 +531,36 @@ async function runJsonAsync(args) {
   child.stdout.on("data", (chunk) => { stdout += chunk; });
   child.stderr.on("data", (chunk) => { stderr += chunk; });
   const status = await new Promise((resolve, reject) => { child.on("error", reject); child.on("close", resolve); });
-  assert.equal(status, 0, stderr || stdout);
-  assert.equal(stderr, "");
-  return JSON.parse(stdout);
+  return { status, stdout, stderr };
+}
+
+async function createModelService(t, { evidenceId = "evidence-0001" } = {}) {
+  const requests = [];
+  const server = http.createServer((request, response) => {
+    const chunks = [];
+    request.on("data", (chunk) => chunks.push(chunk));
+    request.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8");
+      requests.push({ authorization: request.headers.authorization, body });
+      const doctor = body.includes('Return exactly {\\"status\\":\\"ok\\"}');
+      const content = doctor ? { status: "ok" } : {
+        recommendation: "PROPOSE_NEW_PROFILE",
+        rationale: "The cited evidence supports a bounded reusable engineering Profile proposal.",
+        evidenceIds: [evidenceId],
+        risks: ["Human review remains required."],
+        proposedDeltas: ["Review the proposed boundary and evidence contract."]
+      };
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({
+        model: "glm-5.1",
+        choices: [{ message: { content: JSON.stringify(content) } }],
+        usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 }
+      }));
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => server.close());
+  return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
 }
 
 function cleanEnv() {

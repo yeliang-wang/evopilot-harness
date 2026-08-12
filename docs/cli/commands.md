@@ -16,7 +16,8 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 | `registry v3-validate|v3-sign|v3-verify` | Validate Catalog-root discovery and Registry signatures. |
 | `ontology inspect|validate|diff|publish` | Versioned Ontology Pack lifecycle. |
 | `policy inspect|validate|diff|publish` | Matcher or Advisor Policy Pack lifecycle. |
-| `llm v3-models` | Read redacted GLM readiness from manual `models.json`. |
+| `llm v3-models` | Read redacted GLM configuration readiness from manual `models.json`; no network call. |
+| `llm v3-doctor` | Make a minimal live GLM request and report redacted connectivity, model, usage, timing, and failure type. |
 | `migrate v2-to-v3|rollback` | Non-mutating migration with journal rollback. |
 | `eval v3-run` | Contract and safety evaluation with explicit accuracy-evidence status. |
 | `hub v3-snapshot|v3-serve` | Standalone Harness Hub state and web server. |
@@ -39,6 +40,11 @@ Primary `produce` options:
 | `--goal <text>` | Desired repeatable engineering task. |
 | `--advisor auto|on|off|required` | Advisor risk mode. `auto` follows Policy. |
 | `--models-file <file>` | Manual read-only CodeBuddy-style GLM configuration. |
+| `--advisor-timeout-ms <number>` | Full production Advisor request timeout. Default: `180000`. |
+
+`llm v3-doctor` accepts `--timeout-ms <number>` for its minimal live request. Its default is `60000`; it is intentionally separate from the full production Advisor timeout.
+
+`llm v3-models` returns `readinessScope=CONFIGURATION_ONLY` and `connectionVerified=false`. Use `llm v3-doctor --models-file <file> --json` before a production run that requires Advisor review. `produce` persists every Advisor attempt, including failures, under the external Workspace. Large graphs use the Advisor Policy's deterministic evidence projection (default: 48 nodes, 96,000 characters, 2,000 characters per excerpt); the Run records complete-Graph and projection digests, selected/omitted counts, ids, kinds, and source coverage. Advisor Policy can permit one structure/citation-only repair for invalid JSON or a rejected output contract; `attempts[]`, aggregate `usage`, and both validations remain auditable. With `--advisor required`, an unsuccessful final Advisor result produces `status=BLOCKED`, a non-zero exit code, and `nextAction=repair-advisor-and-rerun` while retaining evidence and Proposal artifacts for diagnosis.
 
 See [quickstart.md](quickstart.md), [automation.md](automation.md), and [v3 Production Lifecycle](../guides/v3-production-lifecycle.md).
 

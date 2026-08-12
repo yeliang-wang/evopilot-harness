@@ -63,7 +63,7 @@ Defines eligibility minimums, BM25 parameters, factor weights, decision threshol
 
 ### AdvisorPolicyPack
 
-Defines the generic evidence-bound system prompt, allowed decisions, required response fields, citation requirement, and authority limits.
+Defines the generic evidence-bound system prompt, allowed decisions, required response fields, citation requirement, deterministic LLM-input projection budget, bounded structure/citation repair, and authority limits.
 
 ### EvaluationPack
 

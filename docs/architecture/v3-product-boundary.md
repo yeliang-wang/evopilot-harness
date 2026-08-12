@@ -39,7 +39,7 @@ There are independent version axes:
 
 | Axis | Example | Changes when |
 |---|---|---|
-| Engine | `evopilot-harness@3.0.2` | CLI, schemas, algorithms, UI, or runtime code changes. |
+| Engine | `evopilot-harness@3.1.0` | CLI, schemas, algorithms, UI, or runtime code changes. |
 | Asset | `redis-client-profile@0.1.0` | A Component, Profile, or Bundle is reviewed and evolved. |
 | Ontology | `software-engineering@1.0.0` | Concepts or role relationships change. |
 | Policy | `default-matcher@1.0.0` | Weights, thresholds, risk rules, or Advisor contract changes. |

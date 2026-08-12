@@ -74,7 +74,7 @@ An existing-Profile evolution must change evidence-backed matching or acceptance
 
 ## LLM Boundary
 
-GLM receives only the redacted Evidence Graph, deterministic result, Ontology Pack, relevant Match Policy fields, and Advisor output contract. Every conclusion must cite valid `evidenceId` values.
+GLM receives only a Policy-budgeted projection of the redacted Evidence Graph, the deterministic result, Ontology Pack, relevant Match Policy fields, and Advisor output contract. Projection preserves deterministic reasoning citations first and then source/kind diversity; it records Graph and projection digests plus coverage counts. Every conclusion must cite an `evidenceId` present in that projection. Advisor Policy may authorize one repair attempt after invalid JSON or citation validation failure. The repair receives the exact projected ids and failed checks, may repair only structure/citations, and cannot replace deterministic reasoning or bypass final validation.
 
 GLM may:
 

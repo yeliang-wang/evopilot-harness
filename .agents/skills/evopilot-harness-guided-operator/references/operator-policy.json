@@ -1,0 +1,55 @@
+{
+  "schema": "evopilot-harness-guided-operator-policy/v1",
+  "release": {
+    "packageName": "evopilot-harness",
+    "allowedMajorVersions": [3]
+  },
+  "requiredDocumentation": [
+    "AGENTS.md",
+    "docs/cli/AGENTS.md",
+    "docs/cli/quickstart.md",
+    "docs/cli/workflows.md",
+    "docs/cli/commands.md",
+    "docs/guides/how-harness-works.md"
+  ],
+  "allowedCommands": [
+    {"family": "workspace", "action": "init", "jsonRequired": true},
+    {"family": "workspace", "action": "status", "jsonRequired": true},
+    {"family": "asset", "action": "v3-test", "jsonRequired": true},
+    {"family": "asset", "action": "v3-inspect", "jsonRequired": true},
+    {"family": "asset", "action": "v3-validate", "jsonRequired": true},
+    {"family": "registry", "action": "v3-validate", "jsonRequired": true},
+    {"family": "llm", "action": "v3-models", "jsonRequired": true},
+    {"family": "llm", "action": "v3-doctor", "jsonRequired": true},
+    {"family": "produce", "action": null, "jsonRequired": true},
+    {"family": "proposal", "action": "review", "jsonRequired": true},
+    {"family": "proposal", "action": "approve", "jsonRequired": true},
+    {"family": "proposal", "action": "publish", "jsonRequired": true},
+    {"family": "catalog", "action": "v3-validate", "jsonRequired": true},
+    {"family": "hub", "action": "v3-snapshot", "jsonRequired": true},
+    {"family": "hub", "action": "v3-serve", "jsonRequired": false}
+  ],
+  "forbiddenFlags": [
+    "--allow-internet-research",
+    "--apply",
+    "--approve-and-publish",
+    "--force"
+  ],
+  "workspaceWriteFlags": [
+    "--data-root",
+    "--github-cache-root",
+    "--out"
+  ],
+  "sourceSkipDirectories": [
+    ".git",
+    ".evopilot-harness",
+    ".idea",
+    ".next",
+    "build",
+    "coverage",
+    "dist",
+    "node_modules",
+    "target"
+  ],
+  "shellMeta": [";", "&&", "||", "`", "$(", ">", "<"]
+}

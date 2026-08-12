@@ -39,7 +39,7 @@ node src/index.mjs catalog v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --js
 node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
 
-Harness Hub provides a standalone read-only operational view of assets, proposals, governance Packs, evaluation status, evidence-source types, and Advisor token usage.
+Harness Hub provides a standalone read-only operational view of assets, proposals, governance Packs, evaluation status, evidence-source types, and Advisor token usage. Before required Advisor production, use `llm v3-models` for configuration-only inspection and `llm v3-doctor` for a minimal live connectivity check.
 
 ## 2. How Harnesses Evolve
 
@@ -86,14 +86,17 @@ Matching is not delegated to an LLM. The decision path is:
 6. Retrieve published Profile candidates with BM25 and structured concept matches.
 7. Score role, boundary, capability, execution, evidence coverage, negative conflict, and novelty.
 8. Apply thresholds and risk rules from the versioned `MatchPolicyPack`.
-9. Call GLM only where the policy requires semantic review.
-10. Produce a human-reviewable Profile or Bundle Proposal.
+9. Call GLM only where the policy or operator requires semantic review.
+10. Persist a redacted Advisor Run for success, failure, rejection, unavailable, or skipped outcomes.
+11. Produce a human-reviewable Profile or Bundle Proposal, or a blocked diagnostic Proposal when required review failed.
 
 Every candidate includes factor scores, rejection reasons, and supporting evidence ids. Strong negative conflicts cannot be treated as normal evolution. Shared concepts such as `executable-engineering` establish eligibility but do not manufacture a domain classification.
 
 GLM receives redacted evidence, the deterministic result, relevant Packs, and a strict response contract. It may recommend a decision or asset delta and must cite valid evidence ids. It cannot change the deterministic decision, approve, publish, execute source commands, mutate configuration, or invent evidence.
 
-The Engine records provider, model, token usage, prompt and response digests, Pack versions, validation state, and replay evidence without returning raw API keys.
+The Engine records provider, model, aggregate token usage, prompt and response digests, Pack versions, validation state, timing, failure type, redacted reason, attempt history, and replay evidence without returning raw API keys. The same Advisor Run Contract applies to local projects, Source Roots, Git repositories, attachments, logs, historical Harnesses, notes, and mixed evidence. Before an Advisor call, a deterministic Policy-budgeted projection keeps reasoning-cited nodes first, then round-robins across source and evidence-kind buckets. The complete Evidence Graph remains unchanged and auditable; the Run records projection digest, budget, selected/omitted counts, ids, kinds, and source coverage. Advisor Policy may allow one structure/citation-only repair after invalid JSON or a rejected citation contract. The repair receives only the exact projected Evidence ids, cannot change the deterministic decision, and is subject to the same validation and stop gates.
+
+`llm v3-models` does not call the provider. `llm v3-doctor` performs a minimal live JSON-contract request. When `advisor=required` fails, `produce` retains Evidence Graph and Proposal artifacts, returns `status=BLOCKED` with a non-zero exit code, and requires a fresh run after the Advisor problem is repaired.
 
 ## 4. Which Evidence Sources Are Supported
 

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { EVIDENCE_GRAPH_SCHEMA, PACKAGE_ROOT, REGISTRY_SCHEMA } from "./constants.mjs";
-import { inspectModels, runAdvisor, validateRecommendation } from "./advisor.mjs";
+import { DEFAULT_DOCTOR_TIMEOUT_MS, diagnoseModel, inspectModels, runAdvisor, validateRecommendation } from "./advisor.mjs";
 import { discoverAssets, generateSigningKey, publishCatalog, signFile, validateAssets, validateCatalog, verifyFile } from "./catalog.mjs";
 import { approveProposal, createProposal, inspectProposal, publishProposal } from "./lifecycle.mjs";
 import { serveHubV3, writeHubSnapshot } from "./hub.mjs";
@@ -117,6 +117,11 @@ async function dispatch(args, group, action, id) {
     const file = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
     return output(args, inspectModels(file, option(args, "model")));
   }
+  if (group === "llm" && action === "v3-doctor") {
+    const file = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
+    const result = await diagnoseModel(file, option(args, "model"), Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
+    return output(args, result, result.status === "READY" ? 0 : 2);
+  }
   if (group === "hub" && action === "v3-snapshot") return output(args, writeHubSnapshot(home, option(args, "out", path.join(home, "cache/hub-snapshot.json"))));
   if (group === "hub" && action === "v3-serve") {
     serveHubV3(home, { host: option(args, "host", "127.0.0.1"), port: Number(option(args, "port", 4176)) });
@@ -126,7 +131,7 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
 }
 
 async function produce(args, home) {
@@ -141,8 +146,15 @@ async function produce(args, home) {
       const proposal = createProposal({ home, runRoot: grouped.runRoot, graph: reasoned.graph, reasoning: reasoned.result, advisor });
       proposals.push({ groupId: group.groupId, projects: group.projects, ...proposal });
     }
-    const result = { ...corpus, status: "REVIEW_REQUIRED", proposals, nextAction: "review-corpus-proposals" };
-    return output(args, result);
+    const blocked = proposals.some((proposal) => proposal.status === "BLOCKED");
+    const result = {
+      ...corpus,
+      status: blocked ? "BLOCKED" : "REVIEW_REQUIRED",
+      proposals,
+      advisorSummary: summarizeAdvisorRuns(proposals.map((proposal) => proposal.advisor)),
+      nextAction: blocked ? "repair-advisor-and-rerun" : "review-corpus-proposals"
+    };
+    return output(args, result, blocked ? 2 : 0);
   }
   const evidence = collectEvidence(args, home);
   const reasoned = reasonEvidence(evidence.graph, home);
@@ -150,7 +162,7 @@ async function produce(args, home) {
   writeJson(path.join(evidence.runRoot, "reasoning-result.json"), reasoned.result);
   const advisor = await runAdvisor({ args, home, graph: reasoned.graph, reasoning: reasoned.result, knowledge: reasoned.knowledge, runRoot: evidence.runRoot });
   const proposal = createProposal({ home, runRoot: evidence.runRoot, graph: reasoned.graph, reasoning: reasoned.result, advisor });
-  return output(args, {
+  const result = {
     schema: "evopilot-harness-produce-result/v3",
     status: proposal.status,
     runId: evidence.runId,
@@ -159,7 +171,23 @@ async function produce(args, home) {
     advisor,
     proposal,
     nextAction: proposal.nextAction
-  });
+  };
+  return output(args, result, proposal.status === "BLOCKED" ? 2 : 0);
+}
+
+function summarizeAdvisorRuns(advisors) {
+  const runs = advisors.filter(Boolean);
+  return {
+    runCount: runs.length,
+    succeededCount: runs.filter((advisor) => advisor.status === "SUCCEEDED").length,
+    failedCount: runs.filter((advisor) => ["FAILED", "REJECTED", "UNAVAILABLE"].includes(advisor.status)).length,
+    skippedCount: runs.filter((advisor) => advisor.status === "SKIPPED").length,
+    usage: runs.reduce((total, advisor) => ({
+      inputTokens: total.inputTokens + Number(advisor.usage?.inputTokens ?? 0),
+      outputTokens: total.outputTokens + Number(advisor.usage?.outputTokens ?? 0),
+      totalTokens: total.totalTokens + Number(advisor.usage?.totalTokens ?? 0)
+    }), { inputTokens: 0, outputTokens: 0, totalTokens: 0 })
+  };
 }
 
 function mergeCorpusEvidence(home, group) {

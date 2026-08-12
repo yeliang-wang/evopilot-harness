@@ -2,6 +2,37 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.1.0 - 2026-08-12
+
+### Added
+
+- Added `llm v3-doctor` to distinguish a configured GLM profile from verified live connectivity without exposing credentials; its minimal live request defaults to 60 seconds.
+- Added a unified, redacted Advisor Run Contract for local projects, Source Roots, Git repositories, attachments, production logs, historical Harnesses, notes, and mixed evidence.
+- Added persisted Advisor results for success, failure, rejection, unavailable, disabled, and policy-skipped outcomes, including request id, model, usage, validation, timing, retryability, failure type, and diagnostic reason.
+- Added Source Root Advisor aggregation and regression coverage for successful and failed required Advisor runs.
+- Added one Policy-bounded structure/citation repair for invalid JSON or rejected Advisor contracts, with per-attempt validation and aggregate token accounting.
+- Added deterministic Advisor Evidence Projection for large Graphs, with Policy budgets, reasoning-first selection, source/kind coverage, immutable full-Graph retention, and projection audit metadata.
+- Added an explicitly authorized `READ_ONLY_DIAGNOSTIC` state to the project-level guided Operator Skill.
+
+### Changed
+
+- `llm v3-models` now explicitly reports configuration-only readiness and points operators to `llm v3-doctor` for live verification.
+- `produce --advisor required` now returns `BLOCKED` with a non-zero exit code when Advisor review fails, while retaining evidence and Proposal artifacts for diagnosis.
+- Source Root production now returns `advisorSummary` and complete per-Proposal Advisor results instead of hiding group failure details behind `REVIEW_REQUIRED`.
+- Separated timeout policies: full production Advisor reasoning defaults to 180 seconds, while the lightweight live doctor remains at 60 seconds; both retain explicit CLI overrides.
+- Updated CLI, automation, lifecycle, architecture, release, and AI-agent documentation for the unified Advisor contract.
+
+### Validation
+
+- `python3 .agents/skills/evopilot-harness-guided-operator/scripts/self_test.py`
+- `node --test tests/v3.test.mjs`
+- `npm test`
+- `npm run v3:check`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 3.0.2 - 2026-08-11
 
 ### Documentation

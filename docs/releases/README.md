@@ -4,6 +4,7 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
+- [3.1.0](3.1.0.md) - live GLM doctor, unified Advisor Run diagnostics, Source Root blocking semantics, and guided read-only diagnosis.
 - [3.0.2](3.0.2.md) - v3 documentation system, governance entry points, and verified Harness Hub product view.
 - [3.0.1](3.0.1.md) - Linux-safe v2-to-v3 migration journal and rollback fix.
 - [3.0.0](3.0.0.md) - product-neutral v3 assets, evidence-bound reasoning, immutable publication, Workspace, evaluation, signing, and migration.

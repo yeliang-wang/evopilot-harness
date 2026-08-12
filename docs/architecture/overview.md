@@ -32,7 +32,7 @@ flowchart TD
   Publish --> Catalog["Catalog, Registry, optional signature"]
 ```
 
-The deterministic boundary decides eligibility and asset relationship. GLM receives redacted evidence and the deterministic result; it may recommend changes but cannot approve, publish, execute commands, or override gates.
+The deterministic boundary decides eligibility and asset relationship. GLM receives a Policy-budgeted projection of redacted evidence plus the deterministic result; the complete Evidence Graph remains the audit source of record. GLM may recommend changes but cannot approve, publish, execute commands, or override gates.
 
 ## Modules
 
@@ -41,7 +41,7 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Runtime | Engine, Workspace, CLI, Harness Hub | Engine code is read-only; mutable state belongs in the Workspace. |
 | Evidence | Source Ingestion, Snapshot/Redaction, Evidence Graph | Inputs are evidence only and never publication authority. |
 | Reasoning | OntologyPack, MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator | Domain concepts and thresholds are versioned data, not hidden model decisions. |
-| Advisor | AdvisorPolicyPack, GLM Advisor | Evidence-bound advisory output with citations and token metadata. |
+| Advisor | AdvisorPolicyPack, GLM Advisor | Evidence projection, bounded contract repair, citations, attempts, and token metadata are Policy-governed and auditable. |
 | Assets | HarnessComponent, HarnessProfile, HarnessBundle/Export | Bundle is the immutable execution publication unit. |
 | Governance | EvaluationPack, Proposal Lifecycle, Schema Validator | Review and validation remain mandatory before publication. |
 | Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
@@ -92,7 +92,7 @@ Matching can expose Profile metadata. Execution must bind a published Bundle so 
 | Engine | CLI, schemas, algorithms, Hub, or runtime code changes. |
 | Harness Asset | A Component, Profile, or Bundle evolves. |
 | Ontology | Concepts, conflicts, roles, or task relationships change. |
-| Policy | Eligibility, weights, thresholds, risks, or Advisor contract changes. |
+| Policy | Eligibility, weights, thresholds, risks, Advisor projection, repair, or output-contract changes. |
 | Evaluation | Reviewed cases or acceptance expectations change. |
 | Catalog | Published membership or metadata changes. |
 
@@ -100,4 +100,4 @@ An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
 ## Compatibility
 
-The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.0.2` retains the v2 CLI and Catalog layer for existing automation; see [v2 Architecture Compatibility](v2-compatibility.md).
+The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.1.0` retains the v2 CLI and Catalog layer for existing automation; see [v2 Architecture Compatibility](v2-compatibility.md).

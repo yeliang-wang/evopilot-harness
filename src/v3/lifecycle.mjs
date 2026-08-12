@@ -27,46 +27,45 @@ export function createProposal({ home, runRoot, graph, reasoning, advisor }) {
   }
   const validations = proposedAssets.map((asset) => validateDocument(asset));
   const evaluationPack = buildEvaluationPack(graph, reasoning, proposedAssets[0]);
+  const advisorBlocking = advisor.required && advisor.status !== "SUCCEEDED";
+  const blockers = [
+    ...(validations.some((item) => !item.valid) ? ["proposed-asset-schema-invalid"] : []),
+    ...(advisorBlocking ? ["policy-required-advisor-review-missing"] : []),
+    ...(reasoning.decision === "PROPOSE_NEW_PROFILE" ? ["new-profile-evaluation-review-required"] : [])
+  ];
+  const status = advisorBlocking ? "BLOCKED" : "REVIEW_REQUIRED";
+  const nextAction = advisorBlocking ? "repair-advisor-and-rerun" : "proposal-review";
   const proposal = {
     schema: "evopilot-harness-profile-proposal/v1",
     proposalId: graph.runId,
-    status: "REVIEW_REQUIRED",
+    status,
     decision: reasoning.decision,
     createdAt: new Date().toISOString(),
     evidenceGraphDigest: graph.graphDigest,
     reasoningDigest: digest(reasoning),
-    advisor: {
-      required: reasoning.advisorRequired,
-      status: advisor.status,
-      policy: advisor.policy,
-      responseDigest: advisor.responseDigest,
-      usage: advisor.usage
-    },
+    advisor,
     humanApprovalRequired: true,
     proposedAssets,
     validations,
     evaluationPack,
-    blockers: [
-      ...(validations.some((item) => !item.valid) ? ["proposed-asset-schema-invalid"] : []),
-      ...(reasoning.advisorRequired && advisor.status !== "SUCCEEDED" ? ["policy-required-advisor-review-missing"] : []),
-      ...(reasoning.decision === "PROPOSE_NEW_PROFILE" ? ["new-profile-evaluation-review-required"] : [])
-    ],
-    nextAction: "proposal-review"
+    blockers,
+    nextAction
   };
   writeYaml(path.join(runRoot, "proposal.yaml"), proposal);
   writeYaml(path.join(runRoot, "evaluation-pack.yaml"), evaluationPack);
   for (const asset of proposedAssets) writeYaml(path.join(runRoot, "drafts", kindDirectory(asset.kind), asset.metadata.id, "asset.yaml"), asset);
   return {
     schema: "evopilot-harness-proposal-result/v3",
-    status: "REVIEW_REQUIRED",
+    status,
     proposalId: proposal.proposalId,
     decision: proposal.decision,
     proposedAssets: proposedAssets.map(assetSummary),
     validations,
+    advisor,
     blockers: proposal.blockers,
     evaluationStatus: evaluationPack.spec.status,
     proposalPath: path.join(runRoot, "proposal.yaml"),
-    nextAction: "proposal-review"
+    nextAction
   };
 }
 

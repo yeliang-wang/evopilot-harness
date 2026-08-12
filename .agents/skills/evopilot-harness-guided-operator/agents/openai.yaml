@@ -1,0 +1,7 @@
+interface:
+  display_name: "EvoPilot Harness CLI 操作向导"
+  short_description: "以真人方式安全操作现有 Harness Release"
+  default_prompt: "使用 $evopilot-harness-guided-operator，引导我完成一次 Harness CLI 端到端场景。"
+
+policy:
+  allow_implicit_invocation: false

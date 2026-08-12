@@ -45,7 +45,11 @@ Validate before production:
 ```bash
 node src/index.mjs asset v3-test --workspace "$EVOPILOT_HARNESS_HOME" --json
 node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs llm v3-models --workspace "$EVOPILOT_HARNESS_HOME" --models-file /path/to/models.json --json
+node src/index.mjs llm v3-doctor --workspace "$EVOPILOT_HARNESS_HOME" --models-file /path/to/models.json --json
 ```
+
+`v3-models` proves configuration only. When Advisor review is required, stop unless `v3-doctor` proves live connectivity. Do not print the model file or its credentials.
 
 ## Production Flow
 
@@ -54,6 +58,7 @@ node src/index.mjs produce \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --source-project /path/to/project \
   --goal "Produce or evolve a reusable Harness asset." \
+  --advisor required \
   --json
 ```
 
@@ -75,9 +80,14 @@ reasoning.candidates
 reasoning.rejectionReasons
 reasoning.evidenceIds
 advisor.status/required
+advisor.failureType/reason
 advisor.model
 advisor.usage
+advisor.evidenceProjection
+advisor.attemptCount/repairAttempted
+advisor.attempts
 advisor.promptDigest/responseDigest
+advisor.resultPath
 proposal.proposedAssets
 proposal.validations
 proposal.blockers
@@ -92,6 +102,8 @@ If the decision is `PROPOSE_NEW_PROFILE`, confirm that:
 - all Advisor citations exist in the Evidence Graph;
 - the new boundary does not duplicate an existing Profile;
 - the Evaluation Pack has been shown to the reviewer.
+
+Advisor Policy may permit one invalid-JSON or citation-contract repair. Confirm that every attempt is recorded, total usage includes all attempts, deterministic reasoning is unchanged, and a failed repair remains `BLOCKED`.
 
 ## Approval Flow
 
@@ -135,7 +147,7 @@ node src/index.mjs produce \
   --json
 ```
 
-Report `discoveredProjectCount`, `groupCount`, every `groups[]` entry, every per-project decision, every proposal blocker, and every `runId`. Nested modules are deduplicated unless `--include-modules` is explicitly supplied.
+Report `discoveredProjectCount`, `groupCount`, `advisorSummary`, every `groups[]` entry, every per-project decision, every `proposals[].advisor` result, every proposal blocker, and every `runId`. Nested modules are deduplicated unless `--include-modules` is explicitly supplied. If a required Advisor fails, expect `status=BLOCKED`, a non-zero exit code, persisted diagnostic evidence, and `nextAction=repair-advisor-and-rerun`.
 
 ## Migration Flow
 

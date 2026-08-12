@@ -40,8 +40,8 @@ The source domain is intentionally open, so ownership must be stricter than the 
 | 10 | Eligibility Gate | Decide whether evidence supports a repeatable model-external engineering task | General software taxonomy classification |
 | 11 | Candidate Retrieval/Scoring | BM25 and role, boundary, capability, execution, evidence, conflict, novelty factors | Publication or LLM-only decisions |
 | 12 | Decision Aggregator | `EVOLVE_EXISTING`, `COMPOSE_NEW_BUNDLE`, `PROPOSE_NEW_PROFILE`, stop/review decisions | Human approval |
-| 13 | AdvisorPolicyPack | LLM input/output, citation, recommendation, and authority contract | Model configuration secrets |
-| 14 | GLM Advisor | Evidence-bound ambiguity/risk/delta advice, token and replay evidence | Execute, approve, publish, mutate configuration, override deterministic gates |
+| 13 | AdvisorPolicyPack | LLM input projection, output, repair, citation, recommendation, and authority contract | Model configuration secrets |
+| 14 | GLM Advisor | Evidence-bound ambiguity/risk/delta advice, per-attempt token and replay evidence | Execute, approve, publish, mutate configuration, override deterministic gates |
 | 15 | HarnessComponent | Atomic environment, action, constraint, evidence, validator contract | Domain-wide classification |
 | 16 | HarnessProfile | Domain/role/task composition, positive/negative boundary, Component references | Mutable dependency resolution at execution time |
 | 17 | HarnessBundle/Export | Immutable resolved publication with pinned Profile/Components and optional consumer exports | Treat an EvoPilot export as canonical source truth |
