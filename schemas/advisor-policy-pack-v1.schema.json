@@ -73,6 +73,26 @@
               "uniqueItems": true,
               "items": { "enum": ["READY_FOR_HUMAN_APPROVAL", "REVISE", "SPLIT", "REJECT", "NEED_MORE_EVIDENCE"] }
             },
+            "maxOutputTokens": { "type": "integer", "minimum": 1024, "maximum": 32768 },
+            "citationRules": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["requiredPaths", "requireGroupCoherenceForMultipleSources", "allowEmptyEvidencePaths"],
+              "properties": {
+                "requiredPaths": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "enum": ["projectMembership", "boundaryAssessment", "advisorAssessment"] }
+                },
+                "requireGroupCoherenceForMultipleSources": { "type": "boolean" },
+                "allowEmptyEvidencePaths": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": { "enum": ["findings", "existingAssetOverlap", "definitionQuality", "evaluationSufficiency"] }
+                }
+              }
+            },
             "repair": {
               "type": "object",
               "additionalProperties": false,

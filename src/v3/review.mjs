@@ -120,7 +120,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
       "For a corpus, assess group coherence and every source membership; use SPLIT when one reusable boundary does not fit all members.",
       "Assess new-versus-evolve relationships against existing Catalog assets and identify duplicate, conflicting, or overly broad definitions.",
       "Assess whether the Profile or Bundle is specific, professional, executable, constrained, evidence-backed, and evaluable.",
-      "Cite only supplied evidenceId values for source-derived conclusions. Never invent evidence.",
+      "Cite only supplied evidenceId values for source-derived membership, boundary, Advisor, and multi-source coherence conclusions. Catalog overlap, Proposal structure, definition quality, evaluation sufficiency, and non-source findings may use an empty evidenceIds array. Never invent evidence.",
       "Do not approve, publish, execute source code, mutate configuration, or override deterministic safety gates."
     ]
   };
@@ -129,7 +129,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
   let activeRequest = requestBody;
   const maxRepairs = Math.min(1, Math.max(0, Number(contract.repair?.maxAttempts ?? 0)));
   for (let index = 0; index <= maxRepairs; index += 1) {
-    const attempt = await semanticAttempt({ model, requestBody: activeRequest, timeoutMs: Number(option(args, "review-timeout-ms", option(args, "advisor-timeout-ms", 180_000))), graph, contract, sourceIds: sources.map((item) => item.sourceId), attempt: index + 1 });
+    const attempt = await semanticAttempt({ model, requestBody: activeRequest, timeoutMs: Number(option(args, "review-timeout-ms", option(args, "advisor-timeout-ms", 180_000))), graph, contract, sources, attempt: index + 1 });
     attempts.push(attempt.record);
     if (attempt.status === "SUCCEEDED") return complete("SUCCEEDED", {
       model: publicModel(model),
@@ -163,7 +163,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
   }
 }
 
-async function semanticAttempt({ model, requestBody, timeoutMs, graph, contract, sourceIds, attempt }) {
+async function semanticAttempt({ model, requestBody, timeoutMs, graph, contract, sources, attempt }) {
   const started = Date.now();
   const base = (status, extra = {}) => ({ status, attempt, startedAt: new Date(started).toISOString(), completedAt: new Date().toISOString(), durationMs: Date.now() - started, promptDigest: digest(requestBody), ...extra });
   let response;
@@ -188,12 +188,12 @@ async function semanticAttempt({ model, requestBody, timeoutMs, graph, contract,
   let assessment;
   try {
     envelope = JSON.parse(raw);
-    assessment = parseJsonContent(envelope?.choices?.[0]?.message?.content);
+    assessment = normalizeSemanticAssessment(parseJsonContent(envelope?.choices?.[0]?.message?.content));
   } catch (error) {
     const record = base("FAILED", { failureType: "INVALID_RESPONSE_JSON", reason: `GLM review response was not valid JSON: ${error instanceof Error ? error.message : String(error)}`, responseDigest, usage: normalizeUsage(envelope?.usage), retryable: false });
     return { ...record, raw, record };
   }
-  const validation = validateSemanticAssessment(assessment, graph, contract, sourceIds);
+  const validation = validateSemanticAssessment(assessment, graph, contract, sources);
   if (validation.status !== "VALIDATED") {
     const record = base("REJECTED", { failureType: "CONTRACT_REJECTED", reason: "GLM review response violated the evidence-bound Proposal Review Contract.", responseDigest, validation, usage: normalizeUsage(envelope.usage), retryable: false });
     return { ...record, raw, assessment, record };
@@ -202,17 +202,33 @@ async function semanticAttempt({ model, requestBody, timeoutMs, graph, contract,
   return { ...record, raw, assessment, record };
 }
 
-function validateSemanticAssessment(value, graph, contract, sourceIds) {
+function validateSemanticAssessment(value, graph, contract, sources) {
   const missing = (contract.requiredFields ?? []).filter((field) => value?.[field] == null);
   const allowedVerdict = (contract.allowedVerdicts ?? REVIEW_VERDICTS).includes(value?.verdict);
   const knownEvidenceIds = new Set(graph.nodes.map((node) => node.evidenceId));
   const citedIds = collectEvidenceIds(value);
   const unknownEvidenceIds = citedIds.filter((id) => !knownEvidenceIds.has(id));
   const memberships = Array.isArray(value?.projectMembership) ? value.projectMembership : [];
+  const sourceIds = sources.map((item) => item.sourceId);
+  const sourceById = new Map(sources.map((item) => [item.sourceId, item]));
   const returnedSourceIds = memberships.map((item) => item?.sourceId).filter(Boolean);
   const unknownSourceIds = returnedSourceIds.filter((id) => !sourceIds.includes(id));
   const missingSourceIds = sourceIds.filter((id) => !returnedSourceIds.includes(id));
   const findings = Array.isArray(value?.findings) ? value.findings : [];
+  const citationRules = contract.citationRules ?? {
+    requiredPaths: ["projectMembership", "boundaryAssessment", "advisorAssessment"],
+    requireGroupCoherenceForMultipleSources: true
+  };
+  const membershipCitationFailures = memberships.filter((item) => {
+    const source = sourceById.get(item?.sourceId);
+    return !source || !Array.isArray(item?.evidenceIds) || item.evidenceIds.length === 0 || item.evidenceIds.some((id) => !source.evidenceIds.includes(id));
+  }).map((item) => item?.sourceId ?? "missing-source-id");
+  const requiredCitationFailures = (citationRules.requiredPaths ?? []).filter((field) => {
+    if (field === "projectMembership") return membershipCitationFailures.length > 0;
+    return !Array.isArray(value?.[field]?.evidenceIds) || value[field].evidenceIds.length === 0;
+  });
+  const groupCitationRequired = Boolean(citationRules.requireGroupCoherenceForMultipleSources) && sources.length > 1 && value?.groupCoherence?.status !== "NOT_APPLICABLE";
+  const groupCitationValid = !groupCitationRequired || (Array.isArray(value?.groupCoherence?.evidenceIds) && value.groupCoherence.evidenceIds.length > 0);
   const semanticShapeValid = Boolean(validateSemanticReviewSchema(value));
   const semanticShapeErrors = semanticShapeValid ? [] : (validateSemanticReviewSchema.errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message}`);
   const checks = [
@@ -221,6 +237,7 @@ function validateSemanticAssessment(value, graph, contract, sourceIds) {
     { id: "allowed-verdict", status: allowedVerdict ? "PASS" : "FAIL", evidence: [String(value?.verdict)] },
     { id: "evidence-citations", status: citedIds.length > 0 && unknownEvidenceIds.length === 0 ? "PASS" : "FAIL", evidence: unknownEvidenceIds.length ? unknownEvidenceIds : citedIds },
     { id: "source-membership-closure", status: unknownSourceIds.length === 0 && missingSourceIds.length === 0 ? "PASS" : "FAIL", evidence: unique([...unknownSourceIds, ...missingSourceIds]) },
+    { id: "required-source-citations", status: requiredCitationFailures.length === 0 && groupCitationValid ? "PASS" : "FAIL", evidence: unique([...requiredCitationFailures, ...membershipCitationFailures, ...(groupCitationValid ? [] : ["groupCoherence"])]) },
     { id: "findings", status: findings.length > 0 && findings.every((item) => item?.dimension && item?.conclusion && Array.isArray(item?.evidenceIds)) ? "PASS" : "FAIL", evidence: findings.map((item) => item?.id ?? "missing-id") }
   ];
   return { status: checks.every((item) => item.status === "PASS") ? "VALIDATED" : "FAILED", checks };
@@ -385,24 +402,37 @@ function proposalForReview(proposal) {
 }
 
 function reviewRequest(model, policy, prompt) {
-  return { model: model.modelName, temperature: 0, response_format: { type: "json_object" }, messages: [{ role: "system", content: policy.spec.reviewSystemPrompt ?? policy.spec.systemPrompt }, { role: "user", content: JSON.stringify(prompt) }] };
+  return { model: model.modelName, temperature: 0, max_tokens: Number(policy.spec.reviewContract?.maxOutputTokens ?? 8192), response_format: { type: "json_object" }, messages: [{ role: "system", content: policy.spec.reviewSystemPrompt ?? policy.spec.systemPrompt }, { role: "user", content: JSON.stringify(prompt) }] };
 }
 
 function semanticOutputShape() {
   return {
     verdict: "READY_FOR_HUMAN_APPROVAL|REVISE|SPLIT|REJECT|NEED_MORE_EVIDENCE",
     summary: "string",
-    findings: [{ id: "string", severity: "info|warning|blocking", dimension: "string", conclusion: "string", reasons: ["string"], evidenceIds: ["evidence-0001"], suggestedActions: ["string"] }],
+    findings: [{ id: "string", severity: "info|warning|blocking", dimension: "string", conclusion: "string", reasons: ["string"], evidenceIds: [], suggestedActions: ["string"] }],
     reasons: ["string"],
     groupCoherence: { status: "COHERENT|INCOHERENT|UNCERTAIN|NOT_APPLICABLE", rationale: "string", evidenceIds: ["evidence-0001"] },
     projectMembership: [{ sourceId: "source-001", sourceType: "string", sourceRef: "exact supplied sourceRef", status: "IN_SCOPE|OUT_OF_SCOPE|UNCERTAIN", rationale: "string", evidenceIds: ["evidence-0001"] }],
     boundaryAssessment: { status: "PASS|FAIL|UNCERTAIN", rationale: "string", evidenceIds: ["evidence-0001"] },
-    existingAssetOverlap: { status: "NONE|RELATED|EVOLUTION_CANDIDATE|DUPLICATE|CONFLICT", rationale: "string", candidates: [], evidenceIds: ["evidence-0001"] },
-    definitionQuality: { status: "PASS|FAIL|UNCERTAIN", score: 0.0, rationale: "string", checks: [], evidenceIds: ["evidence-0001"] },
-    evaluationSufficiency: { status: "PASS|FAIL|UNCERTAIN", rationale: "string", evidenceIds: ["evidence-0001"] },
+    existingAssetOverlap: { status: "NONE|RELATED|EVOLUTION_CANDIDATE|DUPLICATE|CONFLICT", rationale: "string", candidates: [], evidenceIds: [] },
+    definitionQuality: { status: "PASS|FAIL|UNCERTAIN", score: 0.0, rationale: "string", checks: [{ id: "string", status: "PASS|FAIL|UNCERTAIN", detail: "optional string" }], evidenceIds: [] },
+    evaluationSufficiency: { status: "PASS|FAIL|UNCERTAIN", rationale: "string", evidenceIds: [] },
     advisorAssessment: { status: "CONSISTENT|CONFLICTED|INSUFFICIENT", rationale: "string", evidenceIds: ["evidence-0001"] },
     suggestedActions: ["string"]
   };
+}
+
+function normalizeSemanticAssessment(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const normalized = structuredClone(value);
+  if (Array.isArray(normalized.definitionQuality?.checks)) {
+    normalized.definitionQuality.checks = normalized.definitionQuality.checks.map((item, index) => {
+      if (item && typeof item === "object" && !Array.isArray(item)) return item;
+      const detail = String(item ?? "").trim() || `Reported quality check ${index + 1}`;
+      return { id: safeId(detail) || `reported-check-${index + 1}`, status: "REPORTED", detail };
+    });
+  }
+  return normalized;
 }
 
 function reviewRepairRequest(model, policy, contract, graph, sources, previous) {

@@ -101,4 +101,4 @@ An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
 ## Compatibility
 
-The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.2.0` retains the v2 CLI, Asset v3, Catalog, and Registry layer for existing automation; v3 approval now requires a current Proposal Review Report. See [v2 Architecture Compatibility](v2-compatibility.md).
+The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.2.1` retains the v2 CLI, Asset v3, Catalog, and Registry layer for existing automation; v3 approval now requires a current Proposal Review Report. See [v2 Architecture Compatibility](v2-compatibility.md).

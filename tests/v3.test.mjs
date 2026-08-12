@@ -75,7 +75,7 @@ test("v3 workspace keeps the Engine read-only and installs complete versioned bo
   const registry = runJson(["registry", "v3-validate", "--workspace", home, "--json"]);
   assert.equal(registry.status, "VALIDATED");
   const advisorPolicies = runJson(["policy", "inspect", "--workspace", home, "--type", "advisor", "--json"]);
-  assert.ok(advisorPolicies.packs.some((pack) => pack.document.metadata.version === "1.2.0" && pack.document.spec.reviewContract));
+  assert.ok(advisorPolicies.packs.some((pack) => pack.document.metadata.version === "1.2.1" && pack.document.spec.reviewContract));
 });
 
 test("v3 formal schemas reject incomplete assets and validate governance packs", () => {
@@ -283,6 +283,45 @@ test("proposal approval rejects a Review Report after the Proposal changes", asy
   const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
   assert.ok(blocked.blockers.includes("proposal-review-stale"));
   assert.doesNotMatch(JSON.stringify(blocked), /stale-secret/);
+});
+
+test("proposal review accepts production-shaped non-source assessments and normalizes quality checks", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t, { productionShape: true });
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "production-shape-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--json"]);
+
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.status, "REVIEWED");
+  assert.equal(review.verdict, "READY_FOR_HUMAN_APPROVAL");
+  assert.equal(review.reviewer.status, "SUCCEEDED");
+  assert.equal(review.reviewer.policy.version, "1.2.1");
+  assert.equal(review.reviewer.attempts.length, 1);
+  assert.deepEqual(review.existingAssetOverlap.evidenceIds, []);
+  assert.deepEqual(review.evaluationSufficiency.evidenceIds, []);
+  assert.ok(review.findings.some((finding) => finding.evidenceIds.length === 0));
+  assert.ok(review.definitionQuality.checks.every((check) => typeof check === "object" && check.id));
+  assert.equal(service.requests.at(-1).request.max_tokens, 8192);
+  assert.doesNotMatch(JSON.stringify(review), /production-shape-secret/);
+});
+
+test("proposal review still blocks production-shaped output with missing source citations", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t, { missingSourceCitations: true });
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "missing-citation-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--json"]);
+
+  const review = await runJsonAsyncFailure(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.status, "BLOCKED");
+  assert.equal(review.verdict, "NEED_MORE_EVIDENCE");
+  assert.ok(review.remainingBlockers.includes("semantic-proposal-review-required"));
+  assert.equal(review.reviewer.attempts.length, 2);
+  assert.ok(review.reviewer.attempts.every((attempt) => attempt.validation.checks.some((check) => check.id === "required-source-citations" && check.status === "FAIL")));
+  assert.doesNotMatch(JSON.stringify(review), /missing-citation-secret/);
 });
 
 test("proposal review blocks when the independent semantic reviewer is unavailable", () => {
@@ -632,18 +671,24 @@ async function createModelService(t, { evidenceId = "evidence-0001" } = {}) {
   return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
 }
 
-async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPROVAL" } = {}) {
+async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPROVAL", productionShape = false, missingSourceCitations = false } = {}) {
   const requests = [];
   const server = http.createServer((request, response) => {
     const chunks = [];
     request.on("data", (chunk) => chunks.push(chunk));
     request.on("end", () => {
       const body = Buffer.concat(chunks).toString("utf8");
-      requests.push({ authorization: request.headers.authorization, body });
       const envelope = JSON.parse(body);
+      requests.push({ authorization: request.headers.authorization, body, request: envelope });
       const prompt = JSON.parse(envelope.messages[1].content);
-      const content = prompt.task?.startsWith("Independently review")
-        ? readyReviewAssessment(prompt, verdict)
+      const reviewPrompt = prompt.task?.startsWith("Independently review") || prompt.task?.startsWith("Repair the previous Proposal Review");
+      const reviewShape = prompt.previousOutput ?? (productionShape ? productionShapeReviewAssessment(prompt, verdict) : readyReviewAssessment(prompt, verdict));
+      if (missingSourceCitations && reviewShape?.projectMembership) {
+        reviewShape.projectMembership = reviewShape.projectMembership.map((item) => ({ ...item, evidenceIds: [] }));
+        reviewShape.boundaryAssessment = { ...reviewShape.boundaryAssessment, evidenceIds: [] };
+      }
+      const content = reviewPrompt
+        ? reviewShape
         : {
           recommendation: "PROPOSE_NEW_PROFILE",
           rationale: "The cited evidence supports a bounded reusable engineering Profile proposal.",
@@ -658,6 +703,24 @@ async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPRO
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   t.after(() => server.close());
   return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
+}
+
+function productionShapeReviewAssessment(prompt, verdict) {
+  const assessment = readyReviewAssessment(prompt, verdict);
+  assessment.findings.push({
+    id: "evaluation-policy-review",
+    severity: "info",
+    dimension: "evaluation-sufficiency",
+    conclusion: "The Proposal evaluation policy still requires a separate human decision.",
+    reasons: ["This conclusion is derived from the supplied EvaluationPack rather than source evidence."],
+    evidenceIds: [],
+    suggestedActions: ["Keep the evaluation review as an explicit human gate."]
+  });
+  assessment.existingAssetOverlap.evidenceIds = [];
+  assessment.definitionQuality.evidenceIds = [];
+  assessment.definitionQuality.checks = ["classification is present", "negative boundary is present", "validators are present"];
+  assessment.evaluationSufficiency.evidenceIds = [];
+  return assessment;
 }
 
 function readyReviewAssessment(prompt, verdict = "READY_FOR_HUMAN_APPROVAL") {

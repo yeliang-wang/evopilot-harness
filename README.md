@@ -1,7 +1,7 @@
 # EvoPilot Harness
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.2.0)
+[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.2.1)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -122,7 +122,7 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-Engine `3.2.0` retains v2 CLI, Asset v3, Catalog, and Registry compatibility. New v3 approval automation must run the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+Engine `3.2.1` retains v2 CLI, Asset v3, Catalog, and Registry compatibility. New v3 approval automation must run the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
 ## Validate
 

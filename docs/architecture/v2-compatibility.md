@@ -4,7 +4,7 @@ This page preserves the architecture map for existing v2 automation. The current
 
 ## Status
 
-The v2 CLI, source packs, Harness Asset envelope, Catalog, and Registry remain available as a compatibility layer in Engine `3.2.0`. They are not the canonical v3 asset model.
+The v2 CLI, source packs, Harness Asset envelope, Catalog, and Registry remain available as a compatibility layer in Engine `3.2.1`. They are not the canonical v3 asset model.
 
 | v2 concept | Current role | v3 direction |
 |---|---|---|

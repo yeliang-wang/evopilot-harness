@@ -19,7 +19,7 @@
     "suggestedActions": { "type": "array", "items": { "type": "string" } }
   },
   "$defs": {
-    "evidenceIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^evidence-[0-9]{4,}$" } },
+    "evidenceIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^evidence-[0-9]{4,}$" } },
     "assessment": {
       "type": "object",
       "additionalProperties": false,

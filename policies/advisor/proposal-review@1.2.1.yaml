@@ -1,0 +1,65 @@
+apiVersion: harness.evopilot.io/v1
+kind: AdvisorPolicyPack
+metadata:
+  id: default-advisor
+  version: 1.2.1
+  lifecycle: published
+  description: Evidence-bound GLM advice and internally consistent Proposal Review contracts for Harness asset decisions.
+spec:
+  modelConfigMode: manual-read-only
+  allowedProvider: zhipu
+  requiredCitations: true
+  systemPrompt: >-
+    You review Harness asset eligibility and candidate relationships. Use only the supplied Evidence Graph,
+    Ontology Pack, Match Policy result, and cited research evidence. Every source-derived conclusion must cite
+    one or more evidenceId values. Do not invent domain facts, approve or publish assets, execute code, mutate
+    model configuration, or override deterministic safety gates. Return only JSON matching the output contract.
+  reviewSystemPrompt: >-
+    You independently review a generated Harness Proposal for product boundary, corpus coherence, project membership,
+    existing-asset relationships, definition quality, and evaluation sufficiency. Use only the supplied Proposal,
+    Evidence Graph, reasoning, Catalog context, and policy outputs. Distinguish building a product from merely using
+    or integrating it. Source-derived membership, boundary, Advisor, and multi-source coherence conclusions must cite
+    supplied evidenceId values. Catalog overlap, Proposal structure, definition quality, evaluation sufficiency, and
+    non-source findings may use an empty evidenceIds array because they are derived from supplied non-Graph inputs.
+    Return only the Review Contract JSON and never approve, publish, execute, mutate configuration, invent evidence,
+    or override deterministic safety gates.
+  outputContract:
+    requiredFields: [recommendation, rationale, evidenceIds, risks, proposedDeltas]
+    allowedRecommendations: [EVOLVE_EXISTING, COMPOSE_NEW_BUNDLE, PROPOSE_NEW_PROFILE, INSUFFICIENT_EVIDENCE, NOT_HARNESS_ELIGIBLE, REVIEW_REQUIRED]
+    evidenceProjection:
+      algorithm: reasoning-source-kind-round-robin/v1
+      maxNodes: 48
+      maxCharacters: 96000
+      maxExcerptCharacters: 2000
+    repair:
+      maxAttempts: 1
+      retryOn: [INVALID_RESPONSE_JSON, CONTRACT_REJECTED]
+  reviewContract:
+    requiredFields:
+      - verdict
+      - summary
+      - findings
+      - reasons
+      - groupCoherence
+      - projectMembership
+      - boundaryAssessment
+      - existingAssetOverlap
+      - definitionQuality
+      - evaluationSufficiency
+      - advisorAssessment
+      - suggestedActions
+    allowedVerdicts: [READY_FOR_HUMAN_APPROVAL, REVISE, SPLIT, REJECT, NEED_MORE_EVIDENCE]
+    maxOutputTokens: 8192
+    citationRules:
+      requiredPaths: [projectMembership, boundaryAssessment, advisorAssessment]
+      requireGroupCoherenceForMultipleSources: true
+      allowEmptyEvidencePaths: [findings, existingAssetOverlap, definitionQuality, evaluationSufficiency]
+    repair:
+      maxAttempts: 1
+      retryOn: [INVALID_RESPONSE_JSON, CONTRACT_REJECTED]
+  authority:
+    mayRecommend: true
+    mayApprove: false
+    mayPublish: false
+    mayExecute: false
+    mayMutateModelConfig: false

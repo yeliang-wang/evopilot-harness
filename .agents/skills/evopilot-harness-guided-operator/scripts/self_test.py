@@ -73,7 +73,7 @@ def create_release(root: Path) -> None:
     (root / "src").mkdir(parents=True)
     (root / "src/index.mjs").write_text("// test entrypoint\n", encoding="utf-8")
     (root / "package.json").write_text(
-        json.dumps({"name": "evopilot-harness", "version": "3.2.0"}) + "\n",
+        json.dumps({"name": "evopilot-harness", "version": "3.2.1"}) + "\n",
         encoding="utf-8",
     )
     for relative in REQUIRED_DOCS:
@@ -128,7 +128,7 @@ def main() -> int:
             "--state-file",
             str(state),
             "--expected-version",
-            "3.2.0",
+            "3.2.1",
             "--source-project",
             str(source),
             "--evidence-path",

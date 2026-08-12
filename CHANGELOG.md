@@ -2,6 +2,25 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.2.1 - 2026-08-12
+
+### Fixed
+
+- Aligned Proposal Review prompts, Policy, Schema, and runtime validation so source-derived conclusions require Evidence Graph citations while Catalog-, Proposal-, definition-, and evaluation-derived conclusions may honestly use empty `evidenceIds`.
+- Normalized string-form semantic definition-quality checks into structured report objects before Schema validation.
+- Added an explicit 8192-token structured Review output budget and a production-shaped GLM response regression test.
+- Preserved fail-closed behavior for missing source citations, unknown evidence ids, incomplete source membership, malformed JSON, and exhausted bounded repair.
+
+### Validation
+
+- `python3 .agents/skills/evopilot-harness-guided-operator/scripts/self_test.py`
+- `node --test tests/v3.test.mjs`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- Live GLM doctor, required Advisor, and Proposal Review from an isolated published-source Workspace
+- `git diff --check`
+
 ## 3.2.0 - 2026-08-12
 
 ### Added
