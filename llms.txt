@@ -17,6 +17,7 @@
 - [Product and module boundaries](docs/architecture/adr/0001-product-and-module-boundaries.md)
 - [v3 asset model](docs/architecture/v3-asset-model.md)
 - [v3 reasoning and Proposal Review contract](docs/reference/v3-reasoning-contract.md)
+- [Feedback evidence contract and workflow](docs/guides/feedback-evidence.md)
 - [Catalog contract](docs/reference/catalog-contract.md)
 - [Registry contract](docs/reference/registry-contract.md)
 - [v2 compatibility](docs/guides/v2-compatibility.md)

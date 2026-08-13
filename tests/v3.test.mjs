@@ -8,6 +8,11 @@ import test from "node:test";
 import { spawn, spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { DEFAULT_ADVISOR_TIMEOUT_MS, DEFAULT_DOCTOR_TIMEOUT_MS, projectAdvisorEvidence } from "../src/v3/advisor.mjs";
+import { discoverAssets } from "../src/v3/catalog.mjs";
+import { feedbackPackageDigest, feedbackPayloadDigest } from "../src/v3/feedback.mjs";
+import { serveHubV3 } from "../src/v3/hub.mjs";
+import { validateDocument } from "../src/v3/schema.mjs";
+import { digest } from "../src/v3/utils.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const cli = path.join(root, "src/index.mjs");
@@ -553,6 +558,242 @@ test("Harness Hub v3 snapshot exposes assets, proposals, governance packs, evalu
   assert.equal(result.llmUsage.reviewRunCount, 0);
   assert.ok(fs.existsSync(out));
 });
+
+test("feedback processing validates immutable bindings, ingests idempotently, aggregates four dimensions, and never mutates Catalog assets", () => {
+  const home = initializedHome();
+  const now = "2026-08-13T08:00:00.000Z";
+  const organizationBefore = treeDigest(path.join(home, "catalogs/organization"));
+  const builtinBefore = treeDigest(path.join(home, "catalogs/builtin"));
+  const proposalsBefore = treeDigest(path.join(home, "evolution-runs"));
+  const firstFile = writeFeedbackFixture(home, createFeedbackPackage(home, { packageId: "feedback-alpha", sourceId: "workspace-alpha", score: 0.9 }), "feedback-alpha.yaml");
+
+  const inspected = runJson(["feedback", "inspect", firstFile, "--workspace", home, "--json"]);
+  assert.equal(inspected.status, "INSPECTED");
+  assert.equal(inspected.declaredPackageDigest, inspected.calculatedPackageDigest);
+  assert.equal(inspected.declaredPayloadDigest, inspected.calculatedPayloadDigest);
+
+  const validated = runJson(["feedback", "validate", firstFile, "--workspace", home, "--now", now, "--json"]);
+  assert.equal(validated.status, "VALIDATED");
+  assert.ok(validated.checks.every((check) => check.status === "PASS"));
+
+  const processed = runJson(["feedback", "process", firstFile, "--workspace", home, "--now", now, "--json"]);
+  assert.equal(processed.status, "PROCESSED");
+  assert.equal(processed.ingestion.status, "ACCEPTED");
+  assert.equal(processed.proposalCreated, false);
+  assert.equal(processed.assetMutation, false);
+  assert.equal(processed.sourceExecution, false);
+  assert.equal(processed.aggregation.report.summary.sampleCount, 1);
+  assert.equal(processed.aggregation.report.summary.independentSourceCount, 1);
+  assert.equal(processed.aggregation.report.summary.dimensions.outcome.successRate, 1);
+  assert.equal(processed.aggregation.report.summary.dimensions.outcome.averageScore, 0.9);
+  assert.equal(processed.aggregation.report.summary.dimensions.process.averageRetryCount, 1);
+  assert.equal(processed.aggregation.report.summary.dimensions.safety.safeRate, 1);
+  assert.equal(processed.aggregation.report.summary.dimensions.cost.averageTotalTokens, 150);
+  assert.equal(processed.aggregation.report.summary.uncertainty.level, "HIGH");
+  assert.ok(processed.aggregation.report.summary.uncertainty.outcomeSuccessRate95);
+  assert.equal(processed.aggregation.report.groups.filter((group) => group.assetRef.kind === "HarnessBundle").length, 1);
+  assert.equal(processed.aggregation.report.groups.filter((group) => group.assetRef.kind === "HarnessProfile").length, 1);
+  assert.equal(processed.aggregation.report.groups.filter((group) => group.assetRef.kind === "HarnessComponent").length, 1);
+  assert.match(path.basename(processed.ingestion.destination), /^feedback-alpha@1\.0\.0-[a-f0-9]{16}\.yaml$/);
+
+  const duplicate = runJson(["feedback", "process", firstFile, "--workspace", home, "--now", now, "--json"]);
+  assert.equal(duplicate.ingestion.status, "DUPLICATE");
+  assert.equal(duplicate.ingestion.counted, false);
+  assert.equal(duplicate.aggregation.packageCount, 1);
+
+  const secondFile = writeFeedbackFixture(home, createFeedbackPackage(home, { packageId: "feedback-beta", sourceId: "workspace-beta", outcome: "FAILED", score: 0.2, safety: "POLICY_VIOLATION", totalTokens: 250, currency: "CNY" }), "feedback-beta.yaml");
+  const second = runJson(["feedback", "process", secondFile, "--workspace", home, "--now", now, "--json"]);
+  assert.equal(second.ingestion.status, "ACCEPTED");
+  assert.equal(second.aggregation.packageCount, 2);
+  assert.equal(second.aggregation.report.summary.independentSourceCount, 2);
+  assert.equal(second.aggregation.report.summary.dimensions.outcome.successRate, 0.5);
+  assert.equal(second.aggregation.report.summary.dimensions.outcome.averageScore, 0.55);
+  assert.equal(second.aggregation.report.summary.dimensions.safety.safeRate, 0.5);
+  assert.equal(second.aggregation.report.summary.dimensions.cost.averageTotalTokens, 200);
+  assert.equal(second.aggregation.report.metadata.algorithmVersion, "effectiveness-aggregate/v1");
+  assert.equal(second.aggregation.report.summary.dimensions.cost.averageEstimatedCost, null);
+  assert.deepEqual(second.aggregation.report.summary.dimensions.cost.estimatedCostByCurrency.map((item) => item.currency), ["CNY", "USD"]);
+
+  const report = runJson(["feedback", "report", second.aggregation.reportId, "--workspace", home, "--json"]);
+  assert.equal(report.status, "FOUND");
+  assert.equal(report.digestMatches, true);
+  assert.equal(report.report.scope.packageCount, 2);
+  assert.equal(report.report.groups.length, 3);
+  assert.equal(treeDigest(path.join(home, "catalogs/organization")), organizationBefore);
+  assert.equal(treeDigest(path.join(home, "catalogs/builtin")), builtinBefore);
+  assert.equal(treeDigest(path.join(home, "evolution-runs")), proposalsBefore);
+});
+
+test("feedback validation rejects approval, redaction, freshness, integrity, immutable binding, and identity conflicts", () => {
+  const home = initializedHome();
+  const now = "2026-08-13T08:00:00.000Z";
+  const cases = [
+    ["unapproved", (document) => { document.approval.status = "PENDING"; }, "approval"],
+    ["unredacted", (document) => { document.redaction.status = "RAW"; }, "redaction"],
+    ["expired", (document) => { document.metadata.expiresAt = "2026-08-13T07:59:59.000Z"; }, "not-expired"],
+    ["tampered-package", (document) => { document.dimensions.outcome.score = 0.1; }, "package-digest"],
+    ["tampered-payload", (document) => { document.redaction.payloadDigest = digest("wrong-payload"); }, "redacted-payload-digest"],
+    ["bundle-digest", (document) => { document.harnessBinding.bundleRef.digest = digest("wrong-bundle"); }, "bundle-reference"],
+    ["profile-digest", (document) => { document.harnessBinding.profileRef.digest = digest("wrong-profile"); }, "profile-reference"],
+    ["component-digest", (document) => { document.harnessBinding.componentRefs[0].digest = digest("wrong-component"); }, "component:engineering-validation-reference"],
+    ["acceptance-counts", (document) => { document.dimensions.outcome.acceptancePassed = 5; }, "outcome-acceptance-counts"],
+    ["process-counts", (document) => { document.dimensions.process.failedStepCount = 9; }, "process-step-counts"],
+    ["token-accounting", (document) => { document.dimensions.cost.totalTokens = 999; }, "cost-token-accounting"]
+  ];
+
+  for (const [id, mutate, expectedFailure] of cases) {
+    const document = createFeedbackPackage(home, { packageId: `feedback-${id}` });
+    mutate(document);
+    if (!["tampered-package", "tampered-payload"].includes(id)) finalizeFeedbackPackage(document);
+    const file = writeFeedbackFixture(home, document, `${id}.yaml`);
+    const rejected = runJsonFailure(["feedback", "process", file, "--workspace", home, "--now", now, "--json"]);
+    assert.equal(rejected.status, "REJECTED", id);
+    assert.ok(rejected.validation.failures.some((failure) => failure.id === expectedFailure), `${id} should fail ${expectedFailure}`);
+    assert.equal(rejected.proposalCreated, false, id);
+    assert.equal(rejected.assetMutation, false, id);
+    assert.equal(rejected.sourceExecution, false, id);
+  }
+
+  const accepted = createFeedbackPackage(home, { packageId: "feedback-conflict", score: 0.8 });
+  const acceptedFile = writeFeedbackFixture(home, accepted, "conflict-accepted.yaml");
+  assert.equal(runJson(["feedback", "ingest", acceptedFile, "--workspace", home, "--now", now, "--json"]).status, "ACCEPTED");
+  const conflicting = createFeedbackPackage(home, { packageId: "feedback-conflict", score: 0.3 });
+  const conflictingFile = writeFeedbackFixture(home, conflicting, "conflict-rejected.yaml");
+  const conflict = runJsonFailure(["feedback", "ingest", conflictingFile, "--workspace", home, "--now", now, "--json"]);
+  assert.equal(conflict.status, "REJECTED");
+  assert.ok(conflict.validation.failures.some((failure) => failure.id === "package-id-conflict"));
+  assert.equal(walkFilesForTest(path.join(home, "feedback/packages")).length, 1);
+  assert.ok(walkFilesForTest(path.join(home, "feedback/rejected")).length >= cases.length + 1);
+});
+
+test("feedback inspect is Workspace-independent and malformed packages fail as structured JSON", () => {
+  const directory = temporaryHome();
+  const malformed = path.join(directory, "malformed.yaml");
+  fs.writeFileSync(malformed, "apiVersion: feedback.evopilot.io/v1\nkind: HarnessExecutionFeedbackPackage\nmetadata: {}\n");
+  const inspected = runJsonFailure(["feedback", "inspect", malformed, "--workspace", path.join(directory, "not-initialized"), "--json"]);
+  assert.equal(inspected.status, "FAILED");
+  assert.equal(inspected.schemaValidation.valid, false);
+  const home = initializedHome();
+  const validated = runJsonFailure(["feedback", "validate", malformed, "--workspace", home, "--now", "2026-08-13T08:00:00.000Z", "--json"]);
+  assert.equal(validated.status, "REJECTED");
+  assert.ok(validated.failures.length > 0);
+});
+
+test("EvaluationPack v1 remains compatible and v2 governs Outcome, Process, Safety, and Cost evidence", () => {
+  const v1 = {
+    apiVersion: "harness.evopilot.io/v1",
+    kind: "EvaluationPack",
+    metadata: { id: "legacy-evaluation", version: "1.0.0", lifecycle: "approved", description: "Legacy compatibility fixture." },
+    spec: {
+      targetRef: "HarnessBundle:distributed-cache-product@3.0.0",
+      minimumReviewedCases: 1,
+      cases: [{ id: "legacy-case", inputDigest: digest("legacy-input"), expectedDecision: "PASSED", reviewStatus: "approved" }],
+      status: "READY"
+    }
+  };
+  assert.equal(validateDocument(v1).valid, true);
+  const v2 = {
+    apiVersion: "harness.evopilot.io/v2",
+    kind: "EvaluationPack",
+    metadata: { id: "cache-effectiveness", version: "2.0.0", lifecycle: "approved", description: "Four-dimensional execution evidence gate." },
+    spec: {
+      targetRef: { kind: "HarnessBundle", id: "distributed-cache-product", version: "3.0.0", digest: digest("bundle") },
+      minimumReviewedCases: 3,
+      requiredDimensions: ["outcome", "process", "safety", "cost"],
+      criteria: {
+        outcome: { minimumSuccessRate: 0.8 },
+        process: { maximumFailureRate: 0.1, maximumAverageRetryCount: 2 },
+        safety: { minimumSafeRate: 1, maximumIncidentCount: 0 },
+        cost: { maximumAverageTotalTokens: 5000, maximumAverageEstimatedCost: 1, currency: "USD" }
+      },
+      cases: [{ id: "reviewed-case", inputDigest: digest("input"), expectedDecision: "SUCCEEDED", reviewStatus: "approved", feedbackPackageRefs: [{ packageId: "feedback-alpha", version: "1.0.0", digest: digest("feedback") }] }],
+      status: "READY"
+    }
+  };
+  assert.equal(validateDocument(v2).valid, true);
+  delete v2.spec.criteria.safety;
+  assert.equal(validateDocument(v2).valid, false);
+});
+
+test("Harness Hub exposes feedback as a read-only projection and rejects mutation methods", async (t) => {
+  const home = initializedHome();
+  const now = "2026-08-13T08:00:00.000Z";
+  const file = writeFeedbackFixture(home, createFeedbackPackage(home, { packageId: "feedback-hub" }), "feedback-hub.yaml");
+  runJson(["feedback", "process", file, "--workspace", home, "--now", now, "--json"]);
+  const snapshot = runJson(["hub", "v3-snapshot", "--workspace", home, "--out", path.join(home, "hub-feedback.json"), "--json"]);
+  assert.equal(snapshot.feedback.packageCount, 1);
+  assert.equal(snapshot.feedback.acceptedEventCount, 1);
+  assert.equal(snapshot.feedback.reportCount, 1);
+  assert.equal(snapshot.feedback.latestReport.summary.sampleCount, 1);
+  assert.ok(snapshot.lifecycleCommands.includes("feedback process"));
+
+  const server = serveHubV3(home, { host: "127.0.0.1", port: 0 });
+  t.after(() => server.close());
+  if (!server.listening) await new Promise((resolve) => server.once("listening", resolve));
+  const port = server.address().port;
+  const response = await fetch(`http://127.0.0.1:${port}/api/v3/snapshot`, { method: "POST" });
+  assert.equal(response.status, 405);
+  assert.deepEqual(await response.json(), { status: "method-not-allowed", allowed: ["GET"] });
+});
+
+function createFeedbackPackage(home, { packageId = "feedback-package", sourceId = "workspace-source", outcome = "SUCCEEDED", score = 0.9, safety = "SAFE", totalTokens = 150, currency = "USD" } = {}) {
+  const assets = discoverAssets([path.join(home, "catalogs/builtin/assets")]);
+  const bundle = assets.find((record) => record.asset.kind === "HarnessBundle" && record.asset.metadata.id === "distributed-cache-product");
+  assert.ok(bundle, "distributed-cache-product Bundle should be available");
+  const profile = assets.find((record) => record.asset.kind === "HarnessProfile" && record.asset.metadata.id === bundle.asset.spec.profile.id && record.asset.metadata.version === bundle.asset.spec.profile.version);
+  assert.ok(profile, "Bundle Profile should be available");
+  const components = bundle.asset.spec.resolvedComponents.map((reference) => {
+    const component = assets.find((record) => record.asset.kind === "HarnessComponent" && record.asset.metadata.id === reference.id && record.asset.metadata.version === reference.version);
+    assert.ok(component, `Bundle Component ${reference.id} should be available`);
+    return { id: component.asset.metadata.id, version: component.asset.metadata.version, digest: component.digest };
+  });
+  const document = {
+    apiVersion: "feedback.evopilot.io/v1",
+    kind: "HarnessExecutionFeedbackPackage",
+    metadata: {
+      packageId,
+      version: "1.0.0",
+      generatedAt: "2026-08-13T07:00:00.000Z",
+      expiresAt: "2026-09-13T07:00:00.000Z",
+      producer: { name: "feedback-fixture", version: "1.0.0", instanceId: sourceId },
+      packageDigest: digest("placeholder")
+    },
+    approval: { status: "APPROVED", approvedBy: "reviewer@example.invalid", approvedAt: "2026-08-13T07:30:00.000Z", purpose: "Harness effectiveness evaluation" },
+    redaction: { status: "REDACTED", policyVersion: "redaction-v1", removedFieldCount: 2, payloadDigest: digest("placeholder") },
+    harnessBinding: {
+      bundleRef: { id: bundle.asset.metadata.id, version: bundle.asset.metadata.version, digest: bundle.digest },
+      profileRef: { id: profile.asset.metadata.id, version: profile.asset.metadata.version, digest: profile.digest },
+      componentRefs: components
+    },
+    executionContext: { taskClass: "unknown-user-task", complexity: "MEDIUM", environmentDigest: digest(`environment-${sourceId}`), trajectoryRefs: [`trajectory:${packageId}`], startedAt: "2026-08-13T06:50:00.000Z", completedAt: "2026-08-13T06:59:00.000Z" },
+    dimensions: {
+      outcome: { status: outcome, score, acceptancePassed: outcome === "SUCCEEDED" ? 4 : 2, acceptanceTotal: 4 },
+      process: { status: outcome === "FAILED" ? "FAILED" : "COMPLETED", stepCount: 8, failedStepCount: outcome === "FAILED" ? 2 : 0, retryCount: 1, durationMs: 540000 },
+      safety: { status: safety, violationCount: safety === "SAFE" ? 0 : 1, incidentCount: safety === "INCIDENT" ? 1 : 0 },
+      cost: { status: "RECORDED", inputTokens: Math.floor(totalTokens * 2 / 3), outputTokens: totalTokens - Math.floor(totalTokens * 2 / 3), totalTokens, estimatedCost: totalTokens / 100000, currency }
+    },
+    provenance: { sourceType: "evopilot-goal-loop", sourceId, requestIds: [`request:${packageId}`], model: { provider: "zhipu", name: "glm-feedback-fixture" }, evidenceRefs: [`evidence:${packageId}`] }
+  };
+  return finalizeFeedbackPackage(document);
+}
+
+function finalizeFeedbackPackage(document) {
+  document.redaction.payloadDigest = feedbackPayloadDigest(document);
+  document.metadata.packageDigest = feedbackPackageDigest(document);
+  return document;
+}
+
+function writeFeedbackFixture(home, document, name) {
+  const file = path.join(home, "fixtures/feedback", name);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(document, null, 2)}\n`);
+  return file;
+}
+
+function walkFilesForTest(directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory).map((name) => path.join(directory, name)).filter((file) => fs.statSync(file).isFile());
+}
 
 function initializedHome() {
   const home = temporaryHome();

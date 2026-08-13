@@ -11,6 +11,7 @@ Read [quickstart.md](quickstart.md), [automation.md](automation.md), [commands.m
 - Do not call EvoPilot to create, mutate, approve, or publish Harness assets.
 - The Engine installation is read-only. Mutable state belongs under `EVOPILOT_HARNESS_HOME`.
 - Engine, Harness assets, Ontology, Policy, Evaluation, and Catalog versions are independent.
+- Treat `HarnessExecutionFeedbackPackage` as static Evidence Source state. Never translate `feedback process` into Goal Loop execution, Proposal creation, asset mutation, approval, or publication.
 
 ## Non-Negotiable Rules
 
@@ -29,6 +30,7 @@ Read [quickstart.md](quickstart.md), [automation.md](automation.md), [commands.m
 - Do not invent a Proposal review conclusion. The CLI Review Report owns verdict, reasons, evidence, and suggested actions.
 - Do not call `proposal inspect` a review. Approval requires a current `READY_FOR_HUMAN_APPROVAL` Review Report.
 - Do not claim matching accuracy when `accuracyClaim=INSUFFICIENT_EVAL_EVIDENCE`.
+- For feedback commands, stop on `REJECTED` or `FAILED` and report Package identity/digest, binding, failures, ingestion status, Report identity/digest, samples, independent sources, contexts, four dimensions, missing fields, uncertainty, and `nextAction`.
 
 ## Required Start
 

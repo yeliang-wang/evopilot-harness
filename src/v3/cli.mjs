@@ -6,6 +6,7 @@ import { DEFAULT_DOCTOR_TIMEOUT_MS, diagnoseModel, inspectModels, runAdvisor, va
 import { discoverAssets, generateSigningKey, publishCatalog, signFile, validateAssets, validateCatalog, verifyFile } from "./catalog.mjs";
 import { approveProposal, createProposal, inspectProposal, publishProposal } from "./lifecycle.mjs";
 import { serveHubV3, writeHubSnapshot } from "./hub.mjs";
+import { aggregateFeedback, ingestFeedbackPackage, inspectFeedbackPackage, processFeedbackPackage, readEffectivenessReport, validateFeedbackPackage } from "./feedback.mjs";
 import { applyV2Migration, planV2Migration, rollbackMigration } from "./migration.mjs";
 import { collectEvidence, reasonCorpus, reasonEvidence } from "./reasoning.mjs";
 import { inspectProposalReview, reviewProposal } from "./review.mjs";
@@ -14,7 +15,7 @@ import { booleanOption, digest, option, parseCli, print, readYaml, safeId, usage
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, workspaceStatus } from "./workspace.mjs";
 
-const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys"]);
+const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback"]);
 
 export async function handleV3Command(argv) {
   const args = parseCli(argv);
@@ -45,6 +46,10 @@ async function dispatch(args, group, action, id) {
     requireWorkspace(home);
     const result = generateSigningKey(path.resolve(option(args, "private-key", path.join(home, "keys/catalog-signing-private.pem"))), path.resolve(option(args, "public-key", path.join(home, "keys/catalog-signing-public.pem"))));
     return output(args, { schema: "evopilot-harness-key-generation/v3", status: "GENERATED", ...result });
+  }
+  if (group === "feedback" && action === "inspect") {
+    const result = inspectFeedbackPackage(id ?? requiredFileOption(args));
+    return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
   requireWorkspace(home);
   if (group === "asset" && action === "v3-validate") {
@@ -104,6 +109,26 @@ async function dispatch(args, group, action, id) {
     return output(args, result, ["READY", "MIGRATED"].includes(result.status) ? 0 : 2);
   }
   if (group === "migrate" && action === "rollback") return output(args, rollbackMigration(home, id ?? requiredOption(args, "migration-id")));
+  if (group === "feedback" && action === "validate") {
+    const result = validateFeedbackPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, result.status === "VALIDATED" ? 0 : 2);
+  }
+  if (group === "feedback" && action === "ingest") {
+    const result = ingestFeedbackPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, ["ACCEPTED", "DUPLICATE"].includes(result.status) ? 0 : 2);
+  }
+  if (group === "feedback" && action === "aggregate") {
+    const result = aggregateFeedback({ home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result);
+  }
+  if (group === "feedback" && action === "report") {
+    const result = readEffectivenessReport({ home, reportId: id ?? requiredIdOption(args, "report-id") });
+    return output(args, result, result.status === "FOUND" ? 0 : 2);
+  }
+  if (group === "feedback" && action === "process") {
+    const result = processFeedbackPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, result.status === "PROCESSED" ? 0 : 2);
+  }
   if (group === "produce") return produce(args, home);
   if (group === "proposal" && action === "inspect") return output(args, inspectProposal(home, id ?? requiredOption(args, "proposal-id")));
   if (group === "proposal" && action === "review") {
@@ -137,7 +162,7 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|review|review-inspect|approve|publish, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
 }
 
 async function produce(args, home) {
@@ -336,6 +361,16 @@ function requiredOption(args, name) {
   const value = option(args, name);
   if (!value) throw usage(`Missing required --${name}.`);
   return path.resolve(value);
+}
+
+function requiredFileOption(args) {
+  return requiredOption(args, "file");
+}
+
+function requiredIdOption(args, name) {
+  const value = option(args, name);
+  if (!value) throw usage(`Missing required --${name}.`);
+  return value;
 }
 
 function output(args, value, code = 0) {

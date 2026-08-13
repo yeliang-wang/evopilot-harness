@@ -41,6 +41,8 @@ node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --j
 
 Harness Hub provides a standalone read-only operational view of assets, proposals, governance Packs, evaluation status, evidence-source types, and Advisor token usage. Before required Advisor production, use `llm v3-models` for configuration-only inspection and `llm v3-doctor` for a minimal live connectivity check.
 
+v3.3.0 also stores approved structured execution feedback under `feedback/` and projects effectiveness reports in Harness Hub. Feedback never enters the Catalog.
+
 ## 2. How Harnesses Evolve
 
 The main command is `produce`. It builds evidence and reasoning, then stops at a Proposal review gate:
@@ -110,13 +112,18 @@ The Engine records provider, model, aggregate token usage, prompt and response d
 | GitHub or Git repository | `--github-repo <repo>` | Resolve a repository revision into local static evidence. |
 | Attachment | `--attachment <file>` | PDF, PPTX, DOCX, text, and other supporting material. |
 | Production log | `--production-log <file>` | Redacted runtime behavior, failure, latency, trace, and incident evidence. |
+| Execution feedback | `feedback process <file>` | Approved, redacted Outcome/Process/Safety/Cost evidence bound to one immutable published Bundle closure. |
 | Historical Harness | `--historical-harness <file>` | Prior asset intent and evolution context. |
 | Operator note | `--note <text>` | Human constraints and task intent. |
 | Research | `--research-url <https-url>` with `--allow-internet-research` | Supplemental cited public evidence. |
 
 Source projects and project roots are material for reasoning; they are not copied into the Harness asset library. Internet research and historical Harnesses are supplemental and cannot independently satisfy local engineering-evidence eligibility.
 
+A Production Log and an Execution Feedback Package are deliberately different. The log is unstructured material for normal Proposal reasoning. The Package is a governed feedback contract with approval, redaction, expiry, provenance, two integrity digests, and exact Bundle/Profile/Component references. It is aggregated for effectiveness measurement and stops without creating a Proposal.
+
 The default source path is static. The Engine does not run project builds, tests, deployments, or business commands. Any future Evidence Runner requires a separate sandbox, explicit authorization, and a new reviewed contract.
+
+See [Feedback Evidence](feedback-evidence.md) for digest calculation, rejection gates, idempotency, four-dimensional aggregation, and current cross-project integration status.
 
 ## 5. What Gets Published
 

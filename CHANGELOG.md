@@ -2,6 +2,34 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 3.3.0 - 2026-08-13
+
+### Added
+
+- Added the `HarnessExecutionFeedbackPackage v1` contract for approved, redacted, time-bounded, provenance-bearing execution evidence bound to a published immutable Bundle, Profile, and complete Component closure.
+- Added Package and redacted-payload integrity checks, content-addressed idempotent ingestion, package-id conflict rejection, and persisted rejection/event records under the external Workspace.
+- Added `HarnessEffectivenessReport v1` aggregation by Bundle, Profile, Component, and version across Outcome, Process, Safety, and Cost.
+- Added sample count, independent source count, execution context, missing-field accounting, uncertainty levels, and Wilson 95% intervals to effect claims.
+- Added `EvaluationPack v2` four-dimensional feedback criteria while preserving EvaluationPack v1 validation.
+- Added JSON-first `feedback inspect|validate|ingest|aggregate|report|process` CLI commands and Harness Hub read-only feedback projections.
+- Added a machine-enforced Roadmap Gate for intent and release-version alignment.
+
+### Boundaries
+
+- Feedback is Evidence Source state, not a Catalog asset. Processing never creates a Proposal, mutates or publishes Harness assets, executes Goal Loops, or runs source projects.
+- v3.3.0 does not implement pairwise experiments, automatic delta reasoning, approval, publication, or model training; those remain outside this milestone.
+- Contract fixtures validate the consumer side. Cross-project production closure requires a compatible control plane to export real approved packages.
+
+### Validation
+
+- `npm run roadmap:check`
+- `npm run roadmap:release -- 3.3.0`
+- `npm run verify:architecture`
+- `npm run check`
+- `npm run release:artifact`
+- `npm run verify:release-artifact`
+- `git diff --check`
+
 ## 3.2.1 - 2026-08-12
 
 ### Fixed

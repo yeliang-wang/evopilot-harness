@@ -17,10 +17,15 @@ npm run check
 git diff --check
 ```
 
+`npm run v3:check` includes disposable-Workspace `feedback validate` and `feedback process` acceptance. The fixture is deleted with the Workspace and never enters a Catalog.
+
 The current v3 suite covers:
 
 - read-only Engine behavior and writable Workspace isolation;
 - Component, Profile, Bundle, Ontology, Matcher, Advisor, and Evaluation schemas;
+- Feedback Package, Effectiveness Report, and EvaluationPack v1/v2 schemas;
+- feedback approval, redaction, time, integrity, immutable Bundle closure, idempotency, conflict, and rejection gates;
+- Bundle/Profile/Component/version effectiveness aggregation across Outcome, Process, Safety, and Cost, including samples, sources, contexts, missing fields, and uncertainty;
 - immutable Profile and Component digest closure;
 - v2-to-v3 migration, non-mutating dry-run, applied journals, and rollback;
 - exact migration id preservation on case-sensitive Linux filesystems, added in `3.0.1`;
@@ -33,7 +38,7 @@ The current v3 suite covers:
 - nested-module deduplication, per-project reasoning, grouping, and merged Evidence Graphs;
 - Catalog and Registry validation, immutable publication, optional signing, and tamper rejection;
 - contract and safety evaluations with honest evidence-sufficiency status;
-- Harness Hub v3 snapshot fields;
+- Harness Hub v3 snapshot fields, feedback projection, and non-GET 405 enforcement;
 - retained v2 compatibility behavior.
 
 Exact fixture and asset counts are release implementation evidence, not a claim that those counts represent all domains or user projects.
@@ -66,6 +71,7 @@ Acceptance also requires a clean ownership audit:
 - GLM did not approve, publish, mutate configuration, or override deterministic decisions;
 - Proposal Review Engine did not approve, publish, execute source code, invent evidence, or override failed deterministic gates;
 - immutable published versions were not overwritten;
+- Feedback processing did not create a Proposal, mutate a Catalog asset, publish an asset, execute a Goal Loop, or run source projects;
 - EvoPilot or Dashboard behavior was not added to this repository;
 - external validation corpora were not copied into the Harness asset library;
 - no ECS deployment was inferred or required by the local-first release contract.

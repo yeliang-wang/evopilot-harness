@@ -32,7 +32,7 @@ The source domain is intentionally open, so ownership must be stricter than the 
 | 2 | Workspace | Organization Catalog, proposals, evidence, evaluations, cache, keys | Engine source mutation |
 | 3 | CLI | Parse and orchestrate explicit commands, JSON output, stop status | Bypass policy, review, approval, or validation |
 | 4 | Harness Hub | Read-only Workspace/Catalog projection and operator guidance | Browser-local approval/publication or EvoPilot state |
-| 5 | Source Ingestion | Local project/root discovery, dedupe/grouping, GitHub checkout, attachment/log/history/note/research intake | Asset publication or source-project execution |
+| 5 | Source Ingestion | Local project/root discovery, dedupe/grouping, GitHub checkout, attachment/log/history/note/research intake, and approved structured feedback reading | Asset publication, source-project execution, or feedback-origin replay |
 | 6 | Snapshot/Redaction | Bounded excerpts, secret/private-data redaction, stable source digests | Raw secret publication or semantic decisions |
 | 7 | Evidence Graph | Stable `evidenceId`, node authority, concepts, graph digest | Final matching or approval authority |
 | 8 | OntologyPack | Versioned concepts, roles, conflicts, task/evidence kinds | Hard-coded matcher thresholds |
@@ -46,7 +46,7 @@ The source domain is intentionally open, so ownership must be stricter than the 
 | 16 | HarnessComponent | Atomic environment, action, constraint, evidence, validator contract | Domain-wide classification |
 | 17 | HarnessProfile | Domain/role/task composition, positive/negative boundary, Component references | Mutable dependency resolution at execution time |
 | 18 | HarnessBundle/Export | Immutable resolved publication with pinned Profile/Components and optional consumer exports | Treat an EvoPilot export as canonical source truth |
-| 19 | EvaluationPack | Reviewed cases, expected decisions, minimum evidence and readiness | Claim accuracy from contract tests alone |
+| 19 | EvaluationPack | Reviewed cases, feedback effectiveness aggregation, four-dimensional criteria, provenance, minimum evidence, and readiness | Claim accuracy, causality, or automatic evolution from contract tests alone |
 | 20 | Proposal Lifecycle | Inspect, explicit approval, immutable publication into Organization Catalog | Produce-and-publish in one step or write Built-in assets |
 | 21 | Schema Validator | Asset/Pack and Review Report shape plus cross-reference validation | Business approval |
 | 22 | Catalog Publisher/Optional Signing | Catalog index/lock/digests and optional signing/verification | Registry asset duplication or mandatory consumer trust policy |
@@ -77,7 +77,7 @@ Dependencies may point from later lifecycle stages to immutable outputs of earli
 ## Enforcement
 
 - Root `AGENTS.md` and CLI agent instructions define agent behavior.
-- `npm run verify:architecture` checks all 23 module anchors, source-tool allowlists, read-only Hub behavior, Advisor authority, Proposal gates, Organization-only publication, and local-path leakage from asset trees.
+- `npm run verify:architecture` checks all 24 module anchors, source-tool allowlists, read-only Hub behavior, Advisor authority, Proposal gates, Organization-only publication, and local-path leakage from asset trees.
 - `npm run check` includes architecture verification and is run by GitHub CI and release workflows.
 - Schema tests and v3 tests verify immutable references, Proposal lifecycle, Advisor citations, migration rollback, and Catalog behavior.
 

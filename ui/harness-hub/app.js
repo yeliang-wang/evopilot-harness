@@ -21,7 +21,9 @@ const elements = {
   commandPreview: document.querySelector("#command-preview"),
   assetCounts: document.querySelector("#asset-counts"),
   governanceList: document.querySelector("#governance-list"),
-  llmUsage: document.querySelector("#llm-usage")
+  llmUsage: document.querySelector("#llm-usage"),
+  feedbackCounts: document.querySelector("#feedback-counts"),
+  feedbackSummary: document.querySelector("#feedback-summary")
 };
 
 elements.refresh.addEventListener("click", () => loadSnapshot());
@@ -65,11 +67,35 @@ function render() {
   renderEvolutions(snapshot.evolutions ?? []);
   renderSourceTypes(snapshot.sourceTypes ?? []);
   renderGovernance(snapshot.governancePacks ?? [], snapshot.evaluation ?? {}, snapshot.llmUsage ?? {});
+  renderFeedback(snapshot.feedback ?? {});
   if (elements.assetCounts) {
     const counts = snapshot.assetCounts ?? {};
     elements.assetCounts.textContent = `components=${counts.HarnessComponent ?? 0} profiles=${counts.HarnessProfile ?? 0} bundles=${counts.HarnessBundle ?? 0}`;
   }
   updateCommandPreview();
+}
+
+function renderFeedback(feedback) {
+  if (!elements.feedbackCounts || !elements.feedbackSummary) return;
+  elements.feedbackCounts.textContent = `packages=${feedback.packageCount ?? 0} reports=${feedback.reportCount ?? 0}`;
+  elements.feedbackSummary.innerHTML = "";
+  const events = document.createElement("article");
+  events.innerHTML = `<strong>Ingestion · accepted=${feedback.acceptedEventCount ?? 0} duplicate=${feedback.duplicateEventCount ?? 0} rejected=${feedback.rejectedEventCount ?? 0}</strong><small>${escapeHtml(JSON.stringify(feedback.rejectionReasons ?? {}))}</small>`;
+  elements.feedbackSummary.append(events);
+  const latest = feedback.latestReport;
+  if (!latest) {
+    elements.feedbackSummary.append(emptyCard("No effectiveness report yet."));
+    return;
+  }
+  const summary = latest.summary ?? {};
+  const dimensions = summary.dimensions ?? {};
+  const report = document.createElement("article");
+  report.innerHTML = `
+    <strong>${escapeHtml(latest.reportId)} · samples=${summary.sampleCount ?? 0} sources=${summary.independentSourceCount ?? 0}</strong>
+    <small>outcome=${dimensions.outcome?.successRate ?? "n/a"} process-retries=${dimensions.process?.averageRetryCount ?? "n/a"} safety=${dimensions.safety?.safeRate ?? "n/a"} tokens=${dimensions.cost?.averageTotalTokens ?? "n/a"}</small>
+    <small>uncertainty=${escapeHtml(summary.uncertainty?.level ?? "UNKNOWN")} · ${escapeHtml(latest.reportDigest ?? "digest missing")}</small>
+  `;
+  elements.feedbackSummary.append(report);
 }
 
 function renderCatalogTable(entries) {

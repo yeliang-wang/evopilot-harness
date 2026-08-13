@@ -2,7 +2,7 @@
 
 ## v3 Runtime Layout
 
-The container treats `/app` as the Engine and `/data` as `EVOPILOT_HARNESS_HOME`. The entrypoint initializes missing bootstrap assets in `/data` and serves Harness Hub v3. Persist `/data`; Harness assets, evidence, proposals, policies, evaluations, signatures, and Catalog versions must survive Engine image upgrades.
+The container treats `/app` as the Engine and `/data` as `EVOPILOT_HARNESS_HOME`. The entrypoint initializes missing bootstrap assets in `/data` and serves Harness Hub v3. Persist `/data`; Harness assets, evidence, feedback Packages/Reports, proposals, policies, evaluations, signatures, and Catalog versions must survive Engine image upgrades.
 
 ```bash
 docker compose up -d
@@ -60,7 +60,7 @@ docker compose ps
 Default image:
 
 ```text
-ghcr.io/yeliang-wang/evopilot-harness:3.2.1
+ghcr.io/yeliang-wang/evopilot-harness:3.3.0
 ```
 
 Override image and port:

@@ -16,6 +16,7 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 - Automatically run and present `proposal review` for every Proposal returned by a confirmed production stage, then stop. Never invent or hide a Review Report conclusion.
 - Continue to approval only for a current `status=REVIEWED`, `verdict=READY_FOR_HUMAN_APPROVAL` report and separate user-supplied approval.
 - Stop on `BLOCKED`, `FAILED`, validation blockers, missing files, missing Catalog blocks, approval gates, or non-zero exit codes.
+- Stop on feedback `REJECTED`; it is not permission to repair approval, redaction, provenance, or immutable bindings automatically.
 - Treat `llm v3-models` as configuration-only. Require `llm v3-doctor` when a workflow requires live Advisor connectivity.
 - Parse the persisted Advisor Run Contract for `status`, `required`, `failureType`, `reason`, `model`, aggregate `usage`, `validation`, `requestId`, `evidenceProjection`, `attemptCount`, `repairAttempted`, `attempts[]`, digests, timing, and `resultPath`.
 - Treat `evidenceProjection.graphDigest`, `projectionDigest`, total/selected/omitted counts, character budget, selected ids/kinds, and source coverage as LLM-input evidence. The complete Evidence Graph remains the deterministic and audit source of record.
@@ -32,6 +33,8 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 | `llm v3-doctor --json` | `status`, `requestId`, `readinessScope`, `connectionVerified`, `model`, `usage`, `failureType`, `reason` |
 | `produce --json` | `status`, Evidence Graph/reasoning, `advisor`, `proposal`, `blockers`, `nextAction` |
 | `produce --source-root --json` | `status`, `discoveredProjectCount`, `groupCount`, `groups[]`, `advisorSummary`, `proposals[].advisor`, `blockers`, `nextAction` |
+| `feedback validate|process --json` | `status`, Package identity/digest, checks/failures, binding, ingestion/rejection, `proposalCreated`, `assetMutation`, `nextAction` |
+| `feedback aggregate|report --json` | Report id/digest, sample/source counts, contexts, four dimensions, missing fields, uncertainty, groups, `nextAction` |
 | `catalog publish --json` | `status`, `catalogId`, `out`, `templateCount`, `entries[]`, `catalogDigest` |
 | `catalog validate --json` | `status`, `source`, `entryCount`, `checks[]`, `blockers[]` |
 | `harness list --json` | `status`, `source`, `count`, `harnesses[]`, `nextAction` |
@@ -58,6 +61,7 @@ Stop and report the current JSON response when any of these are true:
 ```text
 status=BLOCKED
 status=FAILED
+status=REJECTED
 blockers.length > 0
 nextAction=review-approve-harness
 nextAction=review-approve-corpus-plan
@@ -87,6 +91,8 @@ Automation summaries must include:
 - `draft.template.definitionQuality.objective`, focus areas, and non-goals
 - approval actor and confirmation when present
 - publication Harness id, version, Harness root, Catalog root, and Registry file when present
+- feedback Package id/version/digest, immutable Bundle/Profile/Component references, validation failures, ingestion status, and rejection reasons
+- Effectiveness Report id/digest, sample/source counts, context, four dimensions, missing fields, and uncertainty
 - for corpus runs: `corpusId`, source root, discovered/evaluated count, duplicate count, group count, every target Harness id, selected project count, duplicate project count, and group validation status
 - Registry digest, Catalog id, Catalog digest, entry path, and entry digest after publication
 - `nextAction`

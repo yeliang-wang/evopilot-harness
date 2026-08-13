@@ -15,6 +15,9 @@ const DIRECTORIES = [
   "policies/advisor",
   "evidence",
   "evaluations",
+  "feedback/packages",
+  "feedback/rejected",
+  "feedback/reports",
   "evolution-runs",
   "cache/github",
   "migrations",
@@ -98,7 +101,8 @@ export function workspaceStatus(home) {
       config: path.join(resolved, "config.yaml"),
       registry: path.join(resolved, "harness-registry.yaml"),
       builtinCatalog: path.join(resolved, "catalogs/builtin"),
-      organizationCatalog: path.join(resolved, "catalogs/organization")
+      organizationCatalog: path.join(resolved, "catalogs/organization"),
+      feedback: path.join(resolved, "feedback")
     }
   };
 }

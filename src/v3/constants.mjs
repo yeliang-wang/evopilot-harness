@@ -8,6 +8,8 @@ export const REGISTRY_SCHEMA = "evopilot-harness-registry/v2";
 export const EVIDENCE_GRAPH_SCHEMA = "evopilot-harness-evidence-graph/v1";
 export const REASONING_SCHEMA = "evopilot-harness-reasoning-result/v3";
 export const WORKSPACE_SCHEMA = "evopilot-harness-workspace/v1";
+export const FEEDBACK_API_VERSION = "feedback.evopilot.io/v1";
+export const EFFECTIVENESS_API_VERSION = "feedback.evopilot.io/v1";
 export const DECISIONS = [
   "EVOLVE_EXISTING",
   "COMPOSE_NEW_BUNDLE",

@@ -58,6 +58,9 @@ jobs:
       - name: Check
         run: npm run check
 
+      - name: Verify Roadmap release alignment
+        run: npm run roadmap:release -- "$VERSION"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

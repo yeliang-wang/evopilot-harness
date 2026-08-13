@@ -39,6 +39,8 @@ node src/index.mjs catalog validate --source published --json
 
 Human-readable output is intentionally short and can change. JSON schemas are described in [commands.md](commands.md).
 
+For governed v3.3 execution feedback, start with [Feedback Evidence](../guides/feedback-evidence.md) and use `feedback inspect|validate|process|aggregate|report --json`. This path measures immutable published assets and never creates a Proposal or publishes an asset.
+
 ## Documentation
 
 - [Agent Instructions](AGENTS.md)

@@ -4,10 +4,11 @@ Use this index to choose the shortest path for your task. Generic architecture a
 
 ## Learn The Product
 
-1. [How Harness Works](guides/how-harness-works.md) - management, evolution, reasoning, sources, publication, and control-plane consumption.
-2. [Architecture Overview](architecture/overview.md) - current v3 modules, data flow, storage, and system boundary.
-3. [v3 Asset Model](architecture/v3-asset-model.md) - Component, Profile, Bundle, and governance Packs.
-4. [v3 Product Boundary](architecture/v3-product-boundary.md) - what this project owns and explicitly does not own.
+1. [Product Roadmap](roadmap/ROADMAP.md) - accepted production-feedback, asset-quality, version, and deviation plan.
+2. [How Harness Works](guides/how-harness-works.md) - management, evolution, reasoning, sources, publication, and control-plane consumption.
+3. [Architecture Overview](architecture/overview.md) - current v3 modules, data flow, storage, and system boundary.
+4. [v3 Asset Model](architecture/v3-asset-model.md) - Component, Profile, Bundle, and governance Packs.
+5. [v3 Product Boundary](architecture/v3-product-boundary.md) - what this project owns and explicitly does not own.
 
 ## Produce And Publish
 
@@ -16,6 +17,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [CLI Commands](cli/commands.md) - complete atomic command reference.
 - [Harness Hub](guides/harness-hub-integration.md) - standalone UI and optional iframe integration.
 - [v3 Reasoning Contract](reference/v3-reasoning-contract.md) - eligibility, retrieval, scoring, decisions, Proposal Review Engine, and GLM authority.
+- [Feedback Evidence](guides/feedback-evidence.md) - structured feedback contract, validation, ingestion, four-dimensional effectiveness, and authority limits.
 
 ## Integrate A Consumer
 
@@ -35,6 +37,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Release Management](operations/release-management.md)
 - [Troubleshooting](operations/troubleshooting.md)
 - [Development](development.md)
+- [`scripts/roadmap-gate.mjs`](../scripts/roadmap-gate.mjs) - deterministic Roadmap contract, intent, and release-version gate used by agents and CI.
 - [Security](../SECURITY.md)
 - [Contributing](../CONTRIBUTING.md)
 

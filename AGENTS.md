@@ -4,6 +4,15 @@ This repository is the independent Harness producer for the EvoPilot series. CLI
 
 Use [llms.txt](llms.txt) for the shortest machine-readable documentation map and [docs/README.md](docs/README.md) for the human documentation index.
 
+## Roadmap Gate
+
+- Treat [EvoPilot Harness Roadmap](docs/roadmap/ROADMAP.md) and `governance/roadmap.yaml` as the accepted product-evolution plan.
+- Before changing product behavior, architecture, contracts, CLI, schemas, versions, or release scope, run `npm run roadmap:gate -- --intent "<requested change>" --json` and report the result.
+- Continue implementation only for `ALIGNED`. Stop on `UNPLANNED`, `DEVIATION`, `BOUNDARY_CHANGE`, or `UNKNOWN` and obtain explicit user review before editing.
+- `BOUNDARY_CHANGE` always requires a replacement ADR, migration and compatibility impact, formal Roadmap revision, executable guard updates, and explicit user approval. A one-task exception is not sufficient.
+- User approval of an unplanned one-task exception does not revise the Roadmap and cannot authorize a Release containing an undeclared Engine capability. User Organization Catalog assets continue to evolve through their independent lifecycle.
+- Before commit or Release, run `npm run roadmap:check`; before a versioned Release, also run `npm run roadmap:release -- <version>`.
+
 ## Accepted Product Boundary
 
 - `evopilot-harness` owns Harness evidence ingestion, reasoning, authoring, evolution, review, approval, evaluation, publication, Catalog/Registry, CLI, and Harness Hub.
@@ -40,6 +49,7 @@ No module may bypass Proposal approval, write Built-in assets from evidence, giv
 Run after architecture, lifecycle, CLI, or documentation changes:
 
 ```bash
+npm run roadmap:check
 npm run verify:architecture
 npm run check
 git diff --check

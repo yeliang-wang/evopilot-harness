@@ -11,13 +11,21 @@ const SCHEMAS = {
   OntologyPack: "ontology-pack-v1.schema.json",
   MatchPolicyPack: "match-policy-pack-v1.schema.json",
   AdvisorPolicyPack: "advisor-policy-pack-v1.schema.json",
-  EvaluationPack: "evaluation-pack-v1.schema.json"
+  HarnessExecutionFeedbackPackage: "harness-execution-feedback-package-v1.schema.json",
+  HarnessEffectivenessReport: "harness-effectiveness-report-v1.schema.json"
+};
+
+const VERSIONED_SCHEMAS = {
+  EvaluationPack: {
+    "harness.evopilot.io/v1": "evaluation-pack-v1.schema.json",
+    "harness.evopilot.io/v2": "evaluation-pack-v2.schema.json"
+  }
 };
 
 const validatorCache = new Map();
 
 export function validateDocument(document, file = "<memory>") {
-  const schemaName = SCHEMAS[document?.kind];
+  const schemaName = VERSIONED_SCHEMAS[document?.kind]?.[document?.apiVersion] ?? SCHEMAS[document?.kind];
   if (!schemaName) return { status: "FAILED", valid: false, file, kind: document?.kind ?? null, errors: [{ path: "/kind", message: "unsupported v3 document kind" }] };
   let validate = validatorCache.get(schemaName);
   if (!validate) {

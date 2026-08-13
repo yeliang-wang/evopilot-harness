@@ -43,6 +43,7 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Evidence | Source Ingestion, Snapshot/Redaction, Evidence Graph | Inputs are evidence only and never publication authority. |
 | Reasoning | OntologyPack, MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator | Domain concepts and thresholds are versioned data, not hidden model decisions. |
 | Advisor | AdvisorPolicyPack, GLM Advisor, Proposal Review Engine | Evidence projection, independent Proposal assessment, bounded contract repair, citations, attempts, verdicts, and token metadata are Policy-governed and auditable. |
+| Feedback Evidence | Package validator, immutable-binding resolver, content-addressed store, effectiveness aggregator | Reads approved execution outcomes; never executes projects or mutates assets. |
 | Assets | HarnessComponent, HarnessProfile, HarnessBundle/Export | Bundle is the immutable execution publication unit. |
 | Governance | EvaluationPack, Proposal Lifecycle, Schema Validator | A current ready Review Report, human approval, and validation remain mandatory before publication. |
 | Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
@@ -101,4 +102,4 @@ An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
 ## Compatibility
 
-The canonical v3 API namespace is `harness.evopilot.io/v3`. Optional control-plane projections are exports, not source assets. Engine `3.2.1` retains the v2 CLI, Asset v3, Catalog, and Registry layer for existing automation; v3 approval now requires a current Proposal Review Report. See [v2 Architecture Compatibility](v2-compatibility.md).
+The canonical v3 asset API namespace is `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`. Optional control-plane projections are exports, not source assets. Engine `3.3.0` retains the v2 CLI, Asset v3, Catalog, and Registry layer for existing automation; v3 approval requires a current Proposal Review Report. See [v2 Architecture Compatibility](v2-compatibility.md).

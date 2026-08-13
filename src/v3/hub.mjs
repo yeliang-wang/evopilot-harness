@@ -5,6 +5,7 @@ import { PACKAGE_ROOT } from "./constants.mjs";
 import { discoverAssets, validateCatalog } from "./catalog.mjs";
 import { digest, readYaml, walkFiles, writeJson } from "./utils.mjs";
 import { workspaceStatus } from "./workspace.mjs";
+import { feedbackSummary } from "./feedback.mjs";
 
 export function buildHubSnapshot(home) {
   const assets = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
@@ -60,15 +61,17 @@ export function buildHubSnapshot(home) {
     governancePacks: packs,
     llmUsage: { runCount: advisorRuns.length + reviewRuns.length, advisorRunCount: advisorRuns.length, reviewRunCount: reviewRuns.length, ...usage },
     evaluation: evaluationSummary(home),
+    feedback: feedbackSummary(home),
     sourceTypes: [
       { id: "source-project", label: "Source project", description: "Local project code, manifests, architecture, and design files." },
       { id: "source-root", label: "Project corpus", description: "Valid projects under a root, grouped by v3 reasoning outcomes." },
       { id: "github-repository", label: "GitHub repository", description: "Commit-resolved repository snapshot in the workspace cache." },
       { id: "attachment", label: "Attachment", description: "PDF, PPTX, DOCX, or text evidence with extraction and redaction." },
       { id: "runtime-log", label: "Production log", description: "Redacted runtime evidence correlated to Harness decisions." },
+      { id: "execution-feedback-package", label: "Execution feedback package", description: "Approved, redacted, immutable-Bundle-bound Outcome, Process, Safety, and Cost evidence." },
       { id: "operator-note", label: "Operator note", description: "Goal or contextual note; never sufficient by itself for publication." }
     ],
-    lifecycleCommands: ["workspace init", "produce", "proposal inspect", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
+    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "proposal inspect", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
     nextAction: proposals.some((proposal) => proposal.status === "REVIEW_REQUIRED") ? "review-proposals" : "produce-or-review-assets"
   };
 }

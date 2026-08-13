@@ -10,6 +10,9 @@ flowchart TD
   Matcher["MatchPolicyPack"] --> Profile
   Advisor["AdvisorPolicyPack"] --> Review["Profile / Bundle Proposal"]
   Evaluation["EvaluationPack"] --> Review
+  Feedback["HarnessExecutionFeedbackPackage"] --> Effect["HarnessEffectivenessReport"]
+  Bundle --> Feedback
+  Effect --> Evaluation
   Review --> Profile
   Review --> Bundle
 ```
@@ -67,7 +70,21 @@ Defines the generic evidence-bound system prompt, allowed decisions, required re
 
 ### EvaluationPack
 
-Stores reviewed input digests and expected decisions. A generated proposal starts as `INSUFFICIENT_EVAL_EVIDENCE`. It becomes `READY` only when its minimum reviewed-case contract is met.
+v1 stores reviewed input digests and expected decisions. A generated proposal starts as `INSUFFICIENT_EVAL_EVIDENCE`. v2 additionally binds an exact asset and defines Outcome, Process, Safety, and Cost criteria with immutable feedback-package references. v1 remains supported.
+
+## Feedback Evidence Contracts
+
+### HarnessExecutionFeedbackPackage
+
+Carries approved, redacted, time-bounded execution evidence with Package and payload digests, provenance, execution context, four measured dimensions, and exact references to one published immutable Bundle, its Profile, and its complete Component closure.
+
+It is Workspace evidence, not a Catalog asset. Validation resolves every id, version, lifecycle, and digest. Ingestion is content-addressed and idempotent.
+
+### HarnessEffectivenessReport
+
+Aggregates accepted Packages by Bundle, Profile, Component, and version. It includes sample and independent-source counts, context coverage, missing fields, Outcome/Process/Safety/Cost measures, uncertainty level, and Wilson 95% intervals.
+
+The Report cannot mutate or publish an asset and is not a causal or evolution decision.
 
 ## Formal Validation
 
@@ -78,6 +95,11 @@ Schemas are under [`schemas/`](../../schemas):
 - `match-policy-pack-v1.schema.json`
 - `advisor-policy-pack-v1.schema.json`
 - `evaluation-pack-v1.schema.json`
+- `evaluation-pack-v2.schema.json`
+- `harness-execution-feedback-package-v1.schema.json`
+- `harness-effectiveness-report-v1.schema.json`
+
+Only Component, Profile, and Bundle assets enter Catalog discovery. Feedback Packages and Reports remain under the external Workspace `feedback/` tree.
 
 Use:
 

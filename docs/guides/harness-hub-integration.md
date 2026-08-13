@@ -35,9 +35,13 @@ GET /api/v3/snapshot
 - Catalog status, digest, and Workspace location;
 - evidence-source types;
 - GLM Advisor run count and server-derived token usage;
+- feedback Package ingestion counts and rejection reasons;
+- latest Outcome, Process, Safety, and Cost effectiveness summary with sample/source counts and uncertainty;
 - a review-safe `produce` command for the next source input.
 
 The browser is not an independent state store. It does not gain approval or publication authority from browser-local state. Use the CLI and server-side Workspace lifecycle for review, approval, validation, signing, and publication.
+
+Feedback is also read-only in the Hub. The HTTP surface accepts only GET; the browser cannot ingest feedback, create a Proposal, or mutate a Harness asset.
 
 ## Snapshot For Automation
 

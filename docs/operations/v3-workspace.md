@@ -15,6 +15,10 @@ $EVOPILOT_HARNESS_HOME/
 │   └── advisor/
 ├── evidence/
 ├── evaluations/
+├── feedback/
+│   ├── packages/
+│   ├── rejected/
+│   └── reports/
 ├── evolution-runs/
 ├── migrations/
 ├── keys/
@@ -22,6 +26,8 @@ $EVOPILOT_HARNESS_HOME/
 ```
 
 `catalogs/builtin` is synchronized from the Engine's bootstrap assets. User changes belong in `catalogs/organization`; do not edit built-in files in place.
+
+`feedback/packages` stores accepted content-addressed Packages, `feedback/rejected` stores rejection metadata and reasons, and `feedback/reports` stores effectiveness Reports. These paths are Evidence/Evaluation state and are never Catalog roots.
 
 Workspace status reports `engine.mutationAllowed=false` separately from `engine.filesystemWritable`. A source checkout may be physically writable while the product contract still forbids Engine mutation. The production Compose service additionally uses a read-only root filesystem and keeps `/data` as its writable volume.
 

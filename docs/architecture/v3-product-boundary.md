@@ -39,10 +39,11 @@ There are independent version axes:
 
 | Axis | Example | Changes when |
 |---|---|---|
-| Engine | `evopilot-harness@3.2.1` | CLI, schemas, algorithms, UI, or runtime code changes. |
+| Engine | `evopilot-harness@3.3.0` | CLI, schemas, algorithms, UI, or runtime code changes. |
 | Asset | `redis-client-profile@0.1.0` | A Component, Profile, or Bundle is reviewed and evolved. |
 | Ontology | `software-engineering@1.0.0` | Concepts or role relationships change. |
 | Policy | `default-advisor@1.2.1` | Weights, thresholds, risk rules, Advisor contract, or Proposal Review contract changes. |
+| Evaluation/Feedback | Evaluation versions and Package/Report digests | Evaluation criteria, execution evidence, or aggregate scope changes. |
 | Catalog | Catalog digest and signature | Published asset membership or metadata changes. |
 
 Publishing a user Harness asset does not require an Engine release.

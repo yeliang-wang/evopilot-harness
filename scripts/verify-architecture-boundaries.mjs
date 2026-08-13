@@ -35,9 +35,18 @@ for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${m
 
 mustContain("AGENTS.md", "The 24 accepted module boundaries", "root agent instructions must reference all module boundaries");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
+mustContain("governance/roadmap.yaml", '"roadmapFamily": "evopilot-series-agentic-evolution"', "the accepted Harness Roadmap contract must remain installed");
+mustContain("governance/roadmap.yaml", '"harness-must-not-execute-evopilot-loops"', "the Roadmap must preserve the producer/control-plane boundary");
+mustContain("AGENTS.md", "Continue implementation only for `ALIGNED`", "agent instructions must stop Roadmap deviations before implementation");
+mustContain("package.json", '"roadmap:check"', "package scripts must expose static Roadmap validation");
+mustContain("package.json", '"roadmap:release"', "package scripts must expose the release-version Roadmap gate");
 mustContain("src/v3/workspace.mjs", 'mode: "read-only"', "Engine must remain read-only");
 mustContain("src/v3/workspace.mjs", "mutationAllowed: false", "Engine mutation must remain forbidden");
 mustContain("src/v3/hub.mjs", 'request.method !== "GET"', "Harness Hub HTTP surface must remain read-only");
+mustContain("src/v3/feedback.mjs", "proposalCreated: false", "feedback processing must not create Proposals in v3.3");
+mustContain("src/v3/feedback.mjs", "assetMutation: false", "feedback processing must not mutate Harness assets in v3.3");
+mustContain("src/v3/feedback.mjs", "sourceExecution: false", "feedback processing must not execute source projects");
+mustContain("src/v3/catalog.mjs", '["HarnessComponent", "HarnessProfile", "HarnessBundle"]', "feedback packages and effectiveness reports must remain outside Catalog asset discovery");
 mustContain("src/v3/reasoning.mjs", "EVIDENCE_EXTRACTION_COMMANDS", "source evidence tools must use an explicit allowlist");
 mustContain("src/v3/lifecycle.mjs", 'proposal.status !== "APPROVED"', "publication must require an approved Proposal");
 mustContain("src/v3/lifecycle.mjs", '"catalogs/organization/assets"', "publication must target Organization Catalog assets");

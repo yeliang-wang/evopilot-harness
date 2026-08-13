@@ -1,7 +1,7 @@
 # EvoPilot Harness
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.2.1)
+[![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v3.3.0)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -26,6 +26,8 @@ A Harness is a versioned executable asset package for one class of repeatable en
 | `MatchPolicyPack` | Eligibility, retrieval, scoring, thresholds, and risk rules. |
 | `AdvisorPolicyPack` | Evidence-bound GLM output contract and authority limits. |
 | `EvaluationPack` | Reviewed decision cases and explicit evidence-sufficiency status. |
+| `HarnessExecutionFeedbackPackage` | Approved, redacted execution evidence bound to one immutable Bundle closure. |
+| `HarnessEffectivenessReport` | Outcome, Process, Safety, and Cost aggregation with sample, context, provenance, and uncertainty. |
 
 This is intentionally narrower than general software classification. Unknown domains become review-stage proposals; they are not silently turned into published assets.
 
@@ -56,6 +58,16 @@ node src/index.mjs produce \
 ```
 
 The same command accepts a project root, GitHub repository, attachments, production logs, historical Harnesses, operator notes, and explicitly enabled research. Source ingestion is static: it does not run project build, test, deploy, or business commands.
+
+Process one approved structured execution-feedback package without creating a Proposal or mutating assets:
+
+```bash
+node src/index.mjs feedback process /path/to/feedback.yaml \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+`--production-log` remains unstructured, redacted source material for Proposal reasoning. A `HarnessExecutionFeedbackPackage` is a separate governed contract with approval, redaction, expiry, provenance, package/payload digests, and exact published Bundle/Profile/Component binding. See [Feedback Evidence](docs/guides/feedback-evidence.md).
 
 ## Reasoning And Review
 
@@ -122,7 +134,9 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-Engine `3.2.1` retains v2 CLI, Asset v3, Catalog, and Registry compatibility. New v3 approval automation must run the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+Engine `3.3.0` retains v2 CLI, Asset v3, Catalog, and Registry compatibility. New v3 approval automation must run the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+
+v3.3.0 validates the feedback-consumer contract with independent fixtures. Until a compatible control plane publishes real `HarnessExecutionFeedbackPackage` exports, that proves producer-side consumption behavior, not a completed cross-project production feedback loop.
 
 ## Validate
 

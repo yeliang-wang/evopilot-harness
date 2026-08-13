@@ -1,5 +1,26 @@
 # Troubleshooting
 
+## Feedback Package Is `REJECTED`
+
+Run validation with JSON and inspect `failures[]`:
+
+```bash
+node src/index.mjs feedback validate /path/to/feedback.yaml \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+- `schema`: repair the v1 envelope.
+- `approval`: export only after explicit approval.
+- `redaction` or `redacted-payload-digest`: redact first, then recalculate both digests.
+- `not-expired`: generate a fresh approved Package.
+- `package-digest`: reject tampering and regenerate through the producer.
+- `bundle-reference`, `profile-reference`, or `component:*`: reference exact published ids, versions, and digests.
+- `bundle-component-closure`: include exactly the Components resolved by the Bundle.
+- `package-id-conflict`: issue a new Package id; one id cannot identify different content.
+
+Do not edit accepted Packages under `feedback/packages`. High Report uncertainty is not a runtime error: inspect sample count, independent sources, contexts, missing fields, and `uncertainty.reasons`.
+
 ## v3 `proposal approve` Is Blocked
 
 Inspect the draft and run the independent Review Engine:

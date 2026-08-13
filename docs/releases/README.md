@@ -4,6 +4,7 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
+- [3.3.0](3.3.0.md) - governed execution-feedback ingestion, immutable Bundle closure validation, and four-dimensional effectiveness evidence.
 - [3.2.1](3.2.1.md) - production GLM Proposal Review contract alignment and structured-output hardening.
 - [3.2.0](3.2.0.md) - independent Proposal Review Engine, structured verdict reports, approval binding, and automatic Guided Operator presentation.
 - [3.1.0](3.1.0.md) - live GLM doctor, unified Advisor Run diagnostics, Source Root blocking semantics, and guided read-only diagnosis.

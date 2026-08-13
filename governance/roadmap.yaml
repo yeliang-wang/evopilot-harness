@@ -1,0 +1,140 @@
+{
+  "schema": "evopilot-series-roadmap/v1",
+  "roadmapFamily": "evopilot-series-agentic-evolution",
+  "contractVersion": "1.0.0",
+  "project": "evopilot-harness",
+  "updatedAt": "2026-08-13",
+  "ownership": {
+    "owns": [
+      "Harness Evidence Source ingestion and redaction",
+      "Harness reasoning, Proposal, review, approval, and publication",
+      "HarnessComponent, HarnessProfile, and immutable HarnessBundle lifecycle",
+      "Ontology, Match Policy, Advisor Policy, and Evaluation Packs",
+      "Catalog, Registry, CLI, and standalone Harness Hub"
+    ],
+    "mustNotOwn": [
+      "EvoPilot project onboarding or project profiles",
+      "goal-loop execution or project release decisions",
+      "direct execution of source projects",
+      "model training implementation",
+      "unapproved mutation based on runtime feedback"
+    ]
+  },
+  "versionPolicy": {
+    "publishedBaseline": "3.2.1",
+    "currentWorkingVersion": "3.3.0",
+    "versionsEvolveIndependently": true,
+    "majorRequiredFor": [
+      "incompatible Harness Asset schema",
+      "incompatible cross-project feedback contract",
+      "replacement of an accepted product boundary"
+    ]
+  },
+  "standingWork": [
+    {
+      "id": "evopilot-harness-maintenance",
+      "description": "Correctness, security, documentation synchronization, dependency maintenance, compatibility, and release repair that does not add an unplanned product capability or change an accepted boundary.",
+      "signals": ["bug", "fix", "security", "documentation", "dependency", "compatibility", "regression", "correctness", "修复", "安全", "文档", "依赖", "兼容", "回归"]
+    }
+  ],
+  "milestones": [
+    {
+      "id": "evopilot-harness-3.3-feedback-evidence-foundation",
+      "status": "COMPLETE",
+      "targetVersion": "3.3.0",
+      "releaseLine": "3.3.x",
+      "objective": "Consume approved production feedback as a governed Evidence Source and measure published Harness effectiveness without controlling project execution.",
+      "outcomes": [
+        "HarnessExecutionFeedbackPackage schema and static reader",
+        "redaction, approval, integrity, Bundle-reference, and provenance validation",
+        "effectiveness aggregation by Profile, Component, Bundle, and version",
+        "EvaluationPack extensions for Outcome, Process, Safety, and Cost evidence"
+      ],
+      "acceptance": [
+        "unapproved, unredacted, stale, tampered, or unresolved feedback packages are rejected",
+        "feedback remains an Evidence Source and never mutates published assets directly",
+        "effectiveness claims retain sample, context, uncertainty, source diversity, and version provenance",
+        "source projects remain statically read and are never executed"
+      ],
+      "signals": ["harnessexecutionfeedbackpackage", "harness execution feedback", "feedback package", "runtime feedback", "effectiveness aggregation", "evaluationpack reward", "执行反馈包", "生产反馈", "效果聚合", "评估包"],
+      "exclusions": ["Goal Loop execution", "automatic Harness publication", "model training"]
+    },
+    {
+      "id": "evopilot-harness-3.4-production-feedback-evolution",
+      "status": "PLANNED",
+      "targetVersion": "3.4.0",
+      "releaseLine": "3.4.x",
+      "objective": "Use governed execution feedback and pairwise experiment evidence to produce more accurate and professional Harness evolution Proposals.",
+      "outcomes": [
+        "feedback-linked Profile, Component, Bundle, Ontology, Policy, and Evaluation delta reasoning",
+        "new-versus-existing-versus-composed decision with execution outcome evidence",
+        "Pairwise experiment evidence ingestion and conflict handling",
+        "blast-radius, compatibility, rollback, and expected-effect analysis"
+      ],
+      "acceptance": [
+        "every proposed delta cites immutable source or feedback evidence",
+        "Pairwise evidence cannot override deterministic, schema, Evaluation, or human gates",
+        "Proposal Review reports effect, regression, compatibility, and rollback risks",
+        "only explicit review, approval, validation, and publication create a new asset version"
+      ],
+      "signals": ["pairwise feedback", "production feedback evolution", "asset effectiveness", "profile delta", "component delta", "bundle delta", "impact analysis", "生产反馈进化", "资产效果", "影响分析", "回滚分析"],
+      "exclusions": ["automatic approval", "project execution", "consumer-side release decision"]
+    },
+    {
+      "id": "evopilot-harness-3.5-professional-asset-learning",
+      "status": "PLANNED",
+      "targetVersion": "3.5.0",
+      "releaseLine": "3.5.x",
+      "objective": "Continuously improve Harness asset precision and professional completeness from accumulated governed evidence rather than hard-coded domain lists.",
+      "outcomes": [
+        "evidence-backed curriculum of unresolved boundaries and evaluation gaps",
+        "calibrated matching and Proposal quality evaluation from independently reviewed cases",
+        "cross-version regression suites for Asset, Ontology, Policy, and Evaluation changes",
+        "external research evidence adapters with provenance and authority limits"
+      ],
+      "acceptance": [
+        "quality claims separate contract coverage from independently reviewed accuracy evidence",
+        "new domains and roles are inferred from evidence rather than predefined user project categories",
+        "LLM remains advisory and cannot become publication authority",
+        "Engine releases remain independent from user Harness asset evolution"
+      ],
+      "signals": ["asset curriculum", "matching calibration", "proposal quality benchmark", "cross-version regression", "research evidence adapter", "专业资产", "匹配校准", "质量基准", "跨版本回归", "研究证据"],
+      "exclusions": ["embedded model trainer", "unrestricted internet authority", "automatic publication"]
+    }
+  ],
+  "boundaryRules": [
+    {
+      "id": "harness-must-not-execute-evopilot-loops",
+      "classification": "BOUNDARY_CHANGE",
+      "reason": "evopilot-harness produces Harness assets; EvoPilot owns project onboarding and Goal Loop execution.",
+      "signals": ["run goal loop in evopilot-harness", "onboard project in evopilot-harness", "project release decision in evopilot-harness", "在 evopilot-harness 执行 goal loop", "在 evopilot-harness 接入项目", "由 evopilot-harness 决定项目发布"]
+    },
+    {
+      "id": "harness-must-not-run-source-projects",
+      "classification": "BOUNDARY_CHANGE",
+      "reason": "Source ingestion is static; any future Evidence Runner requires a separate approved architecture and explicit authorization.",
+      "signals": ["execute source project", "run source project tests", "deploy source project", "执行 source project", "运行源项目测试", "部署源项目"]
+    },
+    {
+      "id": "harness-must-not-train-models",
+      "classification": "BOUNDARY_CHANGE",
+      "reason": "evopilot-harness may use an advisory LLM but is not a model-training platform.",
+      "signals": ["train model inside evopilot-harness", "embedded rl trainer", "update model weights in harness", "在 evopilot-harness 训练模型", "harness 更新模型权重"]
+    }
+  ],
+  "deviationSignals": ["replace roadmap", "skip milestone", "merge evopilot and evopilot-harness", "change product boundary", "替换 roadmap", "跳过里程碑", "合并 evopilot 和 evopilot-harness", "改变产品边界"],
+  "crossProjectContracts": [
+    {
+      "id": "published-harness-consumption/v3",
+      "status": "ACTIVE",
+      "direction": "evopilot-harness -> evopilot",
+      "rule": "evopilot-harness publishes immutable assets and Catalog/Registry metadata; consumers read them without producer-state mutation."
+    },
+    {
+      "id": "harness-execution-feedback-package/v1",
+      "status": "CONSUMER_ACTIVE_EXPORTER_PENDING",
+      "direction": "evopilot -> evopilot-harness",
+      "rule": "evopilot-harness may statically read an approved, redacted, immutable feedback package as Evidence Source; it does not control or replay the originating project."
+    }
+  ]
+}

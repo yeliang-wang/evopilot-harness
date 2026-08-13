@@ -137,6 +137,7 @@ run("tar", [
   "docs",
   "eval",
   "harnesses",
+  "governance",
   "ontology",
   "package-lock.json",
   "package.json",

@@ -10,6 +10,7 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 |---|---|
 | `workspace init|status` | Create or inspect the writable v3 Workspace. |
 | `produce` | Build Evidence Graph, reason, call Advisor when required, and stop at proposal review. |
+| `feedback inspect|validate|ingest|aggregate|report|process` | Govern approved execution feedback and create read-only effectiveness reports without asset mutation. |
 | `proposal inspect` | Read the generated Proposal without claiming an independent review. |
 | `proposal review` | Run deterministic gates plus independent evidence-bound semantic review and persist a structured Review Report. |
 | `proposal review-inspect` | Read the latest persisted Review Report without rerunning the reviewer. |
@@ -64,6 +65,30 @@ The report schema is `evopilot-harness-proposal-review/v1`. It includes determin
 `llm v3-models` returns `readinessScope=CONFIGURATION_ONLY` and `connectionVerified=false`. Use `llm v3-doctor --models-file <file> --json` before a production run that requires Advisor review. `produce` persists every Advisor attempt, including failures, under the external Workspace. Large graphs use the Advisor Policy's deterministic evidence projection (default: 48 nodes, 96,000 characters, 2,000 characters per excerpt); the Run records complete-Graph and projection digests, selected/omitted counts, ids, kinds, and source coverage. Advisor Policy can permit one structure/citation-only repair for invalid JSON or a rejected output contract; `attempts[]`, aggregate `usage`, and both validations remain auditable. With `--advisor required`, an unsuccessful final Advisor result produces `status=BLOCKED`, a non-zero exit code, and `nextAction=repair-advisor-and-rerun` while retaining evidence and Proposal artifacts for diagnosis.
 
 See [quickstart.md](quickstart.md), [automation.md](automation.md), and [v3 Production Lifecycle](../guides/v3-production-lifecycle.md).
+
+## Feedback Evidence
+
+Inspect and validate without storing:
+
+```bash
+evopilot-harness feedback inspect /path/to/feedback.yaml --json
+evopilot-harness feedback validate /path/to/feedback.yaml \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+Process one Package end to end, or use the atomic ingestion and aggregation commands:
+
+```bash
+evopilot-harness feedback process /path/to/feedback.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness feedback ingest /path/to/feedback.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness feedback aggregate --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness feedback report <report-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+Use `--now <ISO-8601>` only for deterministic testing or replay. Normal operation uses the current time. `PROCESSED`, `ACCEPTED`, `DUPLICATE`, `VALIDATED`, `INSPECTED`, `AGGREGATED`, `EMPTY`, and `FOUND` exit 0. `REJECTED` and `FAILED` exit 2.
+
+`feedback process` always reports `proposalCreated=false`, `assetMutation=false`, and `sourceExecution=false`. It never invokes the Proposal lifecycle. Full contract details are in [Feedback Evidence](../guides/feedback-evidence.md).
 
 ## Legacy v2 Compatibility Commands
 
