@@ -2,7 +2,18 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
-## 4.0.0 - Unreleased
+## 4.0.1 - 2026-08-19
+
+### Fixed
+
+- Resolved the Linux CI failure in the stdio MCP no-listener test by resolving `lsof` through `PATH` and reporting command-execution failures explicitly.
+- Aligned static Roadmap package-version validation with the already-declared `4.0.x` release line so governed patch releases pass the same rule as `roadmap:release`.
+
+### Release
+
+- This is the first completed 4.0.x release and includes the Agent-native capabilities described under 4.0.0 below.
+
+## 4.0.0 - 2026-08-19
 
 ### Added
 
@@ -20,7 +31,7 @@ All notable changes to `evopilot-harness` are documented here.
 ### Boundaries
 
 - v4.0.0 does not execute source-project commands, own EvoPilot Goal Loops, embed a conversational model or general Agent runtime, create model credentials, auto-approve, auto-publish, or expose remote multi-tenant MCP.
-- This entry describes an uncommitted local candidate. Release remains separately unauthorized.
+- The source tag was published, but GitHub CI failed before GHCR artifact publication and GitHub Release creation because the network-listener test assumed `/usr/sbin/lsof`. Use v4.0.1.
 
 ## 3.4.0 - Unreleased
 

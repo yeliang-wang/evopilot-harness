@@ -39,7 +39,7 @@ There are independent version axes:
 
 | Axis | Example | Changes when |
 |---|---|---|
-| Engine | `evopilot-harness@4.0.0` candidate | Digital Expert, Agent protocol, CLI, schemas, algorithms, UI, or runtime code changes. |
+| Engine | `evopilot-harness@4.0.1` | Digital Expert, Agent protocol, CLI, schemas, algorithms, UI, or runtime code changes. |
 | Asset | `redis-client-profile@0.1.0` | A Component, Profile, or Bundle is reviewed and evolved. |
 | Ontology | `software-engineering@1.0.0` | Concepts or role relationships change. |
 | Policy | `default-advisor@1.2.1` | Weights, thresholds, risk rules, Advisor contract, or Proposal Review contract changes. |

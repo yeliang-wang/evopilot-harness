@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted and implemented as the v4.0.0 release candidate. Git commit, tag, GitHub Release, npm, and container publication remain separately unauthorized.
+Accepted and released in v4.0.1. The v4.0.0 source tag was superseded after its Release workflow failed before publication.
 
 ## Context
 

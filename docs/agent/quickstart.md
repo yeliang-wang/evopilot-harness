@@ -20,7 +20,7 @@ npm run digital-expert:check
 node src/index.mjs version --json
 ```
 
-Expected product version for this candidate is `4.0.0`. Do not put the Workspace inside the Release directory.
+Expected product version is `4.0.1`. Do not put the Workspace inside the Release directory.
 
 ## Load The Expert
 
@@ -44,7 +44,7 @@ Configure the Agent host to launch:
 node /absolute/path/to/evopilot-harness/src/index.mjs mcp serve --transport stdio --workspace /absolute/external/workspace
 ```
 
-The process writes only JSON-RPC messages to stdout, uses stderr for process diagnostics, and opens no network listener. v4.0.0 rejects non-stdio transports.
+The process writes only JSON-RPC messages to stdout, uses stderr for process diagnostics, and opens no network listener. v4 rejects non-stdio transports.
 
 ## Start A Conversation
 

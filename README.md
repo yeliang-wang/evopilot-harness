@@ -152,9 +152,9 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The local Engine `4.0.0` candidate retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, and EvaluationPack v1/v2 read compatibility. New v3 approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+The Engine `4.0.1` release retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, and EvaluationPack v1/v2 read compatibility. New v3 approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
-The latest published Engine baseline remains v3.3.0 until a separate v4 Release review is authorized and completed. This working tree implements the approved v4.0.0 candidate; it does not add v4.1 Pairwise/Champion-Challenger comparison or v4.2 professional asset learning.
+The latest published Engine baseline is v4.0.1. It does not add v4.1 Pairwise/Champion-Challenger comparison or v4.2 professional asset learning.
 
 ## Validate
 

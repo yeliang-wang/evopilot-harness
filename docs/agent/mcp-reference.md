@@ -8,7 +8,7 @@ evopilot-harness mcp serve \
   --workspace "$HOME/.evopilot-harness"
 ```
 
-From a checkout, replace `evopilot-harness` with `node /absolute/path/src/index.mjs`. v4.0.0 supports only local stdio. It opens no listening port and rejects a Workspace inside the Release.
+From a checkout, replace `evopilot-harness` with `node /absolute/path/src/index.mjs`. v4 supports only local stdio. It opens no listening port and rejects a Workspace inside the Release.
 
 ## Protocol
 

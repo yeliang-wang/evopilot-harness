@@ -22,7 +22,7 @@ test("Digital Expert adapters are generated from one immutable Core", () => {
   execFileSync(process.execPath, ["scripts/generate-digital-expert-adapters.mjs", "--check"], { cwd: root, stdio: "pipe" });
   const lock = JSON.parse(fs.readFileSync(path.join(root, "digital-expert/manifest.lock.json"), "utf8"));
   assert.match(lock.coreDigest, /^sha256:[a-f0-9]{64}$/);
-  assert.equal(lock.expertVersion, "4.0.0");
+  assert.equal(lock.expertVersion, "4.0.1");
   for (const adapter of ["codex/SKILL.md", "workbuddy/WORKBUDDY.md", "claude-code/CLAUDE.md", "mcp/MCP.md", "generic/AGENT.md"]) {
     const content = fs.readFileSync(path.join(root, "digital-expert/adapters", adapter), "utf8");
     assert.match(content, new RegExp(lock.coreDigest.replace(":", "\\:")));
@@ -527,8 +527,9 @@ test("real stdio MCP rejects incompatible versions and exposes no network transp
     assert.equal(capabilities.mcp.networkListening, false);
     assert.equal(capabilities.authority.sourceExecutionAllowed, false);
     assert.deepEqual(capabilities.compatibility, operationCompatibility());
-    const listeners = spawnSync("/usr/sbin/lsof", ["-nP", "-a", "-p", String(client.child.pid), "-iTCP", "-sTCP:LISTEN"], { encoding: "utf8" });
-    assert.equal(listeners.stdout.trim(), "");
+    const listeners = spawnSync("lsof", ["-nP", "-a", "-p", String(client.child.pid), "-iTCP", "-sTCP:LISTEN"], { encoding: "utf8" });
+    assert.equal(listeners.error, undefined, `lsof network-listener inspection failed: ${listeners.error?.message ?? "unknown error"}`);
+    assert.equal(listeners.stdout?.trim(), "");
     const tools = await client.request("tools/list");
     assert.ok(tools.tools.length >= 16);
     await assert.rejects(() => client.tool("run_engine_diagnostic", { operation: "catalog.publish", input: {} }), /must be one of/);

@@ -98,6 +98,10 @@ test("Roadmap Gate permits declared releases and rejects undeclared release line
   assert.equal(agentNative.status, 0, agentNative.stderr);
   assert.equal(agentNative.body.classification, "ALIGNED");
 
+  const agentNativePatch = run(["--release-version", "4.0.1"]);
+  assert.equal(agentNativePatch.status, 0, agentNativePatch.stderr);
+  assert.equal(agentNativePatch.body.classification, "ALIGNED");
+
   const undeclared = run(["--release-version", "5.0.0"]);
   assert.equal(undeclared.status, 2);
   assert.equal(undeclared.body.classification, "UNPLANNED");

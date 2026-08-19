@@ -60,10 +60,10 @@ docker compose ps
 Default image:
 
 ```text
-ghcr.io/yeliang-wang/evopilot-harness:3.3.0
+ghcr.io/yeliang-wang/evopilot-harness:4.0.1
 ```
 
-This remains the latest published image. Do not use `4.0.0` until the separately authorized Release workflow publishes and verifies that immutable image. v4 ordinary operation is local-first through stdio MCP; no remote production deployment is part of the default release contract.
+This is the latest published image after the tag workflow and immutable digest are verified. Do not use the failed `4.0.0` source tag. v4 ordinary operation is local-first through stdio MCP; no remote production deployment is part of the default release contract.
 
 Override image and port:
 

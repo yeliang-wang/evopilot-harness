@@ -1,12 +1,12 @@
-# v4.0.0 Acceptance
+# v4.0.1 Acceptance
 
-This page records the required validation surface for the local v4.0.0 candidate. A passing implementation suite does not authorize a Release.
+This page records the required validation surface for the v4.0.1 release. A passing implementation suite does not authorize a future Release.
 
 ## Deterministic Commands
 
 ```bash
 npm run roadmap:check
-npm run roadmap:release -- 4.0.0 --json
+npm run roadmap:release -- 4.0.1 --json
 npm run digital-expert:check
 node --test tests/v4.test.mjs
 npm run verify:architecture

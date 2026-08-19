@@ -4,7 +4,8 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
-- [4.0.0 candidate](4.0.0.md) - portable Digital Expert, local stdio MCP Operation Server, persistent Agent Operation Sessions, cross-Agent resume, and digest-bound human gates. Not yet released.
+- [4.0.1](4.0.1.md) - first completed Agent-native release, including portable listener validation on macOS and Linux CI.
+- [4.0.0 tag only](4.0.0.md) - implementation tag whose release workflow failed before GitHub Release and GHCR publication; superseded by v4.0.1.
 - [3.4.0 candidate](3.4.0.md) - evidence-linked Asset Delta Proposals, EvaluationPack v3, five-way decisions, and deterministic impact closure. Not yet released.
 - [3.3.0](3.3.0.md) - governed execution-feedback ingestion, immutable Bundle closure validation, and four-dimensional effectiveness evidence.
 - [3.2.1](3.2.1.md) - production GLM Proposal Review contract alignment and structured-output hardening.

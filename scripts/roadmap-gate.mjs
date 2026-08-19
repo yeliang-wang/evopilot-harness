@@ -68,7 +68,8 @@ function validateRoadmap(value) {
   }
   const packageVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
   const knownVersions = new Set([value?.versionPolicy?.publishedBaseline, value?.versionPolicy?.currentWorkingVersion, ...(value?.milestones ?? []).map((item) => item.targetVersion)]);
-  required(knownVersions.has(packageVersion), `package version ${packageVersion} is not declared by the Roadmap`);
+  const declaredReleaseVersion = (value?.milestones ?? []).some((item) => inReleaseLine(packageVersion, item.releaseLine));
+  required(knownVersions.has(packageVersion) || declaredReleaseVersion, `package version ${packageVersion} is not declared by the Roadmap`);
   required(fs.existsSync(path.join(root, "docs/roadmap/ROADMAP.md")), "docs/roadmap/ROADMAP.md is missing");
   const agents = fs.readFileSync(path.join(root, "AGENTS.md"), "utf8");
   required(agents.includes("Roadmap Gate"), "AGENTS.md must require the Roadmap Gate");

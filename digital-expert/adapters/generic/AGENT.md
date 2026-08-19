@@ -3,7 +3,7 @@
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.0.0`
+- Expert version: `4.0.1`
 - Core digest: `sha256:6524e149b49a2164ccc97252d28083789d68ae487b528c36b0e69b2eb415f0e9`
 - Agent protocol: `evopilot-harness-agent-operations/v1`
 - Engine API: `harness.evopilot.io/v3`

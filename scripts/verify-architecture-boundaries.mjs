@@ -66,7 +66,8 @@ mustContain("src/v3/review.mjs", "mayApprove: false", "Proposal Review Engine mu
 mustContain("package.json", '"verify:architecture"', "package scripts must expose architecture verification");
 mustContain("package.json", "npm run verify:architecture", "npm run check must execute architecture verification");
 mustContain("package.json", '"digital-expert:check"', "package scripts must expose deterministic Digital Expert validation");
-mustContain("package.json", '"version": "4.0.0"', "Agent-native candidate must use the approved major version");
+const packageVersion = JSON.parse(read("package.json")).version;
+if (!/^4\.0\.\d+$/.test(packageVersion)) failures.push("Agent-native release must remain in the approved 4.0.x line");
 mustContain("src/index.mjs", 'argv[0] === "mcp" && argv[1] === "serve"', "CLI must expose the local MCP process entry");
 mustContain("src/v4/constants.mjs", "assertExternalWorkspace", "Agent state must remain outside the Release");
 mustContain("src/v4/session/store.mjs", "CONFIRM_OPERATION_PLAN", "Plan confirmation must be explicit and digest-bound");

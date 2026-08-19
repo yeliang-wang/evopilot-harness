@@ -31,7 +31,7 @@ import {
 export async function serveOperationServer(argv = [], io = {}) {
   const args = parseCli(argv);
   const transport = option(args, "transport", "stdio");
-  if (transport !== "stdio") throw usage("v4.0.0 supports only --transport stdio.");
+  if (transport !== "stdio") throw usage("v4 supports only --transport stdio.");
   const home = assertExternalWorkspace(option(args, "workspace", defaultHarnessHome()));
   const version = packageVersion();
   const server = new StdioMcpServer({

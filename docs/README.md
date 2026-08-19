@@ -66,4 +66,4 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The working tree is a v4.0.0 implementation candidate; the latest published baseline remains v3.3.0 until a separate Release authorization and publication complete.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The current published Engine baseline is v4.0.1.
