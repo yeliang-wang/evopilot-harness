@@ -8,7 +8,7 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current Engine release candidate: [`v3.3.0`](../releases/3.3.0.md). It becomes a published Engine release only after commit, tag, GitHub Release, and artifact verification. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current local Engine release candidate: [`v4.0.0`](../releases/4.0.0.md). The latest published baseline remains `v3.3.0`. The candidate becomes a published Engine release only after separate Release authorization, commit, tag, GitHub Release, and artifact verification. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Version Policy
 
@@ -56,7 +56,7 @@ Artifact verification checks the expected files, checksums, package metadata, an
 The Git tag must exactly match `package.json`:
 
 ```text
-tag v3.3.0 -> package.json version 3.3.0
+tag v4.0.0 -> package.json version 4.0.0
 ```
 
 `.github/workflows/release-artifacts.yml`:
@@ -77,3 +77,5 @@ GitHub Release, GHCR publication, and local artifact verification are separate e
 The default product and release contract is local-first. Docker and Compose are packaging and local operation options. ECS or another production platform is not part of the default release chain and must not be inferred from a GitHub Release or container publication.
 
 No release action is implied by documentation edits. Commit, push, tag, GitHub Release, registry publication, or deployment requires separate explicit authorization.
+
+The current v4.0.0 implementation and acceptance task does not authorize commit, push, tag, GitHub Release, npm/GHCR publication, or deployment.

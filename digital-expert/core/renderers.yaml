@@ -1,0 +1,14 @@
+schema: evopilot-harness-digital-expert-renderers/v1
+requiredFields:
+  common: [schema, status, nextAction]
+  session: [sessionId, status, sessionDigest, planDigest, proposals, blockers, nextAction]
+  proposal: [proposalId, decision, proposalDigest, proposedAssets, blockers, nextAction]
+  review: [reviewId, reportDigest, status, verdict, summary, findings, reasons, evidenceIds, deterministicGates, groupCoherence, projectMembership, boundaryAssessment, existingAssetOverlap, definitionQuality, evaluationSufficiency, advisorAssessment, suggestedActions, remainingBlockers, reviewer, nextAction]
+  publication: [proposalId, status, assets, catalog, nextAction]
+rules:
+  - preserve-engine-values
+  - do-not-invent-missing-fields
+  - do-not-collapse-blockers
+  - include-human-decision-required
+  - include-model-and-token-usage-when-present
+  - redact-secrets-and-raw-sensitive-evidence

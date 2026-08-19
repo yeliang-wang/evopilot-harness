@@ -46,7 +46,7 @@ node src/index.mjs produce \
   --json
 ```
 
-Nested modules are deduplicated by default. Add `--include-modules` only when modules are independent project evidence units. Every discovered project first receives its own Evidence Graph and reasoning result. Runs are then grouped by selected existing Profile, proposed new Profile, or composed Bundle target. Each group receives a merged, re-indexed Evidence Graph and exactly one review-stage Proposal. Shared execution-only evidence is never used to guess a domain; such projects remain `unclassified-engineering` until Advisor and human review add justified domain evidence.
+Nested modules are deduplicated by default. Add `--include-modules` only when modules are independent project evidence units. Every discovered project first receives its own Evidence Graph and reasoning result. Runs are then grouped by selected existing Profile, proposed new Profile, composed Bundle target, `NO_CHANGE`, or `NEED_MORE_EVIDENCE`. Each group receives a merged, re-indexed Evidence Graph and exactly one auditable Proposal. Shared execution-only evidence is never used to guess a domain; without discriminating domain evidence the result remains `NEED_MORE_EVIDENCE` and no generic Profile is created.
 
 ## 4. Add Materials And Logs
 
@@ -81,7 +81,7 @@ Only HTTPS is allowed; local and private-network destinations are rejected. Rese
 
 ## 5. Review
 
-Stop when `status` is `REVIEW_REQUIRED` or `BLOCKED`. Before required Advisor production, distinguish configuration from connectivity:
+Stop when `status` is `REVIEW_REQUIRED`, `NO_CHANGE`, `NEED_MORE_EVIDENCE`, or `BLOCKED`. Before required Advisor production, distinguish configuration from connectivity:
 
 ```bash
 node src/index.mjs llm v3-models --workspace "$EVOPILOT_HARNESS_HOME" --models-file /path/to/models.json --json
@@ -106,6 +106,10 @@ advisor.model
 advisor.usage
 advisor.resultPath
 proposal.proposedAssets
+proposal.assetDeltaProposal
+proposal.assetDeltaProposal.deltas[].impact
+proposal.evaluationStatus
+proposal.deltaClosure
 proposal.validations
 proposal.blockers
 proposal.evaluationStatus
@@ -113,17 +117,21 @@ nextAction
 ```
 
 ```bash
+node src/index.mjs proposal validate <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+
 node src/index.mjs proposal review <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --models-file /path/to/models.json \
   --json
 ```
 
-For Source Roots, run this command once for every returned Proposal. Present every report and stop. Required review fields include `verdict`, `summary`, `findings`, `reasons`, `evidenceIds`, deterministic gates, group coherence, every project membership, boundary assessment, existing-asset overlap, definition quality, evaluation sufficiency, suggested actions, remaining blockers, Reviewer model/usage, report digest, and `nextAction`.
+First present every Proposal decision, Delta before/after state, change evidence, impact analysis, Evaluation case coverage, and closure result. Do not review, approve, or publish a terminal `NO_CHANGE` or `NEED_MORE_EVIDENCE` Proposal. For Source Roots, run semantic review once for every validated mutating Proposal. Present every report and stop. Required review fields include `verdict`, `summary`, `findings`, `reasons`, `evidenceIds`, deterministic gates, group coherence, every project membership, boundary assessment, existing-asset overlap, definition quality, evaluation sufficiency, suggested actions, remaining blockers, Reviewer model/usage, report digest, and `nextAction`.
 
 ## 6. Approve And Publish
 
-Only a current `status=REVIEWED`, `verdict=READY_FOR_HUMAN_APPROVAL` report may proceed to this separate human gate:
+Only a mutating decision with `deltaClosure.status=VALIDATED` and a current `status=REVIEWED`, `verdict=READY_FOR_HUMAN_APPROVAL` report may proceed to this separate human gate:
 
 ```bash
 node src/index.mjs proposal approve <proposal-id> \
@@ -140,7 +148,9 @@ node src/index.mjs proposal publish <proposal-id> \
 
 Policy-required Advisor failures return `BLOCKED`, persist a redacted Advisor Run, and block approval. Large group Graphs are reduced only for LLM input through the deterministic Advisor Policy projection; the complete Graph remains the source of record and projection coverage is reported. Policy may permit one structure/citation-only repair for invalid JSON or a rejected response contract; every attempt and its usage remain visible, and a failed repair stays blocked. For Source Roots, report the aggregate `advisorSummary` and each `proposals[].advisor` result. Repair the Advisor and start a fresh production run; do not attach approval to a failed Advisor run. Existing immutable asset versions are never overwritten.
 
-The semantic Proposal reviewer is a second, independent LLM contract. Its verdict and suggestions belong to the Engine report, not the Guided Operator Skill. It cannot approve or publish. Missing, failed, rejected, stale, or non-ready Review Reports block approval.
+The semantic Proposal reviewer is a second, independent LLM contract. Its verdict and suggestions belong to the Engine report, not the Guided Operator Skill. It cannot alter the deterministic decision, repair missing impact closure, approve, or publish. Missing, failed, rejected, stale, digest-mismatched, or non-ready Review Reports block approval. Every mutating decision requires `--evaluation-reviewed`; all Evaluation cases must be approved, all required polarities must be represented, and the pack must be `READY`. Approval binds the current Review Report and stores an approved-content digest. Publication rereads those bindings and rejects any Proposal change made after approval.
+
+Publication rebuilds the Delta from the exact `published` asset and Evaluation documents, then validates their schemas, digests, derived changes, impact fields, and references. It preflights every asset, Evaluation, and Delta destination before the first write. Existing immutable paths block the entire publication rather than leaving partial state.
 
 ## 7. Validate And Sign
 

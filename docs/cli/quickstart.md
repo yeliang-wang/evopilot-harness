@@ -1,6 +1,6 @@
-# EvoPilot Harness v3 CLI Quickstart
+# EvoPilot Harness Atomic CLI Quickstart
 
-> Shortest safe path for a person or AI agent to produce, review, approve, and publish Harness assets.
+> Compatibility path for CI, existing JSON automation, and emergency diagnosis. The ordinary v4 human path is the [Agent-Native Quickstart](../agent/quickstart.md).
 
 ## 1. Initialize
 
@@ -81,7 +81,7 @@ node src/index.mjs produce \
   --json
 ```
 
-The command stops at `REVIEW_REQUIRED`, `BLOCKED`, `INSUFFICIENT_EVIDENCE`, or `NOT_HARNESS_ELIGIBLE`. It never approves or publishes automatically. A required Advisor failure returns a non-zero exit code, persists `advisor-result.json`, and sets `nextAction=repair-advisor-and-rerun`.
+The command returns one of five Proposal decisions: `EVOLVE_EXISTING`, `COMPOSE_NEW_BUNDLE`, `PROPOSE_NEW_PROFILE`, `NO_CHANGE`, or `NEED_MORE_EVIDENCE`. It stops at review, a terminal decision, `BLOCKED`, or the earlier `NOT_HARNESS_ELIGIBLE` Eligibility result. It never approves or publishes automatically. A required Advisor failure returns a non-zero exit code, persists `advisor-result.json`, and sets `nextAction=repair-advisor-and-rerun`.
 
 The minimal `v3-doctor` request defaults to 60 seconds. Full production Advisor reasoning defaults to 180 seconds and can be overridden with `produce --advisor-timeout-ms <number>` when an operator has a stricter environment-specific limit.
 
@@ -114,6 +114,10 @@ advisor.attempts[]
 advisor.validation
 advisor.resultPath
 proposal.proposedAssets
+proposal.assetDeltaProposal
+proposal.assetDeltaProposal.deltas[].impact
+proposal.evaluationStatus
+proposal.deltaClosure
 proposal.validations
 proposal.blockers
 proposal.evaluationStatus
@@ -130,7 +134,17 @@ node src/index.mjs proposal inspect <proposal-id> \
   --json
 ```
 
-Then run the independent Proposal Review Engine. It applies deterministic gates and a separate evidence-bound semantic review; it does not merely return `proposal.yaml`:
+Validate exact before/after state, positive/negative Evaluation coverage, impact analysis, and the decision/publication boundary without running the semantic reviewer:
+
+```bash
+node src/index.mjs proposal validate <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+Stop unless `closure.status=VALIDATED`. `NO_CHANGE` and `NEED_MORE_EVIDENCE` must report `assetDelta.spec.publicationAllowed=false`; present their reasons and stop without approval or publication.
+
+For a validated mutating decision, run the independent Proposal Review Engine. It applies the Delta gates and a separate evidence-bound semantic review; it does not merely return `proposal.yaml`:
 
 ```bash
 node src/index.mjs proposal review <proposal-id> \
@@ -143,7 +157,7 @@ Report `verdict`, `summary`, `findings`, `reasons`, `evidenceIds`, `groupCoheren
 
 ## 6. Approve And Publish
 
-Use real reviewer values. An AI agent must not invent them. Approval is blocked unless a current, schema-valid Review Report has `status=REVIEWED` and `verdict=READY_FOR_HUMAN_APPROVAL`.
+Use real reviewer values. An AI agent must not invent them. Approval is blocked unless a current, schema-valid and digest-matched Review Report has `status=REVIEWED` and `verdict=READY_FOR_HUMAN_APPROVAL`. Every mutating decision also requires all Evaluation cases to be approved and the pack to be `READY`.
 
 ```bash
 node src/index.mjs proposal approve <proposal-id> \
@@ -158,7 +172,7 @@ node src/index.mjs proposal publish <proposal-id> \
   --json
 ```
 
-Publication fails if the proposal is not approved, a schema fails, a dependency cannot be resolved, or an immutable asset version already exists.
+Publication fails if the decision is terminal, Delta/Evaluation closure fails, the Proposal changed after approval, Review Report or approval binding drifted, Evaluation is not fully reviewed, a schema fails, a dependency cannot be resolved, or any immutable asset, Evaluation, or Delta destination already exists. Publication rebuilds Delta after-states from the exact published documents and preflights all destinations before writing.
 
 ## 7. Sign And Verify
 

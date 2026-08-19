@@ -13,15 +13,16 @@ The v3 reasoning pipeline is deterministic at its decision boundary:
 7. Score every candidate by role, boundary, capability, execution, evidence coverage, negative conflict, and novelty.
 8. Apply versioned thresholds and risk policy.
 9. Call GLM only for ambiguity, conflict, or new-Profile decisions.
-10. Produce a review-stage Profile or Bundle proposal and supporting Evaluation Pack.
-11. Run deterministic Proposal gates plus an independent evidence-bound semantic review.
-12. Synthesize and persist a structured Review Report, then stop for human decision.
+10. Produce one of five Proposal decisions with a typed Asset Delta and EvaluationPack v3.
+11. Validate exact state, decision/publication semantics, positive/negative Evaluation coverage, and deterministic impact closure.
+12. Run remaining deterministic Proposal gates plus an independent evidence-bound semantic review.
+13. Synthesize and persist a structured Review Report, then stop for human decision.
 
 ## Eligibility
 
 The gate asks whether evidence supports a repeatable engineering task with model-external actions, constraints, evidence, or validators. It does not ask which general software category the source belongs to.
 
-Outcomes before candidate matching:
+Eligibility outcomes before candidate matching:
 
 - `NOT_HARNESS_ELIGIBLE`: no relevant engineering boundary or explicit reject signals.
 - `INSUFFICIENT_EVIDENCE`: engineering intent exists, but minimum evidence or action signals are missing.
@@ -47,7 +48,7 @@ Weights and thresholds come from `MatchPolicyPack`; they are not constants in v3
 
 For `PROPOSE_NEW_PROFILE`, the deterministic result also emits `proposedProfile`: the Ontology-derived Profile id, domain, exact role, task class, positive concepts, negative concepts, and evidenced source kinds. Proposal generation must preserve this intent. It must not replace a specific role such as `redis-client-library` with a generic `<domain>-engineering` role.
 
-`executable-engineering` is a shared eligibility concept, not domain evidence. It contributes to execution readiness but is excluded from role detection. When no domain-specific concept is evidenced, the result is `unclassified-engineering` and remains review-blocking instead of assigning the first available domain role.
+`executable-engineering` is a shared eligibility concept, not domain evidence. It contributes to execution readiness but is excluded from role detection. When no domain-specific concept is evidenced, the Proposal decision is `NEED_MORE_EVIDENCE`; the Engine does not generate a generic `unclassified` Profile.
 
 ## Final Decisions
 
@@ -56,11 +57,10 @@ For `PROPOSE_NEW_PROFILE`, the deterministic result also emits `proposedProfile`
 | `EVOLVE_EXISTING` | Draft a new version of the selected Profile. |
 | `COMPOSE_NEW_BUNDLE` | Draft a Bundle from multiple strong Profile relationships. |
 | `PROPOSE_NEW_PROFILE` | Draft a review-stage Profile and Ontology/Policy implications; never auto-publish. |
-| `INSUFFICIENT_EVIDENCE` | Stop and request more source evidence. |
-| `NOT_HARNESS_ELIGIBLE` | Stop; do not create a Harness asset. |
-| `REVIEW_REQUIRED` | Stop on ambiguity or a threshold gap. |
+| `NO_CHANGE` | Preserve an auditable finding that current evidence adds no justified asset delta; approval and publication are blocked. |
+| `NEED_MORE_EVIDENCE` | Preserve an auditable stop when evidence, domain discrimination, score, or candidate separation is insufficient; approval and publication are blocked. |
 
-A detected Ontology role with no published Profile becomes `PROPOSE_NEW_PROFILE`. A strong negative boundary conflict cannot be treated as a normal existing-Profile evolution.
+`NOT_HARNESS_ELIGIBLE` remains an earlier Eligibility Gate stop and is not one of the five Proposal decisions. A detected Ontology role with no published Profile becomes `PROPOSE_NEW_PROFILE`. A strong negative boundary conflict cannot be treated as a normal existing-Profile evolution. A strong existing match becomes `NO_CHANGE` when evidence adds neither a new domain concept nor a new required evidence kind; otherwise it may become `EVOLVE_EXISTING`. Ambiguous or sub-threshold candidates become `NEED_MORE_EVIDENCE`.
 
 ## Proposal Quality
 
@@ -72,7 +72,13 @@ A new Profile proposal is assembled from deterministic intent and the Evidence G
 - isolation, operator-approval, evidence-citation, domain-conflict, and validation blockers;
 - source, Ontology, Match Policy, and successful Advisor response digests.
 
-An existing-Profile evolution must change evidence-backed matching or acceptance coverage in addition to version and provenance metadata. All such deltas remain review-stage until human approval.
+An existing-Profile evolution must change evidence-backed matching or acceptance coverage in addition to version and provenance metadata. All such deltas remain review-stage until human approval. Every mutating Proposal also carries an EvaluationPack v3 Delta.
+
+## Asset Delta Closure
+
+`AssetDeltaProposal v1` supports Component, Profile, Bundle, Ontology, Matcher Policy, Advisor Policy, and Evaluation assets. It records exact before/after documents and digests, JSON-pointer changes, evidence ids, operation semantics, and deterministic impact findings for compatibility, dependency, blast radius, expected effect, regression, and rollback.
+
+`proposal validate` recomputes and checks the Delta and Evaluation closure without invoking the semantic reviewer. It fails on malformed contracts, missing positive/negative cases, stale Evaluation digests, altered asset identity, invalid create/update/compose/no-change semantics, blocked impact analysis, or a terminal decision that permits publication.
 
 ## Proposal Review Contract
 
@@ -84,7 +90,7 @@ An existing-Profile evolution must change evidence-backed matching or acceptance
 - `REJECT`
 - `NEED_MORE_EVIDENCE`
 
-Deterministic gates validate Proposal shape, evidence/reasoning digests, required Advisor completion, definition-contract completeness, and Evaluation Pack presence. The semantic reviewer independently evaluates product ownership versus dependency/use, corpus coherence and every source membership, new-versus-existing asset relationships, boundary quality, professional definition completeness, and evaluation sufficiency. Synthesis cannot turn a failed blocking gate into `READY_FOR_HUMAN_APPROVAL`.
+Deterministic gates validate Proposal shape, evidence/reasoning digests, required Advisor completion, definition-contract completeness, typed Delta closure, impact closure, and Evaluation Pack presence. The semantic reviewer independently evaluates product ownership versus dependency/use, corpus coherence and every source membership, new-versus-existing asset relationships, boundary quality, professional definition completeness, and evaluation sufficiency. Synthesis cannot turn a failed blocking gate into `READY_FOR_HUMAN_APPROVAL`.
 
 The Review Report records findings, reasons, evidence ids, actions, original Proposal blockers, Review blockers, model and token usage, attempts, policy and algorithm versions, Proposal/report digests, and `nextAction`. Source-derived project membership, boundary, Advisor, and multi-source coherence conclusions require valid Evidence Graph citations. Catalog overlap, Proposal structure, definition quality, evaluation sufficiency, and findings derived only from those non-Graph inputs may use an empty `evidenceIds` array; the reviewer must not invent source citations for them. String-form definition-quality checks are normalized into structured report entries before validation, but normalization cannot add evidence or change a verdict.
 
@@ -108,6 +114,7 @@ GLM may not:
 - invent evidence IDs;
 - override eligibility, signature, schema, or human-approval gates;
 - use self-reported confidence as the final deterministic decision.
+- replace `NO_CHANGE` or `NEED_MORE_EVIDENCE` with a mutating decision.
 
 The Proposal semantic reviewer has the same authority limits. It may produce a structured review verdict, but it cannot approve or publish.
 
@@ -115,4 +122,4 @@ The run stores provider, model, input/output/total tokens, prompt and response d
 
 ## Evaluation Claims
 
-`eval v3-run` covers schema, Advisor citation, adversarial response, and unknown-domain proposal contracts. It reports `INSUFFICIENT_EVAL_EVIDENCE` until enough independently reviewed cases exist. Contract tests are not represented as general matching accuracy.
+`eval v3-run` covers schema, Advisor citation, adversarial response, unknown-domain stops, all supported Delta asset kinds, positive/negative Evaluation cases, and blocked impact closure. EvaluationPack v1, v2, and v3 remain readable. Generated packs report `INSUFFICIENT_EVAL_EVIDENCE` until enough independently reviewed cases exist. Contract tests are not represented as general matching accuracy or causal improvement.

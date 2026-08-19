@@ -3,31 +3,34 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-13",
+  "updatedAt": "2026-08-19",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
       "Harness reasoning, Proposal, review, approval, and publication",
       "HarnessComponent, HarnessProfile, and immutable HarnessBundle lifecycle",
       "Ontology, Match Policy, Advisor Policy, and Evaluation Packs",
-      "Catalog, Registry, CLI, and standalone Harness Hub"
+      "Catalog, Registry, CLI, and standalone Harness Hub",
+      "portable Digital Expert, Agent adapters, local Harness Operation Server, and Agent Operation Session protocol"
     ],
     "mustNotOwn": [
       "EvoPilot project onboarding or project profiles",
       "goal-loop execution or project release decisions",
       "direct execution of source projects",
       "model training implementation",
-      "unapproved mutation based on runtime feedback"
+      "unapproved mutation based on runtime feedback",
+      "general-purpose Agent runtime, conversational foundation model, or Agent-owned approval and publication authority"
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "3.2.1",
-    "currentWorkingVersion": "3.3.0",
+    "publishedBaseline": "3.3.0",
+    "currentWorkingVersion": "3.4.0",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
       "incompatible cross-project feedback contract",
-      "replacement of an accepted product boundary"
+      "replacement of an accepted product boundary",
+      "replacement of the supported primary human operation model"
     ]
   },
   "standingWork": [
@@ -35,6 +38,11 @@
       "id": "evopilot-harness-maintenance",
       "description": "Correctness, security, documentation synchronization, dependency maintenance, compatibility, and release repair that does not add an unplanned product capability or change an accepted boundary.",
       "signals": ["bug", "fix", "security", "documentation", "dependency", "compatibility", "regression", "correctness", "修复", "安全", "文档", "依赖", "兼容", "回归"]
+    },
+    {
+      "id": "evopilot-harness-evolution-governance",
+      "description": "Repository and Codex workflow governance that binds Engine evolution to reviewed evidence, this Roadmap, an approved Evolution Target, deterministic acceptance, and separately authorized release without changing Harness product behavior, asset authority, or boundaries.",
+      "signals": ["evolution governance", "roadmap governance", "roadmap binding", "evolution target", "conversational orchestrator", "演进治理", "roadmap 绑定", "演进目标", "对话式编排"]
     }
   ],
   "milestones": [
@@ -60,46 +68,92 @@
       "exclusions": ["Goal Loop execution", "automatic Harness publication", "model training"]
     },
     {
-      "id": "evopilot-harness-3.4-production-feedback-evolution",
+      "id": "evopilot-harness-3.4-evidence-driven-asset-delta",
       "status": "PLANNED",
       "targetVersion": "3.4.0",
       "releaseLine": "3.4.x",
-      "objective": "Use governed execution feedback and pairwise experiment evidence to produce more accurate and professional Harness evolution Proposals.",
+      "objective": "Produce professional, evidence-linked Harness Asset Delta Proposals with portable evaluation and deterministic impact closure before controlled comparative experiments.",
       "outcomes": [
-        "feedback-linked Profile, Component, Bundle, Ontology, Policy, and Evaluation delta reasoning",
-        "new-versus-existing-versus-composed decision with execution outcome evidence",
-        "Pairwise experiment evidence ingestion and conflict handling",
-        "blast-radius, compatibility, rollback, and expected-effect analysis"
+        "typed AssetDeltaProposal reasoning across Profile, Component, Bundle, Ontology, Policy, and Evaluation assets",
+        "portable EvaluationPack v3 positive and negative cases with context, assertions, validator and scorer versions, baseline references, and regression boundaries",
+        "new-versus-existing-versus-composed decision with explicit NO_CHANGE and NEED_MORE_EVIDENCE outcomes",
+        "deterministic compatibility, blast-radius, expected-effect, regression, and rollback analysis"
       ],
       "acceptance": [
-        "every proposed delta cites immutable source or feedback evidence",
-        "Pairwise evidence cannot override deterministic, schema, Evaluation, or human gates",
-        "Proposal Review reports effect, regression, compatibility, and rollback risks",
+        "every proposed delta records exact before and after state and cites immutable source or approved feedback evidence",
+        "every proposed delta is covered by reviewed positive or negative Evaluation cases with versioned assertions, validators, or scorers",
+        "Proposal Review blocks missing compatibility, blast-radius, expected-effect, regression, or rollback analysis",
+        "LLM advice cannot override deterministic NO_CHANGE, NEED_MORE_EVIDENCE, schema, Evaluation, or human gates",
         "only explicit review, approval, validation, and publication create a new asset version"
       ],
-      "signals": ["pairwise feedback", "production feedback evolution", "asset effectiveness", "profile delta", "component delta", "bundle delta", "impact analysis", "生产反馈进化", "资产效果", "影响分析", "回滚分析"],
-      "exclusions": ["automatic approval", "project execution", "consumer-side release decision"]
+      "signals": ["evidence-driven asset delta", "asset delta proposal", "evaluationpack v3", "portable evaluation cases", "positive negative cases", "profile delta", "component delta", "bundle delta", "impact analysis", "证据驱动资产变更", "资产变更提案", "正反例", "影响分析", "回滚分析"],
+      "exclusions": ["Pairwise experiment ingestion", "Champion/Challenger", "automatic approval", "project execution", "consumer-side release decision"]
     },
     {
-      "id": "evopilot-harness-3.5-professional-asset-learning",
+      "id": "evopilot-harness-4.0-agent-native-operations",
       "status": "PLANNED",
-      "targetVersion": "3.5.0",
-      "releaseLine": "3.5.x",
-      "objective": "Continuously improve Harness asset precision and professional completeness from accumulated governed evidence rather than hard-coded domain lists.",
+      "targetVersion": "4.0.0",
+      "releaseLine": "4.0.x",
+      "objective": "Make a portable, question-driven Digital Expert the supported ordinary human entry while compatible external Agent hosts operate the deterministic Harness Engine through a local, resumable, policy-governed machine protocol.",
       "outcomes": [
-        "evidence-backed curriculum of unresolved boundaries and evaluation gaps",
-        "calibrated matching and Proposal quality evaluation from independently reviewed cases",
-        "cross-version regression suites for Asset, Ontology, Policy, and Evaluation changes",
-        "external research evidence adapters with provenance and authority limits"
+        "portable Digital Expert Core with one question-at-a-time conversation, plan review, result rendering, human gates, and recovery contracts",
+        "versioned Codex, WorkBuddy, Claude Code, MCP, and generic adapters derived from one Agent-neutral authority",
+        "local Harness Operation Server with default stdio MCP transport, structured tools and resources, process health, and Engine compatibility negotiation",
+        "persistent AgentOperationSession with digest-bound intent, plan, operations, Proposal and Review references, next action, interruption recovery, cross-Agent resume, and safe close",
+        "real Agent-to-MCP-to-Engine end-to-end coverage for every released Harness lifecycle branch without human-entered Harness CLI commands"
       ],
       "acceptance": [
-        "quality claims separate contract coverage from independently reviewed accuracy evidence",
-        "new domains and roles are inferred from evidence rather than predefined user project categories",
-        "LLM remains advisory and cannot become publication authority",
-        "Engine releases remain independent from user Harness asset evolution"
+        "a human completes startup, evidence intake, production, Proposal Review, explicit approval, separate publication, Catalog validation, and close or resume through natural-language interaction without entering a Harness CLI command",
+        "Codex and at least one independently implemented compatible Agent adapter pass the same real local stdio MCP conformance and lifecycle scenarios",
+        "Digital Expert and Adapter output cannot create Harness business verdicts, invent approval identity, bypass Engine gates, or produce a different decision from the same immutable Engine result",
+        "Engine release files, source projects, and human-maintained model configuration remain unchanged while all mutable session and asset state stays in an explicit external Workspace",
+        "process crash, Agent interruption, Advisor failure, incompatible versions, insufficient evidence, blocked review, and cancelled publication remain resumable or terminal with structured next actions and no silent fallback",
+        "all public Agent-native claims are backed by real protocol, process, persistence, security, and cross-Adapter acceptance evidence"
       ],
-      "signals": ["asset curriculum", "matching calibration", "proposal quality benchmark", "cross-version regression", "research evidence adapter", "专业资产", "匹配校准", "质量基准", "跨版本回归", "研究证据"],
-      "exclusions": ["embedded model trainer", "unrestricted internet authority", "automatic publication"]
+      "signals": ["agent-native harness operations", "digital expert", "digital expert pack", "harness operation server", "agent operation session", "local mcp", "stdio mcp", "codex adapter", "workbuddy adapter", "claude code adapter", "question-driven expert", "agent-native operation", "数字专家", "数字人", "问答式数字专家", "本地 mcp", "agent 原生操作", "会话恢复"],
+      "exclusions": ["source-project command execution", "EvoPilot Goal Loop", "general-purpose Agent runtime", "embedded conversational model", "automatic approval", "automatic publication", "automatic model credential creation", "remote multi-tenant Agent service"]
+    },
+    {
+      "id": "evopilot-harness-4.1-controlled-comparative-evidence",
+      "status": "PLANNED",
+      "targetVersion": "4.1.0",
+      "releaseLine": "4.1.x",
+      "objective": "Compare Baseline and Candidate Harness assets under governed, replayable, and context-equivalent evidence before calibrating matching or Proposal quality.",
+      "outcomes": [
+        "HarnessComparisonEvidencePackage for Baseline and Candidate results bound to identical tasks, environments, scorers, and Evaluation cases",
+        "immutable raw observations and append-only versioned rescoring",
+        "repeated-observation, context-comparability, uncertainty, and conflict gates",
+        "independently reviewed matching and Proposal calibration with cross-version regression evidence"
+      ],
+      "acceptance": [
+        "comparative conclusions are blocked when task, environment, scorer, Evaluation case, or asset binding is not comparable",
+        "raw observations remain immutable and every rescoring result retains scorer version, provenance, and prior results",
+        "quality claims report samples, uncertainty, conflicts, and separate contract coverage from independently reviewed accuracy",
+        "Pairwise evidence and LLM advice cannot approve, publish, or override deterministic, schema, Evaluation, or human gates"
+      ],
+      "signals": ["controlled comparative evidence", "pairwise feedback", "baseline candidate", "comparison evidence package", "matching calibration", "proposal quality benchmark", "cross-version regression", "受控对比证据", "成对反馈", "基线候选", "匹配校准", "跨版本回归"],
+      "exclusions": ["project execution", "automatic asset promotion", "automatic publication", "embedded model trainer"]
+    },
+    {
+      "id": "evopilot-harness-4.2-professional-asset-learning",
+      "status": "PLANNED",
+      "targetVersion": "4.2.0",
+      "releaseLine": "4.2.x",
+      "objective": "Continuously improve Harness asset precision and professional completeness from accumulated governed evidence and bounded external research rather than hard-coded domain lists.",
+      "outcomes": [
+        "evidence-backed curriculum of unresolved boundaries, conflicts, production failures, and Evaluation gaps",
+        "external research evidence adapters with provenance and explicit authority limits",
+        "long-horizon professional-completeness measurement separated from independently reviewed accuracy",
+        "evidence-derived domain and role proposals without predefined user project categories"
+      ],
+      "acceptance": [
+        "curriculum entries cite immutable unresolved evidence and cannot become Harness assets without the normal lifecycle",
+        "external research is supplemental and cannot satisfy local eligibility or publication gates by itself",
+        "new domains and roles are inferred from evidence rather than predefined user project categories",
+        "LLM remains advisory and Engine releases remain independent from user Harness asset evolution"
+      ],
+      "signals": ["professional asset learning", "asset curriculum", "research evidence adapter", "long-horizon asset quality", "domain role inference", "专业资产学习", "资产课程", "研究证据", "长期资产质量", "领域角色推理"],
+      "exclusions": ["embedded model trainer", "unrestricted internet authority", "automatic publication", "hard-coded domain expansion"]
     }
   ],
   "boundaryRules": [
@@ -122,7 +176,7 @@
       "signals": ["train model inside evopilot-harness", "embedded rl trainer", "update model weights in harness", "在 evopilot-harness 训练模型", "harness 更新模型权重"]
     }
   ],
-  "deviationSignals": ["replace roadmap", "skip milestone", "merge evopilot and evopilot-harness", "change product boundary", "替换 roadmap", "跳过里程碑", "合并 evopilot 和 evopilot-harness", "改变产品边界"],
+  "deviationSignals": ["replace roadmap", "revise roadmap", "skip milestone", "reorder roadmap milestone", "move roadmap capability", "merge evopilot and evopilot-harness", "change product boundary", "替换 roadmap", "修订 roadmap", "跳过里程碑", "重排 roadmap 里程碑", "移动 roadmap 能力", "合并 evopilot 和 evopilot-harness", "改变产品边界"],
   "crossProjectContracts": [
     {
       "id": "published-harness-consumption/v3",

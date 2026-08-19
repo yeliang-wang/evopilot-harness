@@ -1,0 +1,92 @@
+{
+  "schema": "evopilot-harness-digital-expert-lock/v1",
+  "expertVersion": "4.0.0",
+  "coreDigest": "sha256:6524e149b49a2164ccc97252d28083789d68ae487b528c36b0e69b2eb415f0e9",
+  "files": [
+    {
+      "path": "adapters/claude-code/CLAUDE.md",
+      "sha256": "sha256:95d020b93fdcaca9b216900d79161cb68649292a4d37ccb69ef9fc1a37aadb22",
+      "bytes": 11995
+    },
+    {
+      "path": "adapters/codex/SKILL.md",
+      "sha256": "sha256:356e4ba95d4d16f3b7f99eea016939cac3ffb92e64c6657a2784903f931ebfbb",
+      "bytes": 12216
+    },
+    {
+      "path": "adapters/generic/AGENT.md",
+      "sha256": "sha256:b8b67ed4c013ca1ed6108da1cb9ba49afa21223756492e237f34700d35008f26",
+      "bytes": 11997
+    },
+    {
+      "path": "adapters/mcp/MCP.md",
+      "sha256": "sha256:081951487f8c8cbb3b9bbc61f7e5c436080c71b42600cb0446a17a27817c00aa",
+      "bytes": 11994
+    },
+    {
+      "path": "adapters/workbuddy/WORKBUDDY.md",
+      "sha256": "sha256:632a4340bf77bac12af4dd2aac066dee712556341a7265d442fdb073d17ce09d",
+      "bytes": 11993
+    },
+    {
+      "path": "conformance/generic-host.mjs",
+      "sha256": "sha256:2dcb29ea941a0fbfa3d1830fc53788009720cbb83cf88389dd8d50ef9fde27cf",
+      "bytes": 7190
+    },
+    {
+      "path": "conformance/host-profiles.yaml",
+      "sha256": "sha256:0238c8be198dcb15e26d63fce6b4b1351776357a33e61320677036a8a1bd3b7f",
+      "bytes": 1009
+    },
+    {
+      "path": "conformance/scenario-matrix.yaml",
+      "sha256": "sha256:cfb76ca67254a0bebfcbae849bb0adc2f13bd9f3cc368f28f15ba9cba5e844ff",
+      "bytes": 9932
+    },
+    {
+      "path": "core/conversation.yaml",
+      "sha256": "sha256:386b2bd69a39a90c57195743331f0d41aab2eef4135a9dd2f1a0cf42b9f678be",
+      "bytes": 1487
+    },
+    {
+      "path": "core/instructions.md",
+      "sha256": "sha256:020c49f67de2495674a7f69dcb6ff710301529445efb776541b3560d916b9f70",
+      "bytes": 6003
+    },
+    {
+      "path": "core/policies.yaml",
+      "sha256": "sha256:9674efd93ef739b893bf15db956e12ac70509147253ae18bf3af1f0e7aaed710",
+      "bytes": 1150
+    },
+    {
+      "path": "core/renderers.yaml",
+      "sha256": "sha256:663b22b6d60a48d2d694d564689d102aec8c6b1c769109e8613529735e6ddf54",
+      "bytes": 888
+    },
+    {
+      "path": "core/workflows.yaml",
+      "sha256": "sha256:c0fa3e2d05e4fbe2d7cfa15c38687fa84ee8f7342d4e6d8708e25c8a9aa4a36d",
+      "bytes": 1551
+    },
+    {
+      "path": "expert-manifest.yaml",
+      "sha256": "sha256:d6827d7ecb6e7117f1fd59c487886e1444b071f430d9c96b26c256d445efcc72",
+      "bytes": 2022
+    },
+    {
+      "path": "schemas/adapter-envelope-v1.schema.json",
+      "sha256": "sha256:e50c5fed276b1a52c98d568f70d9c02f3f6821080ae4894b6b77f90a8d8c06a6",
+      "bytes": 1065
+    },
+    {
+      "path": "schemas/agent-operation-session-v1.schema.json",
+      "sha256": "sha256:3e361816af08c623b199a06a2e624345949ba4f0cee4afc3b14f37638a3f5e8f",
+      "bytes": 4107
+    },
+    {
+      "path": "schemas/operation-plan-v1.schema.json",
+      "sha256": "sha256:9aea7ca58f482350d1c33f57dd86aa9118f15438a6eaea3fc788ac25e7772af9",
+      "bytes": 2729
+    }
+  ]
+}

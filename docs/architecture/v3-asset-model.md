@@ -10,6 +10,7 @@ flowchart TD
   Matcher["MatchPolicyPack"] --> Profile
   Advisor["AdvisorPolicyPack"] --> Review["Profile / Bundle Proposal"]
   Evaluation["EvaluationPack"] --> Review
+  Delta["AssetDeltaProposal"] --> Review
   Feedback["HarnessExecutionFeedbackPackage"] --> Effect["HarnessEffectivenessReport"]
   Bundle --> Feedback
   Effect --> Evaluation
@@ -70,7 +71,15 @@ Defines the generic evidence-bound system prompt, allowed decisions, required re
 
 ### EvaluationPack
 
-v1 stores reviewed input digests and expected decisions. A generated proposal starts as `INSUFFICIENT_EVAL_EVIDENCE`. v2 additionally binds an exact asset and defines Outcome, Process, Safety, and Cost criteria with immutable feedback-package references. v1 remains supported.
+v1 stores reviewed input digests and expected decisions. v2 additionally binds an exact asset and defines Outcome, Process, Safety, and Cost criteria with immutable feedback-package references. v3 defines portable positive and negative cases with context, assertions, pinned validators and scorers, optional baseline references, expected outcomes, and regression boundaries. A generated pack starts as `INSUFFICIENT_EVAL_EVIDENCE`; v1 and v2 remain readable.
+
+### AssetDeltaProposal
+
+The review-stage Delta contract covers `HarnessComponent`, `HarnessProfile`, `HarnessBundle`, `OntologyPack`, `MatchPolicyPack`, `AdvisorPolicyPack`, and `EvaluationPack`. Each Delta records exact before/after documents and digests, evidence-linked paths, operation semantics, compatibility, dependencies, blast radius, expected effect, regression coverage, and rollback.
+
+`EVOLVE_EXISTING`, `COMPOSE_NEW_BUNDLE`, and `PROPOSE_NEW_PROFILE` may advance through review. `NO_CHANGE` and `NEED_MORE_EVIDENCE` retain an auditable Proposal but always set `publicationAllowed=false`.
+
+Closure is derived rather than trusted. The validator schema-checks embedded documents, binds proposed assets and Evaluation state, resolves immutable baselines, and recomputes every change and impact field. Approval binds the current Review Report and approved Proposal content by digest. Publication rebuilds after-states from the exact immutable documents being written, so a published Delta digest is the digest of the published asset rather than its earlier review-stage representation.
 
 ## Feedback Evidence Contracts
 
@@ -96,10 +105,12 @@ Schemas are under [`schemas/`](../../schemas):
 - `advisor-policy-pack-v1.schema.json`
 - `evaluation-pack-v1.schema.json`
 - `evaluation-pack-v2.schema.json`
+- `evaluation-pack-v3.schema.json`
+- `asset-delta-proposal-v1.schema.json`
 - `harness-execution-feedback-package-v1.schema.json`
 - `harness-effectiveness-report-v1.schema.json`
 
-Only Component, Profile, and Bundle assets enter Catalog discovery. Feedback Packages and Reports remain under the external Workspace `feedback/` tree.
+Only Component, Profile, and Bundle assets enter normal consumer Catalog discovery. Published Evaluation and Delta records provide lifecycle provenance but are not execution assets. Feedback Packages and Reports remain under the external Workspace `feedback/` tree.
 
 Use:
 
@@ -107,3 +118,5 @@ Use:
 node src/index.mjs asset v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --json
 node src/index.mjs asset v3-test --workspace "$EVOPILOT_HARNESS_HOME" --json
 ```
+
+See [Asset Delta And Evaluation](../guides/asset-delta-and-evaluation.md) for closure semantics and CLI usage.

@@ -144,6 +144,9 @@ function renderEvolutions(evolutions) {
     item.innerHTML = `
       <strong>${escapeHtml(run.evolutionId)}</strong>
       <small>${escapeHtml(run.status)} · ${escapeHtml(run.targetHarnessId ?? "target pending")} · ${escapeHtml(run.reviewVerdict ?? "not-reviewed")} · ${escapeHtml(run.nextAction ?? "review")}</small>
+      <small>delta=${escapeHtml(run.assetDelta?.status ?? "not-generated")} · operations=${escapeHtml(JSON.stringify(run.assetDelta?.operations ?? {}))} · impact=${escapeHtml(run.assetDelta?.impactStatus ?? "n/a")}</small>
+      <small>compatibility=${escapeHtml(JSON.stringify(run.assetDelta?.compatibility ?? {}))} · blast=${escapeHtml(JSON.stringify(run.assetDelta?.blastRadius ?? {}))} · rollback=${escapeHtml(JSON.stringify(run.assetDelta?.rollback ?? {}))}</small>
+      <small>evaluation=${escapeHtml(run.evaluationCoverage?.apiVersion ?? "n/a")} · cases=${run.evaluationCoverage?.caseCount ?? 0} · positive=${run.evaluationCoverage?.polarities?.positive ?? 0} · negative=${run.evaluationCoverage?.polarities?.negative ?? 0}</small>
       <small>${escapeHtml(run.reviewReportDigest ?? "review report pending")}</small>
       <small>${escapeHtml(run.goal ?? "")}</small>
     `;
@@ -186,7 +189,7 @@ function renderGovernance(packs, evaluation, usage) {
   if (!packs.length) elements.governanceList.append(emptyCard("No governance packs found."));
   elements.llmUsage.innerHTML = "";
   const evalItem = document.createElement("article");
-  evalItem.innerHTML = `<strong>Evaluation Packs · ${evaluation.packCount ?? 0}</strong><small>ready=${evaluation.readyCount ?? 0} insufficient=${evaluation.insufficientCount ?? 0}</small>`;
+  evalItem.innerHTML = `<strong>Evaluation Packs · ${evaluation.packCount ?? 0}</strong><small>ready=${evaluation.readyCount ?? 0} insufficient=${evaluation.insufficientCount ?? 0} positive=${evaluation.positiveCaseCount ?? 0} negative=${evaluation.negativeCaseCount ?? 0}</small><small>${escapeHtml(JSON.stringify(evaluation.versionCounts ?? {}))}</small>`;
   elements.llmUsage.append(evalItem);
   const usageItem = document.createElement("article");
   usageItem.innerHTML = `<strong>GLM Runs · ${usage.runCount ?? 0}</strong><small>advisor=${usage.advisorRunCount ?? usage.runCount ?? 0} proposal-review=${usage.reviewRunCount ?? 0} · input=${usage.inputTokens ?? 0} output=${usage.outputTokens ?? 0} total=${usage.totalTokens ?? 0}</small>`;

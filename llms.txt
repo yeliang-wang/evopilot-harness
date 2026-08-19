@@ -5,10 +5,15 @@
 ## Start Here
 
 - [Product documentation](docs/README.md)
-- [Quickstart](docs/cli/quickstart.md)
+- [Agent-native quickstart](docs/agent/quickstart.md)
+- [Digital Expert](docs/agent/digital-expert.md)
+- [MCP reference](docs/agent/mcp-reference.md)
+- [Agent Operation Session](docs/agent/session-protocol.md)
+- [Atomic CLI compatibility](docs/cli/quickstart.md)
 - [How Harness works](docs/guides/how-harness-works.md)
 - [Current v3 architecture](docs/architecture/overview.md)
 - [v3 production lifecycle](docs/guides/v3-production-lifecycle.md)
+- [Asset Delta and Evaluation closure](docs/guides/asset-delta-and-evaluation.md)
 - [CLI instructions for AI agents](docs/cli/AGENTS.md)
 - [CLI command reference](docs/cli/commands.md)
 
@@ -17,6 +22,7 @@
 - [Product and module boundaries](docs/architecture/adr/0001-product-and-module-boundaries.md)
 - [v3 asset model](docs/architecture/v3-asset-model.md)
 - [v3 reasoning and Proposal Review contract](docs/reference/v3-reasoning-contract.md)
+- [AssetDeltaProposal and EvaluationPack v3](docs/guides/asset-delta-and-evaluation.md)
 - [Feedback evidence contract and workflow](docs/guides/feedback-evidence.md)
 - [Catalog contract](docs/reference/catalog-contract.md)
 - [Registry contract](docs/reference/registry-contract.md)
@@ -33,12 +39,16 @@
 
 ## Agent Safety
 
-- Use `--json` for automation.
+- Ordinary humans use the Digital Expert; Agents call local stdio MCP.
+- Use atomic `--json` CLI only for compatibility, CI, and emergency diagnosis.
 - Stop on `nextAction`, blockers, review, approval, policy, or evidence requirements.
 - Never expose `models.json`, API keys, Catalog private keys, private source, or unredacted logs.
 - Source inputs are evidence only; they are not publication authority.
 - GLM Advisor is advisory only.
 - Proposal Review verdicts, reasons, and suggestions come from the CLI Review Engine, not the operating Skill.
+- Parse the five Proposal decisions: `EVOLVE_EXISTING`, `COMPOSE_NEW_BUNDLE`, `PROPOSE_NEW_PROFILE`, `NO_CHANGE`, and `NEED_MORE_EVIDENCE`.
+- Run `proposal validate` before semantic review or approval and stop unless Delta/Evaluation closure is `VALIDATED`.
+- `NO_CHANGE` and `NEED_MORE_EVIDENCE` are terminal, auditable, and never publication-authorizing.
 - Run and present every Proposal Review Report after production; approval requires a current `READY_FOR_HUMAN_APPROVAL` report plus separate human confirmation.
 - Publishing requires schema validation, human approval, and immutable version checks.
 - EvoPilot is a separate read-only consumer and goal-loop control plane.

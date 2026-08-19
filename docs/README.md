@@ -4,11 +4,20 @@ Use this index to choose the shortest path for your task. Generic architecture a
 
 ## Learn The Product
 
-1. [Product Roadmap](roadmap/ROADMAP.md) - accepted production-feedback, asset-quality, version, and deviation plan.
+1. [Product Roadmap](roadmap/ROADMAP.md) - accepted production-feedback, asset-quality, Agent-native operations, version, and deviation plan.
 2. [How Harness Works](guides/how-harness-works.md) - management, evolution, reasoning, sources, publication, and control-plane consumption.
 3. [Architecture Overview](architecture/overview.md) - current v3 modules, data flow, storage, and system boundary.
 4. [v3 Asset Model](architecture/v3-asset-model.md) - Component, Profile, Bundle, and governance Packs.
 5. [v3 Product Boundary](architecture/v3-product-boundary.md) - what this project owns and explicitly does not own.
+6. [ADR 0002: Agent-Native Harness Operations](architecture/adr/0002-agent-native-harness-operations.md) - accepted and implemented v4 candidate operating model.
+
+## Operate Through An Agent
+
+- [Agent-Native Quickstart](agent/quickstart.md) - ordinary human path through a Digital Expert and local stdio MCP.
+- [Digital Expert](agent/digital-expert.md) - portable Core, Adapter generation, imports, authority, and support claims.
+- [MCP Reference](agent/mcp-reference.md) - process, protocol, tools, resources, errors, and safety gates.
+- [Agent Operation Session](agent/session-protocol.md) - persisted state, digests, recovery, cross-Agent resume, and cleanup.
+- [v4 Acceptance](operations/v4-acceptance.md) - deterministic, process, protocol, lifecycle, integrity, and compatibility evidence.
 
 ## Produce And Publish
 
@@ -17,6 +26,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [CLI Commands](cli/commands.md) - complete atomic command reference.
 - [Harness Hub](guides/harness-hub-integration.md) - standalone UI and optional iframe integration.
 - [v3 Reasoning Contract](reference/v3-reasoning-contract.md) - eligibility, retrieval, scoring, decisions, Proposal Review Engine, and GLM authority.
+- [Asset Delta And Evaluation](guides/asset-delta-and-evaluation.md) - typed before/after changes, portable v3 cases, impact closure, terminal decisions, and lifecycle gates.
 - [Feedback Evidence](guides/feedback-evidence.md) - structured feedback contract, validation, ingestion, four-dimensional effectiveness, and authority limits.
 
 ## Integrate A Consumer
@@ -41,7 +51,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Security](../SECURITY.md)
 - [Contributing](../CONTRIBUTING.md)
 
-## AI Agents
+## Atomic CLI And AI Automation
 
 - [Agent Instructions](cli/AGENTS.md) - required stop rules and reporting fields.
 - [Automation Contract](cli/automation.md) - JSON parsing and safe orchestration.
@@ -56,4 +66,4 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md).
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The working tree is a v4.0.0 implementation candidate; the latest published baseline remains v3.3.0 until a separate Release authorization and publication complete.

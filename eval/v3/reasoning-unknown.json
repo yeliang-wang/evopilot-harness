@@ -31,6 +31,6 @@
       }
     ]
   },
-  "expectedDecision": "PROPOSE_NEW_PROFILE",
+  "expectedDecision": "NEED_MORE_EVIDENCE",
   "reviewStatus": "unreviewed"
 }

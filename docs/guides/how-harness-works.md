@@ -7,7 +7,7 @@ This guide explains the current v3 lifecycle from evidence input to an immutable
 `evopilot-harness` is the system of record for Harness assets. It manages the complete production lifecycle:
 
 ```text
-evidence -> reasoning -> proposal -> independent Review Engine -> human approval -> publication -> Catalog
+evidence -> reasoning -> typed Delta + Evaluation -> independent Review Engine -> human approval -> publication -> Catalog
 ```
 
 The Engine is installed read-only. The user's Workspace holds mutable evidence, proposals, organization assets, evaluations, keys, Catalogs, and Registry. Publishing a Harness changes the Workspace Catalog; it does not require a new Engine release.
@@ -41,7 +41,7 @@ node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --j
 
 Harness Hub provides a standalone read-only operational view of assets, proposals, governance Packs, evaluation status, evidence-source types, and Advisor token usage. Before required Advisor production, use `llm v3-models` for configuration-only inspection and `llm v3-doctor` for a minimal live connectivity check.
 
-v3.3.0 also stores approved structured execution feedback under `feedback/` and projects effectiveness reports in Harness Hub. Feedback never enters the Catalog.
+v3.3.0 introduced approved structured execution feedback under `feedback/`. The v3.4 asset-delta contract may cite that feedback as one Evidence Source when producing a typed Delta, but feedback never directly mutates or enters the Catalog. v4 changes the ordinary operation surface, not this authority boundary.
 
 ## 2. How Harnesses Evolve
 
@@ -55,27 +55,30 @@ node src/index.mjs produce \
   --json
 ```
 
-Reasoning selects one of six outcomes:
+Reasoning selects one of five Proposal decisions:
 
 | Decision | Result |
 |---|---|
 | `EVOLVE_EXISTING` | Propose a new version of the selected Profile with evidence-backed boundary or acceptance changes. |
 | `COMPOSE_NEW_BUNDLE` | Propose a Bundle when evidence spans multiple strong Profile relationships. |
 | `PROPOSE_NEW_PROFILE` | Propose a new Profile and its Ontology, Policy, and Evaluation implications. |
-| `REVIEW_REQUIRED` | Stop because candidates are ambiguous or thresholds are not decisive. |
-| `INSUFFICIENT_EVIDENCE` | Stop and request stronger evidence. |
-| `NOT_HARNESS_ELIGIBLE` | Stop because the material is not reusable Harness execution knowledge. |
+| `NO_CHANGE` | Record that the evidence fits the current asset without a justified change; block approval and publication. |
+| `NEED_MORE_EVIDENCE` | Stop because evidence, domain discrimination, or candidate separation is insufficient; block approval and publication. |
 
-No decision publishes automatically. `proposal inspect` reads the generated draft. `proposal review` performs a new, independent assessment using deterministic gates and an evidence-bound semantic reviewer:
+`NOT_HARNESS_ELIGIBLE` remains an earlier stop because the material is not reusable Harness execution knowledge. No decision publishes automatically. `proposal inspect` reads the generated draft. `proposal validate` checks Delta/Evaluation and impact closure without a model call. `proposal review` then performs a new, independent assessment using deterministic gates and an evidence-bound semantic reviewer:
 
 ```bash
+node src/index.mjs proposal validate <proposal-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+
 node src/index.mjs proposal review <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --models-file /path/to/models.json \
   --json
 ```
 
-The Review Engine checks source/corpus coherence, each project membership, product-versus-dependency boundaries, new-versus-existing asset relationships, Profile/Bundle definition quality, evidence closure, and evaluation sufficiency. It returns `READY_FOR_HUMAN_APPROVAL`, `REVISE`, `SPLIT`, `REJECT`, or `NEED_MORE_EVIDENCE`, with reasons, citations, findings, actions, blockers, and Reviewer usage. Approval requires a current `READY_FOR_HUMAN_APPROVAL` report, a real reviewer, a review statement, resolved blockers, and evaluation review where required. Publication rejects an existing immutable version rather than overwriting it.
+The Review Engine checks source/corpus coherence, each project membership, product-versus-dependency boundaries, new-versus-existing asset relationships, Profile/Bundle definition quality, exact Delta state, compatibility and blast radius, rollback, evidence closure, and evaluation sufficiency. It returns `READY_FOR_HUMAN_APPROVAL`, `REVISE`, `SPLIT`, `REJECT`, or `NEED_MORE_EVIDENCE`, with reasons, citations, findings, actions, blockers, and Reviewer usage. Approval requires a mutating decision, valid closure, a current `READY_FOR_HUMAN_APPROVAL` report, a real reviewer, a review statement, resolved blockers, and evaluation review. Publication rejects any existing immutable asset, Evaluation, or Delta destination before writing state.
 
 ## 3. How Classification And Matching Are Decided
 
@@ -91,9 +94,10 @@ Matching is not delegated to an LLM. The decision path is:
 8. Apply thresholds and risk rules from the versioned `MatchPolicyPack`.
 9. Call GLM only where the policy or operator requires semantic review.
 10. Persist a redacted Advisor Run for success, failure, rejection, unavailable, or skipped outcomes.
-11. Produce a human-reviewable Profile or Bundle Proposal, or a blocked diagnostic Proposal when required advice failed.
-12. Independently review the Proposal with deterministic gates and a second evidence-bound semantic contract.
-13. Persist a Review Report and stop for a separate human decision.
+11. Produce a human-reviewable typed Asset Delta and EvaluationPack v3, a terminal no-change/evidence Proposal, or a blocked diagnostic Proposal when required advice failed.
+12. Validate exact state, positive/negative cases, impact, regression, rollback, and publication boundaries.
+13. Independently review a validated mutating Proposal with deterministic gates and a second evidence-bound semantic contract.
+14. Persist a Review Report and stop for a separate human decision.
 
 Every candidate includes factor scores, rejection reasons, and supporting evidence ids. Strong negative conflicts cannot be treated as normal evolution. Shared concepts such as `executable-engineering` establish eligibility but do not manufacture a domain classification.
 

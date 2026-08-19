@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { RELEASE_SOURCE_INPUTS, releaseSourceManifest } from "./release-source-manifest.mjs";
 
 const projectName = "evopilot-harness";
 const root = process.cwd();
@@ -112,6 +113,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const sourceArchive = `${projectName}-${version}-source.tar.gz`;
 const sourceArchivePath = path.join(outDir, sourceArchive);
+const sourceManifest = releaseSourceManifest(root);
 run("tar", [
   "--exclude", "node_modules",
   "--exclude", ".git",
@@ -119,37 +121,8 @@ run("tar", [
   "--exclude", "dist/release",
   "-czf",
   sourceArchivePath,
-  ".agents",
-  ".dockerignore",
-  ".github",
-  ".gitignore",
-  "AGENTS.md",
-  "CHANGELOG.md",
-  "CODE_OF_CONDUCT.md",
-  "CONTRIBUTING.md",
-  "Dockerfile",
-  "LICENSE",
-  "NOTICE",
-  "README.md",
-  "SECURITY.md",
-  "assets",
-  "compose.yaml",
-  "docs",
-  "eval",
-  "harnesses",
-  "governance",
-  "ontology",
-  "package-lock.json",
-  "package.json",
-  "policies",
-  "published",
-  "schemas",
-  "scripts",
-  "src",
-  "tests",
-  "ui",
-  "llms.txt"
-], { stdio: "inherit" });
+  ...RELEASE_SOURCE_INPUTS
+], { stdio: "inherit", env: { ...process.env, COPYFILE_DISABLE: "1" } });
 
 const sbomPath = path.join(outDir, `${projectName}-${version}-sbom.spdx.json`);
 fs.writeFileSync(sbomPath, `${JSON.stringify(generateSbom(), null, 2)}\n`);
@@ -188,7 +161,8 @@ fs.writeFileSync(provenancePath, `${JSON.stringify({
   source: {
     commit,
     dirty: Boolean(dirty),
-    statusDigest: dirty ? `sha256:${crypto.createHash("sha256").update(dirty).digest("hex")}` : null
+    statusDigest: dirty ? `sha256:${crypto.createHash("sha256").update(dirty).digest("hex")}` : null,
+    manifest: sourceManifest
   },
   generatedAt: new Date().toISOString(),
   github: {

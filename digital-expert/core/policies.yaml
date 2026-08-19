@@ -1,0 +1,46 @@
+schema: evopilot-harness-digital-expert-policies/v1
+workspace:
+  releaseWrite: deny
+  sourceWrite: deny
+  modelsConfigWrite: deny
+  externalWorkspaceWrite: allow
+  externalWorkspaceSymlinkEscape: deny
+sessionSecrets:
+  rawValues: deny
+  fileOrProfileReferences: allow
+compatibility:
+  productVersion: exact
+  expertVersion: exact
+  coreDigest: exact
+  agentProtocol: exact
+  engineApi: exact
+  mismatchBeforeMutation: block
+sourceExecution:
+  build: deny
+  test: deny
+  deploy: deny
+  start: deny
+  businessCommands: deny
+humanGates:
+  planConfirmation: required
+  proposalApproval: required
+  evaluationReview: required
+  publicationAuthorization: required-separate
+  maintenancePublicationAuthorization: required-separate-per-operation
+  cancellation: required
+  destructiveCleanup: required
+fallback:
+  directHumanCli: deny
+  alternateModel: deny
+  skipAdvisor: deny
+  automaticRetry: deny
+  retryAfterUnknownMutation: deny
+  automaticApproval: deny
+  automaticPublication: deny
+cleanup:
+  ownedClosedSessionMetadata: explicit-only
+  evolutionRuns: preserve
+  proposals: preserve
+  catalogs: preserve
+  assets: preserve
+  sourceProjects: preserve

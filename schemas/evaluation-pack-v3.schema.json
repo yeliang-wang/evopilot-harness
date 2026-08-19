@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/evaluation-pack-v3.schema.json",
+  "title": "Evaluation Pack v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "harness.evopilot.io/v3" },
+    "kind": { "const": "EvaluationPack" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "lifecycle", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "lifecycle": { "enum": ["review", "approved", "published", "deprecated"] },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetRef", "proposalRef", "minimumReviewedCases", "requiredPolarities", "cases", "validators", "scorers", "status"],
+      "properties": {
+        "targetRef": { "$ref": "#/$defs/assetRef" },
+        "proposalRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id"],
+          "properties": { "id": { "type": "string", "minLength": 1 } }
+        },
+        "minimumReviewedCases": { "type": "integer", "minimum": 2 },
+        "requiredPolarities": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "enum": ["positive", "negative"] }
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/case" },
+          "allOf": [
+            { "contains": { "type": "object", "properties": { "polarity": { "const": "positive" } }, "required": ["polarity"] }, "minContains": 1 },
+            { "contains": { "type": "object", "properties": { "polarity": { "const": "negative" } }, "required": ["polarity"] }, "minContains": 1 }
+          ]
+        },
+        "validators": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/toolRef" } },
+        "scorers": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/toolRef" } },
+        "status": { "enum": ["INSUFFICIENT_EVAL_EVIDENCE", "READY", "FAILED"] }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "decision": { "enum": ["EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NO_CHANGE", "NEED_MORE_EVIDENCE"] },
+    "assetRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "version", "digest"],
+      "properties": {
+        "kind": { "enum": ["HarnessComponent", "HarnessProfile", "HarnessBundle", "OntologyPack", "MatchPolicyPack", "AdvisorPolicyPack", "EvaluationPack"] },
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "toolRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "operator", "expected", "severity"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "pattern": "^/" },
+        "operator": { "enum": ["EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS", "EXISTS"] },
+        "expected": {},
+        "severity": { "enum": ["blocking", "warning"] }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceId", "digest"],
+      "properties": {
+        "evidenceId": { "type": "string", "pattern": "^evidence-[0-9]{4,}$" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "polarity", "context", "inputDigest", "expectedDecision", "expectedOutcome", "assertions", "validators", "scorers", "baselineRef", "regressionBoundary", "evidenceRefs", "reviewStatus"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "polarity": { "enum": ["positive", "negative"] },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sourceTypes", "constraints"],
+          "properties": {
+            "sourceTypes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "constraints": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "inputDigest": { "$ref": "#/$defs/digest" },
+        "expectedDecision": { "$ref": "#/$defs/decision" },
+        "expectedOutcome": { "type": "string", "minLength": 1 },
+        "assertions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/assertion" } },
+        "validators": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/toolRef" } },
+        "scorers": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/toolRef" } },
+        "baselineRef": { "anyOf": [{ "$ref": "#/$defs/assetRef" }, { "type": "null" }] },
+        "regressionBoundary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowedFailures", "failureSeverity", "mustPreserveDecision"],
+          "properties": {
+            "allowedFailures": { "type": "integer", "minimum": 0 },
+            "failureSeverity": { "enum": ["blocking", "warning"] },
+            "mustPreserveDecision": { "type": "boolean" }
+          }
+        },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidenceRef" } },
+        "reviewStatus": { "enum": ["unreviewed", "approved", "rejected"] }
+      }
+    }
+  }
+}

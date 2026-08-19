@@ -89,7 +89,7 @@ Rejected package metadata and failure reasons are written under `feedback/reject
 - sample count, independent source count, task/complexity/environment contexts;
 - missing-field counts, uncertainty level, and Wilson 95% rate intervals.
 
-The report records `algorithmVersion=effectiveness-aggregate/v1`. A single-currency aggregate exposes an overall estimated-cost average; mixed currencies set that field to null and retain separate `estimatedCostByCurrency` values. The report is descriptive evidence, not a causal claim or automatic evolution decision. v3.4.0 is the planned milestone for reviewed feedback-linked asset delta reasoning.
+The report records `algorithmVersion=effectiveness-aggregate/v1`. A single-currency aggregate exposes an overall estimated-cost average; mixed currencies set that field to null and retain separate `estimatedCostByCurrency` values. The report is descriptive evidence, not a causal claim or automatic evolution decision. The v3.4 asset-delta contract can cite approved feedback, but normal Proposal review, approval, and publication remain mandatory.
 
 ## Current Integration Status
 

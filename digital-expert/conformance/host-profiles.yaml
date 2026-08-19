@@ -1,0 +1,22 @@
+schema: evopilot-harness-digital-expert-host-profiles/v1
+profiles:
+  - id: codex
+    adapter: adapters/codex/SKILL.md
+    requiredCapabilities: [conversation, local-instructions, stdio-mcp, structured-tool-results]
+    validation: real-codex-session-plus-protocol-conformance
+  - id: workbuddy
+    adapter: adapters/workbuddy/WORKBUDDY.md
+    requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
+    validation: capability-gated
+  - id: claude-code
+    adapter: adapters/claude-code/CLAUDE.md
+    requiredCapabilities: [conversation, project-instructions, stdio-mcp, structured-tool-results]
+    validation: independent-adapter-conformance
+  - id: mcp
+    adapter: adapters/mcp/MCP.md
+    requiredCapabilities: [stdio-mcp, structured-tool-results]
+    validation: protocol-conformance
+  - id: generic
+    adapter: adapters/generic/AGENT.md
+    requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
+    validation: independent-adapter-conformance

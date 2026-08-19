@@ -6,7 +6,9 @@
 
 ```mermaid
 flowchart LR
-  Operator["Human or AI-assisted operator"] --> Harness["evopilot-harness"]
+  Human["Human"] --> Agent["External Agent + Digital Expert"]
+  Agent --> MCP["Local stdio MCP Operation Server"]
+  MCP --> Harness["Deterministic Harness Engine"]
   Sources["Projects, GitHub, documents, logs, notes"] --> Harness
   Harness --> Catalog["User-owned Registry and Catalogs"]
   Catalog --> Consumer["Compatible read-only control plane"]
@@ -26,8 +28,9 @@ flowchart TD
   Retrieval --> Scoring["Seven-factor candidate scoring"]
   Scoring --> Decision["Versioned decision policy"]
   Decision --> Advisor["Policy-required GLM Advisor"]
-  Advisor --> Proposal["Profile or Bundle Proposal"]
-  Proposal --> Review["Proposal Review Engine"]
+  Advisor --> Proposal["Typed Asset Delta Proposal"]
+  Proposal --> Impact["Evaluation + deterministic impact closure"]
+  Impact --> Review["Proposal Review Engine"]
   Review --> Human["Human approval and evaluation"]
   Human --> Publish["Immutable organization asset publication"]
   Publish --> Catalog["Catalog, Registry, optional signature"]
@@ -40,12 +43,13 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Layer | Modules | Boundary |
 |---|---|---|
 | Runtime | Engine, Workspace, CLI, Harness Hub | Engine code is read-only; mutable state belongs in the Workspace. |
+| Agent Operation | Digital Expert Core, generated Agent Adapters, local Harness Operation Server, AgentOperationSession, External Agent Host | Conversation and transport cannot create Engine verdicts, identity, approval, publication authority, or source execution. |
 | Evidence | Source Ingestion, Snapshot/Redaction, Evidence Graph | Inputs are evidence only and never publication authority. |
-| Reasoning | OntologyPack, MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator | Domain concepts and thresholds are versioned data, not hidden model decisions. |
+| Reasoning | OntologyPack, MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator, Asset Delta Analyzer | Domain concepts, thresholds, exact before/after state, and deterministic impact rules are versioned and auditable, not hidden model decisions. |
 | Advisor | AdvisorPolicyPack, GLM Advisor, Proposal Review Engine | Evidence projection, independent Proposal assessment, bounded contract repair, citations, attempts, verdicts, and token metadata are Policy-governed and auditable. |
 | Feedback Evidence | Package validator, immutable-binding resolver, content-addressed store, effectiveness aggregator | Reads approved execution outcomes; never executes projects or mutates assets. |
 | Assets | HarnessComponent, HarnessProfile, HarnessBundle/Export | Bundle is the immutable execution publication unit. |
-| Governance | EvaluationPack, Proposal Lifecycle, Schema Validator | A current ready Review Report, human approval, and validation remain mandatory before publication. |
+| Governance | EvaluationPack, AssetDeltaProposal, Proposal Lifecycle, Schema Validator | Positive/negative evaluation and Delta closure precede a current ready Review Report, human approval, and immutable publication. |
 | Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
 | Compatibility | Migration/Rollback | v2 inputs migrate into v3 without redefining the canonical asset. |
 
@@ -72,9 +76,12 @@ EVOPILOT_HARNESS_HOME/
   cache/github/
   migrations/
   keys/
+  agent-sessions/
 ```
 
 Built-in assets are copied from the Engine into the Workspace's Built-in Catalog during initialization. Evidence-driven production writes only to review run state and, after approval, the Organization Catalog. It must never overwrite Engine assets or the Built-in Catalog.
+
+Each evolution run persists the Evidence Graph, deterministic reasoning, Advisor Run, Proposal, `evaluation-pack.yaml`, `asset-delta-proposal.yaml`, and independent Review Report under the Workspace. v4 additionally persists digest-validated Session state and an append-only operation journal under `agent-sessions/`. The Engine checkout stays read-only.
 
 ## Asset And Publication Boundary
 
@@ -102,4 +109,4 @@ An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
 ## Compatibility
 
-The canonical v3 asset API namespace is `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`. Optional control-plane projections are exports, not source assets. Engine `3.3.0` retains the v2 CLI, Asset v3, Catalog, and Registry layer for existing automation; v3 approval requires a current Proposal Review Report. See [v2 Architecture Compatibility](v2-compatibility.md).
+The canonical asset API namespace remains `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`, and Agent operation uses `evopilot-harness-agent-operations/v1`. Optional control-plane projections are exports, not source assets. The local Engine `4.0.0` candidate retains the v3 JSON CLI, Asset v3, Workspace, Catalog, Registry, and EvaluationPack v1/v2 read compatibility; approval still requires valid Delta/Evaluation closure and a current Proposal Review Report. See [ADR 0002](adr/0002-agent-native-harness-operations.md) and [v2 Architecture Compatibility](v2-compatibility.md).

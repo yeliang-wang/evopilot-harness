@@ -1,0 +1,8 @@
+{
+  "id": "asset-delta-v34-blocked-impact",
+  "type": "v3.4-contract",
+  "assetKinds": ["HarnessProfile"],
+  "mutation": "block-impact",
+  "expectedStatus": "FAILED",
+  "reviewStatus": "approved"
+}

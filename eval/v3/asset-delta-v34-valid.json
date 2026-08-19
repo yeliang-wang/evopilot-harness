@@ -1,0 +1,15 @@
+{
+  "id": "asset-delta-v34-all-kinds-valid",
+  "type": "v3.4-contract",
+  "assetKinds": [
+    "HarnessComponent",
+    "HarnessProfile",
+    "HarnessBundle",
+    "OntologyPack",
+    "MatchPolicyPack",
+    "AdvisorPolicyPack",
+    "EvaluationPack"
+  ],
+  "expectedStatus": "VALIDATED",
+  "reviewStatus": "approved"
+}

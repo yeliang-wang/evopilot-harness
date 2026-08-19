@@ -1,7 +1,7 @@
 interface:
-  display_name: "EvoPilot Harness CLI 操作向导"
-  short_description: "安全操作 Harness CLI 并展示正式草稿评审"
-  default_prompt: "使用 $evopilot-harness-guided-operator，引导我完成一次 Harness CLI 端到端场景，自动执行并展示所有 Proposal Review Report。"
+  display_name: "EvoPilot Harness Guided Operator (Compatibility)"
+  short_description: "Routes legacy invocations to the v4 Digital Expert"
+  default_prompt: "Load the generated evopilot-harness-digital-expert Skill and operate the installed Release through its local stdio MCP Operation Server. Do not use the former human-CLI workflow."
 
 policy:
   allow_implicit_invocation: false

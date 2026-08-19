@@ -12,7 +12,7 @@ import { discoverAssets } from "../src/v3/catalog.mjs";
 import { feedbackPackageDigest, feedbackPayloadDigest } from "../src/v3/feedback.mjs";
 import { serveHubV3 } from "../src/v3/hub.mjs";
 import { validateDocument } from "../src/v3/schema.mjs";
-import { digest } from "../src/v3/utils.mjs";
+import { digest, readYaml, writeYaml } from "../src/v3/utils.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const cli = path.join(root, "src/index.mjs");
@@ -124,6 +124,67 @@ test("v2 migration is non-mutating, validates 9 templates, and rolls back from i
   assert.match(escaped.error, /journal id .* invalid/i);
 });
 
+test("migration rollback rejects tampered journals and Workspace escapes", () => {
+  const integrityHome = initializedHome();
+  const integrityRun = runJson(["migrate", "v2-to-v3", "--workspace", integrityHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
+  const integrityJournal = JSON.parse(fs.readFileSync(integrityRun.journalFile, "utf8"));
+  integrityJournal.records[0].created.push(path.join(integrityHome, "tampered.txt"));
+  fs.writeFileSync(integrityRun.journalFile, `${JSON.stringify(integrityJournal, null, 2)}\n`);
+  const integrityFailure = runJsonFailure(["migrate", "rollback", integrityRun.migrationId, "--workspace", integrityHome, "--json"]);
+  assert.match(integrityFailure.error, /integrity check failed/i);
+
+  const boundaryHome = initializedHome();
+  const boundaryRun = runJson(["migrate", "v2-to-v3", "--workspace", boundaryHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
+  const boundaryJournal = JSON.parse(fs.readFileSync(boundaryRun.journalFile, "utf8"));
+  const outside = path.join(temporaryHome(), "must-not-delete.txt");
+  fs.writeFileSync(outside, "preserve\n");
+  boundaryJournal.records[0].created = [{ path: outside, role: "asset", digest: digest(fs.readFileSync(outside)) }];
+  delete boundaryJournal.journalDigest;
+  boundaryJournal.journalDigest = digest(boundaryJournal);
+  fs.writeFileSync(boundaryRun.journalFile, `${JSON.stringify(boundaryJournal, null, 2)}\n`);
+  const boundaryFailure = runJsonFailure(["migrate", "rollback", boundaryRun.migrationId, "--workspace", boundaryHome, "--json"]);
+  assert.match(boundaryFailure.error, /created-file binding is invalid|cannot prove ownership/i);
+  assert.equal(fs.readFileSync(outside, "utf8"), "preserve\n");
+
+  const unrelatedHome = initializedHome();
+  const unrelatedRun = runJson(["migrate", "v2-to-v3", "--workspace", unrelatedHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
+  const unrelatedJournal = JSON.parse(fs.readFileSync(unrelatedRun.journalFile, "utf8"));
+  const unrelatedAsset = path.join(unrelatedHome, "catalogs/organization/assets/profiles/unrelated/9.9.9/asset.yaml");
+  writeYaml(unrelatedAsset, {
+    apiVersion: "harness.evopilot.io/v3",
+    kind: "HarnessProfile",
+    metadata: { id: "unrelated", version: "9.9.9", name: "Unrelated Profile", description: "An unrelated organization-owned profile that rollback must preserve.", lifecycle: "published", owner: "organization" },
+    spec: { classification: { domain: "unrelated", role: "unrelated", taskClass: "engineering" }, boundary: { inScope: ["unrelated work"], outOfScope: ["migration cleanup"] }, match: { positiveConcepts: ["unrelated"], negativeConcepts: [], requiredEvidenceKinds: ["source-code"] }, components: [{ id: "engineering-validation", version: "1.0.0", required: true }], acceptance: { requiredEvidence: ["validation-result"], blockingValidators: ["validation-exit-code"] }, evaluationPackRef: "unrelated@9.9.9" },
+    provenance: { sourceDigests: ["sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"], ontologyVersion: "software-engineering@1.0.0", policyVersion: "default-matcher@1.0.0" }
+  });
+  const unrelatedRecord = unrelatedJournal.records.find((record) => record.kind === "HarnessProfile" && record.status === "CREATED");
+  unrelatedRecord.path = unrelatedAsset;
+  unrelatedRecord.id = "unrelated";
+  unrelatedRecord.version = "9.9.9";
+  unrelatedRecord.digest = digest(readYaml(unrelatedAsset));
+  unrelatedRecord.created = [{ path: unrelatedAsset, role: "asset", digest: digest(fs.readFileSync(unrelatedAsset)) }];
+  delete unrelatedJournal.journalDigest;
+  unrelatedJournal.journalDigest = digest(unrelatedJournal);
+  fs.writeFileSync(unrelatedRun.journalFile, `${JSON.stringify(unrelatedJournal, null, 2)}\n`);
+  const unrelatedFailure = runJsonFailure(["migrate", "rollback", unrelatedRun.migrationId, "--workspace", unrelatedHome, "--json"]);
+  assert.match(unrelatedFailure.error, /cannot prove migration ownership/i);
+  assert.equal(readYaml(unrelatedAsset).metadata.owner, "organization");
+
+  const symlinkHome = initializedHome();
+  const organization = path.join(symlinkHome, "catalogs/organization");
+  const assets = path.join(organization, "assets");
+  const externalAssets = path.join(temporaryHome(), "assets");
+  fs.rmSync(assets, { recursive: true, force: true });
+  fs.mkdirSync(externalAssets, { recursive: true });
+  const sentinel = path.join(externalAssets, "must-not-touch.txt");
+  fs.writeFileSync(sentinel, "preserve\n");
+  fs.symlinkSync(externalAssets, assets);
+  const symlinkFailure = runJsonFailure(["migrate", "v2-to-v3", "--workspace", symlinkHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
+  assert.match(symlinkFailure.error, /Migration asset root must be a real Workspace directory/i);
+  assert.equal(fs.readFileSync(sentinel, "utf8"), "preserve\n");
+  assert.equal(fs.readdirSync(externalAssets).length, 1);
+});
+
 test("Redis client evidence proposes a new Profile instead of evolving a distributed-cache product", () => {
   const home = initializedHome();
   const project = createRedisClient(path.join(home, "fixtures/redisclient"));
@@ -138,7 +199,7 @@ test("Redis client evidence proposes a new Profile instead of evolving a distrib
   assert.match(result.reasoning.rejectionReasons[0], /no published HarnessProfile|strong negative boundary conflict/i);
   assert.equal(result.proposal.proposedAssets[0].id, "redis-client-profile");
   assert.ok(result.proposal.blockers.includes("policy-required-advisor-review-missing"));
-  assert.ok(result.proposal.blockers.includes("new-profile-evaluation-review-required"));
+  assert.ok(result.proposal.blockers.includes("evaluation-review-required"));
   assert.ok(result.reasoning.evidenceIds.every((id) => /^evidence-\d{4}$/.test(id)));
   assert.equal(result.proposal.evaluationStatus, "INSUFFICIENT_EVAL_EVIDENCE");
   const proposal = runJson(["proposal", "inspect", result.runId, "--workspace", home, "--json"]);
@@ -167,15 +228,15 @@ test("existing Profile evolution adds evidence-backed contract coverage instead 
   assert.ok(profile.provenance.sourceDigests.includes(result.evidenceGraph.digest));
 });
 
-test("shared executable-engineering evidence never assigns an arbitrary domain role", () => {
+test("shared executable-engineering evidence requests more evidence instead of assigning an arbitrary domain role", () => {
   const home = initializedHome();
   const project = createGenericEngineeringTool(path.join(home, "fixtures/generic-tool"));
-  const result = runJsonFailure(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable engineering Harness asset.", "--advisor", "off", "--json"]);
-  assert.equal(result.reasoning.decision, "PROPOSE_NEW_PROFILE");
+  const result = runJson(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable engineering Harness asset.", "--advisor", "off", "--json"]);
+  assert.equal(result.reasoning.decision, "NEED_MORE_EVIDENCE");
   assert.equal(result.reasoning.proposedProfile.domain, "unclassified-engineering");
   assert.equal(result.reasoning.proposedProfile.role, "unclassified-engineering");
-  assert.equal(result.reasoning.proposedProfile.positiveConcepts.length, 1);
-  assert.equal(result.reasoning.proposedProfile.positiveConcepts[0], "executable-engineering");
+  assert.equal(result.proposal.assetDeltaProposal.publicationAllowed, false);
+  assert.equal(result.proposal.proposedAssets.length, 0);
 });
 
 test("policy-required GLM Advisor cites evidence but cannot approve; human approval publishes the Profile", async (t) => {
@@ -221,7 +282,7 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
   assert.ok(fs.existsSync(produced.advisor.resultPath));
   assert.equal(produced.reasoning.decision, "PROPOSE_NEW_PROFILE");
   assert.equal(produced.proposal.blockers.length, 1);
-  assert.equal(produced.proposal.blockers[0], "new-profile-evaluation-review-required");
+  assert.equal(produced.proposal.blockers[0], "evaluation-review-required");
   assert.equal(requests.length, 1);
   assert.equal(requests[0].authorization, "Bearer test-secret");
   assert.match(requests[0].body, /evidence-0001/);
@@ -235,8 +296,11 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
   assert.equal(review.reviewer.status, "SUCCEEDED");
   assert.equal(review.reviewer.authority.mayApprove, false);
   assert.equal(review.humanDecisionRequired, true);
+  assert.equal(review.deterministicGates.find((gate) => gate.id === "asset-delta-closure")?.status, "PASS");
+  assert.equal(review.assetDeltaAssessment.status, "VALIDATED");
+  assert.equal(review.impactAssessment.status, "READY");
   assert.equal(review.nextAction, "proposal-approve");
-  assert.ok(review.remainingBlockers.includes("new-profile-evaluation-review-required"));
+  assert.ok(review.remainingBlockers.includes("evaluation-review-required"));
   assert.ok(fs.existsSync(review.reportPath));
   assert.ok(review.findings.some((finding) => finding.dimension === "product-boundary"));
   assert.equal(requests.length, 2);
@@ -248,6 +312,20 @@ test("policy-required GLM Advisor cites evidence but cannot approve; human appro
   assert.equal(published.status, "PUBLISHED");
   assert.ok(published.assets.some((asset) => asset.id === "redis-client-profile"));
   assert.equal(published.catalog.status, "PUBLISHED");
+  const publishedDelta = readYaml(published.assetDelta.path);
+  const publishedEvaluation = readYaml(published.evaluation.path);
+  assert.equal(validateDocument(publishedDelta).valid, true);
+  assert.equal(publishedDelta.spec.evaluationPackRef.digest, digest(publishedEvaluation));
+  for (const publishedAsset of published.assets) {
+    const asset = readYaml(publishedAsset.path);
+    const after = publishedDelta.spec.deltas.find((delta) => delta.after?.kind === asset.kind && delta.after?.id === asset.metadata.id && delta.after?.version === asset.metadata.version)?.after;
+    assert.ok(after, `${asset.kind}:${asset.metadata.id}@${asset.metadata.version}`);
+    assert.equal(after.digest, digest(asset));
+    assert.equal(digest(after.document), digest(asset));
+  }
+  const evaluationAfter = publishedDelta.spec.deltas.find((delta) => delta.after?.kind === "EvaluationPack" && delta.after?.id === publishedEvaluation.metadata.id)?.after;
+  assert.equal(evaluationAfter.digest, digest(publishedEvaluation));
+  assert.equal(digest(evaluationAfter.document), digest(publishedEvaluation));
   const catalog = runJson(["catalog", "v3-validate", "--workspace", home, "--json"]);
   assert.equal(catalog.status, "VALIDATED");
 });
@@ -288,6 +366,83 @@ test("proposal approval rejects a Review Report after the Proposal changes", asy
   const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
   assert.ok(blocked.blockers.includes("proposal-review-stale"));
   assert.doesNotMatch(JSON.stringify(blocked), /stale-secret/);
+});
+
+test("proposal approval rejects a Review Report whose current file digest no longer matches its Proposal binding", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "report-tamper-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--models-file", modelsFile, "--json"]);
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  const report = readYaml(review.reportPath);
+  report.summary = `${report.summary} Tampered after review.`;
+  writeYaml(review.reportPath, report);
+
+  const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
+  assert.ok(blocked.blockers.includes("proposal-review-report-digest-mismatch"));
+});
+
+test("all mutating decisions require reviewed Evaluation cases before approval", async (t) => {
+  const service = await createProposalReviewService(t);
+  const fixtures = [
+    ["EVOLVE_EXISTING", createDistributedCacheProduct],
+    ["COMPOSE_NEW_BUNDLE", createGatewayCacheProduct],
+    ["PROPOSE_NEW_PROFILE", createRedisClient]
+  ];
+  for (const [expectedDecision, createProject] of fixtures) {
+    const home = initializedHome();
+    const project = createProject(path.join(home, "fixtures", expectedDecision.toLowerCase()));
+    const modelsFile = path.join(home, "models.json");
+    fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "evaluation-gate-secret", url: service.url }] }));
+    const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--models-file", modelsFile, "--json"]);
+    assert.equal(produced.reasoning.decision, expectedDecision);
+    const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+    assert.equal(review.verdict, "READY_FOR_HUMAN_APPROVAL");
+    const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--json"]);
+    assert.deepEqual(blocked.blockers, ["evaluation-review-required"]);
+  }
+});
+
+test("publication rejects Proposal content changed after approval", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "approval-tamper-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--models-file", modelsFile, "--json"]);
+  await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  const approved = runJson(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
+  assert.match(approved.approval.approvedContentDigest, /^sha256:[a-f0-9]{64}$/);
+  const proposalFile = path.join(home, "evolution-runs", produced.runId, "proposal.yaml");
+  const proposal = readYaml(proposalFile);
+  proposal.proposedAssets[0].metadata.description = `${proposal.proposedAssets[0].metadata.description} Changed after approval.`;
+  writeYaml(proposalFile, proposal);
+
+  const blocked = runJsonFailure(["proposal", "publish", produced.runId, "--workspace", home, "--json"]);
+  assert.ok(blocked.blockers.includes("proposal-approval-content-stale"));
+});
+
+test("Proposal Review blocks a tampered or incomplete asset impact analysis", async (t) => {
+  const home = initializedHome();
+  const project = createRedisClient(path.join(home, "fixtures/redisclient"));
+  const service = await createProposalReviewService(t);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "delta-review-secret", url: service.url }] }));
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--source-project", project, "--goal", "Produce a reusable Harness asset.", "--models-file", modelsFile, "--json"]);
+  const proposalFile = path.join(home, "evolution-runs", produced.runId, "proposal.yaml");
+  const proposal = readYaml(proposalFile);
+  proposal.assetDeltaProposal.spec.deltas[0].impact.status = "BLOCKED";
+  writeYaml(proposalFile, proposal);
+
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.verdict, "REVISE");
+  assert.equal(review.assetDeltaAssessment.status, "FAILED");
+  assert.equal(review.impactAssessment.status, "BLOCKED");
+  assert.equal(review.deterministicGates.find((gate) => gate.id === "asset-delta-closure")?.status, "FAIL");
+  assert.ok(review.remainingBlockers.includes("review-gate:asset-delta-closure"));
+  assert.doesNotMatch(JSON.stringify(review), /delta-review-secret/);
 });
 
 test("proposal review accepts production-shaped non-source assessments and normalizes quality checks", async (t) => {
@@ -496,6 +651,10 @@ test("source-root production deduplicates, groups, and returns successful Adviso
   assert.equal(result.advisorSummary.failedCount, 0);
   assert.ok(result.proposals.every((proposal) => proposal.advisor.status === "SUCCEEDED"));
   assert.ok(result.proposals.every((proposal) => fs.existsSync(proposal.advisor.resultPath)));
+  for (const proposal of result.proposals) {
+    const validation = runJson(["proposal", "validate", proposal.proposalId, "--workspace", home, "--json"]);
+    assert.equal(validation.status, "VALIDATED");
+  }
   assert.doesNotMatch(JSON.stringify(result), /corpus-secret/);
 });
 
@@ -818,6 +977,14 @@ function createDistributedCacheProduct(project) {
   fs.writeFileSync(path.join(project, "package.json"), JSON.stringify({ name: "distributed-cache-product", scripts: { build: "node build.js", test: "node test.js" } }));
   fs.writeFileSync(path.join(project, "src/server.js"), "// Distributed cache server protocol, key-value store, TTL, eviction, hash slots, persistence, replication, sharding, migration, and failover.\nexport class CacheServer {}\n");
   fs.writeFileSync(path.join(project, "README.md"), "Distributed cache product and Redis-compatible key-value store. Build, test, validate, benchmark, and release cache server protocol, TTL, eviction, persistence, replication, sharding, migration, failover, diagnostics, and observability.");
+  return project;
+}
+
+function createGatewayCacheProduct(project) {
+  fs.mkdirSync(path.join(project, "src"), { recursive: true });
+  fs.writeFileSync(path.join(project, "package.json"), JSON.stringify({ name: "gateway-cache-product", scripts: { build: "node build.js", test: "node test.js" } }));
+  fs.writeFileSync(path.join(project, "src/server.js"), "// API gateway reverse proxy route policy, rate limit, upstream ingress, distributed cache, Redis-compatible key-value store, TTL, and eviction.\nexport class GatewayCacheServer {}\n");
+  fs.writeFileSync(path.join(project, "README.md"), "Build, test, validate, and release an API gateway with routing, rate limiting, upstream proxying, distributed cache, TTL, eviction, failover, and diagnostics.");
   return project;
 }
 

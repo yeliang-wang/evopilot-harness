@@ -9,9 +9,10 @@ import { serveHubV3, writeHubSnapshot } from "./hub.mjs";
 import { aggregateFeedback, ingestFeedbackPackage, inspectFeedbackPackage, processFeedbackPackage, readEffectivenessReport, validateFeedbackPackage } from "./feedback.mjs";
 import { applyV2Migration, planV2Migration, rollbackMigration } from "./migration.mjs";
 import { collectEvidence, reasonCorpus, reasonEvidence } from "./reasoning.mjs";
+import { buildAssetDeltaProposal, buildEvaluationPackV3, validateAssetDeltaClosure } from "./delta.mjs";
 import { inspectProposalReview, reviewProposal } from "./review.mjs";
 import { validateDocument, validateFile, validateTree } from "./schema.mjs";
-import { booleanOption, digest, option, parseCli, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
+import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, workspaceStatus } from "./workspace.mjs";
 
@@ -35,6 +36,33 @@ export async function handleV3Command(argv) {
     if (args.options.json) print(result, true);
     else process.stderr.write(`${result.error}\n`);
     return { handled: true, exitCode: error?.name === "UsageError" ? 2 : 1 };
+  }
+}
+
+export async function executeV3Operation({ positionals, options = {} }) {
+  const args = {
+    positionals: Array.isArray(positionals) ? positionals.map(String) : [],
+    options: { ...options },
+    capture: true
+  };
+  const [group, action, id] = args.positionals;
+  try {
+    const response = await dispatch(args, group, action, id);
+    if (!response || typeof response !== "object" || !("result" in response)) {
+      throw new Error(`Engine operation ${args.positionals.join(" ")} did not return a structured result.`);
+    }
+    return response;
+  } catch (error) {
+    return {
+      exitCode: error?.name === "UsageError" ? 2 : 1,
+      result: {
+        schema: "evopilot-harness-error/v3",
+        status: "FAILED",
+        error: error instanceof Error ? error.message : String(error),
+        errorType: error instanceof Error ? error.name : "Error",
+        nextAction: error?.name === "UsageError" ? "repair-operation-input" : "inspect-engine-failure"
+      }
+    };
   }
 }
 
@@ -131,6 +159,14 @@ async function dispatch(args, group, action, id) {
   }
   if (group === "produce") return produce(args, home);
   if (group === "proposal" && action === "inspect") return output(args, inspectProposal(home, id ?? requiredOption(args, "proposal-id")));
+  if (group === "proposal" && action === "validate") {
+    const proposalId = id ?? requiredOption(args, "proposal-id");
+    const proposal = inspectProposal(home, proposalId);
+    const records = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
+    const evidenceContext = proposalEvidenceContext(home, proposalId);
+    const closure = validateAssetDeltaClosure(proposal.assetDeltaProposal, proposal.evaluationPack, { proposedAssets: proposal.proposedAssets, records, ...evidenceContext });
+    return output(args, { schema: "evopilot-harness-proposal-validation/v3.4", status: closure.status, proposalId: proposal.proposalId, decision: proposal.decision, assetDelta: proposal.assetDeltaProposal, evaluationPack: proposal.evaluationPack, closure, nextAction: closure.status === "VALIDATED" ? proposal.nextAction : "repair-asset-delta" }, closure.status === "VALIDATED" ? 0 : 2);
+  }
   if (group === "proposal" && action === "review") {
     const result = await reviewProposal(home, id ?? requiredOption(args, "proposal-id"), args);
     return output(args, result, result.status === "BLOCKED" ? 2 : 0);
@@ -162,7 +198,7 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
 }
 
 async function produce(args, home) {
@@ -172,18 +208,22 @@ async function produce(args, home) {
     for (const group of corpus.groups) {
       const grouped = mergeCorpusEvidence(home, group);
       const reasoned = reasonEvidence(grouped.graph, home);
+      writeJson(path.join(grouped.runRoot, "evidence-graph.json"), reasoned.graph);
       writeJson(path.join(grouped.runRoot, "reasoning-result.json"), reasoned.result);
       const advisor = await runAdvisor({ args, home, graph: reasoned.graph, reasoning: reasoned.result, knowledge: reasoned.knowledge, runRoot: grouped.runRoot });
       const proposal = createProposal({ home, runRoot: grouped.runRoot, graph: reasoned.graph, reasoning: reasoned.result, advisor });
       proposals.push({ groupId: group.groupId, projects: group.projects, ...proposal });
     }
     const blocked = proposals.some((proposal) => proposal.status === "BLOCKED");
+    const reviewRequired = proposals.some((proposal) => proposal.status === "REVIEW_REQUIRED");
+    const needMoreEvidence = proposals.some((proposal) => proposal.status === "NEED_MORE_EVIDENCE");
+    const status = blocked ? "BLOCKED" : reviewRequired ? "REVIEW_REQUIRED" : needMoreEvidence ? "NEED_MORE_EVIDENCE" : "NO_CHANGE";
     const result = {
       ...corpus,
-      status: blocked ? "BLOCKED" : "REVIEW_REQUIRED",
+      status,
       proposals,
       advisorSummary: summarizeAdvisorRuns(proposals.map((proposal) => proposal.advisor)),
-      nextAction: blocked ? "repair-advisor-and-rerun" : "review-corpus-proposals"
+      nextAction: blocked ? "repair-advisor-and-rerun" : reviewRequired ? "review-corpus-proposals" : needMoreEvidence ? "collect-more-corpus-evidence" : "record-no-change"
     };
     return output(args, result, blocked ? 2 : 0);
   }
@@ -234,7 +274,7 @@ function mergeCorpusEvidence(home, group) {
     fs.writeFileSync(snapshotRef, node.excerpt, "utf8");
     return { ...node, evidenceId, snapshotRef };
   });
-  const graph = {
+  const graph = persistedJson({
     schema: EVIDENCE_GRAPH_SCHEMA,
     runId,
     createdAt: new Date().toISOString(),
@@ -243,7 +283,7 @@ function mergeCorpusEvidence(home, group) {
     nodeCount: nodes.length,
     sources: graphs.flatMap((item) => item.sources),
     nodes
-  };
+  });
   graph.graphDigest = digest(graph);
   writeJson(path.join(runRoot, "evidence-graph.json"), graph);
   writeJson(path.join(snapshotRoot, "manifest.json"), {
@@ -327,6 +367,9 @@ function runV3Evaluation(home) {
     } else if (fixture.type === "reasoning-contract") {
       const result = reasonEvidence(fixture.graph, home).result;
       cases.push({ id: fixture.id, expected: fixture.expectedDecision, actual: result.decision, passed: result.decision === fixture.expectedDecision });
+    } else if (fixture.type === "v3.4-contract") {
+      const result = runV34ContractFixture(fixture);
+      cases.push({ id: fixture.id, expected: fixture.expectedStatus, actual: result.status, passed: result.status === fixture.expectedStatus, checks: result.checks });
     }
   }
   const reviewedCases = fixtures.map((file) => JSON.parse(fs.readFileSync(file, "utf8"))).filter((fixture) => fixture.reviewStatus === "approved").length;
@@ -341,6 +384,73 @@ function runV3Evaluation(home) {
     accuracyClaim: reviewedCases >= 20 ? "REVIEWED_CORPUS_AVAILABLE" : "INSUFFICIENT_EVAL_EVIDENCE",
     reviewedCaseCount: reviewedCases,
     note: "Passing contract fixtures does not establish open-domain matching accuracy."
+  };
+}
+
+function runV34ContractFixture(fixture) {
+  const graph = fixtureGraph(fixture.id);
+  const reasoning = {
+    schema: "evopilot-harness-reasoning-result/v3",
+    algorithmVersion: "evaluation-fixture/v1",
+    ontology: { id: "fixture", version: "1.0.0", digest: digest("fixture-ontology") },
+    policy: { id: "fixture", version: "1.0.0", digest: digest("fixture-policy") },
+    evidenceGraph: { runId: graph.runId, graphDigest: graph.graphDigest, nodeCount: graph.nodeCount },
+    eligibility: { decision: "ELIGIBLE", evidenceIds: ["evidence-0001"] },
+    decision: "PROPOSE_NEW_PROFILE",
+    proposedProfile: { id: "fixture-profile", domain: "fixture", role: "fixture-engineering", taskClass: "engineering-task", positiveConcepts: ["executable-engineering"], negativeConcepts: [], evidenceKinds: ["source-code"] },
+    confidence: 1,
+    advisorRequired: false,
+    humanApprovalRequired: true,
+    candidates: [],
+    rejectionReasons: [],
+    evidenceIds: ["evidence-0001"],
+    nextAction: "proposal-review"
+  };
+  const kinds = fixture.assetKinds?.length ? fixture.assetKinds : ["HarnessProfile"];
+  const checks = kinds.map((kind) => {
+    const asset = evaluationFixtureAsset(kind, graph, reasoning);
+    const evaluationPack = buildEvaluationPackV3({ graph, reasoning, proposedAssets: [asset] });
+    const assetDeltaProposal = buildAssetDeltaProposal({ graph, reasoning, proposedAssets: [asset], evaluationPack });
+    if (fixture.mutation === "remove-negative-case") evaluationPack.spec.cases = evaluationPack.spec.cases.filter((item) => item.polarity !== "negative");
+    if (fixture.mutation === "block-impact") assetDeltaProposal.spec.deltas[0].impact.status = "BLOCKED";
+    const closure = validateAssetDeltaClosure(assetDeltaProposal, evaluationPack, { proposedAssets: [asset], evidenceGraph: graph, reasoning });
+    return { kind, status: closure.status, blockers: closure.blockers };
+  });
+  return { status: checks.every((item) => item.status === "VALIDATED") ? "VALIDATED" : "FAILED", checks };
+}
+
+function evaluationFixtureAsset(kind, graph, reasoning) {
+  if (kind === "EvaluationPack") {
+    return buildEvaluationPackV3({ graph, reasoning, proposedAssets: [evaluationFixtureAsset("HarnessProfile", graph, reasoning)] });
+  }
+  const fixtureFiles = {
+    HarnessComponent: "assets/v3/components/engineering-validation/asset.yaml",
+    HarnessProfile: "assets/v3/profiles/observability-apm/1.2.0/asset.yaml",
+    HarnessBundle: "assets/v3/bundles/observability-apm/1.2.0/asset.yaml",
+    OntologyPack: "ontology/builtin/software-engineering.yaml",
+    MatchPolicyPack: "policies/matcher/default.yaml",
+    AdvisorPolicyPack: "policies/advisor/default.yaml"
+  };
+  const asset = readYaml(path.join(PACKAGE_ROOT, fixtureFiles[kind]));
+  asset.metadata.id = `fixture-${safeId(kind)}`;
+  asset.metadata.version = "0.1.0";
+  asset.metadata.lifecycle = "review";
+  return asset;
+}
+
+function fixtureGraph(runId) {
+  const excerpt = "Build, test, validate, and release an evidence-backed engineering asset.";
+  const node = { evidenceId: "evidence-0001", kind: "source-code", sourceType: "source-project", sourceRef: `/fixtures/${safeId(runId)}/Main.java`, excerpt, excerptDigest: digest(excerpt), concepts: ["executable-engineering"] };
+  const graph = { schema: EVIDENCE_GRAPH_SCHEMA, runId: safeId(runId), createdAt: "2026-08-18T00:00:00.000Z", redactionApplied: true, sourceCount: 1, nodeCount: 1, sources: [{ type: "source-project", input: `/fixtures/${safeId(runId)}`, authority: "local", evidenceNodeCount: 1 }], nodes: [node] };
+  graph.graphDigest = digest(graph);
+  return graph;
+}
+
+function proposalEvidenceContext(home, proposalId) {
+  const runRoot = path.join(home, "evolution-runs", safeId(proposalId));
+  return {
+    evidenceGraph: JSON.parse(fs.readFileSync(path.join(runRoot, "evidence-graph.json"), "utf8")),
+    reasoning: JSON.parse(fs.readFileSync(path.join(runRoot, "reasoning-result.json"), "utf8"))
   };
 }
 
@@ -374,6 +484,7 @@ function requiredIdOption(args, name) {
 }
 
 function output(args, value, code = 0) {
+  if (args.capture) return { exitCode: code, result: persistedJson(value) };
   print(value, Boolean(args.options.json));
   return code;
 }

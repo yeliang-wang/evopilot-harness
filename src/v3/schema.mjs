@@ -11,6 +11,7 @@ const SCHEMAS = {
   OntologyPack: "ontology-pack-v1.schema.json",
   MatchPolicyPack: "match-policy-pack-v1.schema.json",
   AdvisorPolicyPack: "advisor-policy-pack-v1.schema.json",
+  AssetDeltaProposal: "asset-delta-proposal-v1.schema.json",
   HarnessExecutionFeedbackPackage: "harness-execution-feedback-package-v1.schema.json",
   HarnessEffectivenessReport: "harness-effectiveness-report-v1.schema.json"
 };
@@ -18,7 +19,8 @@ const SCHEMAS = {
 const VERSIONED_SCHEMAS = {
   EvaluationPack: {
     "harness.evopilot.io/v1": "evaluation-pack-v1.schema.json",
-    "harness.evopilot.io/v2": "evaluation-pack-v2.schema.json"
+    "harness.evopilot.io/v2": "evaluation-pack-v2.schema.json",
+    "harness.evopilot.io/v3": "evaluation-pack-v3.schema.json"
   }
 };
 

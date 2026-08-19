@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { EVIDENCE_GRAPH_SCHEMA, REASONING_SCHEMA } from "./constants.mjs";
 import { discoverAssets } from "./catalog.mjs";
-import { digest, option, options, readYaml, redact, safeId, unique, walkFiles, writeJson } from "./utils.mjs";
+import { digest, option, options, persistedJson, readYaml, redact, safeId, unique, walkFiles, writeJson } from "./utils.mjs";
 
 const TEXT_EXTENSIONS = new Set([".md", ".txt", ".rst", ".adoc", ".yaml", ".yml", ".json", ".xml", ".toml", ".properties", ".gradle", ".java", ".kt", ".go", ".rs", ".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".c", ".cc", ".cpp", ".h", ".hpp", ".sql", ".sh"]);
 const BUILD_FILES = new Set(["pom.xml", "build.gradle", "build.gradle.kts", "package.json", "go.mod", "cargo.toml", "makefile", "cmakelists.txt", "requirements.txt", "pyproject.toml", "dockerfile", "compose.yaml", "docker-compose.yml"]);
@@ -67,7 +67,7 @@ export function collectEvidence(args, home, { projectOverride } = {}) {
     fs.writeFileSync(snapshotFile, node.excerpt, "utf8");
     return { ...node, evidenceId, snapshotRef: snapshotFile };
   });
-  const graph = {
+  const graph = persistedJson({
     schema: EVIDENCE_GRAPH_SCHEMA,
     runId,
     createdAt: new Date().toISOString(),
@@ -76,7 +76,7 @@ export function collectEvidence(args, home, { projectOverride } = {}) {
     nodeCount: nodes.length,
     sources: sourceRecords,
     nodes
-  };
+  });
   graph.graphDigest = digest(graph);
   writeJson(path.join(runRoot, "evidence-graph.json"), graph);
   writeJson(path.join(snapshotRoot, "manifest.json"), { schema: "evopilot-harness-redacted-snapshot/v1", runId, graphDigest: graph.graphDigest, files: nodes.map((node) => ({ evidenceId: node.evidenceId, snapshotRef: node.snapshotRef, excerptDigest: node.excerptDigest })) });
@@ -106,7 +106,7 @@ export function reasonEvidence(graph, home) {
   const decision = decide(eligibility, candidates, knowledge.policy, enriched, knowledge.ontology);
   const result = {
     schema: REASONING_SCHEMA,
-    algorithmVersion: "eligibility-bm25-multifactor/v3",
+    algorithmVersion: "eligibility-bm25-multifactor-delta/v4",
     ontology: { id: knowledge.ontology.metadata.id, version: knowledge.ontology.metadata.version, digest: digest(knowledge.ontology) },
     policy: { id: knowledge.policy.metadata.id, version: knowledge.policy.metadata.version, digest: digest(knowledge.policy) },
     evidenceGraph: { runId: graph.runId, graphDigest: enriched.graphDigest, nodeCount: enriched.nodes.length },
@@ -117,7 +117,7 @@ export function reasonEvidence(graph, home) {
     proposedProfile: decision.proposedProfile,
     confidence: decision.confidence,
     advisorRequired: knowledge.policy.spec.risk.advisorRequiredFor.includes(decision.decision),
-    humanApprovalRequired: knowledge.policy.spec.risk.humanApprovalRequiredFor.includes(decision.decision),
+    humanApprovalRequired: ["EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NO_CHANGE", "NEED_MORE_EVIDENCE"].includes(decision.decision),
     candidates,
     rejectionReasons: decision.rejectionReasons,
     evidenceIds: decision.evidenceIds,
@@ -179,8 +179,8 @@ function enrichEvidenceGraph(graph, ontology) {
     const matches = concepts.filter((concept) => concept.terms.some((term) => normalized.includes(String(term).toLowerCase()))).map((concept) => concept.id);
     return { ...node, concepts: unique(matches) };
   });
-  const enriched = { ...graph, nodes };
-  const digestInput = { ...enriched };
+  const enriched = persistedJson({ ...graph, nodes });
+  const digestInput = persistedJson(enriched);
   delete digestInput.graphDigest;
   enriched.graphDigest = digest(digestInput);
   return enriched;
@@ -228,6 +228,7 @@ function retrieveAndScore(graph, profiles, knowledge) {
   const maxBm25 = Math.max(...bm25Scores, 0.0001);
   const detectedConcepts = unique(graph.nodes.flatMap((node) => node.concepts ?? []));
   const evidenceKinds = unique(graph.nodes.map((node) => node.kind));
+  const deltaEvidenceKinds = evidenceKinds.filter((kind) => !["operator-note"].includes(kind));
   const detectedRole = detectRole(graph, knowledge.ontology);
   const weights = knowledge.policy.spec.weights;
   const candidates = profiles.map((record, index) => {
@@ -242,6 +243,8 @@ function retrieveAndScore(graph, profiles, knowledge) {
     const evidence = overlap(profile.spec.match.requiredEvidenceKinds, evidenceKinds);
     const negativeConflict = overlap(negative, detectedConcepts);
     const novelty = Math.max(0, 1 - boundary);
+    const novelConcepts = detectedConcepts.filter((concept) => concept !== "executable-engineering" && !positive.includes(concept) && !negative.includes(concept));
+    const novelEvidenceKinds = deltaEvidenceKinds.filter((kind) => !profile.spec.match.requiredEvidenceKinds.includes(kind));
     const positiveWeight = weights.role + weights.boundary + weights.capability + weights.execution + weights.evidence;
     const positiveScore = (role * weights.role + boundary * weights.boundary + capability * weights.capability + execution * weights.execution + evidence * weights.evidence) / positiveWeight;
     const total = clamp(positiveScore - negativeConflict * weights.negativeConflict - novelty * weights.novelty);
@@ -255,6 +258,9 @@ function retrieveAndScore(graph, profiles, knowledge) {
       totalScore: round(total),
       bm25Score: round(bm25Scores[index]),
       factors: { role: round(role), boundary: round(boundary), capability: round(capability), execution: round(execution), evidenceCoverage: round(evidence), negativeConflict: round(negativeConflict), novelty: round(novelty) },
+      assetDigest: record.digest,
+      novelConcepts,
+      novelEvidenceKinds,
       evidenceIds,
       rejectionReasons: [
         ...(negativeConflict > 0 ? [`Negative concept conflict=${round(negativeConflict)}`] : []),
@@ -267,6 +273,9 @@ function retrieveAndScore(graph, profiles, knowledge) {
 }
 
 function decide(eligibility, candidates, policy, graph, ontology) {
+  if (eligibility.decision === "INSUFFICIENT_EVIDENCE") {
+    return { decision: "NEED_MORE_EVIDENCE", confidence: 1, rejectionReasons: eligibility.reasons, evidenceIds: eligibility.evidenceIds };
+  }
   if (eligibility.decision !== "ELIGIBLE") {
     return { decision: eligibility.decision, confidence: 1, rejectionReasons: eligibility.reasons, evidenceIds: eligibility.evidenceIds };
   }
@@ -277,7 +286,7 @@ function decide(eligibility, candidates, policy, graph, ontology) {
     return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: 0.7, rejectionReasons: ["No published HarnessProfile candidates exist."], evidenceIds: eligibility.evidenceIds };
   }
   if (!domainConcepts.length) {
-    return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: 0.7, rejectionReasons: ["No published Ontology concept explains the evidenced engineering domain; an Ontology/Profile proposal is required."], evidenceIds: eligibility.evidenceIds };
+    return { decision: "NEED_MORE_EVIDENCE", proposedProfile, confidence: 0.7, rejectionReasons: ["No published Ontology concept explains the evidenced engineering domain; more discriminating evidence is required before an Ontology or Profile delta can be proposed."], evidenceIds: eligibility.evidenceIds };
   }
   if (detectedRole && detectedRole.matched - detectedRole.conflicts > 0 && !candidates.some((candidate) => candidate.domain === detectedRole.domain)) {
     return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: 0.82, rejectionReasons: [`Detected role ${detectedRole.id} has no published HarnessProfile in domain ${detectedRole.domain}.`], evidenceIds: unique([...eligibility.evidenceIds, ...graph.nodes.filter((node) => (node.concepts ?? []).some((concept) => detectedRole.concepts.includes(concept))).map((node) => node.evidenceId).slice(0, 8)]) };
@@ -295,12 +304,15 @@ function decide(eligibility, candidates, policy, graph, ontology) {
     return { decision: "COMPOSE_NEW_BUNDLE", confidence: round((top.totalScore + second.totalScore) / 2), composeProfiles: [pickProfile(top), pickProfile(second)], rejectionReasons: ["Evidence spans two independently strong profile boundaries."], evidenceIds: unique([...top.evidenceIds, ...second.evidenceIds]) };
   }
   if (second && delta < thresholds.ambiguousDelta) {
-    return { decision: "REVIEW_REQUIRED", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: [`Top-candidate delta ${round(delta)} is below ambiguity threshold ${thresholds.ambiguousDelta}.`], evidenceIds: unique([...top.evidenceIds, ...second.evidenceIds]) };
+    return { decision: "NEED_MORE_EVIDENCE", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: [`Top-candidate delta ${round(delta)} is below ambiguity threshold ${thresholds.ambiguousDelta}; more discriminating evidence is required.`], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds, ...second.evidenceIds]) };
   }
   if (top.totalScore >= thresholds.evolveExisting) {
+    if (top.factors.negativeConflict === 0 && top.novelConcepts.length === 0 && top.novelEvidenceKinds.length === 0) {
+      return { decision: "NO_CHANGE", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: ["The evidence fits the existing Profile and adds no new concepts or required evidence kinds."], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
+    }
     return { decision: "EVOLVE_EXISTING", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: top.rejectionReasons, evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
   }
-  return { decision: "REVIEW_REQUIRED", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: [`Best score ${top.totalScore} does not reach evolve-existing threshold ${thresholds.evolveExisting}.`, ...top.rejectionReasons], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
+  return { decision: "NEED_MORE_EVIDENCE", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: [`Best score ${top.totalScore} does not reach evolve-existing threshold ${thresholds.evolveExisting}; the current evidence cannot justify an existing-asset delta.`, ...top.rejectionReasons], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
 }
 
 function detectRole(graph, ontology) {
@@ -474,6 +486,8 @@ function nextAction(decision) {
     EVOLVE_EXISTING: "review-profile-delta",
     COMPOSE_NEW_BUNDLE: "review-bundle-composition",
     PROPOSE_NEW_PROFILE: "run-advisor-and-review-profile-proposal",
+    NO_CHANGE: "review-no-change-conclusion",
+    NEED_MORE_EVIDENCE: "provide-more-discriminating-source-evidence",
     INSUFFICIENT_EVIDENCE: "provide-more-source-evidence",
     NOT_HARNESS_ELIGIBLE: "stop-not-harness-asset",
     REVIEW_REQUIRED: "run-advisor-and-resolve-ambiguity"

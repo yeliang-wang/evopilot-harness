@@ -55,6 +55,10 @@ async function main(argv) {
     process.stdout.write(argv.includes("--json") ? `${JSON.stringify(result, null, 2)}\n` : `${result.name} ${result.version}\n`);
     return 0;
   }
+  if (argv[0] === "mcp" && argv[1] === "serve") {
+    const { serveOperationServer } = await import("./v4/operation-server/server.mjs");
+    return serveOperationServer(argv.slice(2));
+  }
   const v3 = await handleV3Command(argv);
   if (v3.handled) return v3.exitCode;
   const args = parseArgs(argv);
@@ -4678,6 +4682,7 @@ function printHelp() {
   process.stdout.write(`EvoPilot Harness CLI
 
 Usage:
+  evopilot-harness mcp serve --transport stdio [--workspace <dir>]
   evopilot-harness workspace init|status [--workspace <dir>] [--json]
   evopilot-harness produce --source-project <path>|--source-root <path>|--github-repo <repo> [--attachment <file>] [--production-log <file>] [--goal <text>] [--workspace <dir>] [--json]
   evopilot-harness proposal inspect|review|review-inspect|approve|publish <proposal-id> [--models-file models.json] [--workspace <dir>] [--json]

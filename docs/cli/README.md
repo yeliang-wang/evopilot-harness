@@ -2,7 +2,7 @@
 
 > Command-line access to the independent v3 Harness asset factory, proposal lifecycle, signed Catalog, and Harness Hub.
 
-The v3 CLI treats the Engine as read-only and writes user state under `EVOPILOT_HARNESS_HOME`. Its primary path is `workspace init` -> `produce` -> `proposal review` -> `proposal approve` -> `proposal publish` -> Catalog validation/signing. Legacy v2 commands remain available for migration compatibility.
+The v3 CLI treats the Engine as read-only and writes user state under `EVOPILOT_HARNESS_HOME`. Its primary path is `workspace init` -> `produce` -> `proposal validate` -> `proposal review` -> `proposal approve` -> `proposal publish` -> Catalog validation/signing. `NO_CHANGE` and `NEED_MORE_EVIDENCE` stop before review/approval/publication. Legacy v2 commands remain available for migration compatibility.
 
 ## Install
 

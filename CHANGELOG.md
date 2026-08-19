@@ -2,6 +2,63 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.0.0 - Unreleased
+
+### Added
+
+- Added the portable, question-driven Digital Expert Core and deterministic Codex, WorkBuddy, Claude Code, MCP, and Generic Adapter generation with a versioned manifest and checksum lock.
+- Added a local stdio MCP Harness Operation Server with structured tools/resources, protocol negotiation, health, graceful shutdown, and no default listening port.
+- Added persistent `AgentOperationSession` state with atomic writes, digest-bound Plans and human gates, cross-Agent resume, process-interruption recovery, safe close, and ownership-checked cleanup.
+- Added a direct structured v3 Engine adapter, real MCP lifecycle tests, and an independent Generic Agent Host conformance runner.
+
+### Changed
+
+- Made the Digital Expert the ordinary human entry while retaining atomic JSON CLI for CI, compatibility, and emergency diagnosis.
+- Replaced the former Guided Operator workflow with a compatibility alias to the generated Digital Expert Skill.
+- Kept Proposal Review, approval, and publication under Engine authority and made publication a separate explicit Session decision.
+
+### Boundaries
+
+- v4.0.0 does not execute source-project commands, own EvoPilot Goal Loops, embed a conversational model or general Agent runtime, create model credentials, auto-approve, auto-publish, or expose remote multi-tenant MCP.
+- This entry describes an uncommitted local candidate. Release remains separately unauthorized.
+
+## 3.4.0 - Unreleased
+
+### Added
+
+- Added `AssetDeltaProposal v1` for exact, evidence-linked before/after changes across Component, Profile, Bundle, Ontology, Matcher Policy, Advisor Policy, and Evaluation assets.
+- Added deterministic compatibility, dependency, blast-radius, expected-effect, regression, and rollback analysis with closure validation.
+- Added `EvaluationPack v3` portable positive and negative cases with context, assertions, pinned validators/scorers, optional baselines, expected outcomes, and regression boundaries.
+- Added explicit `NO_CHANGE` and `NEED_MORE_EVIDENCE` Proposal decisions and `proposal validate <proposal-id>` JSON automation.
+- Added Harness Hub Delta, impact, Evaluation coverage, blocker, and next-action projections.
+
+### Changed
+
+- Unknown domains without discriminating evidence now stop at `NEED_MORE_EVIDENCE` instead of generating a generic `unclassified` asset.
+- Proposal Review and approval now require valid Delta/Evaluation and deterministic impact closure.
+- All mutating decisions now require reviewed Evaluation cases and a `READY` EvaluationPack before approval.
+- Review, approval, and publication are digest-bound; report drift or Proposal changes after approval block publication.
+- Delta closure now schema-validates embedded assets, cross-checks Proposed Assets and Catalog baselines, and recomputes changes and all impact fields.
+- Published Delta after-states are rebuilt from the exact published asset and Evaluation documents.
+- Publication preflights immutable asset, Evaluation, and Delta destinations before writing any state.
+- Match Policy is `1.1.0`; Proposal Review synthesis uses `deterministic-delta-gates-semantic-review-synthesis/v2`.
+- EvaluationPack v1 and v2 remain readable; new v3.4 Proposals use v3.
+
+### Boundaries
+
+- LLM Advisor and semantic review remain evidence-bound advice and cannot override deterministic decisions, closure, human approval, or publication gates.
+- v3.4.0 does not add Pairwise/Champion-Challenger comparison, causal-improvement claims, long-horizon learning, source-project execution, EvoPilot runtime behavior, automatic approval, or automatic publication.
+- This entry describes an uncommitted local candidate. Release remains separately unauthorized.
+
+### Validation
+
+- `npm run roadmap:check` and `npm run roadmap:release -- 3.4.0`: `ALIGNED`.
+- `npm test`: 70/70 passed; `npm run v3:check`: 12/12 passed; `npm run check`: passed.
+- Architecture boundaries: 24/24; Guided Operator self-test: 26/26; `git diff --check`: passed.
+- Harness Hub browser QA passed on desktop and 390 px mobile viewports without horizontal overflow or clipped text.
+- Independent read-only acceptance review: AC-9 `PASS`, no unresolved P0/P1/P2 findings, AC-1 through AC-9 adequate.
+- This remains an uncommitted local release candidate; release is not authorized.
+
 ## 3.3.0 - 2026-08-13
 
 ### Added

@@ -1,0 +1,63 @@
+schema: evopilot-harness-digital-expert/v1
+artifact:
+  id: evopilot-harness-digital-expert
+  version: 4.0.0
+  lifecycle: release-candidate
+  description: Portable question-driven expert for Agent-native evopilot-harness operations.
+compatibility:
+  engineApi:
+    min: harness.evopilot.io/v3
+    max: harness.evopilot.io/v3
+  productVersion: ">=4.0.0 <5.0.0"
+  agentProtocol: evopilot-harness-agent-operations/v1
+  mcpProtocols:
+    - "2025-06-18"
+    - "2025-03-26"
+    - "2024-11-05"
+  defaultTransport: stdio
+requiredHostCapabilities:
+  allOf:
+    - natural-language conversation
+    - local file import or instruction loading
+    - local stdio MCP client or structured local process tool calling
+    - explicit tool-result inspection
+authority:
+  owns:
+    - one-question-at-a-time conversation guidance
+    - Operation Plan presentation
+    - Engine result rendering
+    - human decision prompts
+    - stop and recovery guidance
+  mustNotOwn:
+    - Harness reasoning or Proposal Review verdicts
+    - approval identity or publication authority
+    - Engine or Workspace state
+    - model credentials or model configuration
+    - source-project command execution
+entrypoints:
+  core: core/instructions.md
+  conversation: core/conversation.yaml
+  workflows: core/workflows.yaml
+  policies: core/policies.yaml
+  renderers: core/renderers.yaml
+  mcpCommand: evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness
+adapters:
+  - id: codex
+    path: adapters/codex/SKILL.md
+    format: codex-skill
+  - id: workbuddy
+    path: adapters/workbuddy/WORKBUDDY.md
+    format: instruction-pack
+  - id: claude-code
+    path: adapters/claude-code/CLAUDE.md
+    format: claude-project-instructions
+  - id: mcp
+    path: adapters/mcp/MCP.md
+    format: mcp-client-guide
+  - id: generic
+    path: adapters/generic/AGENT.md
+    format: generic-agent-instructions
+conformance:
+  hostProfiles: conformance/host-profiles.yaml
+  lock: manifest.lock.json
+  generator: ../scripts/generate-digital-expert-adapters.mjs

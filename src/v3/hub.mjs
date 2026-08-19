@@ -22,6 +22,28 @@ export function buildHubSnapshot(home) {
     reviewVerdict: proposal.review?.verdict,
     reviewReportDigest: proposal.review?.reportDigest,
     reviewReportPath: proposal.review?.reportPath,
+    nextAction: proposal.nextAction,
+    assetDelta: proposal.assetDeltaProposal ? {
+      id: proposal.assetDeltaProposal.metadata.id,
+      version: proposal.assetDeltaProposal.metadata.version,
+      status: proposal.assetDeltaProposal.spec.status,
+      publicationAllowed: proposal.assetDeltaProposal.spec.publicationAllowed,
+      deltaCount: proposal.assetDeltaProposal.spec.deltas.length,
+      operations: countBy(proposal.assetDeltaProposal.spec.deltas.map((item) => item.operation)),
+      impactStatus: proposal.assetDeltaProposal.spec.deltas.length ? proposal.assetDeltaProposal.spec.deltas.every((item) => item.impact?.status === "READY") ? "READY" : "BLOCKED" : "NOT_APPLICABLE",
+      compatibility: countBy(proposal.assetDeltaProposal.spec.deltas.map((item) => item.impact?.compatibility?.status)),
+      blastRadius: countBy(proposal.assetDeltaProposal.spec.deltas.map((item) => item.impact?.blastRadius?.level)),
+      rollback: countBy(proposal.assetDeltaProposal.spec.deltas.map((item) => item.impact?.rollback?.status))
+    } : null,
+    evaluationCoverage: proposal.evaluationPack ? {
+      apiVersion: proposal.evaluationPack.apiVersion,
+      status: proposal.evaluationPack.spec.status,
+      caseCount: proposal.evaluationPack.spec.cases?.length ?? 0,
+      reviewedCount: proposal.evaluationPack.spec.cases?.filter((item) => item.reviewStatus === "approved").length ?? 0,
+      polarities: countBy(proposal.evaluationPack.spec.cases?.map((item) => item.polarity).filter(Boolean) ?? []),
+      validatorVersions: proposal.evaluationPack.spec.validators?.map((item) => `${item.id}@${item.version}`) ?? [],
+      scorerVersions: proposal.evaluationPack.spec.scorers?.map((item) => `${item.id}@${item.version}`) ?? []
+    } : null,
     path: file
   }));
   const catalogRoot = fs.existsSync(path.join(home, "catalogs/organization/CATALOG.md")) ? path.join(home, "catalogs/organization") : path.join(home, "catalogs/builtin");
@@ -57,7 +79,7 @@ export function buildHubSnapshot(home) {
     assets: records,
     harnesses: records.filter((record) => record.kind === "HarnessProfile").map((record) => ({ ...record, lifecycleStatus: record.lifecycle, commands: { evolve: `evopilot-harness produce --source-project /path/to/project --workspace ${home} --json` } })),
     proposals,
-    evolutions: proposals.map((proposal) => ({ evolutionId: proposal.proposalId, status: proposal.status, targetHarnessId: proposal.decision, reviewStatus: proposal.reviewStatus, reviewVerdict: proposal.reviewVerdict, reviewReportDigest: proposal.reviewReportDigest, nextAction: proposal.reviewVerdict === "READY_FOR_HUMAN_APPROVAL" ? "proposal-approve" : proposal.reviewVerdict ? `review:${proposal.reviewVerdict.toLowerCase()}` : proposal.blockers.length ? proposal.blockers[0] : "proposal-review" })),
+    evolutions: proposals.map((proposal) => ({ evolutionId: proposal.proposalId, status: proposal.status, targetHarnessId: proposal.decision, reviewStatus: proposal.reviewStatus, reviewVerdict: proposal.reviewVerdict, reviewReportDigest: proposal.reviewReportDigest, assetDelta: proposal.assetDelta, evaluationCoverage: proposal.evaluationCoverage, nextAction: proposal.nextAction ?? (proposal.reviewVerdict === "READY_FOR_HUMAN_APPROVAL" ? "proposal-approve" : proposal.reviewVerdict ? `review:${proposal.reviewVerdict.toLowerCase()}` : proposal.blockers.length ? proposal.blockers[0] : "proposal-review") })),
     governancePacks: packs,
     llmUsage: { runCount: advisorRuns.length + reviewRuns.length, advisorRunCount: advisorRuns.length, reviewRunCount: reviewRuns.length, ...usage },
     evaluation: evaluationSummary(home),
@@ -71,7 +93,7 @@ export function buildHubSnapshot(home) {
       { id: "execution-feedback-package", label: "Execution feedback package", description: "Approved, redacted, immutable-Bundle-bound Outcome, Process, Safety, and Cost evidence." },
       { id: "operator-note", label: "Operator note", description: "Goal or contextual note; never sufficient by itself for publication." }
     ],
-    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "proposal inspect", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
+    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "proposal inspect", "proposal validate", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
     nextAction: proposals.some((proposal) => proposal.status === "REVIEW_REQUIRED") ? "review-proposals" : "produce-or-review-assets"
   };
 }
@@ -109,7 +131,14 @@ function evaluationSummary(home) {
   const packs = walkFiles(path.join(home, "evaluations"), (file) => /\.ya?ml$/i.test(file)).map((file) => {
     try { return readYaml(file); } catch { return null; }
   }).filter((item) => item?.kind === "EvaluationPack");
-  return { packCount: packs.length, readyCount: packs.filter((pack) => pack.spec.status === "READY").length, insufficientCount: packs.filter((pack) => pack.spec.status === "INSUFFICIENT_EVAL_EVIDENCE").length };
+  return {
+    packCount: packs.length,
+    readyCount: packs.filter((pack) => pack.spec.status === "READY").length,
+    insufficientCount: packs.filter((pack) => pack.spec.status === "INSUFFICIENT_EVAL_EVIDENCE").length,
+    versionCounts: countBy(packs.map((pack) => pack.apiVersion)),
+    positiveCaseCount: packs.flatMap((pack) => pack.spec.cases ?? []).filter((item) => item.polarity === "positive").length,
+    negativeCaseCount: packs.flatMap((pack) => pack.spec.cases ?? []).filter((item) => item.polarity === "negative").length
+  };
 }
 
 function countBy(values) {

@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/asset-delta-proposal-v1.schema.json",
+  "title": "Asset Delta Proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "harness.evopilot.io/v3" },
+    "kind": { "const": "AssetDeltaProposal" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "lifecycle", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$" },
+        "lifecycle": { "enum": ["review", "approved", "published", "rejected"] },
+        "description": { "type": "string", "minLength": 20 }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "evidence", "deltas", "evaluationPackRef", "publicationAllowed", "status"],
+      "properties": {
+        "decision": { "$ref": "#/$defs/decision" },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["graphDigest", "reasoningDigest", "evidenceIds"],
+          "properties": {
+            "graphDigest": { "$ref": "#/$defs/digest" },
+            "reasoningDigest": { "$ref": "#/$defs/digest" },
+            "evidenceIds": { "$ref": "#/$defs/evidenceIds" }
+          }
+        },
+        "deltas": { "type": "array", "items": { "$ref": "#/$defs/delta" } },
+        "evaluationPackRef": { "$ref": "#/$defs/documentRef" },
+        "publicationAllowed": { "type": "boolean" },
+        "status": { "enum": ["READY_FOR_REVIEW", "NO_CHANGE", "NEED_MORE_EVIDENCE", "BLOCKED"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "decision": { "enum": ["EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE"] } } },
+          "then": { "properties": { "deltas": { "type": "array", "minItems": 1 }, "publicationAllowed": { "type": "boolean", "const": true } } }
+        },
+        {
+          "if": { "properties": { "decision": { "enum": ["NO_CHANGE", "NEED_MORE_EVIDENCE"] } } },
+          "then": { "properties": { "publicationAllowed": { "type": "boolean", "const": false } } }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "decision": { "enum": ["EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NO_CHANGE", "NEED_MORE_EVIDENCE"] },
+    "assetKind": { "enum": ["HarnessComponent", "HarnessProfile", "HarnessBundle", "OntologyPack", "MatchPolicyPack", "AdvisorPolicyPack", "EvaluationPack"] },
+    "evidenceIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^evidence-[0-9]{4,}$" } },
+    "documentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "version", "digest"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/assetKind" },
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "assetState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "version", "digest", "document"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/assetKind" },
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "document": { "type": "object" }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "operation", "before", "after", "evidenceIds"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^/" },
+        "operation": { "enum": ["ADD", "REMOVE", "REPLACE", "RETAIN", "COMPOSE"] },
+        "before": {},
+        "after": {},
+        "evidenceIds": { "$ref": "#/$defs/evidenceIds" }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": { "type": "string", "minLength": 1 },
+        "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "impact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithmVersion", "compatibility", "dependencies", "blastRadius", "expectedEffect", "regression", "rollback", "status"],
+      "properties": {
+        "algorithmVersion": { "const": "asset-impact-analysis/v1" },
+        "compatibility": {
+          "allOf": [
+            { "$ref": "#/$defs/assessment" },
+            { "type": "object", "properties": { "status": { "enum": ["COMPATIBLE", "REQUIRES_MIGRATION", "INCOMPATIBLE", "NOT_APPLICABLE"] } } }
+          ]
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "affectedRefs", "reasons"],
+          "properties": {
+            "status": { "enum": ["RESOLVED", "IMPACTED", "NOT_APPLICABLE"] },
+            "affectedRefs": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "blastRadius": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["level", "affectedRefs", "reasons"],
+          "properties": {
+            "level": { "enum": ["NONE", "LOCAL", "DEPENDENTS", "CATALOG_WIDE"] },
+            "affectedRefs": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "reasons": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "expectedEffect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "claims"],
+          "properties": {
+            "status": { "enum": ["EVIDENCE_BACKED", "NO_CHANGE", "UNKNOWN"] },
+            "claims": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["description", "evidenceIds"],
+                "properties": {
+                  "description": { "type": "string", "minLength": 1 },
+                  "evidenceIds": { "$ref": "#/$defs/evidenceIds" }
+                }
+              }
+            }
+          }
+        },
+        "regression": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "evaluationCaseIds", "boundaries"],
+          "properties": {
+            "status": { "enum": ["COVERED", "BLOCKED", "NOT_APPLICABLE"] },
+            "evaluationCaseIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "boundaries": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "rollback": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "strategy", "targetRef"],
+          "properties": {
+            "status": { "enum": ["READY", "NOT_REQUIRED", "BLOCKED"] },
+            "strategy": { "type": "string", "minLength": 1 },
+            "targetRef": { "anyOf": [{ "$ref": "#/$defs/documentRef" }, { "type": "null" }] }
+          }
+        },
+        "status": { "enum": ["READY", "BLOCKED"] }
+      }
+    },
+    "delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deltaId", "assetKind", "operation", "before", "after", "changes", "evidenceIds", "impact"],
+      "properties": {
+        "deltaId": { "type": "string", "minLength": 1 },
+        "assetKind": { "$ref": "#/$defs/assetKind" },
+        "operation": { "enum": ["CREATE", "UPDATE", "COMPOSE", "NO_CHANGE"] },
+        "before": { "type": "array", "items": { "$ref": "#/$defs/assetState" } },
+        "after": { "anyOf": [{ "$ref": "#/$defs/assetState" }, { "type": "null" }] },
+        "changes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/change" } },
+        "evidenceIds": { "$ref": "#/$defs/evidenceIds" },
+        "impact": { "$ref": "#/$defs/impact" }
+      }
+    }
+  }
+}

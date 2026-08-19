@@ -66,6 +66,10 @@ export function writeJson(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+export function persistedJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 export function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") {

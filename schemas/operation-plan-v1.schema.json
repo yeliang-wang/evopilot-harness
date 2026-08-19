@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/operation-plan-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "scenario", "goal", "createdAt", "sources", "operations", "stopPoints", "authority"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-operation-plan/v1" },
+    "scenario": { "enum": ["evolve", "feedback", "maintenance"] },
+    "goal": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "minLength": 1 },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sourceProjects": { "type": "array", "items": { "type": "string" } },
+        "sourceRoot": { "type": "string" },
+        "githubRepositories": { "type": "array", "items": { "type": "string" } },
+        "githubRef": { "type": "string" },
+        "attachments": { "type": "array", "items": { "type": "string" } },
+        "productionLogs": { "type": "array", "items": { "type": "string" } },
+        "historicalHarnesses": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "array", "items": { "type": "string" } },
+        "researchUrls": { "type": "array", "items": { "type": "string" } },
+        "allowInternetResearch": { "type": "boolean" },
+        "includeModules": { "type": "boolean" },
+        "limit": { "type": "integer", "minimum": 1 },
+        "advisor": { "enum": ["auto", "required", "off"] },
+        "modelsFile": { "type": "string" },
+        "model": { "type": "string" },
+        "advisorTimeoutMs": { "type": "integer", "minimum": 1 },
+        "reviewTimeoutMs": { "type": "integer", "minimum": 1 },
+        "now": { "type": "string" },
+        "feedbackFile": { "type": "string" }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["operation", "input"],
+        "properties": {
+          "operation": { "type": "string", "minLength": 1 },
+          "input": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "stopPoints": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineAuthoritative", "humanApprovalRequired", "publicationSeparate", "sourceExecutionAllowed"],
+      "properties": {
+        "engineAuthoritative": { "const": true },
+        "humanApprovalRequired": { "const": true },
+        "publicationSeparate": { "const": true },
+        "sourceExecutionAllowed": { "const": false }
+      }
+    }
+  }
+}

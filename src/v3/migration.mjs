@@ -22,42 +22,53 @@ export function planV2Migration(sourceRoot, home) {
 }
 
 export function applyV2Migration(sourceRoot, home) {
-  const plan = planV2Migration(sourceRoot, home);
+  const workspace = fs.realpathSync(home);
+  const assetRoot = migrationAssetRoot(workspace);
+  const plan = planV2Migration(sourceRoot, workspace);
   if (plan.status !== "READY") return { ...plan, status: "FAILED" };
   const migrationId = safeId(`v2-to-v3-${new Date().toISOString().replace(/[:.]/g, "-")}`);
   const records = [];
-  const component = readYaml(path.join(home, "catalogs/builtin/assets/components/engineering-validation/asset.yaml"));
+  const component = readYaml(path.join(workspace, "catalogs/builtin/assets/components/engineering-validation/asset.yaml"));
   const componentDigest = digest(component);
   const templates = walkFiles(path.resolve(sourceRoot), (file) => path.basename(file) === "template.yaml").map((file) => ({ file, template: readYaml(file) })).filter((item) => /^evopilot-harness-template\/v[12]$/.test(String(item.template?.schema)));
   for (const { file, template } of templates) {
-    for (const item of buildAssets(template, file, componentDigest)) {
+    const migrationAssets = buildAssets(template, file, componentDigest);
+    for (const item of migrationAssets) item.asset.metadata.labels = { ...(item.asset.metadata.labels ?? {}), migrationId };
+    const profile = migrationAssets.find((item) => item.asset.kind === "HarnessProfile")?.asset;
+    const bundle = migrationAssets.find((item) => item.asset.kind === "HarnessBundle")?.asset;
+    if (profile && bundle) bundle.spec.profile.digest = digest(profile);
+    for (const item of migrationAssets) {
       const directory = ({ HarnessProfile: "profiles", HarnessBundle: "bundles" })[item.asset.kind];
-      const destination = path.join(home, "catalogs/organization/assets", directory, item.asset.metadata.id, item.asset.metadata.version, "asset.yaml");
+      const destination = path.join(assetRoot, directory, item.asset.metadata.id, item.asset.metadata.version, "asset.yaml");
+      assertMigrationDestination(assetRoot, destination);
       if (fs.existsSync(destination)) {
-        records.push({ status: "SKIPPED_EXISTS", path: destination, digest: digest(readYaml(destination)) });
+        records.push({ status: "SKIPPED_EXISTS", kind: item.asset.kind, id: item.asset.metadata.id, version: item.asset.metadata.version, path: destination, digest: digest(readYaml(destination)) });
         continue;
       }
       writeYaml(destination, item.asset);
-      const created = [destination];
+      const created = [createdFile(destination, "asset")];
       if (item.asset.kind === "HarnessBundle") {
         const exportFile = path.join(path.dirname(destination), "exports/evopilot/template.yaml");
+        assertMigrationDestination(assetRoot, exportFile);
         fs.mkdirSync(path.dirname(exportFile), { recursive: true });
         fs.copyFileSync(file, exportFile);
-        created.push(exportFile);
+        created.push(createdFile(exportFile, "export"));
       }
-      records.push({ status: "CREATED", path: destination, created, digest: digest(item.asset) });
+      records.push({ status: "CREATED", kind: item.asset.kind, id: item.asset.metadata.id, version: item.asset.metadata.version, path: destination, created, digest: digest(item.asset) });
     }
   }
   const journal = {
     schema: "evopilot-harness-migration-journal/v1",
     migrationId,
     type: "v2-to-v3",
+    workspaceRoot: workspace,
     sourceRoot: path.resolve(sourceRoot),
     createdAt: new Date().toISOString(),
     sourceMutated: false,
     records
   };
-  const journalFile = path.join(home, "migrations", `${migrationId}.json`);
+  journal.journalDigest = migrationJournalDigest(journal);
+  const journalFile = path.join(workspace, "migrations", `${migrationId}.json`);
   writeJson(journalFile, journal);
   return { schema: "evopilot-harness-migration-result/v3", status: "MIGRATED", migrationId, journalFile, templateCount: templates.length, createdAssetCount: records.filter((item) => item.status === "CREATED").length, skippedAssetCount: records.filter((item) => item.status === "SKIPPED_EXISTS").length, sourceMutated: false, nextAction: "asset-v3-validate" };
 }
@@ -70,19 +81,117 @@ export function rollbackMigration(home, migrationId) {
   const journalFile = path.join(home, "migrations", `${journalId}.json`);
   if (!fs.existsSync(journalFile)) throw new Error(`Migration journal ${migrationId} was not found.`);
   const journal = JSON.parse(fs.readFileSync(journalFile, "utf8"));
+  const workspace = fs.realpathSync(home);
+  const rollbackRoot = migrationAssetRoot(workspace);
+  validateMigrationJournal(journal, journalId, workspace);
+  const deletionTargets = validateRollbackTargets(journal, journalId, rollbackRoot);
   const removed = [];
-  for (const record of [...journal.records].reverse()) {
-    for (const file of [...(record.created ?? [])].reverse()) {
-      if (!fs.existsSync(file)) continue;
-      fs.rmSync(file, { force: true });
-      removed.push(file);
-      removeEmptyParents(path.dirname(file), path.join(home, "catalogs/organization/assets"));
-    }
+  for (const file of [...deletionTargets].reverse()) {
+    fs.rmSync(file, { force: false });
+    removed.push(file);
+    removeEmptyParents(path.dirname(file), rollbackRoot);
   }
   journal.rolledBackAt = new Date().toISOString();
   journal.rollbackRemoved = removed;
+  journal.journalDigest = migrationJournalDigest(journal);
   writeJson(journalFile, journal);
   return { schema: "evopilot-harness-migration-rollback/v3", status: "ROLLED_BACK", migrationId, removedCount: removed.length, removed, sourceMutated: false };
+}
+
+function validateMigrationJournal(journal, journalId, workspace) {
+  if (!journal || typeof journal !== "object" || Array.isArray(journal)) throw new Error(`Migration journal ${journalId} is invalid.`);
+  if (journal.schema !== "evopilot-harness-migration-journal/v1" || journal.migrationId !== journalId || journal.type !== "v2-to-v3") {
+    throw new Error(`Migration journal ${journalId} binding is invalid.`);
+  }
+  if (journal.workspaceRoot !== workspace) throw new Error(`Migration journal ${journalId} belongs to a different Workspace.`);
+  if (!Array.isArray(journal.records)) throw new Error(`Migration journal ${journalId} records are invalid.`);
+  if (!journal.journalDigest || journal.journalDigest !== migrationJournalDigest(journal)) {
+    throw new Error(`Migration journal ${journalId} integrity check failed.`);
+  }
+  for (const record of journal.records) {
+    if (!record || typeof record !== "object" || Array.isArray(record)) throw new Error(`Migration journal ${journalId} record is invalid.`);
+    if (record.created != null && (!Array.isArray(record.created) || record.created.some((file) => !file || typeof file !== "object" || Array.isArray(file) || typeof file.path !== "string" || !/^sha256:[a-f0-9]{64}$/.test(String(file.digest)) || !["asset", "export"].includes(file.role)))) {
+      throw new Error(`Migration journal ${journalId} created paths are invalid.`);
+    }
+  }
+}
+
+function migrationJournalDigest(journal) {
+  const value = { ...journal };
+  delete value.journalDigest;
+  return digest(value);
+}
+
+function validateRollbackTargets(journal, journalId, rollbackRoot) {
+  const targets = [];
+  const seen = new Set();
+  for (const record of journal.records.filter((item) => item.status === "CREATED")) {
+    if (!(["HarnessProfile", "HarnessBundle"].includes(record.kind)) || !/^[a-z0-9][a-z0-9-]*$/.test(String(record.id)) || !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(String(record.version))) {
+      throw new Error(`Migration journal ${journalId} asset identity is invalid.`);
+    }
+    const directory = record.kind === "HarnessProfile" ? "profiles" : "bundles";
+    const expectedAsset = path.join(rollbackRoot, directory, record.id, record.version, "asset.yaml");
+    const expectedExport = path.join(path.dirname(expectedAsset), "exports/evopilot/template.yaml");
+    const expected = record.kind === "HarnessBundle" ? [{ path: expectedAsset, role: "asset" }, { path: expectedExport, role: "export" }] : [{ path: expectedAsset, role: "asset" }];
+    if (canonicalTarget(record.path) !== canonicalTarget(expectedAsset) || !Array.isArray(record.created) || record.created.length !== expected.length) {
+      throw new Error(`Migration journal ${journalId} created-file binding is invalid.`);
+    }
+    for (const item of expected) {
+      const created = record.created.find((entry) => entry.role === item.role);
+      if (!created || canonicalTarget(created.path) !== canonicalTarget(item.path)) throw new Error(`Migration journal ${journalId} created-file binding is invalid.`);
+      const canonical = canonicalTarget(item.path);
+      if (!inside(rollbackRoot, canonical) || seen.has(canonical) || !fs.existsSync(canonical) || fs.lstatSync(canonical).isSymbolicLink()) {
+        throw new Error(`Migration journal ${journalId} cannot prove ownership of ${item.path}.`);
+      }
+      const currentDigest = digest(fs.readFileSync(canonical));
+      if (currentDigest !== created.digest) throw new Error(`Migration journal ${journalId} created file changed after migration: ${item.path}`);
+      seen.add(canonical);
+      targets.push(canonical);
+    }
+    const asset = readYaml(expectedAsset);
+    if (asset.kind !== record.kind || asset.metadata?.id !== record.id || asset.metadata?.version !== record.version || asset.metadata?.labels?.migrationId !== journalId || digest(asset) !== record.digest) {
+      throw new Error(`Migration journal ${journalId} cannot prove migration ownership of ${expectedAsset}.`);
+    }
+  }
+  return targets;
+}
+
+function migrationAssetRoot(workspace) {
+  let current = workspace;
+  for (const segment of ["catalogs", "organization", "assets"]) {
+    current = path.join(current, segment);
+    if (!fs.existsSync(current) || fs.lstatSync(current).isSymbolicLink()) throw new Error(`Migration asset root must be a real Workspace directory: ${current}`);
+  }
+  const canonical = fs.realpathSync(current);
+  if (!inside(workspace, canonical)) throw new Error(`Migration asset root must remain inside the Workspace: ${canonical}`);
+  return canonical;
+}
+
+function assertMigrationDestination(assetRoot, candidate) {
+  const canonical = canonicalTarget(candidate);
+  if (!inside(assetRoot, canonical)) throw new Error(`Migration destination must remain inside the Organization asset root: ${canonical}`);
+  return canonical;
+}
+
+function canonicalTarget(candidate) {
+  const target = path.resolve(String(candidate));
+  let existing = target;
+  const suffix = [];
+  while (!fs.existsSync(existing)) {
+    const parent = path.dirname(existing);
+    if (parent === existing) break;
+    suffix.unshift(path.basename(existing));
+    existing = parent;
+  }
+  return path.resolve(fs.realpathSync(existing), ...suffix);
+}
+
+function createdFile(file, role) {
+  return { path: file, role, digest: digest(fs.readFileSync(file)) };
+}
+
+function inside(root, target) {
+  return target === root || target.startsWith(`${root}${path.sep}`);
 }
 
 function buildAssets(template, sourceFile, componentDigest) {

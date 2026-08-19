@@ -3,10 +3,11 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import { PACKAGE_ROOT } from "./constants.mjs";
 import { discoverAssets } from "./catalog.mjs";
+import { validateAssetDeltaClosure } from "./delta.mjs";
 import { loadConfiguredModel, modelEndpoint, normalizeUsage, parseJsonContent, projectAdvisorEvidence, publicModel } from "./advisor.mjs";
-import { digest, option, readYaml, safeId, unique, walkFiles, writeJson, writeYaml } from "./utils.mjs";
+import { digest, option, persistedJson, readYaml, safeId, unique, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 
-export const REVIEW_ALGORITHM_VERSION = "deterministic-gates-semantic-review-synthesis/v1";
+export const REVIEW_ALGORITHM_VERSION = "deterministic-delta-gates-semantic-review-synthesis/v2";
 export const REVIEW_VERDICTS = ["READY_FOR_HUMAN_APPROVAL", "REVISE", "SPLIT", "REJECT", "NEED_MORE_EVIDENCE"];
 
 const reviewSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/proposal-review-v1.schema.json"), "utf8"));
@@ -262,8 +263,9 @@ function synthesizeReport({ proposal, proposalDigest, graph, reasoning, policy, 
   const hardFailures = deterministic.gates.filter((gate) => gate.blocking && gate.status === "FAIL");
   if (hardFailures.length && verdict === "READY_FOR_HUMAN_APPROVAL") verdict = hardFailures.some((gate) => gate.id === "evidence-integrity") ? "NEED_MORE_EVIDENCE" : "REVISE";
   if (assessment.groupCoherence?.status === "INCOHERENT" && verdict === "READY_FOR_HUMAN_APPROVAL") verdict = "SPLIT";
+  if (reasoning.decision === "NEED_MORE_EVIDENCE") verdict = "NEED_MORE_EVIDENCE";
   const status = verdict === "READY_FOR_HUMAN_APPROVAL" ? "REVIEWED" : "ACTION_REQUIRED";
-  const nextAction = ({ READY_FOR_HUMAN_APPROVAL: "proposal-approve", REVISE: "revise-proposal", SPLIT: "split-proposal", REJECT: "reject-proposal", NEED_MORE_EVIDENCE: "collect-more-evidence" })[verdict];
+  const nextAction = reasoning.decision === "NO_CHANGE" && verdict === "READY_FOR_HUMAN_APPROVAL" ? "record-no-change" : ({ READY_FOR_HUMAN_APPROVAL: "proposal-approve", REVISE: "revise-proposal", SPLIT: "split-proposal", REJECT: "reject-proposal", NEED_MORE_EVIDENCE: "collect-more-evidence" })[verdict];
   const remainingBlockers = unique([
     ...(proposal.blockers ?? []),
     ...deterministic.blockers,
@@ -295,6 +297,8 @@ function baseReport({ proposal, proposalDigest, graph, reasoning, policy, review
     definitionQuality,
     evaluationSufficiency,
     advisorAssessment,
+    assetDeltaAssessment: deterministic.assetDeltaAssessment,
+    impactAssessment: deterministic.impactAssessment,
     suggestedActions: asStrings(suggestedActions),
     remainingBlockers,
     reviewer: withoutUndefined({
@@ -316,20 +320,28 @@ function baseReport({ proposal, proposalDigest, graph, reasoning, policy, review
 }
 
 function deterministicAssessment(home, proposal, graph, reasoning) {
-  const proposalValid = Array.isArray(proposal.validations) && proposal.validations.length > 0 && proposal.validations.every((item) => item.valid);
-  const evidenceValid = proposal.evidenceGraphDigest === graph.graphDigest && proposal.reasoningDigest === digest(reasoning);
+  const mutatingDecision = ["EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE"].includes(proposal.decision);
+  const proposalValid = mutatingDecision
+    ? Array.isArray(proposal.validations) && proposal.validations.length > 0 && proposal.validations.every((item) => item.valid)
+    : Array.isArray(proposal.proposedAssets) && proposal.proposedAssets.length === 0;
+  const reasoningDigest = digest(persistedJson(reasoning));
+  const evidenceValid = proposal.evidenceGraphDigest === graph.graphDigest && proposal.reasoningDigest === reasoningDigest;
   const advisorValid = !proposal.advisor?.required || proposal.advisor?.status === "SUCCEEDED";
   const proposedAssets = proposal.proposedAssets ?? [];
+  const records = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
   const definitionChecks = proposedAssets.flatMap((asset) => definitionChecksFor(asset));
   const definitionValid = definitionChecks.every((item) => item.status === "PASS");
+  const deltaClosure = validateAssetDeltaClosure(proposal.assetDeltaProposal, proposal.evaluationPack, { proposedAssets, records, evidenceGraph: graph, reasoning });
+  const impacts = proposal.assetDeltaProposal?.spec?.deltas?.map((item) => item.impact) ?? [];
   const gates = [
     gate("proposal-schema", proposalValid, true, proposal.validations?.flatMap((item) => item.errors ?? []) ?? []),
-    gate("evidence-integrity", evidenceValid, true, [proposal.evidenceGraphDigest, graph.graphDigest, proposal.reasoningDigest, digest(reasoning)]),
+    gate("evidence-integrity", evidenceValid, true, [proposal.evidenceGraphDigest, graph.graphDigest, proposal.reasoningDigest, reasoningDigest]),
     gate("required-advisor", advisorValid, true, [proposal.advisor?.status ?? "MISSING"]),
     gate("definition-contract", definitionValid, true, definitionChecks.filter((item) => item.status === "FAIL").map((item) => item.id)),
-    gate("evaluation-pack-present", Boolean(proposal.evaluationPack?.spec?.cases?.length), true, [proposal.evaluationPack?.spec?.status ?? "MISSING"])
+    gate("evaluation-pack-present", proposal.evaluationPack?.apiVersion === "harness.evopilot.io/v3" && Boolean(proposal.evaluationPack?.spec?.cases?.length), true, [proposal.evaluationPack?.apiVersion ?? "MISSING", proposal.evaluationPack?.spec?.status ?? "MISSING"]),
+    gate("asset-delta-closure", deltaClosure.status === "VALIDATED", true, deltaClosure.blockers),
+    gate("decision-publication-boundary", mutatingDecision ? proposal.assetDeltaProposal?.spec?.publicationAllowed === true : proposal.assetDeltaProposal?.spec?.publicationAllowed === false, true, [String(proposal.decision), String(proposal.assetDeltaProposal?.spec?.publicationAllowed)])
   ];
-  const records = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
   const overlap = overlapContext(proposal, records);
   const projectMembership = sourceContext(graph).map((source) => ({ sourceId: source.sourceId, sourceType: source.sourceType, sourceRef: source.sourceRef, status: "UNCERTAIN", rationale: "Awaiting independent semantic membership review.", evidenceIds: source.evidenceIds }));
   const findings = gates.filter((item) => item.status === "FAIL").map((item) => ({ id: `gate-${item.id}`, severity: item.blocking ? "blocking" : "warning", dimension: "deterministic-gate", conclusion: `${item.id} failed.`, reasons: item.evidence.map(String), evidenceIds: [], suggestedActions: [`Resolve ${item.id} and run proposal review again.`] }));
@@ -342,8 +354,23 @@ function deterministicAssessment(home, proposal, graph, reasoning) {
     projectMembership,
     existingAssetOverlap: overlap,
     definitionQuality: { status: definitionValid ? "PASS" : "FAIL", score: definitionChecks.length ? definitionChecks.filter((item) => item.status === "PASS").length / definitionChecks.length : 0, rationale: "Deterministic structural completeness before semantic quality review.", checks: definitionChecks, evidenceIds: [] },
-    evaluationSufficiency: { status: proposal.evaluationPack?.spec?.status ?? "MISSING", rationale: "Evaluation readiness remains a separate human-reviewed gate.", evidenceIds: [] },
-    advisorAssessment: { status: advisorValid ? "AVAILABLE" : "UNAVAILABLE", rationale: proposal.advisor?.reason ?? `Original Advisor status is ${proposal.advisor?.status ?? "MISSING"}.`, evidenceIds: proposal.advisor?.recommendation?.evidenceIds ?? [] }
+    evaluationSufficiency: { status: proposal.evaluationPack?.spec?.status ?? "MISSING", rationale: "EvaluationPack v3 positive and negative cases remain a separate human-reviewed gate.", evidenceIds: [] },
+    advisorAssessment: { status: advisorValid ? "AVAILABLE" : "UNAVAILABLE", rationale: proposal.advisor?.reason ?? `Original Advisor status is ${proposal.advisor?.status ?? "MISSING"}.`, evidenceIds: proposal.advisor?.recommendation?.evidenceIds ?? [] },
+    assetDeltaAssessment: {
+      status: deltaClosure.status,
+      decision: proposal.assetDeltaProposal?.spec?.decision ?? "MISSING",
+      deltaCount: proposal.assetDeltaProposal?.spec?.deltas?.length ?? 0,
+      publicationAllowed: proposal.assetDeltaProposal?.spec?.publicationAllowed === true,
+      checks: deltaClosure.checks.map((item) => ({ ...item, blocking: true }))
+    },
+    impactAssessment: {
+      status: impacts.length ? impacts.every((item) => item.status === "READY") ? "READY" : "BLOCKED" : "NOT_APPLICABLE",
+      readyCount: impacts.filter((item) => item.status === "READY").length,
+      blockedCount: impacts.filter((item) => item.status !== "READY").length,
+      compatibility: unique(impacts.map((item) => item.compatibility?.status)),
+      blastRadius: unique(impacts.map((item) => item.blastRadius?.level)),
+      rollback: unique(impacts.map((item) => item.rollback?.status))
+    }
   };
 }
 
@@ -398,7 +425,7 @@ function overlapContext(proposal, records) {
 }
 
 function proposalForReview(proposal) {
-  return { proposalId: proposal.proposalId, status: proposal.status, decision: proposal.decision, proposedAssets: proposal.proposedAssets, validations: proposal.validations, evaluationPack: proposal.evaluationPack, blockers: proposal.blockers };
+  return { proposalId: proposal.proposalId, status: proposal.status, decision: proposal.decision, proposedAssets: proposal.proposedAssets, validations: proposal.validations, assetDeltaProposal: proposal.assetDeltaProposal, deltaClosure: proposal.deltaClosure, evaluationPack: proposal.evaluationPack, blockers: proposal.blockers };
 }
 
 function reviewRequest(model, policy, prompt) {

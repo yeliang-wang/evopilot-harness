@@ -325,6 +325,11 @@ small {
   gap: 16px;
 }
 
+.split > *,
+.timeline article {
+  min-width: 0;
+}
+
 .timeline {
   display: grid;
   gap: 10px;
@@ -345,6 +350,7 @@ small {
 .timeline small {
   display: block;
   margin-top: 5px;
+  overflow-wrap: anywhere;
 }
 
 .source {

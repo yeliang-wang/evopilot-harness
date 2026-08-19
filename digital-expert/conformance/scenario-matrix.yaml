@@ -1,0 +1,334 @@
+schema: evopilot-harness-digital-expert-scenario-matrix/v1
+evidenceSources:
+  - sourceProjects
+  - sourceRoot
+  - githubRepositories
+  - attachments
+  - productionLogs
+  - historicalHarnesses
+  - notes
+  - researchUrls
+  - feedbackFile
+terminalDecisions:
+  - NOT_HARNESS_ELIGIBLE
+  - NO_CHANGE
+  - NEED_MORE_EVIDENCE
+  - EVOLVE_EXISTING
+  - COMPOSE_NEW_BUNDLE
+  - PROPOSE_NEW_PROFILE
+  - BLOCKED
+  - FAILED
+engineOperations:
+  - workspace.prepare
+  - workspace.inspect
+  - llm.inspect
+  - llm.diagnose
+  - evidence.produce
+  - proposal.inspect
+  - proposal.validate
+  - proposal.review
+  - proposal.review.inspect
+  - proposal.approve
+  - proposal.publish
+  - asset.validate
+  - asset.test
+  - asset.inspect
+  - asset.sign
+  - asset.verify
+  - catalog.publish
+  - catalog.validate
+  - catalog.diff
+  - catalog.sign
+  - catalog.verify
+  - registry.validate
+  - registry.sign
+  - registry.verify
+  - ontology.inspect
+  - ontology.validate
+  - ontology.diff
+  - ontology.publish
+  - policy.inspect
+  - policy.validate
+  - policy.diff
+  - policy.publish
+  - feedback.inspect
+  - feedback.validate
+  - feedback.ingest
+  - feedback.process
+  - feedback.aggregate
+  - feedback.report
+  - migration.plan
+  - migration.apply
+  - migration.rollback
+  - keys.generate
+  - evaluation.run
+  - hub.snapshot
+lifecycleBranches:
+  - plan-review
+  - plan-rejection
+  - publication-operation-authorization
+  - proposal-review-ready
+  - proposal-review-revise
+  - proposal-approval
+  - separate-publication-authorization
+  - catalog-validation
+  - process-interruption
+  - digest-drift
+  - cancellation
+  - close
+  - cleanup
+  - unsupported-capability
+conformanceEvidence:
+  engineBackedTests:
+    - tests/catalog.test.mjs
+    - tests/v3.test.mjs
+    - tests/v3.4.test.mjs
+    - tests/v4.test.mjs
+  realSessionProtocol:
+    - digital-expert/conformance/generic-host.mjs
+    - docs/operations/v4-acceptance.md
+coverage:
+  evidenceSources:
+    sourceProjects: &source_coverage
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP executes every Evidence Source through Digital Expert Session and Engine
+      marker: sourceProjects
+    sourceRoot:
+      <<: *source_coverage
+      marker: sourceRoot
+    githubRepositories:
+      <<: *source_coverage
+      marker: githubRepositories
+    attachments:
+      <<: *source_coverage
+      marker: attachments
+    productionLogs:
+      <<: *source_coverage
+      marker: productionLogs
+    historicalHarnesses:
+      <<: *source_coverage
+      marker: historicalHarnesses
+    notes:
+      <<: *source_coverage
+      marker: notes
+    researchUrls:
+      <<: *source_coverage
+      marker: researchUrls
+    feedbackFile:
+      <<: *source_coverage
+      marker: feedbackFile
+  terminalDecisions:
+    NOT_HARNESS_ELIGIBLE: &reasoning_decisions
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP surfaces every Engine terminal decision through persistent Sessions
+      marker: NOT_HARNESS_ELIGIBLE
+    NO_CHANGE:
+      <<: *reasoning_decisions
+      marker: NO_CHANGE
+    NEED_MORE_EVIDENCE:
+      <<: *reasoning_decisions
+      marker: NEED_MORE_EVIDENCE
+    EVOLVE_EXISTING:
+      <<: *reasoning_decisions
+      marker: EVOLVE_EXISTING
+    COMPOSE_NEW_BUNDLE:
+      <<: *reasoning_decisions
+      marker: COMPOSE_NEW_BUNDLE
+    PROPOSE_NEW_PROFILE:
+      <<: *reasoning_decisions
+      marker: PROPOSE_NEW_PROFILE
+    BLOCKED:
+      <<: *reasoning_decisions
+      marker: BLOCKED
+    FAILED:
+      <<: *reasoning_decisions
+      marker: FAILED
+  engineOperations:
+    workspace.prepare: &maintenance_operations
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP routes every maintenance Engine operation through its authority gate
+      marker: workspace.prepare
+    workspace.inspect:
+      <<: *maintenance_operations
+      marker: workspace.inspect
+    llm.inspect: &llm_operations
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP routes every maintenance Engine operation through its authority gate
+      marker: llm.inspect
+    llm.diagnose:
+      <<: *llm_operations
+      marker: llm.diagnose
+    evidence.produce:
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP executes every Evidence Source through Digital Expert Session and Engine
+      marker: evidence.produce
+    proposal.inspect: &proposal_session_operations
+      testFile: tests/v4.test.mjs
+      testName: Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication separate
+      marker: proposal.inspect
+    proposal.validate:
+      <<: *proposal_session_operations
+      marker: proposal.validate
+    proposal.review:
+      <<: *proposal_session_operations
+      marker: review_session_proposals
+    proposal.review.inspect:
+      <<: *proposal_session_operations
+      marker: proposal.review.inspect
+    proposal.approve:
+      <<: *proposal_session_operations
+      marker: approve_session_proposal
+    proposal.publish:
+      <<: *proposal_session_operations
+      marker: publish_session_proposal
+    asset.validate:
+      <<: *maintenance_operations
+      marker: asset.validate
+    asset.test:
+      <<: *maintenance_operations
+      marker: asset.test
+    asset.inspect:
+      <<: *maintenance_operations
+      marker: asset.inspect
+    asset.sign:
+      <<: *maintenance_operations
+      marker: asset.sign
+    asset.verify:
+      <<: *maintenance_operations
+      marker: asset.verify
+    catalog.publish:
+      <<: *maintenance_operations
+      marker: catalog.publish
+    catalog.validate:
+      <<: *maintenance_operations
+      marker: catalog.validate
+    catalog.diff:
+      <<: *maintenance_operations
+      marker: catalog.diff
+    catalog.sign:
+      <<: *maintenance_operations
+      marker: catalog.sign
+    catalog.verify:
+      <<: *maintenance_operations
+      marker: catalog.verify
+    registry.validate:
+      <<: *maintenance_operations
+      marker: registry.validate
+    registry.sign:
+      <<: *maintenance_operations
+      marker: registry.sign
+    registry.verify:
+      <<: *maintenance_operations
+      marker: registry.verify
+    ontology.inspect:
+      <<: *maintenance_operations
+      marker: ontology.inspect
+    ontology.validate:
+      <<: *maintenance_operations
+      marker: ontology.validate
+    ontology.diff:
+      <<: *maintenance_operations
+      marker: ontology.diff
+    ontology.publish:
+      <<: *maintenance_operations
+      marker: ontology.publish
+    policy.inspect:
+      <<: *maintenance_operations
+      marker: policy.inspect
+    policy.validate:
+      <<: *maintenance_operations
+      marker: policy.validate
+    policy.diff:
+      <<: *maintenance_operations
+      marker: policy.diff
+    policy.publish:
+      <<: *maintenance_operations
+      marker: policy.publish
+    feedback.inspect: &feedback_operations
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP routes every maintenance Engine operation through its authority gate
+      marker: feedback.inspect
+    feedback.validate:
+      <<: *feedback_operations
+      marker: feedback.validate
+    feedback.ingest:
+      <<: *feedback_operations
+      marker: feedback.ingest
+    feedback.process:
+      <<: *feedback_operations
+      marker: feedback.process
+    feedback.aggregate:
+      <<: *maintenance_operations
+      marker: feedback.aggregate
+    feedback.report:
+      <<: *maintenance_operations
+      marker: feedback.report
+    migration.plan: &migration_operations
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP routes every maintenance Engine operation through its authority gate
+      marker: migration.plan
+    migration.apply:
+      <<: *migration_operations
+      marker: migration.apply
+    migration.rollback:
+      <<: *migration_operations
+      marker: migration.rollback
+    keys.generate:
+      <<: *maintenance_operations
+      marker: keys.generate
+    evaluation.run:
+      <<: *maintenance_operations
+      marker: evaluation.run
+    hub.snapshot:
+      <<: *maintenance_operations
+      marker: hub.snapshot
+  lifecycleBranches:
+    plan-review: &session_lifecycle
+      testFile: tests/v4.test.mjs
+      testName: Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication separate
+      marker: PLAN_REVIEW_REQUIRED
+    plan-rejection:
+      testFile: tests/v4.test.mjs
+      testName: Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication separate
+      marker: invalidConfirmation
+    publication-operation-authorization: &maintenance_publication
+      testFile: tests/v4.test.mjs
+      testName: maintenance publication requires a separate digest-bound operation authorization
+      marker: OPERATION_AUTHORIZATION_REQUIRED
+    proposal-review-ready: &proposal_lifecycle
+      testFile: tests/v4.test.mjs
+      testName: Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication separate
+      marker: READY_FOR_HUMAN_APPROVAL
+    proposal-review-revise:
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP persists a REVISE Proposal Review as a blocked Session
+      marker: REVISE
+    proposal-approval:
+      <<: *proposal_lifecycle
+      marker: APPROVE_PROPOSAL
+    separate-publication-authorization:
+      <<: *proposal_lifecycle
+      marker: AUTHORIZE_PUBLICATION
+    catalog-validation:
+      <<: *proposal_lifecycle
+      marker: catalogStatus
+    process-interruption:
+      testFile: tests/v4.test.mjs
+      testName: forced process stop is recovered as an interrupted digest-bound session
+      marker: INTERRUPTED
+    digest-drift:
+      <<: *session_lifecycle
+      marker: stale-agent
+    cancellation:
+      <<: *session_lifecycle
+      marker: CANCEL_SESSION
+    close:
+      <<: *proposal_lifecycle
+      marker: CLOSE_SESSION
+    cleanup:
+      <<: *proposal_lifecycle
+      marker: DELETE_SESSION_STATE
+    unsupported-capability:
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP rejects incompatible versions and exposes no network transport
+      marker: catalog.publish

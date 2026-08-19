@@ -1,0 +1,48 @@
+schema: evopilot-harness-digital-expert-workflows/v1
+workflows:
+  - id: evolve-single-local-project
+    scenario: evolve
+    sources: [sourceProjects]
+  - id: evolve-local-project-root
+    scenario: evolve
+    sources: [sourceRoot]
+  - id: evolve-github-project
+    scenario: evolve
+    sources: [githubRepositories, githubRef]
+  - id: evolve-attachments
+    scenario: evolve
+    sources: [attachments]
+  - id: evolve-production-logs
+    scenario: evolve
+    sources: [productionLogs]
+  - id: evolve-mixed-evidence
+    scenario: evolve
+    sources: [sourceProjects, githubRepositories, attachments, productionLogs, historicalHarnesses, notes, researchUrls]
+  - id: process-approved-feedback
+    scenario: feedback
+    sources: [feedbackFile]
+  - id: maintain-assets-catalog-registry-policies
+    scenario: maintenance
+    sources: [operations]
+    publicationOperationsRequire: authorize_plan_publication_operation
+  - id: resume-cross-agent
+    scenario: resume
+    sources: [sessionId, sessionDigest, adapterId]
+  - id: reconcile-interrupted-operation
+    scenario: recovery
+    sources: [sessionId, sessionDigest, attemptDigest, receiptOrWorkspaceDigest, explicitDecision]
+  - id: diagnose-blocked-operation
+    scenario: diagnostic
+    sources: [readOnlyOperation]
+  - id: cancel-close-cleanup
+    scenario: lifecycle
+    sources: [sessionId, sessionDigest, explicitDecision]
+terminalDecisions:
+  - NOT_HARNESS_ELIGIBLE
+  - NO_CHANGE
+  - NEED_MORE_EVIDENCE
+  - EVOLVE_EXISTING
+  - COMPOSE_NEW_BUNDLE
+  - PROPOSE_NEW_PROFILE
+  - BLOCKED
+  - FAILED

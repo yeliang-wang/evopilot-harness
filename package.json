@@ -1,8 +1,8 @@
 {
   "name": "evopilot-harness",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "Independent user-owned Harness asset factory, reasoning engine, lifecycle, and signed Catalog.",
+  "description": "Agent-native, user-owned Harness asset factory with a portable Digital Expert, local MCP operations, deterministic reasoning, lifecycle, and Catalog.",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
@@ -26,7 +26,9 @@
     "verify:architecture": "node scripts/verify-architecture-boundaries.mjs",
     "v3:generate-builtins": "node scripts/generate-v3-builtins.mjs",
     "v3:check": "node scripts/validate-v3.mjs",
-    "check": "npm run roadmap:check && npm run catalog:publish && npm run catalog:validate && npm run registry:publish && npm run registry:validate && npm run asset:validate && npm run eval:run && npm run llm:replay && npm run hub:snapshot && npm run docs:links && npm run verify:architecture && npm test && npm run v3:check && npm run hub:v3-snapshot",
+    "digital-expert:generate": "node scripts/generate-digital-expert-adapters.mjs",
+    "digital-expert:check": "node scripts/generate-digital-expert-adapters.mjs --check",
+    "check": "npm run roadmap:check && npm run digital-expert:check && npm run catalog:publish && npm run catalog:validate && npm run registry:publish && npm run registry:validate && npm run asset:validate && npm run eval:run && npm run llm:replay && npm run hub:snapshot && npm run docs:links && npm run verify:architecture && npm test && npm run v3:check && npm run hub:v3-snapshot",
     "release:artifact": "node scripts/build-release-artifacts.mjs",
     "verify:release-artifact": "node scripts/verify-release-artifacts.mjs",
     "test": "node --test tests/*.test.mjs"

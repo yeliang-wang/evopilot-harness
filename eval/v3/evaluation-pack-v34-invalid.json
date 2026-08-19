@@ -1,0 +1,8 @@
+{
+  "id": "evaluation-pack-v34-missing-negative",
+  "type": "v3.4-contract",
+  "assetKinds": ["HarnessProfile"],
+  "mutation": "remove-negative-case",
+  "expectedStatus": "FAILED",
+  "reviewStatus": "approved"
+}

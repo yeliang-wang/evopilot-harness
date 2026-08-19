@@ -13,6 +13,7 @@ const checks = [];
 
 try {
   run("workspace-init", ["workspace", "init", "--workspace", home, "--json"]);
+  const builtinBefore = builtinAssetDigest();
   run("asset-validation", ["asset", "v3-validate", "--workspace", home, "--json"]);
   run("asset-tests", ["asset", "v3-test", "--workspace", home, "--json"]);
   run("builtin-catalog", ["catalog", "v3-validate", "--workspace", home, "--source", path.join(home, "catalogs/builtin"), "--json"]);
@@ -23,6 +24,15 @@ try {
   writeYaml(feedbackFile, feedback);
   run("feedback-validation", ["feedback", "validate", feedbackFile, "--workspace", home, "--now", "2026-08-13T08:00:00.000Z", "--json"]);
   run("feedback-processing", ["feedback", "process", feedbackFile, "--workspace", home, "--now", "2026-08-13T08:00:00.000Z", "--json"]);
+  run("v3.4-contract-evaluation", ["eval", "v3-run", "--workspace", home, "--json"]);
+  const noChangeProject = path.join(home, "v3.4-no-change-source");
+  fs.mkdirSync(noChangeProject, { recursive: true });
+  fs.writeFileSync(path.join(noChangeProject, "pom.xml"), "<project><artifactId>v34-no-change</artifactId></project>", "utf8");
+  fs.writeFileSync(path.join(noChangeProject, "Main.java"), "Distributed cache Redis compatible key-value store build test validate release.", "utf8");
+  const noChange = run("v3.4-no-change-proposal", ["produce", "--source-project", noChangeProject, "--workspace", home, "--advisor", "off", "--json"]);
+  if (noChange.reasoning?.decision !== "NO_CHANGE") throw new Error(`v3.4-no-change-proposal expected NO_CHANGE, got ${noChange.reasoning?.decision}`);
+  run("v3.4-proposal-closure", ["proposal", "validate", noChange.runId, "--workspace", home, "--json"]);
+  if (builtinAssetDigest() !== builtinBefore) throw new Error("v3.4 acceptance mutated Built-in Catalog source assets.");
   run("hub-snapshot", ["hub", "v3-snapshot", "--workspace", home, "--out", path.join(home, "hub.json"), "--json"]);
   process.stdout.write(`${JSON.stringify({ schema: "evopilot-harness-v3-acceptance/v1", status: "PASSED", checkCount: checks.length, checks }, null, 2)}\n`);
 } finally {
@@ -58,4 +68,9 @@ function run(id, args) {
   if (result.status !== 0) throw new Error(`${id} failed:\n${result.stderr || result.stdout}`);
   const output = JSON.parse(result.stdout);
   checks.push({ id, status: output.status ?? "READY", schema: output.schema });
+  return output;
+}
+
+function builtinAssetDigest() {
+  return digest(discoverAssets([path.join(root, "assets/v3")]).map((record) => ({ key: `${record.asset.kind}:${record.asset.metadata.id}@${record.asset.metadata.version}`, digest: record.digest })));
 }

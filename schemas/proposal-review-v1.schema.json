@@ -32,6 +32,31 @@
     "definitionQuality": { "$ref": "#/$defs/quality" },
     "evaluationSufficiency": { "$ref": "#/$defs/assessment" },
     "advisorAssessment": { "$ref": "#/$defs/assessment" },
+    "assetDeltaAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "decision", "deltaCount", "publicationAllowed", "checks"],
+      "properties": {
+        "status": { "enum": ["VALIDATED", "FAILED"] },
+        "decision": { "type": "string", "minLength": 1 },
+        "deltaCount": { "type": "integer", "minimum": 0 },
+        "publicationAllowed": { "type": "boolean" },
+        "checks": { "type": "array", "items": { "$ref": "#/$defs/gate" } }
+      }
+    },
+    "impactAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "readyCount", "blockedCount", "compatibility", "blastRadius", "rollback"],
+      "properties": {
+        "status": { "enum": ["READY", "BLOCKED", "NOT_APPLICABLE"] },
+        "readyCount": { "type": "integer", "minimum": 0 },
+        "blockedCount": { "type": "integer", "minimum": 0 },
+        "compatibility": { "type": "array", "items": { "type": "string" } },
+        "blastRadius": { "type": "array", "items": { "type": "string" } },
+        "rollback": { "type": "array", "items": { "type": "string" } }
+      }
+    },
     "suggestedActions": { "type": "array", "items": { "type": "string" } },
     "remainingBlockers": { "type": "array", "items": { "type": "string" } },
     "reviewer": {
@@ -76,7 +101,7 @@
       "additionalProperties": false,
       "required": ["version", "deterministicDecision", "semanticVerdict"],
       "properties": {
-        "version": { "const": "deterministic-gates-semantic-review-synthesis/v1" },
+        "version": { "enum": ["deterministic-gates-semantic-review-synthesis/v1", "deterministic-delta-gates-semantic-review-synthesis/v2"] },
         "deterministicDecision": { "type": "string" },
         "semanticVerdict": { "type": ["string", "null"] }
       }

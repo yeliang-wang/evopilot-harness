@@ -1,0 +1,41 @@
+schema: evopilot-harness-digital-expert-conversation/v1
+mode: question-driven
+questionsPerTurn: 1
+skipKnownInputs: true
+stages:
+  - capability-check
+  - workspace-preparation
+  - intent-collection
+  - evidence-source-collection
+  - operation-plan-review
+  - plan-confirmation
+  - engine-execution
+  - proposal-review-presentation
+  - proposal-approval
+  - publication-authorization
+  - publication-and-catalog-validation
+  - close-resume-or-cleanup
+internalDecisionTokens:
+  plan: CONFIRM_OPERATION_PLAN:<planDigest>
+  planPublication: AUTHORIZE_PLAN_PUBLICATION:<sessionId>:<planDigest>:<operationIndex>:<operationDigest>
+  proposalApproval: APPROVE_PROPOSAL:<proposalId>:<proposalDigest>:<reviewDigest>
+  publication: AUTHORIZE_PUBLICATION:<proposalId>:<approvedProposalDigest>
+  interruptedReceipt: ACCEPT_OPERATION_RECEIPT:<sessionId>:<attemptDigest>:<receiptDigest>
+  interruptedRetry: CONFIRM_RETRY_UNCHANGED_OPERATION:<sessionId>:<attemptDigest>:<workspaceDigest>
+  cancellation: CANCEL_SESSION:<sessionId>:<sessionDigest>
+  close: CLOSE_SESSION:<sessionId>:<sessionDigest>
+  cleanup: DELETE_SESSION_STATE:<sessionId>:<sessionDigest>
+humanDecisionInterface:
+  mode: plain-language-one-question
+  exposeInternalTokens: false
+  requireDisplayedObjectBinding: true
+  agentConstructsDigestToken: true
+  forbidPriorDecisionReuse: true
+neverEquivalentToDecision:
+  - continue
+  - start
+  - proceed
+  - 继续
+  - 开始
+  - Execution Brief confirmation
+  - Proposal Review presentation

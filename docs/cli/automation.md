@@ -6,13 +6,15 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 
 - Use the v3 `produce` and `proposal` commands for new automation; v2 commands are compatibility-only.
 - Initialize and pass an explicit `--workspace` so automation never mutates the Engine checkout.
-- Treat `REVIEW_REQUIRED`, `INSUFFICIENT_EVIDENCE`, `NOT_HARNESS_ELIGIBLE`, and `INSUFFICIENT_EVAL_EVIDENCE` as explicit stop states.
+- Treat `REVIEW_REQUIRED`, `NO_CHANGE`, `NEED_MORE_EVIDENCE`, `NOT_HARNESS_ELIGIBLE`, and `INSUFFICIENT_EVAL_EVIDENCE` as explicit stop states.
 - Report Evidence Graph, Ontology, Policy, Advisor model/token/digest, candidate factor, blocker, and evaluation fields.
 - Never apply an LLM recommendation by replacing `reasoning.decision`; the deterministic result remains authoritative.
 - Use JSON output whenever available.
 - Do not parse human-readable CLI output for automation.
 - Treat `status`, `blockers`, and `nextAction` as control-flow fields.
 - `proposal inspect` is read-only draft inspection. `proposal review` executes the Review Engine. `proposal review-inspect` reads its latest report.
+- `proposal validate` recomputes deterministic Delta/Evaluation closure. Continue only when `closure.status=VALIDATED` and the decision is mutating.
+- Never approve or publish `NO_CHANGE` or `NEED_MORE_EVIDENCE`; both must expose `publicationAllowed=false`.
 - Automatically run and present `proposal review` for every Proposal returned by a confirmed production stage, then stop. Never invent or hide a Review Report conclusion.
 - Continue to approval only for a current `status=REVIEWED`, `verdict=READY_FOR_HUMAN_APPROVAL` report and separate user-supplied approval.
 - Stop on `BLOCKED`, `FAILED`, validation blockers, missing files, missing Catalog blocks, approval gates, or non-zero exit codes.
@@ -31,8 +33,9 @@ This guide is for WorkBuddy, Codex, Claude Code, other AI agents, and CI jobs th
 |---|---|
 | `llm v3-models --json` | `status`, `readinessScope`, `connectionVerified`, `selected`, `nextAction` |
 | `llm v3-doctor --json` | `status`, `requestId`, `readinessScope`, `connectionVerified`, `model`, `usage`, `failureType`, `reason` |
-| `produce --json` | `status`, Evidence Graph/reasoning, `advisor`, `proposal`, `blockers`, `nextAction` |
+| `produce --json` | `status`, Evidence Graph/reasoning, `advisor`, `proposal.decision`, `proposal.assetDeltaProposal`, `proposal.assetDeltaProposal.deltas[].impact`, `proposal.evaluationStatus`, `proposal.deltaClosure`, `blockers`, `nextAction` |
 | `produce --source-root --json` | `status`, `discoveredProjectCount`, `groupCount`, `groups[]`, `advisorSummary`, `proposals[].advisor`, `blockers`, `nextAction` |
+| `proposal validate --json` | `status`, `proposalId`, `decision`, `assetDelta`, `evaluationPack`, `closure.checks[]`, `closure.blockers[]`, `nextAction` |
 | `feedback validate|process --json` | `status`, Package identity/digest, checks/failures, binding, ingestion/rejection, `proposalCreated`, `assetMutation`, `nextAction` |
 | `feedback aggregate|report --json` | Report id/digest, sample/source counts, contexts, four dimensions, missing fields, uncertainty, groups, `nextAction` |
 | `catalog publish --json` | `status`, `catalogId`, `out`, `templateCount`, `entries[]`, `catalogDigest` |
@@ -62,6 +65,8 @@ Stop and report the current JSON response when any of these are true:
 status=BLOCKED
 status=FAILED
 status=REJECTED
+status=NO_CHANGE
+status=NEED_MORE_EVIDENCE
 blockers.length > 0
 nextAction=review-approve-harness
 nextAction=review-approve-corpus-plan
@@ -81,6 +86,7 @@ process exit code != 0
 Automation summaries must include:
 
 - `evolutionId`
+- v3 Proposal id, five-way decision, Delta operation/kind/before/after digests, change paths/evidence ids, impact status, Evaluation case ids/polarities, closure checks/blockers, and `publicationAllowed`
 - source count and source digests
 - GitHub source metadata when present: repository, ref, resolved commit, and cache path
 - `sourceProfile.primaryRole`, recommended Harness id, architecture signals, negative signals, and sensitive material findings

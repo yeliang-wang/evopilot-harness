@@ -31,7 +31,18 @@ const anchors = [
   ["src/v3/migration.mjs", "rollbackMigration", "Migration/Rollback"]
 ];
 
+const agentAnchors = [
+  ["digital-expert/core/instructions.md", "Ask exactly one shortest missing question", "Digital Expert Core"],
+  ["digital-expert/expert-manifest.yaml", "evopilot-harness-digital-expert/v1", "Digital Expert Artifact"],
+  ["src/v4/engine-adapter.mjs", "executeV3Operation", "Structured Engine Adapter"],
+  ["src/v4/operation-server/server.mjs", "StdioMcpServer", "Harness Operation Server"],
+  ["src/v4/session/store.mjs", "AGENT_SESSION_SCHEMA", "AgentOperationSession"],
+  ["src/v4/protocol/tools.mjs", "authorize_proposal_publication", "Agent Protocol Tools"],
+  ["digital-expert/conformance/generic-host.mjs", "generic-agent-host-conformance", "Independent Generic Agent Host"]
+];
+
 for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
+for (const [file, needle, moduleName] of agentAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
 mustContain("AGENTS.md", "The 24 accepted module boundaries", "root agent instructions must reference all module boundaries");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
@@ -54,6 +65,24 @@ mustContain("src/v3/advisor.mjs", "deterministicDecisionPreserved: true", "Advis
 mustContain("src/v3/review.mjs", "mayApprove: false", "Proposal Review Engine must not approve Proposals");
 mustContain("package.json", '"verify:architecture"', "package scripts must expose architecture verification");
 mustContain("package.json", "npm run verify:architecture", "npm run check must execute architecture verification");
+mustContain("package.json", '"digital-expert:check"', "package scripts must expose deterministic Digital Expert validation");
+mustContain("package.json", '"version": "4.0.0"', "Agent-native candidate must use the approved major version");
+mustContain("src/index.mjs", 'argv[0] === "mcp" && argv[1] === "serve"', "CLI must expose the local MCP process entry");
+mustContain("src/v4/constants.mjs", "assertExternalWorkspace", "Agent state must remain outside the Release");
+mustContain("src/v4/session/store.mjs", "CONFIRM_OPERATION_PLAN", "Plan confirmation must be explicit and digest-bound");
+mustContain("src/v4/session/store.mjs", "APPROVE_PROPOSAL", "Proposal approval must be explicit and digest-bound");
+mustContain("src/v4/session/store.mjs", "AUTHORIZE_PUBLICATION", "publication must be a separate explicit decision");
+mustContain("src/v4/session/store.mjs", "AUTHORIZE_PLAN_PUBLICATION", "maintenance publication must have a separate operation authorization");
+mustContain("src/v4/session/store.mjs", "ACCEPT_OPERATION_RECEIPT", "interrupted operation recovery must support immutable receipt reconciliation");
+mustContain("src/v4/session/store.mjs", "CONFIRM_RETRY_UNCHANGED_OPERATION", "interrupted retries must require an unchanged Workspace digest and exact token");
+mustContain("src/v4/engine-adapter.mjs", "evopilot-harness-engine-operation-receipt/v1", "planned Engine operations must persist idempotency receipts");
+mustContain("src/v4/protocol/tools.mjs", "authorize_plan_publication_operation", "Agent protocol must expose the maintenance publication authorization gate");
+mustContain("src/v4/protocol/tools.mjs", "resolve_interrupted_operation", "Agent protocol must expose fail-closed interruption reconciliation");
+mustContain("schemas/agent-operation-session-v1.schema.json", "OPERATION_AUTHORIZATION_REQUIRED", "Session schema must declare the maintenance publication authorization state");
+mustContain("src/v4/session/store.mjs", "CLEANUP_OWNERSHIP_UNCERTAIN", "cleanup must fail closed on uncertain ownership");
+mustContain("src/v4/operation-server/server.mjs", "networkListening: false", "stdio MCP must not claim a network listener");
+mustContain("digital-expert/core/policies.yaml", "sourceExecution", "Digital Expert must preserve the source execution prohibition");
+mustContain(".agents/skills/evopilot-harness-guided-operator/SKILL.md", "Compatibility Alias", "legacy Guided Operator must not retain a second authority");
 
 mustNotContain("src/v3/advisor.mjs", "approveProposal", "Advisor must not approve Proposals");
 mustNotContain("src/v3/advisor.mjs", "publishProposal", "Advisor must not publish Proposals");
@@ -64,6 +93,10 @@ mustNotMatch("src/v3/review.mjs", /\b(?:execFileSync|execSync|spawn|spawnSync)\b
 mustNotMatch("src/v3/reasoning.mjs", /\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "source ingestion must not use shell or process execution outside the reviewed tool path");
 mustNotMatch("src/v3/lifecycle.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/builtin/, "Proposal lifecycle must not write Built-in Catalog assets");
 mustNotMatch("src/v3/migration.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/builtin/, "migration must not write Built-in Catalog assets");
+mustNotMatch("src/v4/operation-server/server.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']/, "Operation Server must remain local stdio and may not spawn or listen");
+mustNotMatch("src/v4/mcp/stdio-server.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']/, "MCP transport must remain stdio-only");
+mustNotMatch("src/v4/session/store.mjs", /(?:writeFileSync|appendFileSync|renameSync|rmSync)\([^\n]*(?:models\.json|source-project)/, "Agent sessions must not mutate model configuration or source projects");
+mustNotMatch("src/v4/operation-server/server.mjs", /(?:writeFileSync|appendFileSync|renameSync|rmSync)\([^\n]*(?:models\.json|source-project)/, "Operation Server must not mutate model configuration or source projects");
 
 const reasoning = read("src/v3/reasoning.mjs");
 const allowedTools = new Set(["git", "pdftotext", "unzip", "curl"]);
@@ -86,7 +119,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/24 module anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/24 Engine anchors, ${agentAnchors.length}/7 Agent-operation anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);

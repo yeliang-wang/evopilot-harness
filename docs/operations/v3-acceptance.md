@@ -23,13 +23,17 @@ The current v3 suite covers:
 
 - read-only Engine behavior and writable Workspace isolation;
 - Component, Profile, Bundle, Ontology, Matcher, Advisor, and Evaluation schemas;
-- Feedback Package, Effectiveness Report, and EvaluationPack v1/v2 schemas;
+- AssetDeltaProposal for Component, Profile, Bundle, Ontology, Matcher Policy, Advisor Policy, and Evaluation changes;
+- Feedback Package, Effectiveness Report, and EvaluationPack v1/v2/v3 schemas;
+- portable positive/negative Evaluation cases with context, assertions, pinned validators/scorers, baselines, expected outcomes, and regression boundaries;
 - feedback approval, redaction, time, integrity, immutable Bundle closure, idempotency, conflict, and rejection gates;
 - Bundle/Profile/Component/version effectiveness aggregation across Outcome, Process, Safety, and Cost, including samples, sources, contexts, missing fields, and uncertainty;
 - immutable Profile and Component digest closure;
 - v2-to-v3 migration, non-mutating dry-run, applied journals, and rollback;
 - exact migration id preservation on case-sensitive Linux filesystems, added in `3.0.1`;
-- Harness eligibility, Ontology role preservation, candidate factors, negative boundaries, ambiguity, novelty, and unknown-domain proposals;
+- Harness eligibility, Ontology role preservation, candidate factors, negative boundaries, ambiguity, novelty, and unknown-domain evidence stops;
+- five-way Delta decisions with deterministic `NO_CHANGE` and `NEED_MORE_EVIDENCE` publication blocking;
+- exact before/after state, change evidence, compatibility, dependencies, blast radius, expected effect, regression, and rollback closure;
 - protection against assigning a domain from shared execution-only concepts;
 - evidence-backed existing-Profile evolution and cross-Profile Bundle composition;
 - GLM citations, token accounting, replay, transport failure, and authority limits;
@@ -71,10 +75,12 @@ Acceptance also requires a clean ownership audit:
 - GLM did not approve, publish, mutate configuration, or override deterministic decisions;
 - Proposal Review Engine did not approve, publish, execute source code, invent evidence, or override failed deterministic gates;
 - immutable published versions were not overwritten;
+- publication preflight prevented partial asset, Evaluation, or Delta writes on immutable-path conflicts;
 - Feedback processing did not create a Proposal, mutate a Catalog asset, publish an asset, execute a Goal Loop, or run source projects;
 - EvoPilot or Dashboard behavior was not added to this repository;
 - external validation corpora were not copied into the Harness asset library;
 - no ECS deployment was inferred or required by the local-first release contract.
+- no v4.1 Pairwise/Champion-Challenger or v4.2 long-horizon learning capability was introduced; the planned v4.0 Agent-native operating model is also not part of v3 acceptance.
 
 ## Release Evidence
 

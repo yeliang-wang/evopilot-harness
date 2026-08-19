@@ -12,6 +12,7 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 | `produce` | Build Evidence Graph, reason, call Advisor when required, and stop at proposal review. |
 | `feedback inspect|validate|ingest|aggregate|report|process` | Govern approved execution feedback and create read-only effectiveness reports without asset mutation. |
 | `proposal inspect` | Read the generated Proposal without claiming an independent review. |
+| `proposal validate` | Recompute typed Delta, Evaluation, impact, digest, operation, and publication-boundary closure without calling the semantic reviewer. |
 | `proposal review` | Run deterministic gates plus independent evidence-bound semantic review and persist a structured Review Report. |
 | `proposal review-inspect` | Read the latest persisted Review Report without rerunning the reviewer. |
 | `proposal approve|publish` | Human-gated approval and immutable publication. Approval requires a current `READY_FOR_HUMAN_APPROVAL` Review Report. |
@@ -46,6 +47,10 @@ Primary `produce` options:
 | `--models-file <file>` | Manual read-only CodeBuddy-style GLM configuration. |
 | `--advisor-timeout-ms <number>` | Full production Advisor request timeout. Default: `180000`. |
 
+All five Proposal decisions are explicit: `EVOLVE_EXISTING`, `COMPOSE_NEW_BUNDLE`, `PROPOSE_NEW_PROFILE`, `NO_CHANGE`, and `NEED_MORE_EVIDENCE`. The first three may advance only after closure, independent review, complete Evaluation-case review, and approval. Approval binds the current Review Report and approved content by digest; publication rejects drift and rebuilds Delta after-states from exact published documents. The last two always carry `publicationAllowed=false` and cannot be approved or published. `NOT_HARNESS_ELIGIBLE` is an earlier Eligibility Gate stop.
+
+`proposal validate <proposal-id>` accepts the same external `--workspace` and returns `evopilot-harness-proposal-validation/v3.4` with `decision`, `assetDelta`, `evaluationPack`, `closure.status`, `closure.checks[]`, `closure.blockers[]`, and `nextAction`.
+
 `proposal review` requires the Proposal id, the same external Workspace, and a manually maintained `--models-file`. `--review-timeout-ms <number>` overrides its semantic-review timeout; otherwise it uses `--advisor-timeout-ms` or `180000`.
 
 Review verdicts:
@@ -58,7 +63,7 @@ Review verdicts:
 | `REJECT` | The Proposal should not advance as the proposed Harness asset. |
 | `NEED_MORE_EVIDENCE` | Evidence or an independent reviewer result is insufficient. |
 
-The report schema is `evopilot-harness-proposal-review/v1`. It includes deterministic gates, findings, reasons, evidence citations, corpus coherence and membership, product boundary, existing-asset overlap, definition quality, evaluation sufficiency, original Advisor assessment, actions, blockers, Reviewer identity/usage, algorithm version, and `nextAction`.
+The report schema is `evopilot-harness-proposal-review/v1`. It includes deterministic Delta/impact gates, findings, reasons, evidence citations, corpus coherence and membership, product boundary, existing-asset overlap, definition quality, evaluation sufficiency, original Advisor assessment, actions, blockers, Reviewer identity/usage, algorithm version, and `nextAction`.
 
 `llm v3-doctor` accepts `--timeout-ms <number>` for its minimal live request. Its default is `60000`; it is intentionally separate from the full production Advisor timeout.
 
