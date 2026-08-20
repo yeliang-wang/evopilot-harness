@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.io/schemas/harness-calibration-case-set-v1.schema.json",
+  "title": "Harness Calibration Case Set v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "review", "cases"],
+  "properties": {
+    "apiVersion": { "const": "comparison.evopilot.io/v1" },
+    "kind": { "const": "HarnessCalibrationCaseSet" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "createdAt", "caseSetDigest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "caseSetDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reviewedBy", "reviewedAt", "evidenceRefs"],
+      "properties": {
+        "status": { "const": "APPROVED" },
+        "reviewedBy": { "type": "string", "minLength": 1 },
+        "reviewedAt": { "$ref": "#/$defs/timestamp" },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/digest" } }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/matchingCase" },
+          { "$ref": "#/$defs/proposalCase" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "expectedMatching": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision"],
+      "properties": {
+        "decision": { "enum": ["EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NO_CHANGE", "NEED_MORE_EVIDENCE", "NOT_HARNESS_ELIGIBLE"] },
+        "targetProfileId": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "matchingCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "caseType", "evidenceGraphRef", "expected", "comparisonReportRef"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "caseType": { "const": "MATCHING" },
+        "evidenceGraphRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["runId", "digest"],
+          "properties": {
+            "runId": { "$ref": "#/$defs/identifier" },
+            "digest": { "$ref": "#/$defs/digest" }
+          }
+        },
+        "expected": { "$ref": "#/$defs/expectedMatching" },
+        "comparisonReportRef": { "$ref": "#/$defs/reportReference" }
+      }
+    },
+    "proposalCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "caseType", "comparisonId", "expectedRecommendation", "comparisonReportRef"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "caseType": { "const": "PROPOSAL" },
+        "comparisonId": { "$ref": "#/$defs/identifier" },
+        "expectedRecommendation": { "enum": ["NON_COMPARABLE", "NEED_MORE_EVIDENCE", "CONFLICT", "KEEP_BASELINE", "REVISE_CANDIDATE", "CANDIDATE_READY_FOR_HUMAN_REVIEW", "ROLLBACK_RECOMMENDED"] },
+        "comparisonReportRef": { "$ref": "#/$defs/reportReference" }
+      }
+    },
+    "reportReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportId", "reportDigest"],
+      "properties": {
+        "reportId": { "$ref": "#/$defs/identifier" },
+        "reportDigest": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

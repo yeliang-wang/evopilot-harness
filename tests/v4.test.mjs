@@ -22,7 +22,7 @@ test("Digital Expert adapters are generated from one immutable Core", () => {
   execFileSync(process.execPath, ["scripts/generate-digital-expert-adapters.mjs", "--check"], { cwd: root, stdio: "pipe" });
   const lock = JSON.parse(fs.readFileSync(path.join(root, "digital-expert/manifest.lock.json"), "utf8"));
   assert.match(lock.coreDigest, /^sha256:[a-f0-9]{64}$/);
-  assert.equal(lock.expertVersion, "4.0.2");
+  assert.equal(lock.expertVersion, "4.1.0");
   for (const adapter of ["codex/SKILL.md", "workbuddy/WORKBUDDY.md", "claude-code/CLAUDE.md", "mcp/MCP.md", "generic/AGENT.md"]) {
     const content = fs.readFileSync(path.join(root, "digital-expert/adapters", adapter), "utf8");
     assert.match(content, new RegExp(lock.coreDigest.replace(":", "\\:")));
@@ -460,7 +460,8 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
     const covered = new Set([...directOperations, ...plannedOperations, ...publicationOperations]);
     const proposalFamily = new Set(["proposal.inspect", "proposal.validate", "proposal.review", "proposal.review.inspect", "proposal.approve", "proposal.publish"]);
     const evidenceFamily = new Set(["evidence.produce"]);
-    const expected = engineCapabilities().map((item) => item.id).filter((operation) => !proposalFamily.has(operation) && !evidenceFamily.has(operation));
+    const comparativeFamily = new Set(engineCapabilities().map((item) => item.id).filter((operation) => operation.startsWith("comparison.") || operation.startsWith("calibration.")));
+    const expected = engineCapabilities().map((item) => item.id).filter((operation) => !proposalFamily.has(operation) && !evidenceFamily.has(operation) && !comparativeFamily.has(operation));
     assert.deepEqual([...covered].sort(), expected.sort());
   } finally {
     await client.close();

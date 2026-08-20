@@ -22,6 +22,7 @@ documentation link validation
 architecture-boundary verification
 Node test suite
 v3 schema, asset, reasoning, lifecycle, feedback, and migration validation
+v4.1 comparison, rescoring, calibration, Proposal binding, Session, CLI, and real MCP validation
 v3 Hub snapshot generation
 npm package allowlist, secret/path policy, and isolated tarball smoke
 ```
@@ -38,6 +39,7 @@ The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Ins
 | v3 contracts | `node --test tests/v3.4.test.mjs tests/v3.test.mjs && npm run v3:check` |
 | Asset Delta and EvaluationPack v3 | `node --test tests/v3.4.test.mjs` |
 | Feedback contracts | `node --test --test-name-pattern='feedback|EvaluationPack' tests/v3.test.mjs` |
+| Controlled comparison and calibration | `node --test tests/v4.1.test.mjs` |
 | Digital Expert generation | `npm run digital-expert:check` |
 | Agent-native protocol and lifecycle | `node --test tests/v4.test.mjs` |
 | npm package contract | `node --test tests/npm-distribution.test.mjs && npm run package:verify && npm run package:smoke` |
@@ -71,6 +73,8 @@ Expected stop states and `nextAction` values are part of the contract. Do not tr
 `eval v3-run` includes valid and adversarial v3.4 fixtures for all seven Delta asset kinds, positive/negative Evaluation coverage, and blocked impact closure. Fixture counts prove contract branches, not domain completeness.
 
 Feedback contract tests create Package fixtures only in disposable Workspaces. They cover approval, redaction, expiry, integrity, immutable Bundle closure, idempotency/conflicts, four-dimensional aggregation, Report uncertainty, Catalog non-mutation, and Hub read-only methods. Fixture success proves the consumer contract, not that an external production exporter already exists.
+
+Comparison tests also use disposable Workspaces. They cover exact Baseline/Candidate bindings, seven governed context mismatches, mixed-context strata, paired metrics, low sample size, safety regressions, immutable conflicts, append-only rescoring, Proposal Review and publication drift, semantic-review contradiction, policy calibration, CLI, Session resume, real stdio MCP, and clean-tarball installed MCP operation. These fixtures prove deterministic contracts and fail-closed behavior. They do not prove universal Candidate quality, causal improvement, or open-domain matching accuracy.
 
 ## Source-To-Proposal Smoke
 
@@ -130,6 +134,6 @@ node src/index.mjs hub v3-serve \
   --port 4176
 ```
 
-Verify `/api/health`, `/api/hub/snapshot`, `/api/v3/snapshot`, desktop and mobile layout, assets, proposals, Packs, five-way decisions, typed Delta summaries, compatibility/blast-radius/rollback findings, positive/negative Evaluation coverage, feedback counts/effectiveness/uncertainty, source types, GLM usage, and the generated `produce` command. Confirm that no secret or unredacted source content is rendered and every non-GET request returns 405.
+Verify `/api/health`, `/api/hub/snapshot`, `/api/v3/snapshot`, desktop and mobile layout, assets, proposals, Packs, five-way decisions, typed Delta summaries, compatibility/blast-radius/rollback findings, positive/negative Evaluation coverage, feedback counts/effectiveness/uncertainty, comparison status/recommendation/uncertainty/limitations, calibration ranking/regressions/conflicts, source types, GLM usage, and the generated `produce` command. Confirm that no secret or unredacted source content is rendered and every non-GET request returns 405.
 
-See [v3 Acceptance Baseline](v3-acceptance.md) for the release-quality interpretation of these checks.
+See [v4.1 Acceptance](v4.1-acceptance.md) and [v3 Acceptance Baseline](v3-acceptance.md) for the release-quality interpretation of these checks.

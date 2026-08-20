@@ -16,16 +16,20 @@
 - [Current v3 architecture](docs/architecture/overview.md)
 - [v3 production lifecycle](docs/guides/v3-production-lifecycle.md)
 - [Asset Delta and Evaluation closure](docs/guides/asset-delta-and-evaluation.md)
+- [Controlled comparative evidence and calibration](docs/guides/controlled-comparative-evidence.md)
 - [CLI instructions for AI agents](docs/cli/AGENTS.md)
 - [CLI command reference](docs/cli/commands.md)
 
 ## Contracts
 
 - [Product and module boundaries](docs/architecture/adr/0001-product-and-module-boundaries.md)
+- [Agent-native operation boundaries](docs/architecture/adr/0002-agent-native-harness-operations.md)
+- [Controlled comparative evidence boundaries](docs/architecture/adr/0003-controlled-comparative-evidence.md)
 - [v3 asset model](docs/architecture/v3-asset-model.md)
 - [v3 reasoning and Proposal Review contract](docs/reference/v3-reasoning-contract.md)
 - [AssetDeltaProposal and EvaluationPack v3](docs/guides/asset-delta-and-evaluation.md)
 - [Feedback evidence contract and workflow](docs/guides/feedback-evidence.md)
+- [Comparison and calibration contract and workflow](docs/guides/controlled-comparative-evidence.md)
 - [Catalog contract](docs/reference/catalog-contract.md)
 - [Registry contract](docs/reference/registry-contract.md)
 - [v2 compatibility](docs/guides/v2-compatibility.md)
@@ -34,6 +38,7 @@
 
 - [Workspace and migration](docs/operations/v3-workspace.md)
 - [Testing](docs/operations/testing.md)
+- [v4.1 acceptance](docs/operations/v4.1-acceptance.md)
 - [Release management](docs/operations/release-management.md)
 - [Troubleshooting](docs/operations/troubleshooting.md)
 - [Security policy](SECURITY.md)
@@ -53,4 +58,8 @@
 - `NO_CHANGE` and `NEED_MORE_EVIDENCE` are terminal, auditable, and never publication-authorizing.
 - Run and present every Proposal Review Report after production; approval requires a current `READY_FOR_HUMAN_APPROVAL` report plus separate human confirmation.
 - Publishing requires schema validation, human approval, and immutable version checks.
+- Comparison and calibration consume externally produced evidence; they do not execute Baseline, Candidate, source projects, tests, or Goal Loops.
+- Treat `NON_COMPARABLE`, `NEED_MORE_EVIDENCE`, `CONFLICT`, safety regression, and report digest drift as stop conditions.
+- Comparison and calibration report acknowledgement records review only; it cannot approve, publish, activate policy, roll back, or execute a Harness.
+- Rescoring is append-only, and calibration cannot mutate the active policy.
 - EvoPilot is a separate read-only consumer and goal-loop control plane.

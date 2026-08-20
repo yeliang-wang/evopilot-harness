@@ -28,7 +28,7 @@ The Workspace separates two Catalogs by default:
 | Built-in | Assets distributed with the Engine | Synchronized from Engine; evidence cannot overwrite it. |
 | Organization | User-produced Components, Profiles, Bundles, and proposals | Written only after review, approval, and validation. |
 
-Supporting Ontology, Matcher Policy, Advisor Policy, and Evaluation Packs are independently versioned. The Registry lists Catalog roots in priority order; each Catalog remains responsible for its own asset index.
+Supporting Ontology, Matcher Policy, Advisor Policy, Comparison Policy, and Evaluation Packs are independently versioned. The Registry lists Catalog roots in priority order; each Catalog remains responsible for its own asset index.
 
 Inspect the current state with JSON output:
 
@@ -41,7 +41,7 @@ node src/index.mjs registry v3-validate --workspace "$EVOPILOT_HARNESS_HOME" --j
 
 Harness Hub provides a standalone read-only operational view of assets, proposals, governance Packs, evaluation status, evidence-source types, and Advisor token usage. Before required Advisor production, use `llm v3-models` for configuration-only inspection and `llm v3-doctor` for a minimal live connectivity check.
 
-v3.3.0 introduced approved structured execution feedback under `feedback/`. The v3.4 asset-delta contract may cite that feedback as one Evidence Source when producing a typed Delta, but feedback never directly mutates or enters the Catalog. v4 changes the ordinary operation surface, not this authority boundary.
+v3.3.0 introduced approved structured execution feedback under `feedback/`. The v3.4 asset-delta contract may cite that feedback as one Evidence Source when producing a typed Delta, but feedback never directly mutates or enters the Catalog. v4 changes the ordinary operation surface, not this authority boundary. v4.1 stores approved Baseline/Candidate evidence and calibration history under `comparisons/`; those reports may support review but never enter the Catalog or acquire lifecycle authority.
 
 ## 2. How Harnesses Evolve
 
@@ -78,7 +78,7 @@ node src/index.mjs proposal review <proposal-id> \
   --json
 ```
 
-The Review Engine checks source/corpus coherence, each project membership, product-versus-dependency boundaries, new-versus-existing asset relationships, Profile/Bundle definition quality, exact Delta state, compatibility and blast radius, rollback, evidence closure, and evaluation sufficiency. It returns `READY_FOR_HUMAN_APPROVAL`, `REVISE`, `SPLIT`, `REJECT`, or `NEED_MORE_EVIDENCE`, with reasons, citations, findings, actions, blockers, and Reviewer usage. Approval requires a mutating decision, valid closure, a current `READY_FOR_HUMAN_APPROVAL` report, a real reviewer, a review statement, resolved blockers, and evaluation review. Publication rejects any existing immutable asset, Evaluation, or Delta destination before writing state.
+The Review Engine checks source/corpus coherence, each project membership, product-versus-dependency boundaries, new-versus-existing asset relationships, Profile/Bundle definition quality, exact Delta state, compatibility and blast radius, rollback, evidence closure, evaluation sufficiency, and any current governed comparison assessment. It distinguishes expected effect from comparatively supported effect. It returns `READY_FOR_HUMAN_APPROVAL`, `REVISE`, `SPLIT`, `REJECT`, or `NEED_MORE_EVIDENCE`, with reasons, citations, findings, actions, blockers, and Reviewer usage. Approval requires a mutating decision, valid closure, a current `READY_FOR_HUMAN_APPROVAL` report, a real reviewer, a review statement, resolved blockers, and evaluation review. Approval and publication fail closed when accepted comparison evidence, report content, or Proposal binding changed after Review. Publication rejects any existing immutable asset, Evaluation, or Delta destination before writing state.
 
 ## 3. How Classification And Matching Are Decided
 
@@ -117,17 +117,21 @@ The Engine records provider, model, aggregate token usage, prompt and response d
 | Attachment | `--attachment <file>` | PDF, PPTX, DOCX, text, and other supporting material. |
 | Production log | `--production-log <file>` | Redacted runtime behavior, failure, latency, trace, and incident evidence. |
 | Execution feedback | `feedback process <file>` | Approved, redacted Outcome/Process/Safety/Cost evidence bound to one immutable published Bundle closure. |
+| Baseline/Candidate comparison | `comparison process <file>` | Approved, redacted paired observations bound to exact assets, task, environment, Evaluation, scorer, and metric versions. |
+| Calibration cases | `calibration ingest <file>` | Independently reviewed matching or Proposal cases for explicit Baseline/Candidate policy replay. |
 | Historical Harness | `--historical-harness <file>` | Prior asset intent and evolution context. |
 | Operator note | `--note <text>` | Human constraints and task intent. |
 | Research | `--research-url <https-url>` with `--allow-internet-research` | Supplemental cited public evidence. |
 
 Source projects and project roots are material for reasoning; they are not copied into the Harness asset library. Internet research and historical Harnesses are supplemental and cannot independently satisfy local engineering-evidence eligibility.
 
-A Production Log and an Execution Feedback Package are deliberately different. The log is unstructured material for normal Proposal reasoning. The Package is a governed feedback contract with approval, redaction, expiry, provenance, two integrity digests, and exact Bundle/Profile/Component references. It is aggregated for effectiveness measurement and stops without creating a Proposal.
+A Production Log, an Execution Feedback Package, and a Comparison Package are deliberately different. The log is unstructured material for normal Proposal reasoning. The Feedback Package measures one immutable published Bundle closure. The Comparison Package contains externally executed, paired Baseline/Candidate observations under one exact governed context. Both structured packages require approval, redaction, expiry, provenance, integrity, and immutable references; neither executes a project or directly mutates an asset.
 
 The default source path is static. The Engine does not run project builds, tests, deployments, or business commands. Any future Evidence Runner requires a separate sandbox, explicit authorization, and a new reviewed contract.
 
 See [Feedback Evidence](feedback-evidence.md) for digest calculation, rejection gates, idempotency, four-dimensional aggregation, and current cross-project integration status.
+
+See [Controlled Comparative Evidence](controlled-comparative-evidence.md) for comparison recommendations, exact-context strata, immutable rescoring, Proposal binding, calibration, Agent operation, and authority limits.
 
 ## 5. What Gets Published
 
@@ -174,5 +178,6 @@ The canonical v3 asset remains product-neutral. An `exports/evopilot/template.ya
 
 - Follow the [v3 Production Lifecycle](v3-production-lifecycle.md).
 - Review the [v3 Reasoning Contract](../reference/v3-reasoning-contract.md).
+- Review [Controlled Comparative Evidence](controlled-comparative-evidence.md).
 - Inspect the [v3 Asset Model](../architecture/v3-asset-model.md).
 - Use [CLI Agent Instructions](../cli/AGENTS.md) for automation.

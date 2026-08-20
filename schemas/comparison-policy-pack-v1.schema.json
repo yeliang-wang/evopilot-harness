@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.io/schemas/comparison-policy-pack-v1.schema.json",
+  "title": "Comparison Policy Pack v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": { "const": "comparison.evopilot.io/v1" },
+    "kind": { "const": "ComparisonPolicyPack" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "lifecycle", "description"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "lifecycle": { "enum": ["draft", "review", "approved", "published", "deprecated"] },
+        "description": { "type": "string", "minLength": 20 }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minPairedObservations", "minIndependentSources", "maximumMissingRatio", "confidenceLevel", "requireExactBindings", "recommendation", "calibration"],
+      "properties": {
+        "minPairedObservations": { "type": "integer", "minimum": 2 },
+        "minIndependentSources": { "type": "integer", "minimum": 1 },
+        "maximumMissingRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidenceLevel": { "type": "number", "exclusiveMinimum": 0.5, "exclusiveMaximum": 1 },
+        "requireExactBindings": {
+          "type": "array",
+          "minItems": 7,
+          "uniqueItems": true,
+          "items": { "enum": ["taskDigest", "sourceSnapshotDigest", "environmentDigest", "modelConfigurationDigest", "toolchainDigest", "evaluationPackDigest", "scorerSetDigest"] }
+        },
+        "recommendation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["blockOnSafetyRegression", "blockOnRequiredMetricRegression", "allowCandidateWhenAllRequiredMetricsNonRegressing"],
+          "properties": {
+            "blockOnSafetyRegression": { "type": "boolean" },
+            "blockOnRequiredMetricRegression": { "type": "boolean" },
+            "allowCandidateWhenAllRequiredMetricsNonRegressing": { "type": "boolean" }
+          }
+        },
+        "calibration": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimumReviewedCases", "maximumFalseUpgradeRate", "maximumFalseNewProfileRate", "requireNoBlockingRegression"],
+          "properties": {
+            "minimumReviewedCases": { "type": "integer", "minimum": 1 },
+            "maximumFalseUpgradeRate": { "type": "number", "minimum": 0, "maximum": 1 },
+            "maximumFalseNewProfileRate": { "type": "number", "minimum": 0, "maximum": 1 },
+            "requireNoBlockingRegression": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" }
+  }
+}

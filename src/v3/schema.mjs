@@ -11,9 +11,15 @@ const SCHEMAS = {
   OntologyPack: "ontology-pack-v1.schema.json",
   MatchPolicyPack: "match-policy-pack-v1.schema.json",
   AdvisorPolicyPack: "advisor-policy-pack-v1.schema.json",
+  ComparisonPolicyPack: "comparison-policy-pack-v1.schema.json",
   AssetDeltaProposal: "asset-delta-proposal-v1.schema.json",
   HarnessExecutionFeedbackPackage: "harness-execution-feedback-package-v1.schema.json",
-  HarnessEffectivenessReport: "harness-effectiveness-report-v1.schema.json"
+  HarnessEffectivenessReport: "harness-effectiveness-report-v1.schema.json",
+  HarnessComparisonEvidencePackage: "harness-comparison-evidence-package-v1.schema.json",
+  HarnessComparisonReport: "harness-comparison-report-v1.schema.json",
+  HarnessComparisonRescoreRecord: "harness-comparison-rescore-record-v1.schema.json",
+  HarnessCalibrationCaseSet: "harness-calibration-case-set-v1.schema.json",
+  HarnessCalibrationReport: "harness-calibration-report-v1.schema.json"
 };
 
 const VERSIONED_SCHEMAS = {

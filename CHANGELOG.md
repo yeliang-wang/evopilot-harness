@@ -2,7 +2,35 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
-## 4.0.2 - Unreleased
+## 4.1.0 - 2026-08-20
+
+### Added
+
+- Added governed Baseline/Candidate package, report, rescore, Comparison Policy, calibration case-set, and calibration report contracts with strict provenance, approval, redaction, expiry, content digest, context, and immutable asset bindings.
+- Added deterministic paired comparison with exact-context strata, repetitions, win/loss/tie and missing-data accounting, uncertainty, conflicts, safety blockers, limitations, and bounded keep/revise/review/rollback recommendations.
+- Added immutable idempotent comparison ingestion and append-only scorer/policy-versioned rescoring that preserves accepted observations and every prior report.
+- Added matching and Proposal policy calibration with independently reviewed cases, ranking, abstention, false-upgrade, false-new-profile, regression, conflicts, and uncertainty.
+- Added Comparison and Calibration support across atomic JSON CLI, Digital Expert, stdio MCP, AgentOperationSession, Harness Hub, installed npm runtime, and technical documentation.
+
+### Changed
+
+- Proposal Review now separates expected effect from comparatively supported effect and approval/publication revalidate the exact comparison snapshot.
+- Proposal digest drift is fail-closed even when only an older Proposal-bound report exists; it is reported as `STALE`, not absent evidence.
+- Proposal calibration replays the exact reviewed Comparison Report package set, and identical case-set/policy replays return the same immutable report.
+- Harness Hub path fields use `workspace:///...` and `package:///...` references and expose bounded comparison/calibration summaries instead of host paths or raw observations.
+- Agent Sessions enter `EVIDENCE_REVIEW_REQUIRED` for deterministic Comparison and Calibration Reports and require an exact report acknowledgement before completion.
+- Digital Expert coverage now includes 11 input classes, 55 Engine operations, 17 lifecycle branches, and 10 real runtime tests.
+- npm package smoke now performs real Comparison and Calibration Sessions from a clean tarball installation without source-checkout resolution.
+- Architecture enforcement now covers 28 Engine module boundaries plus Agent-operation enforcement anchors.
+
+### Boundaries
+
+- Comparison and calibration consume externally produced evidence; they never execute source projects, Baseline/Candidate Harnesses, Goal Loops, tests, deployments, benchmarks, or business commands.
+- Recommendations and report acknowledgement cannot approve, publish, activate policy, roll back, mutate Catalog assets, or train a model.
+- v4.1.0 does not include v4.2 professional asset learning, unrestricted research, long-horizon learning, automatic domain expansion, or universal matching claims.
+- Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment.
+
+## 4.0.2 - 2026-08-20
 
 ### Added
 

@@ -13,11 +13,18 @@ const DIRECTORIES = [
   "ontology",
   "policies/matcher",
   "policies/advisor",
+  "policies/comparison",
   "evidence",
   "evaluations",
   "feedback/packages",
   "feedback/rejected",
   "feedback/reports",
+  "comparisons/packages",
+  "comparisons/rejected",
+  "comparisons/reports",
+  "comparisons/rescores",
+  "comparisons/calibration/case-sets",
+  "comparisons/calibration/reports",
   "evolution-runs",
   "cache/github",
   "migrations",
@@ -35,7 +42,7 @@ export function initializeWorkspace(home, { force = false } = {}) {
       engine: { mode: "read-only", packageRoot: PACKAGE_ROOT },
       catalogs: { builtin: "./catalogs/builtin", organization: "./catalogs/organization" },
       ontology: "./ontology",
-      policies: { matcher: "./policies/matcher", advisor: "./policies/advisor" },
+      policies: { matcher: "./policies/matcher", advisor: "./policies/advisor", comparison: "./policies/comparison" },
       models: { mode: "manual-read-only", file: path.join(PACKAGE_ROOT, "models.json") }
     });
   }
@@ -62,6 +69,7 @@ export function syncBuiltin(home, force = false) {
   copyTree(path.join(PACKAGE_ROOT, "ontology/builtin"), path.join(home, "ontology/builtin"));
   copyTree(path.join(PACKAGE_ROOT, "policies/matcher"), path.join(home, "policies/matcher"));
   syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/advisor"), path.join(home, "policies/advisor"), force);
+  syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/comparison"), path.join(home, "policies/comparison"), force);
   const catalogFile = path.join(builtinRoot, "catalog.yaml");
   writeYaml(catalogFile, {
     schema: CATALOG_SCHEMA,
@@ -102,7 +110,8 @@ export function workspaceStatus(home) {
       registry: path.join(resolved, "harness-registry.yaml"),
       builtinCatalog: path.join(resolved, "catalogs/builtin"),
       organizationCatalog: path.join(resolved, "catalogs/organization"),
-      feedback: path.join(resolved, "feedback")
+      feedback: path.join(resolved, "feedback"),
+      comparisons: path.join(resolved, "comparisons")
     }
   };
 }

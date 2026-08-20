@@ -15,7 +15,7 @@
     "status": {
       "enum": [
         "CREATED", "PLAN_REVIEW_REQUIRED", "READY_TO_EXECUTE", "RUNNING", "INTERRUPTED", "OPERATION_AUTHORIZATION_REQUIRED",
-        "PROPOSAL_REVIEW_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "PUBLICATION_DECISION_REQUIRED",
+        "EVIDENCE_REVIEW_REQUIRED", "PROPOSAL_REVIEW_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "PUBLICATION_DECISION_REQUIRED",
         "PUBLICATION_AUTHORIZED", "COMPLETED", "BLOCKED", "CANCELLED", "CLOSED"
       ]
     },
@@ -78,6 +78,21 @@
     "operationAuthorizations": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
     "pendingOperationAuthorization": { "type": ["object", "null"], "additionalProperties": true },
     "proposals": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "evidenceReports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["type", "reportId", "reportDigest", "reviewed", "nextAction"],
+        "properties": {
+          "type": { "enum": ["COMPARISON", "CALIBRATION"] },
+          "reportId": { "type": "string", "minLength": 1 },
+          "reportDigest": { "$ref": "#/$defs/digest" },
+          "reviewed": { "type": "boolean" },
+          "nextAction": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
     "sequence": { "type": "integer", "minimum": 0 },
     "nextAction": { "type": "string", "minLength": 1 },
     "blockers": { "type": "array", "items": { "type": "string" } },

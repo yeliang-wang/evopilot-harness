@@ -31,17 +31,21 @@ GET /api/v3/snapshot
 
 - Component, Profile, and Bundle inventory;
 - Profile and Bundle Proposals waiting for review;
-- Ontology, Matcher Policy, Advisor Policy, and Evaluation Pack versions;
+- Ontology, Matcher Policy, Advisor Policy, Comparison Policy, and Evaluation Pack versions;
 - Catalog status, digest, and Workspace location;
 - evidence-source types;
 - GLM Advisor run count and server-derived token usage;
 - feedback Package ingestion counts and rejection reasons;
 - latest Outcome, Process, Safety, and Cost effectiveness summary with sample/source counts and uncertainty;
+- controlled comparison package/report counts plus latest comparability, recommendation, uncertainty, blockers, limitations, provenance, and next action;
+- calibration case/report counts plus latest policy bindings, ranking, abstention/error rates, regressions, conflicts, uncertainty, recommendation, and next action;
 - a review-safe `produce` command for the next source input.
 
 The browser is not an independent state store. It does not gain approval or publication authority from browser-local state. Use the CLI and server-side Workspace lifecycle for review, approval, validation, signing, and publication.
 
-Feedback is also read-only in the Hub. The HTTP surface accepts only GET; the browser cannot ingest feedback, create a Proposal, or mutate a Harness asset.
+Feedback, comparison, and calibration are also read-only in the Hub. The HTTP surface accepts only GET; the browser cannot ingest evidence, acknowledge report review, create or approve a Proposal, activate policy, roll back, publish, or mutate a Harness asset.
+
+The snapshot preserves path context without disclosing host filesystem locations. Paths below the external Workspace use `workspace:///...`; files from the installed package use `package:///...`. Consumers must treat these values as display and provenance references, not local filesystem commands.
 
 ## Snapshot For Automation
 

@@ -5,7 +5,7 @@
 Check the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.0.2 version
+npm view @evopilot/harness@4.1.0 version
 ```
 
 If it is missing, stop. Use a locally verified release tarball or a source checkout. Do not silently install `latest`, another version, or an unreviewed package name.
@@ -32,7 +32,7 @@ Bootstrap does not edit Agent configuration or initialize the Workspace.
 
 Verify the project `.mcp.json` uses the exact command from bootstrap. WorkBuddy project MCP servers require explicit approval. In headless mode set `enableAllProjectMcpServers=true` or list `evopilot-harness` in `enabledMcpjsonServers` according to WorkBuddy's documented settings.
 
-If WorkBuddy reports `Unsupported MCP protocol version`, inspect both sides. v4.0.2 supports `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`; do not claim host compatibility outside that list.
+If WorkBuddy reports `Unsupported MCP protocol version`, inspect both sides. v4.1.0 supports `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`; do not claim host compatibility outside that list.
 
 If `inspect_capabilities` is denied because `DeferExecuteTool` requires approval, permit only `DeferExecuteTool` and `mcp__evopilot-harness__inspect_capabilities` for the read-only startup check. Do not use global `bypassPermissions` as acceptance evidence. Confirm the tool result has schema `evopilot-harness-operation-server-capabilities/v1` and compare every compatibility field before mutation.
 
@@ -60,6 +60,37 @@ node src/index.mjs feedback validate /path/to/feedback.yaml \
 - `package-id-conflict`: issue a new Package id; one id cannot identify different content.
 
 Do not edit accepted Packages under `feedback/packages`. High Report uncertainty is not a runtime error: inspect sample count, independent sources, contexts, missing fields, and `uncertainty.reasons`.
+
+## Comparison Package Is `REJECTED`
+
+```bash
+evopilot-harness comparison validate /path/to/comparison.yaml \
+  --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+- `schema`, `package-digest`, or `payload-digest`: reject edited content and regenerate through the evidence producer.
+- `approval`, `redaction`, `not-from-future`, or `not-expired`: obtain a fresh approved and redacted package; do not repair authority metadata automatically.
+- `baseline-*` or `candidate-*`: bind exact published Catalog assets or the exact current Proposal and asset digests.
+- `candidate-evaluation-pack`: bind the Proposal's current EvaluationPack id, version, and digest.
+- `package-id-conflict`: issue a new package id; accepted content is immutable.
+
+## Comparison Is `NON_COMPARABLE` Or Inconclusive
+
+Read `comparability.checks[]`, `comparability.strata[]`, `uncertainty.reasons`, `conflicts`, and `limitations` from the report. A task, source snapshot, environment, model, toolchain, EvaluationPack, scorer set, metric definition, or asset-binding mismatch must remain in separate strata; never merge them manually. `NEED_MORE_EVIDENCE` requires more approved repetitions or sources. `CONFLICT` requires independent evidence review. `REVISE_CANDIDATE` and `ROLLBACK_RECOMMENDED` are non-executing recommendations.
+
+## Rescore Or Proposal Approval Reports Drift
+
+- `proposal-comparison-assessment-drift`: accepted comparison evidence changed after Proposal Review. Score again and rerun `proposal review`.
+- stale report or replacement-chain failure: inspect the source report, current package digests, selected policy/scorer version, and rescore record; do not overwrite prior reports.
+- report integrity failure: preserve the Workspace for audit and regenerate from immutable accepted packages.
+
+## Calibration Is Blocked
+
+Run `calibration validate` and inspect the exact case and report references. Every case set must be independently `APPROVED`; matching cases require a current Evidence Graph reference and both Match Policy files, while Proposal cases require a current Comparison Report and both Comparison Policy files. `NEED_MORE_REVIEWED_CASES` means the selected Comparison Policy minimum is not met. `REVISE_CANDIDATE_POLICY` is a recommendation; edit and review a new policy version outside calibration, then replay. Calibration never changes active policy.
+
+## Session Stops At `EVIDENCE_REVIEW_REQUIRED`
+
+This is expected. Present the entire bound Comparison or Calibration Report. Call `acknowledge_evidence_report_review` only after the human confirms review of the exact report id and digest. Acknowledgement cannot approve, publish, activate policy, roll back, or execute. If the digest changed, reload the report and present it again.
 
 ## v3 `proposal approve` Is Blocked
 

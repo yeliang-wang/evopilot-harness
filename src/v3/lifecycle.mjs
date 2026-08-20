@@ -6,6 +6,7 @@ import { bindEvaluationPack, buildAssetDeltaProposal, buildEvaluationPackV3, isM
 import { validateDocument } from "./schema.mjs";
 import { bumpPatch, digest, persistedJson, readYaml, safeId, unique, writeJson, writeYaml } from "./utils.mjs";
 import { inspectProposalReview, reviewInputDigest, validateProposalReview } from "./review.mjs";
+import { comparisonAssessmentForProposalBinding } from "./comparison.mjs";
 
 export function createProposal({ home, runRoot, graph, reasoning, advisor }) {
   if (reasoning.decision === "NOT_HARNESS_ELIGIBLE") {
@@ -98,7 +99,10 @@ export function approveProposal(home, proposalId, { confirmedBy, confirmation, e
     return { schema: "evopilot-harness-proposal-approval/v3", status: "BLOCKED", proposalId, blockers: ["proposal-review-required"], nextAction: "proposal-review" };
   }
   const reviewValidation = validateProposalReview(review, review.reportPath);
-  const reviewBinding = reviewBindingBlockers(proposal, review, { requireCurrentProposal: true });
+  const reviewBinding = [
+    ...reviewBindingBlockers(proposal, review, { requireCurrentProposal: true }),
+    ...comparisonReviewBlockers(home, proposalId, review)
+  ];
   if (!reviewValidation.valid || reviewBinding.length || review.status !== "REVIEWED" || review.verdict !== "READY_FOR_HUMAN_APPROVAL") {
     const blockers = [
       ...(!reviewValidation.valid ? ["proposal-review-invalid"] : []),
@@ -148,7 +152,10 @@ export function publishProposal(home, proposalId) {
     return { schema: "evopilot-harness-proposal-publication/v3", status: "BLOCKED", proposalId, blockers: ["proposal-review-required"], nextAction: "proposal-review" };
   }
   const reviewValidation = validateProposalReview(review, review.reportPath);
-  const bindingBlockers = reviewBindingBlockers(proposal, review, { approval: proposal.approval });
+  const bindingBlockers = [
+    ...reviewBindingBlockers(proposal, review, { approval: proposal.approval }),
+    ...comparisonReviewBlockers(home, proposalId, review)
+  ];
   const approvedDigestValid = Boolean(proposal.approval?.approvedContentDigest) && proposal.approval.approvedContentDigest === approvedContentDigest(proposal);
   const evaluationBlockers = evaluationReviewBlockers(proposal.evaluationPack);
   const approvalBlockers = unique([
@@ -227,6 +234,16 @@ function reviewBindingBlockers(proposal, review, { requireCurrentProposal = fals
     if (approval.reviewReportDigest !== review.reportDigest) blockers.push("proposal-approval-review-digest-mismatch");
   }
   return unique(blockers);
+}
+
+function comparisonReviewBlockers(home, proposalId, review) {
+  const recorded = review.comparisonAssessment;
+  const current = comparisonAssessmentForProposalBinding(home, { proposalId, proposalDigest: review.proposalDigest });
+  if (!recorded) return current.status === "NOT_PROVIDED" ? [] : ["proposal-comparison-review-missing"];
+  return unique([
+    ...(digest(recorded) === digest(current) ? [] : ["proposal-comparison-assessment-drift"]),
+    ...(current.blocking ? [`proposal-comparison-${String(current.status).toLowerCase()}`] : [])
+  ]);
 }
 
 function evaluationReviewBlockers(evaluationPack) {

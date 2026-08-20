@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.io/schemas/harness-calibration-report-v1.schema.json",
+  "title": "Harness Calibration Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "caseSetRef", "policyBindings", "summary", "cases", "ranking", "conflicts", "uncertainty", "recommendation", "authority"],
+  "properties": {
+    "apiVersion": { "const": "comparison.evopilot.io/v1" },
+    "kind": { "const": "HarnessCalibrationReport" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportId", "generatedAt", "algorithmVersion", "reportDigest"],
+      "properties": {
+        "reportId": { "$ref": "#/$defs/identifier" },
+        "generatedAt": { "$ref": "#/$defs/timestamp" },
+        "algorithmVersion": { "type": "string", "minLength": 1 },
+        "reportDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "caseSetRef": { "$ref": "#/$defs/reference" },
+    "policyBindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline", "candidate"],
+      "properties": {
+        "baseline": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/policyReference" } },
+        "candidate": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/policyReference" } }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewedCaseCount", "matchingCaseCount", "proposalCaseCount", "baseline", "candidate", "regressions"],
+      "properties": {
+        "reviewedCaseCount": { "type": "integer", "minimum": 0 },
+        "matchingCaseCount": { "type": "integer", "minimum": 0 },
+        "proposalCaseCount": { "type": "integer", "minimum": 0 },
+        "baseline": { "$ref": "#/$defs/scoreSummary" },
+        "candidate": { "$ref": "#/$defs/scoreSummary" },
+        "regressions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "caseType", "expected", "baselineActual", "candidateActual", "baselinePassed", "candidatePassed", "regression"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "caseType": { "enum": ["MATCHING", "PROPOSAL"] },
+          "expected": { "type": "string", "minLength": 1 },
+          "baselineActual": { "type": "string", "minLength": 1 },
+          "candidateActual": { "type": "string", "minLength": 1 },
+          "baselinePassed": { "type": "boolean" },
+          "candidatePassed": { "type": "boolean" },
+          "regression": { "type": "boolean" }
+        }
+      }
+    },
+    "ranking": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rank", "policySide", "passRate", "passedCount", "failedCount"],
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1, "maximum": 2 },
+          "policySide": { "enum": ["BASELINE", "CANDIDATE"] },
+          "passRate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "passedCount": { "type": "integer", "minimum": 0 },
+          "failedCount": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "conflicts": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/identifier" } },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reasons", "reviewedCaseCount", "minimumReviewedCases"],
+      "properties": {
+        "level": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "reviewedCaseCount": { "type": "integer", "minimum": 0 },
+        "minimumReviewedCases": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "recommendation": { "enum": ["CANDIDATE_POLICY_ELIGIBLE_FOR_HUMAN_REVIEW", "REVISE_CANDIDATE_POLICY", "NEED_MORE_REVIEWED_CASES"] },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activePolicyMutated", "mayApprove", "mayPublish"],
+      "properties": {
+        "activePolicyMutated": { "const": false },
+        "mayApprove": { "const": false },
+        "mayPublish": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "policyReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "version", "digest"],
+      "properties": {
+        "kind": { "enum": ["MatchPolicyPack", "ComparisonPolicyPack"] },
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "scoreSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passedCount", "failedCount", "passRate", "falseUpgradeRate", "falseNewProfileRate", "correctAbstentionRate"],
+      "properties": {
+        "passedCount": { "type": "integer", "minimum": 0 },
+        "failedCount": { "type": "integer", "minimum": 0 },
+        "passRate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "falseUpgradeRate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "falseNewProfileRate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "correctAbstentionRate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

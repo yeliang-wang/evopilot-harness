@@ -11,7 +11,7 @@
 
 ![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 
-[Documentation](docs/README.md) | [Agent Quickstart](docs/agent/quickstart.md) | [npm Distribution](docs/operations/npm-distribution.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [MCP Reference](docs/agent/mcp-reference.md) | [Release Notes](docs/releases/README.md)
+[Documentation](docs/README.md) | [Agent Quickstart](docs/agent/quickstart.md) | [Controlled Comparison](docs/guides/controlled-comparative-evidence.md) | [npm Distribution](docs/operations/npm-distribution.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [MCP Reference](docs/agent/mcp-reference.md) | [Release Notes](docs/releases/README.md)
 
 ## What A Harness Is
 
@@ -29,6 +29,10 @@ A Harness is a versioned executable asset package for one class of repeatable en
 | `AssetDeltaProposal` | Evidence-linked before/after asset state plus compatibility, impact, expected-effect, regression, and rollback analysis. |
 | `HarnessExecutionFeedbackPackage` | Approved, redacted execution evidence bound to one immutable Bundle closure. |
 | `HarnessEffectivenessReport` | Outcome, Process, Safety, and Cost aggregation with sample, context, provenance, and uncertainty. |
+| `HarnessComparisonEvidencePackage` | Approved, redacted Baseline/Candidate observations bound to exact assets, task, environment, Evaluation, and scorer versions. |
+| `HarnessComparisonReport` | Deterministic paired metrics, comparability, uncertainty, conflicts, safety blockers, limitations, and one non-authorizing recommendation. |
+| `HarnessCalibrationCaseSet` | Independently reviewed matching and Proposal cases for Baseline/Candidate policy replay. |
+| `HarnessCalibrationReport` | Policy ranking, abstention, false upgrade, false new profile, regression, conflicts, and uncertainty without active-policy mutation. |
 
 This is intentionally narrower than general software classification. Unknown domains without discriminating evidence stop at `NEED_MORE_EVIDENCE`; they are not silently turned into generic or published assets.
 
@@ -37,11 +41,11 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.0.2 version
+npm view @evopilot/harness@4.1.0 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.0.2
+npm install --save-exact @evopilot/harness@4.1.0
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host workbuddy \
   --workspace "$HOME/.evopilot-harness" \
@@ -60,7 +64,7 @@ Then tell the Agent:
 自动展示 Engine Proposal Review，并分别停在批准和发布决策点。
 ```
 
-The Digital Expert asks one missing question at a time. The human does not enter Harness lifecycle CLI commands. The Agent starts MCP, prepares the external Workspace, persists an `AgentOperationSession`, calls the Engine, renders the complete Review, and stops for explicit digest-bound decisions. Planned operations use durable idempotency receipts; interrupted unknown outcomes fail closed, and maintenance publication has a separate operation authorization. Project roots, Git repositories, attachments, production logs, historical Harnesses, notes, feedback, maintenance, diagnostics, resume, cancellation, close, and owned-session cleanup are covered. Source ingestion remains static and never runs project build, test, deploy, or business commands.
+The Digital Expert asks one missing question at a time. The human does not enter Harness lifecycle CLI commands. The Agent starts MCP, prepares the external Workspace, persists an `AgentOperationSession`, calls the Engine, renders the complete Review, and stops for explicit digest-bound decisions. Planned operations use durable idempotency receipts; interrupted unknown outcomes fail closed, and maintenance publication has a separate operation authorization. Project roots, Git repositories, attachments, production logs, historical Harnesses, notes, feedback, controlled Baseline/Candidate comparison, matching and Proposal calibration, maintenance, diagnostics, resume, cancellation, close, and owned-session cleanup are covered. Comparison and calibration reports enter a separate digest-bound review acknowledgement state. Source ingestion remains static and never runs project build, test, deploy, or business commands.
 
 See [Agent-native quickstart](docs/agent/quickstart.md), [npm distribution](docs/operations/npm-distribution.md), [Digital Expert](docs/agent/digital-expert.md), [MCP reference](docs/agent/mcp-reference.md), and [Session protocol](docs/agent/session-protocol.md).
 
@@ -78,6 +82,16 @@ node src/index.mjs feedback process /path/to/feedback.yaml \
 
 `--production-log` remains unstructured, redacted source material for Proposal reasoning. A `HarnessExecutionFeedbackPackage` is a separate governed contract with approval, redaction, expiry, provenance, package/payload digests, and exact published Bundle/Profile/Component binding. See [Feedback Evidence](docs/guides/feedback-evidence.md).
 
+Process one approved Baseline/Candidate package and return an immutable report without approving, publishing, rolling back, activating policy, or executing either asset:
+
+```bash
+node src/index.mjs comparison process /path/to/comparison.yaml \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --json
+```
+
+The report is valid only for its exact task, source snapshot, environment, model, toolchain, Evaluation, scorer, metrics, and asset bindings. Rescoring appends a new report and preserves every accepted observation and prior report. Independently reviewed calibration cases replay explicit Baseline/Candidate policy versions without mutating the active policy. See [Controlled Comparative Evidence](docs/guides/controlled-comparative-evidence.md).
+
 ## Reasoning And Review
 
 The v3 pipeline combines deterministic controls with evidence-bound model advice:
@@ -90,6 +104,7 @@ flowchart LR
   Match --> Advisor["Evidence-bound GLM Advisor Run"]
   Advisor --> Proposal["Typed Asset Delta Proposal"]
   Proposal --> Closure["Evaluation + impact closure"]
+  Comparison["Governed Baseline/Candidate evidence"] --> Review
   Closure --> Review["Proposal Review Engine"]
   Review --> Human["Human approval + evaluation"]
   Human --> Catalog["Immutable assets + Catalog"]
@@ -135,7 +150,7 @@ node src/index.mjs proposal publish <proposal-id> \
   --json
 ```
 
-All three mutating decisions require reviewed positive/negative Evaluation cases and a `READY` EvaluationPack. Approval binds the current Review Report and approved Proposal content by digest; publication rechecks both and rebuilds Delta after-states from the exact immutable documents being written.
+All three mutating decisions require reviewed positive/negative Evaluation cases and a `READY` EvaluationPack. When governed comparative evidence is bound, Review distinguishes expected effect from comparatively supported effect. Approval and publication recheck the exact comparison snapshot and fail closed on new evidence, conflict, tamper, or digest drift. Approval binds the current Review Report and approved Proposal content by digest; publication rechecks both and rebuilds Delta after-states from the exact immutable documents being written.
 
 ## Ownership Boundary
 
@@ -155,9 +170,9 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The Engine `4.0.2` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, and EvaluationPack v1/v2 read compatibility. New v3 approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+The Engine `4.1.0` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, v4 Agent Sessions, and EvaluationPack v1/v2 read compatibility. Legacy Sessions without `evidenceReports` remain readable. New approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
-GitHub Release, npm publication, and optional GHCR publication are separate evidence layers. Check each registry before claiming it is published. v4.0.2 does not add v4.1 Pairwise/Champion-Challenger comparison or v4.2 professional asset learning.
+GitHub Release, npm publication, and optional GHCR publication are separate evidence layers. Check each registry before claiming v4.1.0 is published. The v4.1 source candidate adds controlled comparison and calibration; it does not add v4.2 professional asset learning, automatic policy activation, or source-project execution.
 
 ## Validate
 
@@ -183,6 +198,7 @@ Evaluation reports `INSUFFICIENT_EVAL_EVIDENCE` until enough independently revie
 - [v3 asset model](docs/architecture/v3-asset-model.md)
 - [v3 reasoning contract](docs/reference/v3-reasoning-contract.md)
 - [Asset Delta and Evaluation](docs/guides/asset-delta-and-evaluation.md)
+- [Controlled comparative evidence and calibration](docs/guides/controlled-comparative-evidence.md)
 - [Harness Hub integration](docs/guides/harness-hub-integration.md)
 - [Development](docs/development.md)
 - [Security](SECURITY.md)

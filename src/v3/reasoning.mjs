@@ -9,9 +9,9 @@ const TEXT_EXTENSIONS = new Set([".md", ".txt", ".rst", ".adoc", ".yaml", ".yml"
 const BUILD_FILES = new Set(["pom.xml", "build.gradle", "build.gradle.kts", "package.json", "go.mod", "cargo.toml", "makefile", "cmakelists.txt", "requirements.txt", "pyproject.toml", "dockerfile", "compose.yaml", "docker-compose.yml"]);
 const EVIDENCE_EXTRACTION_COMMANDS = new Set(["pdftotext", "unzip", "curl"]);
 
-export function loadKnowledge(home) {
-  const ontologyFile = latestYaml(path.join(home, "ontology"), "OntologyPack");
-  const matcherFile = latestYaml(path.join(home, "policies/matcher"), "MatchPolicyPack");
+export function loadKnowledge(home, overrides = {}) {
+  const ontologyFile = overrides.ontologyFile ? path.resolve(overrides.ontologyFile) : latestYaml(path.join(home, "ontology"), "OntologyPack");
+  const matcherFile = overrides.policyFile ? path.resolve(overrides.policyFile) : latestYaml(path.join(home, "policies/matcher"), "MatchPolicyPack");
   if (!ontologyFile || !matcherFile) throw new Error("Workspace is missing a published OntologyPack or MatchPolicyPack.");
   return { ontology: readYaml(ontologyFile), ontologyFile, policy: readYaml(matcherFile), policyFile: matcherFile };
 }
@@ -96,8 +96,8 @@ export function discoverSourceProjects(root, { includeModules = false, limit = 1
   return projects.slice(0, limit);
 }
 
-export function reasonEvidence(graph, home) {
-  const knowledge = loadKnowledge(home);
+export function reasonEvidence(graph, home, overrides = {}) {
+  const knowledge = loadKnowledge(home, overrides);
   const enriched = enrichEvidenceGraph(graph, knowledge.ontology);
   const eligibility = eligibilityGate(enriched, knowledge.policy);
   const assetRoots = [path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")];

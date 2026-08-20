@@ -30,7 +30,7 @@ digital-expert/
 
 | Component | Owns | Cannot own |
 |---|---|---|
-| Digital Expert Core | Questions, plan/review rendering, stop points, recovery guidance | Matching, Review verdict, state, identity, approval, publication |
+| Digital Expert Core | Questions, plan/review rendering, comparison/calibration presentation, stop points, recovery guidance | Matching, comparison verdict, Review verdict, state, identity, approval, policy activation, rollback, publication |
 | Agent Adapter | Host import format and MCP binding | Host-specific business policy |
 | External Agent | Conversation and tool invocation | Engine state or silent human decisions |
 | Operation Server | MCP, capabilities, Session coordination, Engine adapter | General Agent loop, shell, business verdict |
@@ -38,7 +38,7 @@ digital-expert/
 
 ## Question-Driven Behavior
 
-The Expert asks exactly one shortest missing question and does not repeat information already supplied. A complete request moves directly to an Execution Brief and Plan. It renders Engine output without inventing missing evidence or changing verdict language. Humans approve the immutable object currently displayed in natural language; the Expert constructs digest-bound Engine tokens internally and never asks a human to copy protocol credentials.
+The Expert asks exactly one shortest missing question and does not repeat information already supplied. A complete request moves directly to an Execution Brief and Plan. It renders Engine output without inventing missing evidence or changing verdict language. For comparison it renders bindings, comparability, strata, metrics, uncertainty, conflicts, safety blockers, limitations, recommendation, authority, and next action. For calibration it renders reviewed case and policy bindings, ranking, abstention/error rates, regressions, conflicts, uncertainty, recommendation, and active-policy non-mutation. Humans decide on the immutable object currently displayed in natural language; the Expert constructs digest-bound Engine tokens internally and never asks a human to copy protocol credentials.
 
 ## Import
 
@@ -48,7 +48,7 @@ The Expert asks exactly one shortest missing question and does not repeat inform
 - Generic or custom Agent: load `digital-expert/adapters/generic/AGENT.md` and implement stdio MCP with structured tool results.
 - MCP-only client: use `digital-expert/adapters/mcp/MCP.md`; it provides transport guidance but not a conversational UI.
 
-Adapter packaging does not prove the host supports local instructions, subprocesses, or stdio MCP. Unsupported hosts must return a capability blocker. v4.0.2 validates the Codex protocol path, the included independent Generic Agent Host, cross-Adapter Plan/Engine-call/stop-point semantics, the real MCP process, and the WorkBuddy CLI currently installed on the acceptance Mac from an isolated local tarball. The acceptance report records its exact path and version. Claude Code remains package-only until its actual host passes conformance. WorkBuddy acceptance does not prove public npm availability or every later host version.
+Adapter packaging does not prove the host supports local instructions, subprocesses, or stdio MCP. Unsupported hosts must return a capability blocker. v4.1.0 validates the Codex protocol path, the included independent Generic Agent Host, cross-Adapter Plan/Engine-call/stop-point semantics, the real MCP process, comparison and calibration Sessions, and clean-tarball installed MCP operation. The previously recorded WorkBuddy evidence remains bounded to its exact local CLI path and version; a new source version, public npm availability, Claude Code packaging, or an Adapter file alone does not prove every host version.
 
 ## Legacy Skill
 

@@ -29,6 +29,34 @@ node src/index.mjs proposal publish <proposal-id> --workspace "$EVOPILOT_HARNESS
 
 Detailed single-project, project-root, GitHub, attachment, log, research, signing, and migration workflows are in [v3 Production Lifecycle](../guides/v3-production-lifecycle.md).
 
+## Controlled Comparison And Calibration
+
+Use an approved, redacted package produced by an external evaluator. The Harness Engine validates and compares the evidence; it does not run the Baseline or Candidate:
+
+```bash
+node src/index.mjs comparison validate /path/to/comparison.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs comparison process /path/to/comparison.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs comparison report <report-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+Present the entire report and stop. Continue to Proposal Review only for a current bounded recommendation and separate human decision. `NON_COMPARABLE`, `NEED_MORE_EVIDENCE`, `CONFLICT`, safety regression, and digest drift are blocking outcomes.
+
+For policy calibration, use an independently reviewed case set and explicit Baseline/Candidate policy files:
+
+```bash
+node src/index.mjs calibration validate /path/to/case-set.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs calibration ingest /path/to/case-set.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+node src/index.mjs calibration run --workspace "$EVOPILOT_HARNESS_HOME" \
+  --case-set-id <case-set-id> \
+  --baseline-match-policy /path/to/baseline-match-policy.yaml \
+  --candidate-match-policy /path/to/candidate-match-policy.yaml \
+  --baseline-comparison-policy /path/to/baseline-comparison-policy.yaml \
+  --candidate-comparison-policy /path/to/candidate-comparison-policy.yaml \
+  --json
+```
+
+Calibration may recommend a candidate policy review, but it never mutates or activates policy. See [Controlled Comparative Evidence](../guides/controlled-comparative-evidence.md).
+
 ## Legacy v2 Workflows
 
 ## Publish Current Source Packs

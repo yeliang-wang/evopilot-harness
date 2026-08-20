@@ -16,6 +16,9 @@ This matrix is for third-party AI agents that simulate human operation through `
 | Review-gated evolution | Agent and admin | `evolution create`, `advance`, `review`, `impact`, `approve`, `publish` | Stop before approval | approval actor, confirmation, publication root |
 | Attachment-driven evolution | Agent and admin | `evolve --attachment ... --file ... --json` | Stop at draft review | source digests and draft files |
 | Production log learning | Agent and admin | `evolve --production-log ... --json` | Stop if sensitive material is still visible | redaction flag, runtime evidence guidance |
+| Controlled Baseline/Candidate comparison | Digital Expert + Agent + reviewer | MCP `comparison` Plan or `comparison validate|process|report --json` | Stop at `EVIDENCE_REVIEW_REQUIRED`; acknowledge only the exact report | immutable bindings, comparability/strata, paired metrics, uncertainty, conflicts, safety blockers, recommendation, report digest |
+| Append-only comparison rescoring | Digital Expert + Agent + reviewer | MCP maintenance Plan or `comparison rescore --json` | Stop for replacement-report review | source/replacement report digests, scorer/policy version, reason, raw/prior mutation flags |
+| Matching and Proposal calibration | Digital Expert + Agent + reviewer | MCP `calibration` Plan or `calibration validate|ingest|run|report --json` | Stop at `EVIDENCE_REVIEW_REQUIRED`; never activate policy | independently reviewed cases, policy bindings, ranking, abstention/error rates, regressions, conflicts, uncertainty |
 | Hub operation | Operator | `hub snapshot`, `hub serve` | Stop if Registry validation fails or Catalog status is not `READY` | `/api/hub/snapshot`, Registry status, Catalog table, Harness cards |
 | EvoPilot hand-off | EvoPilot operator | Configure `EVOPILOT_HARNESS_REGISTRY_CONFIG` | Stop if EvoPilot plan lacks `selectedHarness` | EvoPilot `plan.selectedHarness` fields |
 
@@ -39,6 +42,9 @@ Every completed scenario summary must include:
 - approval actor and confirmation when approval occurred
 - publication Harness root, Catalog root, and Registry path when publication occurred
 - Registry digest, Catalog id, Catalog digest, and entry digests after publication
+- comparison Package/Report identity and digests, exact context and asset bindings, paired count, metrics, strata, uncertainty, conflicts, safety blockers, limitations, recommendation, and authority flags
+- rescore source/replacement bindings, scorer and policy versions, reason, and immutable-history proof
+- calibration Case Set/Report identity and digests, independent review evidence, policy bindings, ranking, abstention, false-upgrade, false-new-profile, regressions, conflicts, uncertainty, and `activePolicyMutated=false`
 
 ## Human Approval
 
@@ -51,6 +57,11 @@ Stop on:
 ```text
 BLOCKED
 FAILED
+REJECTED
+NON_COMPARABLE
+NEED_MORE_EVIDENCE
+CONFLICT
+EVIDENCE_REVIEW_REQUIRED
 non-zero exit code
 validation blockers
 missing source file
@@ -63,3 +74,5 @@ nextAction=review-candidate-match
 nextAction=repair-draft-validation
 nextAction=repair-corpus-plan-validation
 ```
+
+Comparison or calibration report acknowledgement records review only. It does not approve or publish a Proposal, activate a policy, authorize rollback, or execute a Harness.

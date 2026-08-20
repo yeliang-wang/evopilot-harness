@@ -1,0 +1,29 @@
+apiVersion: comparison.evopilot.io/v1
+kind: ComparisonPolicyPack
+metadata:
+  id: default-controlled-comparison
+  version: 1.0.0
+  lifecycle: published
+  description: Fail-closed Baseline and Candidate comparison with immutable evidence, uncertainty, and human review.
+spec:
+  minPairedObservations: 5
+  minIndependentSources: 1
+  maximumMissingRatio: 0
+  confidenceLevel: 0.95
+  requireExactBindings:
+    - taskDigest
+    - sourceSnapshotDigest
+    - environmentDigest
+    - modelConfigurationDigest
+    - toolchainDigest
+    - evaluationPackDigest
+    - scorerSetDigest
+  recommendation:
+    blockOnSafetyRegression: true
+    blockOnRequiredMetricRegression: true
+    allowCandidateWhenAllRequiredMetricsNonRegressing: true
+  calibration:
+    minimumReviewedCases: 3
+    maximumFalseUpgradeRate: 0.1
+    maximumFalseNewProfileRate: 0.1
+    requireNoBlockingRegression: true

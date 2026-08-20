@@ -11,6 +11,8 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 | `workspace init|status` | Create or inspect the writable v3 Workspace. |
 | `produce` | Build Evidence Graph, reason, call Advisor when required, and stop at proposal review. |
 | `feedback inspect|validate|ingest|aggregate|report|process` | Govern approved execution feedback and create read-only effectiveness reports without asset mutation. |
+| `comparison inspect|validate|ingest|score|report|rescore|process` | Validate, immutably store, compare, read, and append-only rescore governed Baseline/Candidate evidence. |
+| `calibration validate|ingest|run|report` | Replay explicit Baseline/Candidate matching or Proposal policies over independently reviewed cases without active-policy mutation. |
 | `proposal inspect` | Read the generated Proposal without claiming an independent review. |
 | `proposal validate` | Recompute typed Delta, Evaluation, impact, digest, operation, and publication-boundary closure without calling the semantic reviewer. |
 | `proposal review` | Run deterministic gates plus independent evidence-bound semantic review and persist a structured Review Report. |
@@ -20,7 +22,7 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 | `catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify` | Publish and verify v3 Catalogs. |
 | `registry v3-validate|v3-sign|v3-verify` | Validate Catalog-root discovery and Registry signatures. |
 | `ontology inspect|validate|diff|publish` | Versioned Ontology Pack lifecycle. |
-| `policy inspect|validate|diff|publish` | Matcher or Advisor Policy Pack lifecycle. |
+| `policy inspect|validate|diff|publish` | Matcher, Advisor, or Comparison Policy Pack lifecycle. |
 | `llm v3-models` | Read redacted GLM configuration readiness from manual `models.json`; no network call. |
 | `llm v3-doctor` | Make a minimal live GLM request and report redacted connectivity, model, usage, timing, and failure type. |
 | `migrate v2-to-v3|rollback` | Non-mutating migration with journal rollback. |
@@ -69,7 +71,7 @@ The report schema is `evopilot-harness-proposal-review/v1`. It includes determin
 
 `llm v3-models` returns `readinessScope=CONFIGURATION_ONLY` and `connectionVerified=false`. Use `llm v3-doctor --models-file <file> --json` before a production run that requires Advisor review. `produce` persists every Advisor attempt, including failures, under the external Workspace. Large graphs use the Advisor Policy's deterministic evidence projection (default: 48 nodes, 96,000 characters, 2,000 characters per excerpt); the Run records complete-Graph and projection digests, selected/omitted counts, ids, kinds, and source coverage. Advisor Policy can permit one structure/citation-only repair for invalid JSON or a rejected output contract; `attempts[]`, aggregate `usage`, and both validations remain auditable. With `--advisor required`, an unsuccessful final Advisor result produces `status=BLOCKED`, a non-zero exit code, and `nextAction=repair-advisor-and-rerun` while retaining evidence and Proposal artifacts for diagnosis.
 
-See [quickstart.md](quickstart.md), [automation.md](automation.md), and [v3 Production Lifecycle](../guides/v3-production-lifecycle.md).
+See [quickstart.md](quickstart.md), [automation.md](automation.md), [v3 Production Lifecycle](../guides/v3-production-lifecycle.md), and [Controlled Comparative Evidence](../guides/controlled-comparative-evidence.md).
 
 ## Feedback Evidence
 
@@ -94,6 +96,43 @@ evopilot-harness feedback report <report-id> --workspace "$EVOPILOT_HARNESS_HOME
 Use `--now <ISO-8601>` only for deterministic testing or replay. Normal operation uses the current time. `PROCESSED`, `ACCEPTED`, `DUPLICATE`, `VALIDATED`, `INSPECTED`, `AGGREGATED`, `EMPTY`, and `FOUND` exit 0. `REJECTED` and `FAILED` exit 2.
 
 `feedback process` always reports `proposalCreated=false`, `assetMutation=false`, and `sourceExecution=false`. It never invokes the Proposal lifecycle. Full contract details are in [Feedback Evidence](../guides/feedback-evidence.md).
+
+## Controlled Comparison And Calibration
+
+```bash
+evopilot-harness comparison inspect /path/to/comparison.yaml --json
+evopilot-harness comparison validate /path/to/comparison.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness comparison process /path/to/comparison.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness comparison report <report-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+`comparison process` performs validated, idempotent ingestion followed by deterministic scoring. It reports `assetMutation=false` and `sourceExecution=false`. `NON_COMPARABLE`, `NEED_MORE_EVIDENCE`, `CONFLICT`, `KEEP_BASELINE`, `REVISE_CANDIDATE`, `CANDIDATE_READY_FOR_HUMAN_REVIEW`, and `ROLLBACK_RECOMMENDED` are recommendations or stop states, never lifecycle authority.
+
+```bash
+evopilot-harness comparison rescore <report-id> \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --policy-file /path/to/comparison-policy.yaml \
+  --reason "Apply the reviewed scorer and policy revision." \
+  --json
+```
+
+`comparison rescore` requires a reason and a different policy/scorer binding. It creates a new report and `HarnessComparisonRescoreRecord`; `rawObservationsMutated=false` and `priorReportsMutated=false` are mandatory.
+
+```bash
+evopilot-harness calibration validate /path/to/case-set.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness calibration ingest /path/to/case-set.yaml --workspace "$EVOPILOT_HARNESS_HOME" --json
+evopilot-harness calibration run \
+  --workspace "$EVOPILOT_HARNESS_HOME" \
+  --case-set-id <case-set-id> \
+  --baseline-match-policy /path/to/baseline-match-policy.yaml \
+  --candidate-match-policy /path/to/candidate-match-policy.yaml \
+  --baseline-comparison-policy /path/to/baseline-comparison-policy.yaml \
+  --candidate-comparison-policy /path/to/candidate-comparison-policy.yaml \
+  --json
+evopilot-harness calibration report <report-id> --workspace "$EVOPILOT_HARNESS_HOME" --json
+```
+
+Provide the matching policy pair for `MATCHING` cases and the comparison policy pair for `PROPOSAL` cases. Calibration reports ranking, abstention, false-upgrade, false-new-profile, regression, conflicts, uncertainty, and `activePolicyMutated=false`. Full contract details are in [Controlled Comparative Evidence](../guides/controlled-comparative-evidence.md).
 
 ## Legacy v2 Compatibility Commands
 

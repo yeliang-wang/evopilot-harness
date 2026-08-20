@@ -10,6 +10,7 @@ stages:
   - operation-plan-review
   - plan-confirmation
   - engine-execution
+  - comparison-or-calibration-review-presentation
   - proposal-review-presentation
   - proposal-approval
   - publication-authorization
@@ -22,6 +23,7 @@ internalDecisionTokens:
   publication: AUTHORIZE_PUBLICATION:<proposalId>:<approvedProposalDigest>
   interruptedReceipt: ACCEPT_OPERATION_RECEIPT:<sessionId>:<attemptDigest>:<receiptDigest>
   interruptedRetry: CONFIRM_RETRY_UNCHANGED_OPERATION:<sessionId>:<attemptDigest>:<workspaceDigest>
+  evidenceReview: ACKNOWLEDGE_<COMPARISON|CALIBRATION>_REVIEW:<reportId>:<reportDigest>
   cancellation: CANCEL_SESSION:<sessionId>:<sessionDigest>
   close: CLOSE_SESSION:<sessionId>:<sessionDigest>
   cleanup: DELETE_SESSION_STATE:<sessionId>:<sessionDigest>

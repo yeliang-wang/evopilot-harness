@@ -6,7 +6,7 @@
   "required": ["schema", "scenario", "goal", "createdAt", "sources", "operations", "stopPoints", "authority"],
   "properties": {
     "schema": { "const": "evopilot-harness-operation-plan/v1" },
-    "scenario": { "enum": ["evolve", "feedback", "maintenance"] },
+    "scenario": { "enum": ["evolve", "feedback", "comparison", "calibration", "maintenance"] },
     "goal": { "type": "string", "minLength": 1 },
     "createdAt": { "type": "string", "minLength": 1 },
     "sources": {
@@ -31,7 +31,15 @@
         "advisorTimeoutMs": { "type": "integer", "minimum": 1 },
         "reviewTimeoutMs": { "type": "integer", "minimum": 1 },
         "now": { "type": "string" },
-        "feedbackFile": { "type": "string" }
+        "feedbackFile": { "type": "string" },
+        "comparisonFile": { "type": "string" },
+        "comparisonPolicyFile": { "type": "string" },
+        "calibrationCaseSet": { "type": "string" },
+        "calibrationCaseSetId": { "type": "string" },
+        "baselineMatchPolicy": { "type": "string" },
+        "candidateMatchPolicy": { "type": "string" },
+        "baselineComparisonPolicy": { "type": "string" },
+        "candidateComparisonPolicy": { "type": "string" }
       }
     },
     "operations": {

@@ -1,6 +1,6 @@
 {
   "name": "@evopilot/harness",
-  "version": "4.0.2",
+  "version": "4.1.0",
   "private": false,
   "description": "Agent-native, user-owned Harness asset factory with a portable Digital Expert, local MCP operations, deterministic reasoning, lifecycle, and Catalog.",
   "license": "Apache-2.0",

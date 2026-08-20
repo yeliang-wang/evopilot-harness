@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.io/schemas/harness-comparison-rescore-record-v1.schema.json",
+  "title": "Harness Comparison Rescore Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "sourceReportRef", "rescoredReportRef", "sourcePackageDigests", "scorerSet", "reason", "authority"],
+  "properties": {
+    "apiVersion": { "const": "comparison.evopilot.io/v1" },
+    "kind": { "const": "HarnessComparisonRescoreRecord" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rescoreId", "comparisonId", "generatedAt", "recordDigest"],
+      "properties": {
+        "rescoreId": { "$ref": "#/$defs/identifier" },
+        "comparisonId": { "$ref": "#/$defs/identifier" },
+        "generatedAt": { "$ref": "#/$defs/timestamp" },
+        "recordDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "sourceReportRef": { "$ref": "#/$defs/reportReference" },
+    "rescoredReportRef": { "$ref": "#/$defs/reportReference" },
+    "sourcePackageDigests": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/digest" } },
+    "scorerSet": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/reference" } },
+    "reason": { "type": "string", "minLength": 10 },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawObservationsMutated", "priorReportsMutated", "mayApprove", "mayPublish"],
+      "properties": {
+        "rawObservationsMutated": { "const": false },
+        "priorReportsMutated": { "const": false },
+        "mayApprove": { "const": false },
+        "mayPublish": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "reportReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportId", "reportDigest"],
+      "properties": {
+        "reportId": { "$ref": "#/$defs/identifier" },
+        "reportDigest": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

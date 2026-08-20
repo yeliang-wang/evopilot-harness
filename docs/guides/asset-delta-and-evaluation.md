@@ -72,7 +72,7 @@ A generated pack starts at `INSUFFICIENT_EVAL_EVIDENCE`. Contract closure proves
 
 Compatibility is additive:
 
-| Version | Purpose | Read status in Engine 4.0.2 |
+| Version | Purpose | Read status in Engine 4.1.0 |
 |---|---|---|
 | `EvaluationPack v1` | Reviewed expected-decision cases | Supported. |
 | `EvaluationPack v2` | Outcome, Process, Safety, and Cost feedback criteria | Supported. |
@@ -115,17 +115,16 @@ closure.blockers[]
 nextAction
 ```
 
-Continue only when closure is `VALIDATED` and the decision is mutating. Run `proposal review`, present the complete Review Report, and stop for a separate human decision. `proposal approve` requires the current report file to match the report id and digest bound into the Proposal, explicit confirmation, `--evaluation-reviewed`, every Evaluation case marked approved, all required polarities, and `EvaluationPack.status=READY`. Approval stores a digest of the complete approved content. Publication recomputes that digest, revalidates the report and Evaluation closure, rebuilds Delta after-states from the exact published assets and Evaluation, and performs immutable path preflight before writing any asset, Evaluation, Delta, or Catalog state.
+Continue only when closure is `VALIDATED` and the decision is mutating. Run `proposal review`, present the complete Review Report, and stop for a separate human decision. When a current governed comparison is bound, the report includes `comparisonAssessment` and separates expected effect from comparatively supported effect. `proposal approve` requires the current report file to match the report id and digest bound into the Proposal, the comparison snapshot to remain current, explicit confirmation, `--evaluation-reviewed`, every Evaluation case marked approved, all required polarities, and `EvaluationPack.status=READY`. Approval stores a digest of the complete approved content. Publication recomputes that digest, revalidates the report, comparison snapshot, and Evaluation closure, rebuilds Delta after-states from the exact published assets and Evaluation, and performs immutable path preflight before writing any asset, Evaluation, Delta, or Catalog state.
 
 ## Explicit Exclusions
 
-Engine 3.4.0 does not add:
+The Asset Delta and Evaluation contracts themselves do not add:
 
-- Pairwise, Baseline/Candidate, or Champion/Challenger experiments;
 - causal-improvement claims or automatic promotion;
 - long-horizon curriculum learning or unrestricted external research;
 - source-project build, test, deploy, benchmark, or business execution;
 - EvoPilot project matching, Goal Loop execution, or project release decisions;
 - automatic approval, publication, or Catalog mutation.
 
-Controlled comparative evidence belongs to the planned 4.1.0 milestone. Professional asset learning and bounded external research belong to the planned 4.2.0 milestone. The intervening 4.0.0 milestone changes the supported Agent-native operating model without expanding v3.4 Asset Delta or Evaluation behavior.
+Engine v4.1 adds controlled Baseline/Candidate evidence as a separate governed input to Proposal Review; it does not change the Delta or Evaluation publication authority and does not claim causality. See [Controlled Comparative Evidence](controlled-comparative-evidence.md). Professional asset learning and bounded external research remain in the planned v4.2.0 milestone.

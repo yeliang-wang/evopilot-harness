@@ -3,8 +3,8 @@
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.0.2`
-- Core digest: `sha256:e8b5c97c539d6a4c0ce512fcfd18ef9c9f54ccdfa82fa3925ff36f57f129c8b3`
+- Expert version: `4.1.0`
+- Core digest: `sha256:1ab2d6ddbabc3549ae1f7324cb02daa5f4959de878dc35d064d6bbdb0ce81f8a`
 - Agent protocol: `evopilot-harness-agent-operations/v1`
 - Engine API: `harness.evopilot.io/v3`
 - MCP command: `evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness`
@@ -46,14 +46,16 @@ Ask exactly one shortest missing question. Accept a complete user request withou
 1. Start the local stdio MCP process with the Adapter's exact package command and complete standard MCP initialization. Call `inspect_capabilities` before any Workspace mutation, then compare its Product version, Expert version, Core digest, Agent protocol, and Engine API binding with the loaded Adapter. Stop when one field is missing or incompatible. A host-specific `clientInfo.compatibility` extension may fail an obvious mismatch earlier, but the Digital Expert must not require a non-standard MCP client extension.
 2. Call `prepare_workspace`; all mutable state must remain under the returned external Workspace.
 3. Collect intent and call `start_operation_session`.
-4. Collect the shortest missing source or maintenance input and call `plan_operation_session`.
+4. Collect the shortest missing evolve, feedback, comparison, calibration, or maintenance input and call `plan_operation_session`.
 5. Render the exact Plan and `planDigest`; ask for a plan decision. “Continue”, “开始”, or Execution Brief acceptance is not confirmation unless the human explicitly approves the displayed digest.
 6. After the human explicitly approves the displayed Plan in natural language, construct the Engine-required confirmation token from the current digest and call `confirm_operation_plan`. Never ask the human to copy, type, or understand an internal decision token.
 7. Call `execute_operation_plan` and stop on every structured blocker or `nextAction`. A maintenance publication operation requires `authorize_plan_publication_operation` with its exact Plan and operation digests before execution.
-8. When Proposals exist, call `review_session_proposals` automatically and render every Engine Review field before asking for approval.
-9. Call `approve_session_proposal` only after explicit approval of the exact Proposal, Review, and Evaluation bindings. Approval never authorizes publication.
-10. Ask a separate publication question. Call `authorize_proposal_publication`, then `publish_session_proposal`, only for the exact approved Proposal digest.
-11. Render Catalog validation and final state. Ask whether to close, preserve for resume, or explicitly clean only owned closed-session metadata.
+8. For a comparison scenario, render the complete Engine `HarnessComparisonReport`, including comparability checks and strata, every metric, pair and missing counts, uncertainty, conflicts, recommendation, reasons, limitations, bindings, and authority. Do not ask the human to compare raw Harness files and do not reinterpret the recommendation. After presentation, call `acknowledge_evidence_report_review` only when the human confirms they reviewed the exact report digest; that acknowledgement is not approval, rollback, or publication authorization. `NON_COMPARABLE`, `NEED_MORE_EVIDENCE`, `CONFLICT`, `KEEP_BASELINE`, `REVISE_CANDIDATE`, and `ROLLBACK_RECOMMENDED` are stop outcomes, not approval shortcuts.
+9. For a calibration scenario, render the complete `HarnessCalibrationReport`, including reviewed case count, baseline and candidate policy bindings, ranking, every case result, false-upgrade and false-new-profile rates, abstention, regressions, conflicts, uncertainty, recommendation, and non-mutation authority. Record review of the exact report through `acknowledge_evidence_report_review`; calibration review never activates a candidate policy.
+10. When Proposals exist, call `review_session_proposals` automatically and render every Engine Review field, including `comparisonAssessment`, before asking for approval.
+11. Call `approve_session_proposal` only after explicit approval of the exact Proposal, Review, Evaluation, and any controlled-comparison bindings. Approval never authorizes publication.
+12. Ask a separate publication question. Call `authorize_proposal_publication`, then `publish_session_proposal`, only for the exact approved Proposal digest.
+13. Render Catalog validation and final state. Ask whether to close, preserve for resume, or explicitly clean only owned closed-session metadata.
 
 For every gate, separate the human decision from the Engine credential: the human answers one plain-language question about the currently rendered immutable object; the Expert constructs the exact digest-bound token and submits it internally. Generic continuation cannot authorize a gate that was not displayed, and an earlier decision cannot authorize a later or changed digest.
 
@@ -65,6 +67,8 @@ Stop and show the exact Engine result, reason, evidence references, and `nextAct
 - any raw secret material in Agent input or Session state;
 - source or Release integrity uncertainty;
 - insufficient Evidence or `NEED_MORE_EVIDENCE`;
+- non-comparable, conflicting, stale, or regressing Baseline/Candidate evidence;
+- insufficient calibration cases, calibration regression, or candidate-policy revision requirement;
 - Advisor or Proposal Review failure;
 - a Review verdict other than `READY_FOR_HUMAN_APPROVAL`;
 - stale Session, Plan, Proposal, Review, approval, or publication digest;
@@ -96,6 +100,7 @@ stages:
   - operation-plan-review
   - plan-confirmation
   - engine-execution
+  - comparison-or-calibration-review-presentation
   - proposal-review-presentation
   - proposal-approval
   - publication-authorization
@@ -108,6 +113,7 @@ internalDecisionTokens:
   publication: AUTHORIZE_PUBLICATION:<proposalId>:<approvedProposalDigest>
   interruptedReceipt: ACCEPT_OPERATION_RECEIPT:<sessionId>:<attemptDigest>:<receiptDigest>
   interruptedRetry: CONFIRM_RETRY_UNCHANGED_OPERATION:<sessionId>:<attemptDigest>:<workspaceDigest>
+  evidenceReview: ACKNOWLEDGE_<COMPARISON|CALIBRATION>_REVIEW:<reportId>:<reportDigest>
   cancellation: CANCEL_SESSION:<sessionId>:<sessionDigest>
   close: CLOSE_SESSION:<sessionId>:<sessionDigest>
   cleanup: DELETE_SESSION_STATE:<sessionId>:<sessionDigest>
@@ -150,6 +156,12 @@ workflows:
   - id: process-approved-feedback
     scenario: feedback
     sources: [feedbackFile]
+  - id: compare-baseline-and-candidate
+    scenario: comparison
+    sources: [comparisonFile, comparisonPolicyFile]
+  - id: calibrate-matching-and-proposal-quality
+    scenario: calibration
+    sources: [calibrationCaseSet, calibrationCaseSetId, baselineMatchPolicy, candidateMatchPolicy, baselineComparisonPolicy, candidateComparisonPolicy]
   - id: maintain-assets-catalog-registry-policies
     scenario: maintenance
     sources: [operations]
@@ -175,6 +187,18 @@ terminalDecisions:
   - PROPOSE_NEW_PROFILE
   - BLOCKED
   - FAILED
+comparisonRecommendations:
+  - NON_COMPARABLE
+  - NEED_MORE_EVIDENCE
+  - CONFLICT
+  - KEEP_BASELINE
+  - REVISE_CANDIDATE
+  - CANDIDATE_READY_FOR_HUMAN_REVIEW
+  - ROLLBACK_RECOMMENDED
+calibrationRecommendations:
+  - CANDIDATE_POLICY_ELIGIBLE_FOR_HUMAN_REVIEW
+  - REVISE_CANDIDATE_POLICY
+  - NEED_MORE_REVIEWED_CASES
 
 --- core/policies.yaml ---
 schema: evopilot-harness-digital-expert-policies/v1
@@ -202,6 +226,8 @@ sourceExecution:
   businessCommands: deny
 humanGates:
   planConfirmation: required
+  comparisonReview: required-before-proposal-approval-when-present
+  calibrationReview: required-before-policy-delta
   proposalApproval: required
   evaluationReview: required
   publicationAuthorization: required-separate
@@ -216,6 +242,8 @@ fallback:
   retryAfterUnknownMutation: deny
   automaticApproval: deny
   automaticPublication: deny
+  automaticRollback: deny
+  automaticPolicyActivation: deny
 cleanup:
   ownedClosedSessionMetadata: explicit-only
   evolutionRuns: preserve
@@ -230,7 +258,9 @@ requiredFields:
   common: [schema, status, nextAction]
   session: [sessionId, status, sessionDigest, planDigest, proposals, blockers, nextAction]
   proposal: [proposalId, decision, proposalDigest, proposedAssets, blockers, nextAction]
-  review: [reviewId, reportDigest, status, verdict, summary, findings, reasons, evidenceIds, deterministicGates, groupCoherence, projectMembership, boundaryAssessment, existingAssetOverlap, definitionQuality, evaluationSufficiency, advisorAssessment, suggestedActions, remainingBlockers, reviewer, nextAction]
+  review: [reviewId, reportDigest, status, verdict, summary, findings, reasons, evidenceIds, deterministicGates, groupCoherence, projectMembership, boundaryAssessment, existingAssetOverlap, definitionQuality, evaluationSufficiency, advisorAssessment, comparisonAssessment, suggestedActions, remainingBlockers, reviewer, nextAction]
+  comparison: [comparisonId, reportId, reportDigest, comparability, metrics, uncertainty, recommendation, reasons, limitations, authority, nextAction]
+  calibration: [reportId, reportDigest, caseSetRef, policyBindings, summary, ranking, cases, conflicts, uncertainty, recommendation, authority, nextAction]
   publication: [proposalId, status, assets, catalog, nextAction]
 rules:
   - preserve-engine-values

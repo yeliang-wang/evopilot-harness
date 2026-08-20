@@ -16,7 +16,8 @@ The v3 reasoning pipeline is deterministic at its decision boundary:
 10. Produce one of five Proposal decisions with a typed Asset Delta and EvaluationPack v3.
 11. Validate exact state, decision/publication semantics, positive/negative Evaluation coverage, and deterministic impact closure.
 12. Run remaining deterministic Proposal gates plus an independent evidence-bound semantic review.
-13. Synthesize and persist a structured Review Report, then stop for human decision.
+13. Resolve any current governed comparison snapshot and distinguish expected effect from comparatively supported effect.
+14. Synthesize and persist a structured Review Report, then stop for human decision.
 
 ## Eligibility
 
@@ -90,11 +91,11 @@ An existing-Profile evolution must change evidence-backed matching or acceptance
 - `REJECT`
 - `NEED_MORE_EVIDENCE`
 
-Deterministic gates validate Proposal shape, evidence/reasoning digests, required Advisor completion, definition-contract completeness, typed Delta closure, impact closure, and Evaluation Pack presence. The semantic reviewer independently evaluates product ownership versus dependency/use, corpus coherence and every source membership, new-versus-existing asset relationships, boundary quality, professional definition completeness, and evaluation sufficiency. Synthesis cannot turn a failed blocking gate into `READY_FOR_HUMAN_APPROVAL`.
+Deterministic gates validate Proposal shape, evidence/reasoning digests, required Advisor completion, definition-contract completeness, typed Delta closure, impact closure, Evaluation Pack presence, and any governed comparison assessment. The semantic reviewer independently evaluates product ownership versus dependency/use, corpus coherence and every source membership, new-versus-existing asset relationships, boundary quality, professional definition completeness, and evaluation sufficiency. Synthesis cannot turn a failed blocking or comparison gate into `READY_FOR_HUMAN_APPROVAL`.
 
 The Review Report records findings, reasons, evidence ids, actions, original Proposal blockers, Review blockers, model and token usage, attempts, policy and algorithm versions, Proposal/report digests, and `nextAction`. Source-derived project membership, boundary, Advisor, and multi-source coherence conclusions require valid Evidence Graph citations. Catalog overlap, Proposal structure, definition quality, evaluation sufficiency, and findings derived only from those non-Graph inputs may use an empty `evidenceIds` array; the reviewer must not invent source citations for them. String-form definition-quality checks are normalized into structured report entries before validation, but normalization cannot add evidence or change a verdict.
 
-The report is advisory to the human lifecycle gate: neither the Review Engine nor `READY_FOR_HUMAN_APPROVAL` is approval. `proposal approve` rejects a missing, invalid, stale, blocked, or non-ready report.
+The report is advisory to the human lifecycle gate: neither the Review Engine nor `READY_FOR_HUMAN_APPROVAL` is approval. `proposal approve` rejects a missing, invalid, stale, blocked, or non-ready report. When comparison evidence is bound, approval and publication recompute its package/report/Proposal digest snapshot and reject new evidence, conflict, tamper, expiry, or binding drift. An LLM cannot override `NON_COMPARABLE`, safety regression, uncertainty, conflict, or snapshot drift.
 
 ## LLM Boundary
 

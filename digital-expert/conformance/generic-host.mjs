@@ -53,7 +53,7 @@ try {
       session: { sessionId: produced.sessionId, sessionDigest: produced.sessionDigest }
     };
   }
-  const requiredTools = ["start_operation_session", "plan_operation_session", "confirm_operation_plan", "execute_operation_plan", "authorize_plan_publication_operation", "resolve_interrupted_operation", "review_session_proposals", "approve_session_proposal", "authorize_proposal_publication", "publish_session_proposal"];
+  const requiredTools = ["start_operation_session", "plan_operation_session", "confirm_operation_plan", "execute_operation_plan", "authorize_plan_publication_operation", "resolve_interrupted_operation", "acknowledge_evidence_report_review", "review_session_proposals", "approve_session_proposal", "authorize_proposal_publication", "publish_session_proposal"];
   const missingTools = requiredTools.filter((name) => !listed.tools.some((tool) => tool.name === name));
   const workflowPassed = !workflow || workflow.renderedDecision.status === "PROPOSAL_REVIEW_REQUIRED";
   const adapterId = args["adapter-id"] ?? "generic";

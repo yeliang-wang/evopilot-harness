@@ -9,6 +9,8 @@ evidenceSources:
   - notes
   - researchUrls
   - feedbackFile
+  - comparisonFile
+  - calibrationCaseSet
 terminalDecisions:
   - NOT_HARNESS_ELIGIBLE
   - NO_CHANGE
@@ -57,6 +59,17 @@ engineOperations:
   - feedback.process
   - feedback.aggregate
   - feedback.report
+  - comparison.inspect
+  - comparison.validate
+  - comparison.ingest
+  - comparison.process
+  - comparison.score
+  - comparison.report
+  - comparison.rescore
+  - calibration.validate
+  - calibration.ingest
+  - calibration.run
+  - calibration.report
   - migration.plan
   - migration.apply
   - migration.rollback
@@ -72,6 +85,9 @@ lifecycleBranches:
   - proposal-approval
   - separate-publication-authorization
   - catalog-validation
+  - comparison-review
+  - calibration-review
+  - evidence-report-digest-drift
   - process-interruption
   - digest-drift
   - cancellation
@@ -84,6 +100,7 @@ conformanceEvidence:
     - tests/v3.test.mjs
     - tests/v3.4.test.mjs
     - tests/v4.test.mjs
+    - tests/v4.1.test.mjs
   realSessionProtocol:
     - digital-expert/conformance/generic-host.mjs
     - docs/operations/v4-acceptance.md
@@ -117,6 +134,13 @@ coverage:
     feedbackFile:
       <<: *source_coverage
       marker: feedbackFile
+    comparisonFile: &comparative_evidence
+      testFile: tests/v4.1.test.mjs
+      testName: real stdio MCP completes comparison and calibration review sessions without human CLI commands
+      marker: comparisonFile
+    calibrationCaseSet:
+      <<: *comparative_evidence
+      marker: calibrationCaseSet
   terminalDecisions:
     NOT_HARNESS_ELIGIBLE: &reasoning_decisions
       testFile: tests/v4.test.mjs
@@ -263,6 +287,41 @@ coverage:
     feedback.report:
       <<: *maintenance_operations
       marker: feedback.report
+    comparison.inspect: &comparison_operations
+      testFile: tests/v4.1.test.mjs
+      testName: real stdio MCP completes comparison and calibration review sessions without human CLI commands
+      marker: comparison.inspect
+    comparison.validate:
+      <<: *comparison_operations
+      marker: comparison.validate
+    comparison.ingest:
+      <<: *comparison_operations
+      marker: comparison.ingest
+    comparison.process:
+      <<: *comparison_operations
+      marker: comparison.process
+    comparison.score:
+      <<: *comparison_operations
+      marker: comparison.score
+    comparison.report:
+      <<: *comparison_operations
+      marker: comparison.report
+    comparison.rescore:
+      <<: *comparison_operations
+      marker: comparison.rescore
+    calibration.validate: &calibration_operations
+      testFile: tests/v4.1.test.mjs
+      testName: real stdio MCP completes comparison and calibration review sessions without human CLI commands
+      marker: calibration.validate
+    calibration.ingest:
+      <<: *calibration_operations
+      marker: calibration.ingest
+    calibration.run:
+      <<: *calibration_operations
+      marker: calibration.run
+    calibration.report:
+      <<: *calibration_operations
+      marker: calibration.report
     migration.plan: &migration_operations
       testFile: tests/v4.test.mjs
       testName: real stdio MCP routes every maintenance Engine operation through its authority gate
@@ -312,6 +371,17 @@ coverage:
     catalog-validation:
       <<: *proposal_lifecycle
       marker: catalogStatus
+    comparison-review: &comparative_review
+      testFile: tests/v4.1.test.mjs
+      testName: real stdio MCP completes comparison and calibration review sessions without human CLI commands
+      marker: ACKNOWLEDGE_COMPARISON_REVIEW
+    calibration-review:
+      <<: *comparative_review
+      marker: ACKNOWLEDGE_CALIBRATION_REVIEW
+    evidence-report-digest-drift:
+      testFile: tests/v4.1.test.mjs
+      testName: Proposal Review, approval, and publication fail closed on comparison contradiction or digest drift
+      marker: proposal-comparison-assessment-drift
     process-interruption:
       testFile: tests/v4.test.mjs
       testName: forced process stop is recovered as an interrupted digest-bound session

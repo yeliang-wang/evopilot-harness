@@ -7,6 +7,8 @@ import { discoverAssets, generateSigningKey, publishCatalog, signFile, validateA
 import { approveProposal, createProposal, inspectProposal, publishProposal } from "./lifecycle.mjs";
 import { serveHubV3, writeHubSnapshot } from "./hub.mjs";
 import { aggregateFeedback, ingestFeedbackPackage, inspectFeedbackPackage, processFeedbackPackage, readEffectivenessReport, validateFeedbackPackage } from "./feedback.mjs";
+import { ingestComparisonPackage, inspectComparisonPackage, processComparisonPackage, readComparisonReport, rescoreComparison, scoreComparison, validateComparisonPackage } from "./comparison.mjs";
+import { ingestCalibrationCaseSet, readCalibrationReport, runCalibration, validateCalibrationCaseSet } from "./calibration.mjs";
 import { applyV2Migration, planV2Migration, rollbackMigration } from "./migration.mjs";
 import { collectEvidence, reasonCorpus, reasonEvidence } from "./reasoning.mjs";
 import { buildAssetDeltaProposal, buildEvaluationPackV3, validateAssetDeltaClosure } from "./delta.mjs";
@@ -16,7 +18,7 @@ import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, workspaceStatus } from "./workspace.mjs";
 
-const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback"]);
+const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration"]);
 
 export async function handleV3Command(argv) {
   const args = parseCli(argv);
@@ -77,6 +79,10 @@ async function dispatch(args, group, action, id) {
   }
   if (group === "feedback" && action === "inspect") {
     const result = inspectFeedbackPackage(id ?? requiredFileOption(args));
+    return output(args, result, result.status === "INSPECTED" ? 0 : 2);
+  }
+  if (group === "comparison" && action === "inspect") {
+    const result = inspectComparisonPackage(id ?? requiredFileOption(args));
     return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
   requireWorkspace(home);
@@ -157,6 +163,55 @@ async function dispatch(args, group, action, id) {
     const result = processFeedbackPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
     return output(args, result, result.status === "PROCESSED" ? 0 : 2);
   }
+  if (group === "comparison" && action === "validate") {
+    const result = validateComparisonPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, result.status === "VALIDATED" ? 0 : 2);
+  }
+  if (group === "comparison" && action === "ingest") {
+    const result = ingestComparisonPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, ["ACCEPTED", "DUPLICATE"].includes(result.status) ? 0 : 2);
+  }
+  if (group === "comparison" && action === "score") {
+    const result = scoreComparison({ home, comparisonId: id ?? requiredIdOption(args, "comparison-id"), now: option(args, "now", new Date().toISOString()), policyFile: optionalPath(args, "policy-file") });
+    return output(args, result, result.status === "SCORED" ? 0 : 2);
+  }
+  if (group === "comparison" && action === "report") {
+    const result = readComparisonReport({ home, reportId: id ?? requiredIdOption(args, "report-id") });
+    return output(args, result, result.status === "FOUND" ? 0 : 2);
+  }
+  if (group === "comparison" && action === "rescore") {
+    const result = rescoreComparison({ home, reportId: id ?? requiredIdOption(args, "report-id"), policyFile: requiredOption(args, "policy-file"), reason: option(args, "reason"), now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, result.status === "RESCORED" ? 0 : 2);
+  }
+  if (group === "comparison" && action === "process") {
+    const result = processComparisonPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()), policyFile: optionalPath(args, "policy-file") });
+    return output(args, result, result.status === "PROCESSED" ? 0 : 2);
+  }
+  if (group === "calibration" && action === "validate") {
+    const result = validateCalibrationCaseSet({ file: id ?? requiredFileOption(args), home });
+    return output(args, result, result.status === "VALIDATED" ? 0 : 2);
+  }
+  if (group === "calibration" && action === "ingest") {
+    const result = ingestCalibrationCaseSet({ file: id ?? requiredFileOption(args), home });
+    return output(args, result, ["ACCEPTED", "DUPLICATE"].includes(result.status) ? 0 : 2);
+  }
+  if (group === "calibration" && action === "run") {
+    const result = runCalibration({
+      home,
+      caseSetFile: optionalPath(args, "case-set"),
+      caseSetId: option(args, "case-set-id"),
+      baselineMatchPolicyFile: optionalPath(args, "baseline-match-policy"),
+      candidateMatchPolicyFile: optionalPath(args, "candidate-match-policy"),
+      baselineComparisonPolicyFile: optionalPath(args, "baseline-comparison-policy"),
+      candidateComparisonPolicyFile: optionalPath(args, "candidate-comparison-policy"),
+      now: option(args, "now", new Date().toISOString())
+    });
+    return output(args, result, result.status === "CALIBRATED" ? 0 : 2);
+  }
+  if (group === "calibration" && action === "report") {
+    const result = readCalibrationReport({ home, reportId: id ?? requiredIdOption(args, "report-id") });
+    return output(args, result, result.status === "FOUND" ? 0 : 2);
+  }
   if (group === "produce") return produce(args, home);
   if (group === "proposal" && action === "inspect") return output(args, inspectProposal(home, id ?? requiredOption(args, "proposal-id")));
   if (group === "proposal" && action === "validate") {
@@ -198,7 +253,7 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
 }
 
 async function produce(args, home) {
@@ -296,7 +351,9 @@ function mergeCorpusEvidence(home, group) {
 }
 
 function packCommand(args, group, action, home) {
-  const kindMap = group === "ontology" ? { kind: "OntologyPack", directory: "ontology" } : { kind: option(args, "type", "matcher") === "advisor" ? "AdvisorPolicyPack" : "MatchPolicyPack", directory: `policies/${option(args, "type", "matcher")}` };
+  const policyType = option(args, "type", "matcher");
+  const policyKinds = { matcher: "MatchPolicyPack", advisor: "AdvisorPolicyPack", comparison: "ComparisonPolicyPack" };
+  const kindMap = group === "ontology" ? { kind: "OntologyPack", directory: "ontology" } : { kind: policyKinds[policyType] ?? "MatchPolicyPack", directory: `policies/${policyKinds[policyType] ? policyType : "matcher"}` };
   if (action === "inspect") {
     const files = packFiles(path.join(home, kindMap.directory), kindMap.kind);
     return output(args, { schema: `evopilot-harness-${group}-inspect/v3`, status: files.length ? "READY" : "EMPTY", packs: files.map((file) => ({ file, document: readYaml(file), digest: digest(readYaml(file)) })) });
@@ -481,6 +538,11 @@ function requiredIdOption(args, name) {
   const value = option(args, name);
   if (!value) throw usage(`Missing required --${name}.`);
   return value;
+}
+
+function optionalPath(args, name) {
+  const value = option(args, name);
+  return value ? path.resolve(value) : undefined;
 }
 
 function output(args, value, code = 0) {

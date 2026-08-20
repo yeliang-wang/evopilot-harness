@@ -24,8 +24,11 @@ Maintainers should acknowledge the report privately, confirm scope, coordinate a
 - Never commit `models.json`, API keys, signing private keys, source-project secrets, or unredacted production logs.
 - Use a disposable `EVOPILOT_HARNESS_HOME` for tests involving untrusted evidence.
 - Treat GitHub repository URLs, attachments, and logs as untrusted evidence inputs.
+- Treat Baseline/Candidate comparison packages, metric values, scorer references, and calibration case sets as untrusted until schema, digest, approval, redaction, expiry, provenance, review, and immutable asset bindings pass.
 - Do not execute source-project build, test, deploy, or business commands during evidence ingestion.
 - Keep Catalog private keys outside the repository and restrict their filesystem permissions.
+- Never edit accepted comparison packages or prior reports. Use an append-only rescore record for a reviewed scorer or policy change.
+- A Comparison or Calibration Report may recommend review only. Do not wire recommendations or report acknowledgement directly to approval, publication, policy activation, rollback, or execution.
 
 ## Package Supply Chain
 

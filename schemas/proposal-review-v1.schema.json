@@ -57,6 +57,27 @@
         "rollback": { "type": "array", "items": { "type": "string" } }
       }
     },
+    "comparisonAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "required", "proposalDigest", "blocking", "recommendation", "reasons"],
+      "properties": {
+        "status": { "enum": ["NOT_PROVIDED", "VALIDATED", "STALE", "CONFLICT", "FAILED"] },
+        "required": { "type": "boolean" },
+        "proposalDigest": { "$ref": "#/$defs/digest" },
+        "blocking": { "type": "boolean" },
+        "recommendation": { "type": ["string", "null"] },
+        "reportId": { "type": "string" },
+        "reportDigest": { "$ref": "#/$defs/digest" },
+        "comparisonId": { "type": "string" },
+        "packageCount": { "type": "integer", "minimum": 0 },
+        "pairCount": { "type": "integer", "minimum": 0 },
+        "uncertainty": { "type": "object" },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "limitations": { "type": "array", "items": { "type": "string" } },
+        "comparativelySupported": { "type": "boolean" }
+      }
+    },
     "suggestedActions": { "type": "array", "items": { "type": "string" } },
     "remainingBlockers": { "type": "array", "items": { "type": "string" } },
     "reviewer": {
@@ -101,7 +122,7 @@
       "additionalProperties": false,
       "required": ["version", "deterministicDecision", "semanticVerdict"],
       "properties": {
-        "version": { "enum": ["deterministic-gates-semantic-review-synthesis/v1", "deterministic-delta-gates-semantic-review-synthesis/v2"] },
+        "version": { "enum": ["deterministic-gates-semantic-review-synthesis/v1", "deterministic-delta-gates-semantic-review-synthesis/v2", "deterministic-delta-comparison-gates-semantic-review-synthesis/v3"] },
         "deterministicDecision": { "type": "string" },
         "semanticVerdict": { "type": ["string", "null"] }
       }

@@ -77,7 +77,7 @@ Dependencies may point from later lifecycle stages to immutable outputs of earli
 ## Enforcement
 
 - Root `AGENTS.md` and CLI agent instructions define agent behavior.
-- `npm run verify:architecture` checks all 24 module anchors, source-tool allowlists, read-only Hub behavior, Advisor authority, Proposal gates, Organization-only publication, and local-path leakage from asset trees.
+- `npm run verify:architecture` checks these 24 core module anchors plus the four controlled comparative-evidence modules added by ADR 0003, source-tool allowlists, read-only Hub behavior, Advisor authority, Proposal/comparison gates, Organization-only publication, and local-path leakage from asset trees.
 - `npm run check` includes architecture verification and is run by GitHub CI and release workflows.
 - Schema tests and v3 tests verify immutable references, Proposal lifecycle, Advisor citations, migration rollback, and Catalog behavior.
 

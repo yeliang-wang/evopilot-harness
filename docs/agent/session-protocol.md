@@ -29,6 +29,9 @@ stateDiagram-v2
   READY_TO_EXECUTE --> RUNNING
   RUNNING --> OPERATION_AUTHORIZATION_REQUIRED: publication operation reached
   OPERATION_AUTHORIZATION_REQUIRED --> READY_TO_EXECUTE: exact operation authorization
+  RUNNING --> EVIDENCE_REVIEW_REQUIRED: comparison or calibration report produced
+  EVIDENCE_REVIEW_REQUIRED --> PROPOSAL_REVIEW_REQUIRED: reports reviewed and Proposal present
+  EVIDENCE_REVIEW_REQUIRED --> COMPLETED: reports reviewed and no Proposal present
   RUNNING --> PROPOSAL_REVIEW_REQUIRED: Proposal produced
   RUNNING --> COMPLETED: maintenance or terminal result
   RUNNING --> INTERRUPTED: process stop
@@ -51,11 +54,14 @@ stateDiagram-v2
 - Plan binds scenario, sources, operations, stop points, and authority by `planDigest`.
 - A maintenance publication authorization binds Plan digest, operation index, operation digest, and human identity value.
 - A planned Engine operation receipt binds its stable idempotency key, operation, input digest, full structured result, and receipt digest.
+- An evidence report reference binds report type, id, digest, rendered deterministic fields, review status, reviewer value, and review time. Acknowledgement revalidates the persisted report before changing Session state.
 - Proposal approval binds Engine `reviewInputDigest`, Review `reportDigest`, Evaluation review, confirmation, and reviewer value.
 - Publication authorization binds the full approved Proposal digest after approval.
 - Publication rechecks the authorization and current Proposal before writing.
 
 Natural-language continuation is never a gate token. The Digital Expert asks one plain-language decision about the immutable object currently presented, then constructs and submits the exact token internally. It never asks a human to transcribe protocol values or reuses a decision for a later digest.
+
+Comparison and calibration Sessions stop at `EVIDENCE_REVIEW_REQUIRED`. `ACKNOWLEDGE_COMPARISON_REVIEW:<reportId>:<reportDigest>` and `ACKNOWLEDGE_CALIBRATION_REVIEW:<reportId>:<reportDigest>` confirm only that the exact report was reviewed. They cannot substitute for Proposal approval, policy activation, rollback authorization, or publication authorization.
 
 ## Recovery
 

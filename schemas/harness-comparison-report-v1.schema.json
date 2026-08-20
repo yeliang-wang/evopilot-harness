@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.io/schemas/harness-comparison-report-v1.schema.json",
+  "title": "Harness Comparison Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "scope", "comparability", "metrics", "uncertainty", "recommendation", "reasons", "limitations", "authority"],
+  "properties": {
+    "apiVersion": { "const": "comparison.evopilot.io/v1" },
+    "kind": { "const": "HarnessComparisonReport" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reportId", "comparisonId", "generatedAt", "algorithmVersion", "policyRef", "reportDigest"],
+      "properties": {
+        "reportId": { "$ref": "#/$defs/identifier" },
+        "comparisonId": { "$ref": "#/$defs/identifier" },
+        "generatedAt": { "$ref": "#/$defs/timestamp" },
+        "algorithmVersion": { "type": "string", "minLength": 1 },
+        "policyRef": { "$ref": "#/$defs/reference" },
+        "reportDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageDigests", "independentSourceCount", "pairCount", "baseline", "candidate", "contextDigests"],
+      "properties": {
+        "packageDigests": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/digest" } },
+        "independentSourceCount": { "type": "integer", "minimum": 0 },
+        "pairCount": { "type": "integer", "minimum": 0 },
+        "baseline": { "$ref": "#/$defs/assetBinding" },
+        "candidate": { "$ref": "#/$defs/assetBinding" },
+        "contextDigests": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "comparability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "checks"],
+      "properties": {
+        "status": { "enum": ["COMPARABLE", "NON_COMPARABLE"] },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "status", "evidence"],
+            "properties": {
+              "id": { "$ref": "#/$defs/identifier" },
+              "status": { "enum": ["PASS", "FAIL"] },
+              "evidence": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "strata": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["stratumId", "contextDigests", "baselineBindingDigest", "candidateBindingDigest", "metricDefinitionsDigest", "packageDigests", "pairCount", "independentSourceCount"],
+            "properties": {
+              "stratumId": { "$ref": "#/$defs/identifier" },
+              "contextDigests": { "type": "object", "additionalProperties": { "$ref": "#/$defs/digest" } },
+              "baselineBindingDigest": { "$ref": "#/$defs/digest" },
+              "candidateBindingDigest": { "$ref": "#/$defs/digest" },
+              "metricDefinitionsDigest": { "$ref": "#/$defs/digest" },
+              "packageDigests": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/digest" } },
+              "pairCount": { "type": "integer", "minimum": 1 },
+              "independentSourceCount": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "dimension", "valueType", "direction", "required", "blocking", "observedPairCount", "missingPairCount", "baseline", "candidate", "paired", "status"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "dimension": { "enum": ["OUTCOME", "PROCESS", "SAFETY", "COST"] },
+          "valueType": { "enum": ["BOOLEAN", "NUMBER"] },
+          "direction": { "enum": ["HIGHER_IS_BETTER", "LOWER_IS_BETTER", "TRUE_IS_BETTER"] },
+          "required": { "type": "boolean" },
+          "blocking": { "type": "boolean" },
+          "observedPairCount": { "type": "integer", "minimum": 0 },
+          "missingPairCount": { "type": "integer", "minimum": 0 },
+          "baseline": { "$ref": "#/$defs/metricSummary" },
+          "candidate": { "$ref": "#/$defs/metricSummary" },
+          "paired": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["winCount", "lossCount", "tieCount", "medianDelta", "confidenceInterval"],
+            "properties": {
+              "winCount": { "type": "integer", "minimum": 0 },
+              "lossCount": { "type": "integer", "minimum": 0 },
+              "tieCount": { "type": "integer", "minimum": 0 },
+              "medianDelta": { "type": ["number", "null"] },
+              "confidenceInterval": {
+                "oneOf": [
+                  { "type": "null" },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["lower", "upper", "method"],
+                    "properties": {
+                      "lower": { "type": "number" },
+                      "upper": { "type": "number" },
+                      "method": { "enum": ["WILSON", "PAIRED_QUANTILE"] }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "status": { "enum": ["IMPROVED", "REGRESSED", "TIED", "INCONCLUSIVE", "BLOCKING_REGRESSION"] }
+        }
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "reasons", "missingRatio", "conflicts"],
+      "properties": {
+        "level": { "enum": ["LOW", "MEDIUM", "HIGH"] },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "missingRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "conflicts": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "recommendation": { "enum": ["NON_COMPARABLE", "NEED_MORE_EVIDENCE", "CONFLICT", "KEEP_BASELINE", "REVISE_CANDIDATE", "CANDIDATE_READY_FOR_HUMAN_REVIEW", "ROLLBACK_RECOMMENDED"] },
+    "reasons": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "limitations": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mayRecommend", "mayApprove", "mayPublish", "mayRollback", "mayExecute"],
+      "properties": {
+        "mayRecommend": { "const": true },
+        "mayApprove": { "const": false },
+        "mayPublish": { "const": false },
+        "mayRollback": { "const": false },
+        "mayExecute": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$" },
+    "semver": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+    "timestamp": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]{1,9})?Z$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "assetReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "version", "digest"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "id": { "$ref": "#/$defs/identifier" },
+        "version": { "$ref": "#/$defs/semver" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "assetBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "assetRefs"],
+      "properties": {
+        "source": { "enum": ["CATALOG", "PROPOSAL"] },
+        "assetRefs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/assetReference" } },
+        "proposalRef": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["proposalId", "proposalDigest"],
+          "properties": {
+            "proposalId": { "$ref": "#/$defs/identifier" },
+            "proposalDigest": { "$ref": "#/$defs/digest" }
+          }
+        }
+      }
+    },
+    "metricSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sampleCount", "mean", "median", "successRate"],
+      "properties": {
+        "sampleCount": { "type": "integer", "minimum": 0 },
+        "mean": { "type": ["number", "null"] },
+        "median": { "type": ["number", "null"] },
+        "successRate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

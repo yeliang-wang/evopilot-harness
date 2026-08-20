@@ -6,6 +6,8 @@ import { PACKAGE_ROOT } from "../../v3/constants.mjs";
 import { digest, persistedJson, safeId } from "../../v3/utils.mjs";
 import { inspectProposal } from "../../v3/lifecycle.mjs";
 import { inspectProposalReview, reviewInputDigest } from "../../v3/review.mjs";
+import { readComparisonReport } from "../../v3/comparison.mjs";
+import { readCalibrationReport } from "../../v3/calibration.mjs";
 import { requireWorkspace } from "../../v3/workspace.mjs";
 import { engineOperationDefinition, inspectEngineOperationReceipt, invokeEngineOperation, validateEngineOperationRequest } from "../engine-adapter.mjs";
 import { AGENT_SESSION_SCHEMA, OPERATION_PLAN_SCHEMA, assertExternalWorkspace, assertOperationCompatibility, assertWorkspaceTreeConfined, operationCompatibility, resolveWorkspacePath } from "../constants.mjs";
@@ -48,6 +50,7 @@ export function createAgentSession({ home, intent, adapterId, compatibility = op
     operationAuthorizations: [],
     pendingOperationAuthorization: null,
     proposals: [],
+    evidenceReports: [],
     sequence: 0,
     nextAction: "create-operation-plan"
   };
@@ -65,6 +68,7 @@ export function createSessionPlan({ home, sessionId, expectedSessionDigest, scen
   session.operationAuthorizations = [];
   session.pendingOperationAuthorization = null;
   session.proposals = [];
+  session.evidenceReports = [];
   session.status = "PLAN_REVIEW_REQUIRED";
   session.nextAction = "present-plan-and-request-explicit-confirmation";
   return persist(session, { event: "PLAN_CREATED", actor: session.adapter.current, details: { planDigest: session.planDigest, scenario } });
@@ -146,6 +150,7 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
     session.operations.push(operationRecord(planned, result, now, { phase: "plan", planOperationIndex: index, planCompleted: true, attemptDigest: attempt.attemptDigest, idempotencyKey, workspaceDigestBefore, workspaceDigestAfter }));
     session.inFlightOperation = null;
     if (planned.operation === "evidence.produce") await bindProposalReferences(session, result);
+    bindEvidenceReport(session, planned.operation, result);
     persist(session, { event: "ENGINE_OPERATION_COMPLETED", actor: "deterministic-engine", details: { operationIndex: index, operation: planned.operation, resultDigest: digest(result), status: result.status, idempotencyKey } });
     if (result.exitCode !== 0 || ["FAILED", "BLOCKED", "NEED_MORE_EVIDENCE"].includes(result.status)) {
       session.status = "BLOCKED";
@@ -154,7 +159,10 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
       return persist(session, { event: "PLAN_EXECUTION_BLOCKED", actor: "deterministic-engine", details: { operation: planned.operation, nextAction: result.nextAction } });
     }
   }
-  if (session.proposals.length) {
+  if (session.evidenceReports?.some((item) => item.reviewed !== true)) {
+    session.status = "EVIDENCE_REVIEW_REQUIRED";
+    session.nextAction = nextEvidenceReviewAction(session);
+  } else if (session.proposals.length) {
     session.status = "PROPOSAL_REVIEW_REQUIRED";
     session.nextAction = "run-engine-proposal-review";
   } else {
@@ -211,6 +219,7 @@ export async function resolveInterruptedOperation({ home, sessionId, expectedSes
       reconciledFromReceipt: true
     }));
     if (attempt.operation === "evidence.produce") await bindProposalReferences(session, receipt.result);
+    bindEvidenceReport(session, attempt.operation, receipt.result);
     session.humanDecisions.push(decision("INTERRUPTED_OPERATION_RECEIPT_ACCEPTED", confirmedBy, confirmation, { attemptDigest: expectedAttemptDigest, receiptDigest: receipt.receiptDigest }, now));
   } else {
     const currentWorkspaceDigest = workspaceStateDigest(session.workspace.home);
@@ -241,6 +250,40 @@ export async function resolveInterruptedOperation({ home, sessionId, expectedSes
   session.status = "READY_TO_EXECUTE";
   session.nextAction = "execute-confirmed-plan";
   return persist(session, { event: "INTERRUPTED_OPERATION_RECONCILED", actor: confirmedBy, details: { attemptDigest: expectedAttemptDigest, resolution: receipt ? "RECEIPT_ACCEPTED" : "UNCHANGED_RETRY_AUTHORIZED" } });
+}
+
+export function acknowledgeSessionEvidenceReview({ home, sessionId, expectedSessionDigest, reportType, reportId, expectedReportDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
+  const session = loadForMutation(home, sessionId, expectedSessionDigest, ["EVIDENCE_REVIEW_REQUIRED"]);
+  const type = String(reportType ?? "").toUpperCase();
+  if (!["COMPARISON", "CALIBRATION"].includes(type)) throw sessionError("EVIDENCE_REPORT_TYPE_REQUIRED", "Report review type must be COMPARISON or CALIBRATION.", "choose-evidence-report-type");
+  const report = session.evidenceReports.find((item) => item.type === type && item.reportId === reportId);
+  if (!report) throw sessionError("EVIDENCE_REPORT_NOT_IN_SESSION", `Report ${reportId} is not bound to this Session.`, "reload-session-evidence-reports");
+  if (report.reportDigest !== expectedReportDigest) throw sessionError("EVIDENCE_REPORT_DIGEST_MISMATCH", "The presented evidence report digest is stale.", "reload-evidence-report");
+  const current = type === "COMPARISON"
+    ? readComparisonReport({ home: session.workspace.home, reportId })
+    : readCalibrationReport({ home: session.workspace.home, reportId });
+  if (current.status !== "FOUND" || current.report.metadata.reportDigest !== expectedReportDigest) {
+    throw sessionError("EVIDENCE_REPORT_INTEGRITY_FAILURE", "The persisted evidence report no longer matches the presented digest.", "stop-and-inspect-evidence-report");
+  }
+  const expected = `ACKNOWLEDGE_${type}_REVIEW:${reportId}:${expectedReportDigest}`;
+  if (confirmation !== expected || !String(confirmedBy ?? "").trim()) {
+    throw sessionError("EXPLICIT_EVIDENCE_REVIEW_REQUIRED", `Evidence review acknowledgement must equal ${expected} and include confirmedBy.`, "request-explicit-evidence-review-acknowledgement");
+  }
+  report.reviewed = true;
+  report.reviewedAt = now;
+  report.reviewedBy = String(confirmedBy).trim();
+  session.humanDecisions.push(decision(`${type}_REPORT_REVIEWED`, confirmedBy, confirmation, { reportId, reportDigest: expectedReportDigest }, now));
+  if (session.evidenceReports.some((item) => item.reviewed !== true)) {
+    session.status = "EVIDENCE_REVIEW_REQUIRED";
+    session.nextAction = nextEvidenceReviewAction(session);
+  } else if (session.proposals.length) {
+    session.status = "PROPOSAL_REVIEW_REQUIRED";
+    session.nextAction = "run-engine-proposal-review";
+  } else {
+    session.status = "COMPLETED";
+    session.nextAction = "close-session";
+  }
+  return persist(session, { event: `${type}_REPORT_REVIEWED`, actor: confirmedBy, details: { reportId, reportDigest: expectedReportDigest } });
 }
 
 export async function reviewSessionProposals({ home, sessionId, expectedSessionDigest, modelsFile, model, advisorTimeoutMs, reviewTimeoutMs, now = new Date().toISOString() }) {
@@ -494,6 +537,37 @@ function buildPlan({ home, scenario, goal, sources, operations, now }) {
     ];
     plannedOperations.forEach((planned) => validateEngineOperationRequest({ home, ...planned }));
     persistedSources = compact({ feedbackFile: file, now: sources.now });
+  } else if (normalizedScenario === "comparison") {
+    assertKnownSourceFields(sources, ["comparisonFile", "comparisonPolicyFile", "now"]);
+    const file = String(sources.comparisonFile ?? "").trim() ? path.resolve(String(sources.comparisonFile)) : "";
+    if (!file) throw sessionError("COMPARISON_FILE_REQUIRED", "Controlled comparison requires comparisonFile.", "collect-comparison-file");
+    const input = compact({ file, policyFile: sources.comparisonPolicyFile ? path.resolve(String(sources.comparisonPolicyFile)) : undefined, now: sources.now });
+    plannedOperations = [{ operation: "comparison.process", input }];
+    plannedOperations.forEach((planned) => validateEngineOperationRequest({ home, ...planned }));
+    persistedSources = compact({ comparisonFile: file, comparisonPolicyFile: input.policyFile, now: sources.now });
+  } else if (normalizedScenario === "calibration") {
+    assertKnownSourceFields(sources, ["calibrationCaseSet", "calibrationCaseSetId", "baselineMatchPolicy", "candidateMatchPolicy", "baselineComparisonPolicy", "candidateComparisonPolicy", "now"]);
+    if (!String(sources.calibrationCaseSet ?? "").trim() && !String(sources.calibrationCaseSetId ?? "").trim()) throw sessionError("CALIBRATION_CASE_SET_REQUIRED", "Calibration requires calibrationCaseSet or calibrationCaseSetId.", "collect-calibration-case-set");
+    const input = compact({
+      caseSet: sources.calibrationCaseSet ? path.resolve(String(sources.calibrationCaseSet)) : undefined,
+      caseSetId: sources.calibrationCaseSetId,
+      baselineMatchPolicy: sources.baselineMatchPolicy ? path.resolve(String(sources.baselineMatchPolicy)) : undefined,
+      candidateMatchPolicy: sources.candidateMatchPolicy ? path.resolve(String(sources.candidateMatchPolicy)) : undefined,
+      baselineComparisonPolicy: sources.baselineComparisonPolicy ? path.resolve(String(sources.baselineComparisonPolicy)) : undefined,
+      candidateComparisonPolicy: sources.candidateComparisonPolicy ? path.resolve(String(sources.candidateComparisonPolicy)) : undefined,
+      now: sources.now
+    });
+    plannedOperations = [{ operation: "calibration.run", input }];
+    plannedOperations.forEach((planned) => validateEngineOperationRequest({ home, ...planned }));
+    persistedSources = compact({
+      calibrationCaseSet: input.caseSet,
+      calibrationCaseSetId: input.caseSetId,
+      baselineMatchPolicy: input.baselineMatchPolicy,
+      candidateMatchPolicy: input.candidateMatchPolicy,
+      baselineComparisonPolicy: input.baselineComparisonPolicy,
+      candidateComparisonPolicy: input.candidateComparisonPolicy,
+      now: input.now
+    });
   } else if (normalizedScenario === "maintenance") {
     assertKnownSourceFields(sources, []);
     plannedOperations = normalizeMaintenanceOperations(home, operations);
@@ -508,7 +582,7 @@ function buildPlan({ home, scenario, goal, sources, operations, now }) {
     createdAt: now,
     sources: persistedJson(persistedSources),
     operations: plannedOperations,
-    stopPoints: ["plan-confirmation", "engine-blocker", "proposal-review", "human-approval", "separate-publication-authorization", "close-or-resume"],
+    stopPoints: ["plan-confirmation", "engine-blocker", "comparison-review", "calibration-review", "proposal-review", "human-approval", "separate-publication-authorization", "close-or-resume"],
     authority: { engineAuthoritative: true, humanApprovalRequired: true, publicationSeparate: true, sourceExecutionAllowed: false }
   };
 }
@@ -569,10 +643,71 @@ async function bindProposalReferences(session, operationResult) {
   });
 }
 
+function bindEvidenceReport(session, operation, operationResult) {
+  ensureV41SessionFields(session);
+  const result = operationResult?.result ?? {};
+  let type = null;
+  let report = null;
+  let nextAction = result.nextAction ?? operationResult?.nextAction;
+  if (operation.startsWith("comparison.")) {
+    type = "COMPARISON";
+    report = result.report ?? result.scoring?.report;
+    nextAction = result.scoring?.nextAction ?? nextAction;
+  } else if (operation.startsWith("calibration.")) {
+    type = "CALIBRATION";
+    report = result.report;
+  }
+  if (!type || !report?.metadata?.reportId || !report?.metadata?.reportDigest) return;
+  const rendered = type === "COMPARISON"
+    ? {
+        comparisonId: report.metadata.comparisonId,
+        comparability: report.comparability,
+        metrics: report.metrics,
+        uncertainty: report.uncertainty,
+        recommendation: report.recommendation,
+        reasons: report.reasons,
+        limitations: report.limitations,
+        authority: report.authority
+      }
+    : {
+        caseSetRef: report.caseSetRef,
+        policyBindings: report.policyBindings,
+        summary: report.summary,
+        cases: report.cases,
+        uncertainty: report.uncertainty,
+        conflicts: report.conflicts,
+        ranking: report.ranking,
+        recommendation: report.recommendation,
+        authority: report.authority
+      };
+  const reference = {
+    type,
+    reportId: report.metadata.reportId,
+    reportDigest: report.metadata.reportDigest,
+    reviewed: false,
+    nextAction,
+    ...persistedJson(rendered)
+  };
+  const existing = session.evidenceReports.find((item) => item.type === type && item.reportId === reference.reportId);
+  if (existing && existing.reportDigest !== reference.reportDigest) throw sessionError("EVIDENCE_REPORT_BINDING_CONFLICT", `Session report ${reference.reportId} changed digest.`, "stop-and-inspect-evidence-report");
+  if (!existing) session.evidenceReports.push(reference);
+}
+
+function nextEvidenceReviewAction(session) {
+  const pending = session.evidenceReports?.find((item) => item.reviewed !== true);
+  return pending?.type === "CALIBRATION" ? "present-calibration-report-and-request-review-acknowledgement" : "present-comparison-report-and-request-review-acknowledgement";
+}
+
 function loadForMutation(home, sessionId, expectedSessionDigest, allowedStatuses) {
   const session = inspectAgentSession(home, sessionId);
   if (session.sessionDigest !== expectedSessionDigest) throw sessionError("SESSION_DIGEST_MISMATCH", "Agent Operation Session changed since the caller last read it.", "reload-session");
   if (allowedStatuses && !allowedStatuses.includes(session.status)) throw sessionError("INVALID_SESSION_STATE", `Session ${sessionId} is ${session.status}; expected ${allowedStatuses.join(" or ")}.`, session.nextAction);
+  ensureV41SessionFields(session);
+  return session;
+}
+
+function ensureV41SessionFields(session) {
+  if (!Array.isArray(session.evidenceReports)) session.evidenceReports = [];
   return session;
 }
 

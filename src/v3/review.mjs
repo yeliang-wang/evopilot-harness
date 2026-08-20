@@ -6,8 +6,12 @@ import { discoverAssets } from "./catalog.mjs";
 import { validateAssetDeltaClosure } from "./delta.mjs";
 import { loadConfiguredModel, modelEndpoint, normalizeUsage, parseJsonContent, projectAdvisorEvidence, publicModel } from "./advisor.mjs";
 import { digest, option, persistedJson, readYaml, safeId, unique, walkFiles, writeJson, writeYaml } from "./utils.mjs";
+import { comparisonAssessmentForProposal } from "./comparison.mjs";
+import { reviewInputDigest } from "./proposal-digest.mjs";
 
-export const REVIEW_ALGORITHM_VERSION = "deterministic-delta-gates-semantic-review-synthesis/v2";
+export { reviewInputDigest } from "./proposal-digest.mjs";
+
+export const REVIEW_ALGORITHM_VERSION = "deterministic-delta-comparison-gates-semantic-review-synthesis/v3";
 export const REVIEW_VERDICTS = ["READY_FOR_HUMAN_APPROVAL", "REVISE", "SPLIT", "REJECT", "NEED_MORE_EVIDENCE"];
 
 const reviewSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/proposal-review-v1.schema.json"), "utf8"));
@@ -74,15 +78,6 @@ export function validateProposalReview(value, file = "<memory>") {
   };
 }
 
-export function reviewInputDigest(proposal) {
-  const reviewInput = structuredClone(proposal);
-  delete reviewInput.review;
-  delete reviewInput.approval;
-  delete reviewInput.publication;
-  delete reviewInput.nextAction;
-  return digest(reviewInput);
-}
-
 async function runSemanticReview({ args, home, proposal, proposalDigest, graph, reasoning, policy, deterministic, runRoot }) {
   const contract = policy.spec.reviewContract;
   const started = Date.now();
@@ -109,6 +104,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
     proposalDigest,
     deterministicReasoning: reasoning,
     deterministicGates: deterministic.gates,
+    controlledComparison: deterministic.comparisonAssessment,
     originalAdvisor: proposal.advisor,
     evidenceGraph: projection.nodes,
     evidenceProjection: projection.summary,
@@ -299,6 +295,7 @@ function baseReport({ proposal, proposalDigest, graph, reasoning, policy, review
     advisorAssessment,
     assetDeltaAssessment: deterministic.assetDeltaAssessment,
     impactAssessment: deterministic.impactAssessment,
+    comparisonAssessment: deterministic.comparisonAssessment,
     suggestedActions: asStrings(suggestedActions),
     remainingBlockers,
     reviewer: withoutUndefined({
@@ -332,6 +329,7 @@ function deterministicAssessment(home, proposal, graph, reasoning) {
   const definitionChecks = proposedAssets.flatMap((asset) => definitionChecksFor(asset));
   const definitionValid = definitionChecks.every((item) => item.status === "PASS");
   const deltaClosure = validateAssetDeltaClosure(proposal.assetDeltaProposal, proposal.evaluationPack, { proposedAssets, records, evidenceGraph: graph, reasoning });
+  const comparisonAssessment = comparisonAssessmentForProposal(home, proposal);
   const impacts = proposal.assetDeltaProposal?.spec?.deltas?.map((item) => item.impact) ?? [];
   const gates = [
     gate("proposal-schema", proposalValid, true, proposal.validations?.flatMap((item) => item.errors ?? []) ?? []),
@@ -340,7 +338,8 @@ function deterministicAssessment(home, proposal, graph, reasoning) {
     gate("definition-contract", definitionValid, true, definitionChecks.filter((item) => item.status === "FAIL").map((item) => item.id)),
     gate("evaluation-pack-present", proposal.evaluationPack?.apiVersion === "harness.evopilot.io/v3" && Boolean(proposal.evaluationPack?.spec?.cases?.length), true, [proposal.evaluationPack?.apiVersion ?? "MISSING", proposal.evaluationPack?.spec?.status ?? "MISSING"]),
     gate("asset-delta-closure", deltaClosure.status === "VALIDATED", true, deltaClosure.blockers),
-    gate("decision-publication-boundary", mutatingDecision ? proposal.assetDeltaProposal?.spec?.publicationAllowed === true : proposal.assetDeltaProposal?.spec?.publicationAllowed === false, true, [String(proposal.decision), String(proposal.assetDeltaProposal?.spec?.publicationAllowed)])
+    gate("decision-publication-boundary", mutatingDecision ? proposal.assetDeltaProposal?.spec?.publicationAllowed === true : proposal.assetDeltaProposal?.spec?.publicationAllowed === false, true, [String(proposal.decision), String(proposal.assetDeltaProposal?.spec?.publicationAllowed)]),
+    gate("controlled-comparison", !comparisonAssessment.blocking, comparisonAssessment.status !== "NOT_PROVIDED", [comparisonAssessment.status, comparisonAssessment.recommendation ?? "NOT_PROVIDED", ...(comparisonAssessment.reasons ?? [])])
   ];
   const overlap = overlapContext(proposal, records);
   const projectMembership = sourceContext(graph).map((source) => ({ sourceId: source.sourceId, sourceType: source.sourceType, sourceRef: source.sourceRef, status: "UNCERTAIN", rationale: "Awaiting independent semantic membership review.", evidenceIds: source.evidenceIds }));
@@ -370,7 +369,8 @@ function deterministicAssessment(home, proposal, graph, reasoning) {
       compatibility: unique(impacts.map((item) => item.compatibility?.status)),
       blastRadius: unique(impacts.map((item) => item.blastRadius?.level)),
       rollback: unique(impacts.map((item) => item.rollback?.status))
-    }
+    },
+    comparisonAssessment
   };
 }
 

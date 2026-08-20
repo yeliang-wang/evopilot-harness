@@ -18,8 +18,8 @@ test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and e
   assert.equal(result.status, "READY");
   assert.deepEqual(result.package, {
     name: "@evopilot/harness",
-    version: "4.0.2",
-    spec: "@evopilot/harness@4.0.2",
+    version: "4.1.0",
+    spec: "@evopilot/harness@4.1.0",
     root,
     distributionMode: "source-checkout",
     sourceCheckoutRequired: false,
@@ -31,7 +31,7 @@ test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and e
   const canonicalWorkspace = fs.realpathSync(workspace);
   assert.deepEqual(result.mcp.exactNpxCommand, {
     command: "npx",
-    args: ["--yes", "--package", "@evopilot/harness@4.0.2", "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", canonicalWorkspace]
+    args: ["--yes", "--package", "@evopilot/harness@4.1.0", "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", canonicalWorkspace]
   });
   assert.equal(result.mcp.networkListening, false);
   assert.ok(result.mcp.protocols.includes("2025-11-25"));

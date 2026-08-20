@@ -7,10 +7,10 @@
 Source version, GitHub Release, npm package, and optional GHCR image are separate evidence layers. Before using a public package, verify the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.0.2 version
+npm view @evopilot/harness@4.1.0 version
 ```
 
-If the command does not return `4.0.2`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
+If the command does not return `4.1.0`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
 
 ## Choose One Installation Path
 
@@ -22,7 +22,7 @@ Use only after the Registry check succeeds:
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.0.2
+npm install --save-exact @evopilot/harness@4.1.0
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -38,7 +38,7 @@ npm pack --pack-destination /absolute/package/output
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact /absolute/package/output/evopilot-harness-4.0.2.tgz
+npm install --save-exact /absolute/package/output/evopilot-harness-4.1.0.tgz
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -82,7 +82,7 @@ WorkBuddy must load the returned `workbuddy` Adapter and configure a project MCP
 
 WorkBuddy may dispatch an MCP call through its built-in `DeferExecuteTool`. A least-privilege read-only startup check permits only `DeferExecuteTool` and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence.
 
-The v4.0.2 release-candidate acceptance uses the WorkBuddy CLI currently installed on the acceptance Mac (`2.106.4` at the recorded evidence time) against a clean local tarball installation. It proves a connected packaged MCP server, exactly one real `inspect_capabilities` result, Engine `4.0.2`, protocol negotiation, request ids, no source-checkout resolution, and no Workspace mutation. It does not prove public npm publication or every future WorkBuddy version.
+The previously recorded WorkBuddy acceptance is bounded to the exact CLI path/version and package version used by that run. v4.1.0 separately requires clean-tarball installed-package smoke that uses the installed binary and modules to complete real Comparison and Calibration Sessions through stdio MCP, including report review acknowledgement, with no source-checkout resolution. Neither layer proves public npm publication or every future Agent-host version.
 
 ## Package Boundary
 
@@ -101,7 +101,7 @@ npm run package:verify
 npm run package:smoke
 ```
 
-`package:smoke` installs the tarball in a clean temporary directory and verifies CLI, bootstrap, Digital Expert, stdio MCP, tools/resources, external Workspace, shutdown, and source-checkout exclusion.
+`package:smoke` installs the tarball in a clean temporary directory and verifies CLI, bootstrap, Digital Expert, stdio MCP, tools/resources, external Workspace, shutdown, source-checkout exclusion, controlled Comparison processing, Calibration replay, and digest-bound evidence report acknowledgement.
 
 ## Trusted Publishing
 

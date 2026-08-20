@@ -21,6 +21,12 @@ workflows:
   - id: process-approved-feedback
     scenario: feedback
     sources: [feedbackFile]
+  - id: compare-baseline-and-candidate
+    scenario: comparison
+    sources: [comparisonFile, comparisonPolicyFile]
+  - id: calibrate-matching-and-proposal-quality
+    scenario: calibration
+    sources: [calibrationCaseSet, calibrationCaseSetId, baselineMatchPolicy, candidateMatchPolicy, baselineComparisonPolicy, candidateComparisonPolicy]
   - id: maintain-assets-catalog-registry-policies
     scenario: maintenance
     sources: [operations]
@@ -46,3 +52,15 @@ terminalDecisions:
   - PROPOSE_NEW_PROFILE
   - BLOCKED
   - FAILED
+comparisonRecommendations:
+  - NON_COMPARABLE
+  - NEED_MORE_EVIDENCE
+  - CONFLICT
+  - KEEP_BASELINE
+  - REVISE_CANDIDATE
+  - CANDIDATE_READY_FOR_HUMAN_REVIEW
+  - ROLLBACK_RECOMMENDED
+calibrationRecommendations:
+  - CANDIDATE_POLICY_ELIGIBLE_FOR_HUMAN_REVIEW
+  - REVISE_CANDIDATE_POLICY
+  - NEED_MORE_REVIEWED_CASES

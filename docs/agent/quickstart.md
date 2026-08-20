@@ -15,15 +15,15 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 For a publicly available version:
 
 ```bash
-npm view @evopilot/harness@4.0.2 version
+npm view @evopilot/harness@4.1.0 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.0.2
+npm install --save-exact @evopilot/harness@4.1.0
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
-The Registry command must return `4.0.2`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
+The Registry command must return `4.1.0`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
 ## Load The Expert
 
@@ -70,18 +70,30 @@ Example:
 
 The Expert calls `inspect_capabilities`, prepares the Workspace, starts a persistent Session, and asks only the shortest missing question. Before execution it presents the Plan, source boundaries, Advisor mode, operations, stop points, and exact `planDigest`.
 
+To review externally produced Baseline/Candidate evidence instead of producing a Proposal:
+
+```text
+使用 /absolute/path/to/comparison.yaml 作为已经批准、脱敏的比较证据包。
+先展示 Operation Plan，再处理比较；完整展示 Comparison Report，
+并停在报告审阅确认，不要批准、发布、回滚或执行任何 Harness。
+```
+
+For calibration, provide the reviewed case set plus explicit Baseline and Candidate policy files. The Expert presents ranking, abstention, false-upgrade, false-new-profile, regressions, conflicts, uncertainty, and recommendation. See [Controlled Comparative Evidence](../guides/controlled-comparative-evidence.md).
+
 ## Mandatory Decisions
 
 The human answers one plain-language question about the Plan, Proposal, publication, or recovery action currently on screen. The Expert then builds and submits the Engine's exact digest-bound token internally. A human never copies or types these protocol values:
 
 ```text
 CONFIRM_OPERATION_PLAN:<planDigest>
+ACKNOWLEDGE_COMPARISON_REVIEW:<reportId>:<reportDigest>
+ACKNOWLEDGE_CALIBRATION_REVIEW:<reportId>:<reportDigest>
 AUTHORIZE_PLAN_PUBLICATION:<sessionId>:<planDigest>:<operationIndex>:<operationDigest>
 APPROVE_PROPOSAL:<proposalId>:<proposalDigest>:<reviewDigest>
 AUTHORIZE_PUBLICATION:<proposalId>:<approvedProposalDigest>
 ```
 
-`AUTHORIZE_PLAN_PUBLICATION` applies to maintenance Plans containing `catalog.publish`, `ontology.publish`, or `policy.publish`. It is separate from Plan confirmation. `AUTHORIZE_PUBLICATION` applies to an approved Harness Proposal and remains a separate decision from Proposal approval.
+The two `ACKNOWLEDGE_*_REVIEW` values record only that the exact deterministic report was reviewed; they cannot approve, publish, activate policy, roll back, or execute. `AUTHORIZE_PLAN_PUBLICATION` applies to maintenance Plans containing `catalog.publish`, `ontology.publish`, or `policy.publish`. It is separate from Plan confirmation. `AUTHORIZE_PUBLICATION` applies to an approved Harness Proposal and remains a separate decision from Proposal approval.
 
 “继续”, “开始”, plan acceptance, Review presentation, and Proposal approval do not authorize a later gate. A valid answer must explicitly approve the immutable object just presented; an earlier answer cannot approve a newly created or changed digest.
 

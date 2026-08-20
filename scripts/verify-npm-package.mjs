@@ -11,7 +11,7 @@ const packed = JSON.parse(execFileSync("npm", ["pack", "--dry-run", "--json"], {
 const files = packed.files.map((entry) => entry.path).sort();
 
 assert.equal(manifest.name, "@evopilot/harness");
-assert.equal(manifest.version, "4.0.2");
+assert.equal(manifest.version, "4.1.0");
 assert.equal(manifest.private, false);
 assert.equal(manifest.publishConfig?.access, "public");
 assert.equal(manifest.publishConfig?.provenance, true);
@@ -26,6 +26,15 @@ const required = [
   "src/index.mjs",
   "src/v4/bootstrap.mjs",
   "src/v4/operation-server/server.mjs",
+  "src/v3/comparison.mjs",
+  "src/v3/calibration.mjs",
+  "policies/comparison/default.yaml",
+  "schemas/comparison-policy-pack-v1.schema.json",
+  "schemas/harness-comparison-evidence-package-v1.schema.json",
+  "schemas/harness-comparison-report-v1.schema.json",
+  "schemas/harness-comparison-rescore-record-v1.schema.json",
+  "schemas/harness-calibration-case-set-v1.schema.json",
+  "schemas/harness-calibration-report-v1.schema.json",
   "digital-expert/expert-manifest.yaml",
   "digital-expert/manifest.lock.json",
   "digital-expert/adapters/workbuddy/WORKBUDDY.md",

@@ -5,7 +5,9 @@ Start here when reviewing the current v3 system, repository boundaries, Catalog 
 - [Architecture Overview](overview.md) - current v3 modules, data flow, storage boundaries, and version axes.
 - [v3 Product Boundary](v3-product-boundary.md) - narrowed product scope, ownership, and independent versions.
 - [v3 Asset Model](v3-asset-model.md) - Component, Profile, Bundle, and supporting Packs.
-- [ADR 0001: Product And Module Boundaries](adr/0001-product-and-module-boundaries.md) - accepted cross-project and 24-module ownership rules.
+- [ADR 0001: Product And Module Boundaries](adr/0001-product-and-module-boundaries.md) - accepted cross-project and 24 core Engine ownership rules.
+- [ADR 0002: Agent-Native Harness Operations](adr/0002-agent-native-harness-operations.md) - five operating boundaries for Digital Expert, Adapters, MCP, Sessions, and external Agent hosts.
+- [ADR 0003: Controlled Comparative Evidence](adr/0003-controlled-comparative-evidence.md) - four Engine boundaries for immutable comparison intake, paired scoring, rescoring, and calibration.
 - [v3 Reasoning Contract](../reference/v3-reasoning-contract.md) - Evidence Graph, eligibility, matcher, and LLM authority.
 - [Catalog Consumption Boundary](catalog-consumption-boundary.md) - legacy v2 boundary between publication and EvoPilot consumption.
 - [Catalog Contract](../reference/catalog-contract.md) - published Catalog format and digest rules.

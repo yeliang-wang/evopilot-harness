@@ -26,19 +26,20 @@ Use a disposable Workspace for development. Do not point tests at a user's produ
 
 | Path | Responsibility |
 |---|---|
-| `src/v3/` | Workspace, evidence, reasoning, Advisor, lifecycle, Catalog, migration, and Hub runtime. |
+| `src/v3/` | Workspace, evidence, reasoning, Advisor, comparison, calibration, lifecycle, Catalog, migration, and Hub runtime. |
+| `src/v4/` | Agent bootstrap, structured Engine adapter, local stdio MCP, protocol, security, and persistent Session runtime. |
 | `src/index.mjs` | CLI entry point and legacy v2 compatibility commands. |
-| `schemas/` | Formal Asset, Ontology, Policy, Advisor, and Evaluation schemas. |
+| `schemas/` | Formal Asset, Ontology, Policy, Advisor, Evaluation, comparison, calibration, and Agent Session schemas. |
 | `assets/v3/` | Built-in Component, Profile, Bundle, and export assets shipped with the Engine. |
 | `ontology/` | Built-in Ontology Packs. |
-| `policies/` | Built-in Matcher and Advisor Policy Packs. |
+| `policies/` | Built-in Matcher, Advisor, and Comparison Policy Packs. |
 | `ui/harness-hub/` | Standalone Harness Hub frontend. |
 | `tests/` | v3 behavior, safety, lifecycle, and v2 compatibility tests. |
 | `eval/` | Contract, unknown-source, adversarial, and Advisor replay fixtures. |
 | `scripts/` | Validation, generated snapshot, architecture, and release tooling. |
 | `harnesses/`, `published/` | Legacy v2 source packs and published compatibility Catalog. |
 
-The accepted ownership contract is [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md). A change that crosses that contract requires an explicit replacement ADR, migration analysis, updated executable guards, and user approval.
+The accepted ownership contracts are [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), and [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). A change that crosses them requires an explicit replacement ADR, migration analysis, updated executable guards, and user approval.
 
 ## Common Change Flows
 
@@ -74,6 +75,7 @@ Keep the root README as a concise product entry. Put normative details in one fo
 | Documentation only | `npm run docs:links`, documentation audit, `git diff --check` |
 | Boundaries or modules | `npm run verify:architecture`, `npm test` |
 | CLI or lifecycle | `npm test`, `npm run v3:check`, targeted CLI smoke |
+| Comparison, rescoring, or calibration | `node --test tests/v4.1.test.mjs`, `npm run verify:architecture`, `npm run package:smoke` |
 | Schemas, assets, Packs | `npm run v3:check`, `npm run check` |
 | Hub | Hub API smoke plus desktop and mobile browser checks |
 | npm or Agent distribution | `npm run package:verify`, `npm run package:smoke`, and actual-host conformance when support is claimed |

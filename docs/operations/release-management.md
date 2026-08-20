@@ -8,7 +8,7 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current source candidate: [`v4.0.2`](../releases/4.0.2.md). Verify the latest completed GitHub Release and public npm version independently. The `v4.0.0` source tag did not produce a GitHub Release and is superseded. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current source candidate: [`v4.1.0`](../releases/4.1.0.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Version Policy
 
@@ -58,7 +58,7 @@ Artifact verification checks the expected files, checksums, npm allowlist bounda
 The Git tag must exactly match `package.json`:
 
 ```text
-tag v4.0.2 -> package.json version 4.0.2
+tag v4.1.0 -> package.json version 4.1.0
 ```
 
 `.github/workflows/release-artifacts.yml`:

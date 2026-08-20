@@ -24,7 +24,15 @@ const planSources = {
     advisorTimeoutMs: { type: "integer", minimum: 1 },
     reviewTimeoutMs: { type: "integer", minimum: 1 },
     now: { type: "string" },
-    feedbackFile: { type: "string" }
+    feedbackFile: { type: "string" },
+    comparisonFile: { type: "string" },
+    comparisonPolicyFile: { type: "string" },
+    calibrationCaseSet: { type: "string" },
+    calibrationCaseSetId: { type: "string" },
+    baselineMatchPolicy: { type: "string" },
+    candidateMatchPolicy: { type: "string" },
+    baselineComparisonPolicy: { type: "string" },
+    candidateComparisonPolicy: { type: "string" }
   }
 };
 
@@ -37,10 +45,10 @@ export const TOOL_DEFINITIONS = [
     intent: { type: "string", minLength: 1 },
     adapterId: { type: "string", minLength: 2 }
   }, ["intent", "adapterId"]),
-  tool("plan_operation_session", "Create a digest-bound evolve, feedback, or maintenance plan. Present it to the human before confirmation.", {
+  tool("plan_operation_session", "Create a digest-bound evolve, feedback, comparison, calibration, or maintenance plan. Present it to the human before confirmation.", {
     sessionId,
     expectedSessionDigest: digest,
-    scenario: { enum: ["evolve", "feedback", "maintenance"], default: "evolve" },
+    scenario: { enum: ["evolve", "feedback", "comparison", "calibration", "maintenance"], default: "evolve" },
     goal: { type: "string", minLength: 1 },
     sources: planSources,
     operations: {
@@ -85,6 +93,15 @@ export const TOOL_DEFINITIONS = [
     confirmedBy: { type: "string", minLength: 1 },
     confirmation: { type: "string", minLength: 1 }
   }, ["sessionId", "expectedSessionDigest", "expectedAttemptDigest", "confirmedBy", "confirmation"]),
+  tool("acknowledge_evidence_report_review", "Record that the human reviewed the exact deterministic comparison or calibration report. This is not Proposal approval, policy activation, rollback, or publication authorization.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    reportType: { enum: ["COMPARISON", "CALIBRATION"] },
+    reportId: { type: "string", minLength: 1 },
+    expectedReportDigest: digest,
+    confirmedBy: { type: "string", minLength: 1 },
+    confirmation: { type: "string", minLength: 1 }
+  }, ["sessionId", "expectedSessionDigest", "reportType", "reportId", "expectedReportDigest", "confirmedBy", "confirmation"]),
   tool("review_session_proposals", "Run the authoritative Engine Proposal Review for every Proposal in the session.", {
     sessionId,
     expectedSessionDigest: digest,

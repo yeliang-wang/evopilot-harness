@@ -41,22 +41,28 @@ Use [llms.txt](llms.txt) for the shortest machine-readable documentation map and
 
 ## Module Ownership
 
-The 24 accepted module boundaries are defined in [ADR 0001](docs/architecture/adr/0001-product-and-module-boundaries.md):
+The 24 core Engine module boundaries are defined in [ADR 0001](docs/architecture/adr/0001-product-and-module-boundaries.md):
 
 1. Engine; 2. Workspace; 3. CLI; 4. Harness Hub; 5. Source Ingestion; 6. Snapshot/Redaction; 7. Evidence Graph.
 8. OntologyPack; 9. MatchPolicyPack; 10. Eligibility Gate; 11. Candidate Retrieval/Scoring; 12. Decision Aggregator; 13. AdvisorPolicyPack; 14. GLM Advisor.
 15. Proposal Review Engine; 16. HarnessComponent; 17. HarnessProfile; 18. HarnessBundle/Export; 19. EvaluationPack; 20. Proposal Lifecycle; 21. Schema Validator.
 22. Catalog Publisher/Optional Signing; 23. Registry; 24. Migration/Rollback.
 
-No module may bypass Proposal approval, write Built-in assets from evidence, give LLM authority, execute source-project commands, or make Engine source files the runtime state store.
+The four controlled comparative-evidence module boundaries are defined in [ADR 0003](docs/architecture/adr/0003-controlled-comparative-evidence.md): 25. Comparison Evidence Intake/Immutable Store; 26. Comparability/Paired Scoring; 27. Versioned Rescoring; 28. Matching/Proposal Calibration. Together they form 28 enforced Engine module boundaries.
 
-The five v4 operating-module boundaries are defined in [ADR 0002](docs/architecture/adr/0002-agent-native-harness-operations.md): Digital Expert Core, Agent Adapter, Harness Operation Server, AgentOperationSession, and External Agent Host. Together with ADR 0001, the candidate has 29 enforced component/module boundaries.
+No Engine module may bypass Proposal approval, write Built-in assets from evidence, give LLM authority, execute source-project commands, mutate active policy from calibration, overwrite comparison history, or make Engine source files the runtime state store.
+
+The five v4 operating-module boundaries are defined in [ADR 0002](docs/architecture/adr/0002-agent-native-harness-operations.md): Digital Expert Core, Agent Adapter, Harness Operation Server, AgentOperationSession, and External Agent Host. Together with the 28 Engine modules, the v4.1 candidate has 33 enforced component/module boundaries.
 
 - One Agent-neutral Core must generate every Adapter workflow and stop rule. Do not edit generated Adapter semantics directly.
 - MCP tools may coordinate the Engine but cannot bypass Engine validation or Session human gates.
 - Every Session mutation must bind the current `sessionDigest`; Plan, Review, approval, and publication each retain their own digest boundary.
 - Publication remains a separate human decision after approval.
 - Maintenance Catalog, Ontology, and Policy publication requires a separate operation authorization after Plan confirmation.
+- Comparison and calibration reports are deterministic evidence. A Session must present the exact report and record a digest-bound acknowledgement before completion; acknowledgement is not approval, policy activation, rollback, or publication authorization.
+- Baseline/Candidate evidence is comparable only under the exact governed task, source snapshot, environment, model, toolchain, Evaluation, scorer, metric, and asset bindings. Non-comparable contexts must remain stratified and must not produce a mixed aggregate.
+- Rescoring is append-only. It may add a replacement report and rescore record but may not mutate accepted observations or prior reports.
+- Calibration may recommend a matching or Proposal policy revision but may not mutate or activate the current policy.
 - Planned Engine operations use stable idempotency receipts. After interruption, accept a matching receipt or explicitly retry only when the external Workspace digest is unchanged; never repeat an uncertain mutation.
 - Session state belongs under the explicit external Workspace. Release, source, attachments, logs, and human-maintained model configuration remain read-only.
 

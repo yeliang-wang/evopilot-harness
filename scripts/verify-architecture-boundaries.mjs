@@ -28,7 +28,11 @@ const anchors = [
   ["src/v3/schema.mjs", "validateDocument", "Schema Validator"],
   ["src/v3/catalog.mjs", "publishCatalog", "Catalog Publisher/Optional Signing"],
   ["src/v3/cli.mjs", "validateRegistryV3", "Registry"],
-  ["src/v3/migration.mjs", "rollbackMigration", "Migration/Rollback"]
+  ["src/v3/migration.mjs", "rollbackMigration", "Migration/Rollback"],
+  ["src/v3/comparison.mjs", "ingestComparisonPackage", "Comparison Evidence Intake/Immutable Store"],
+  ["src/v3/comparison.mjs", "scoreComparison", "Comparability/Paired Scoring"],
+  ["src/v3/comparison.mjs", "rescoreComparison", "Versioned Rescoring"],
+  ["src/v3/calibration.mjs", "runCalibration", "Matching/Proposal Calibration"]
 ];
 
 const agentAnchors = [
@@ -44,8 +48,9 @@ const agentAnchors = [
 for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of agentAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
-mustContain("AGENTS.md", "The 24 accepted module boundaries", "root agent instructions must reference all module boundaries");
+mustContain("AGENTS.md", "28 enforced Engine module boundaries", "root agent instructions must reference the complete Engine module boundary set");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
+mustContain("docs/architecture/adr/0003-controlled-comparative-evidence.md", "Accepted", "controlled comparative evidence ADR must remain accepted");
 mustContain("governance/roadmap.yaml", '"roadmapFamily": "evopilot-series-agentic-evolution"', "the accepted Harness Roadmap contract must remain installed");
 mustContain("governance/roadmap.yaml", '"harness-must-not-execute-evopilot-loops"', "the Roadmap must preserve the producer/control-plane boundary");
 mustContain("AGENTS.md", "Continue implementation only for `ALIGNED`", "agent instructions must stop Roadmap deviations before implementation");
@@ -67,7 +72,7 @@ mustContain("package.json", '"verify:architecture"', "package scripts must expos
 mustContain("package.json", "npm run verify:architecture", "npm run check must execute architecture verification");
 mustContain("package.json", '"digital-expert:check"', "package scripts must expose deterministic Digital Expert validation");
 const packageVersion = JSON.parse(read("package.json")).version;
-if (!/^4\.0\.\d+$/.test(packageVersion)) failures.push("Agent-native release must remain in the approved 4.0.x line");
+if (!/^4\.1\.\d+$/.test(packageVersion)) failures.push("Controlled comparative evidence release must remain in the approved 4.1.x line");
 mustContain("src/index.mjs", 'argv[0] === "mcp" && argv[1] === "serve"', "CLI must expose the local MCP process entry");
 mustContain("src/v4/constants.mjs", "assertExternalWorkspace", "Agent state must remain outside the Release");
 mustContain("src/v4/session/store.mjs", "CONFIRM_OPERATION_PLAN", "Plan confirmation must be explicit and digest-bound");
@@ -84,6 +89,18 @@ mustContain("src/v4/session/store.mjs", "CLEANUP_OWNERSHIP_UNCERTAIN", "cleanup 
 mustContain("src/v4/operation-server/server.mjs", "networkListening: false", "stdio MCP must not claim a network listener");
 mustContain("digital-expert/core/policies.yaml", "sourceExecution", "Digital Expert must preserve the source execution prohibition");
 mustContain(".agents/skills/evopilot-harness-guided-operator/SKILL.md", "Compatibility Alias", "legacy Guided Operator must not retain a second authority");
+mustContain("src/v3/comparison.mjs", "sourceExecution: false", "comparison processing must never execute source projects");
+mustContain("src/v3/comparison.mjs", "assetMutation: false", "comparison processing must not mutate Harness assets");
+mustContain("src/v3/comparison.mjs", "mayRollback: false", "comparison recommendations must not perform rollback");
+mustContain("src/v3/comparison.mjs", "priorReportsMutated: false", "rescoring must preserve prior reports");
+mustContain("src/v3/calibration.mjs", "activePolicyMutated: false", "calibration must not activate or mutate policy");
+mustContain("src/v4/session/store.mjs", "EVIDENCE_REVIEW_REQUIRED", "Agent sessions must stop for comparison and calibration report review");
+mustContain("src/v4/session/store.mjs", "ACKNOWLEDGE_${type}_REVIEW:${reportId}:${expectedReportDigest}", "evidence review acknowledgement must bind its type, report id, and digest");
+mustContain("src/v4/protocol/tools.mjs", "acknowledge_evidence_report_review", "Agent protocol must expose evidence report review acknowledgement");
+mustContain("src/v3/lifecycle.mjs", "proposal-comparison-assessment-drift", "approval and publication must reject comparison snapshot drift");
+mustContain("src/v3/review.mjs", "controlled-comparison", "Proposal Review must include the deterministic controlled-comparison gate");
+mustContain("package.json", "policies", "the npm runtime allowlist must include comparison policies");
+mustContain("package.json", "schemas", "the npm runtime allowlist must include comparison schemas");
 
 mustNotContain("src/v3/advisor.mjs", "approveProposal", "Advisor must not approve Proposals");
 mustNotContain("src/v3/advisor.mjs", "publishProposal", "Advisor must not publish Proposals");
@@ -98,6 +115,14 @@ mustNotMatch("src/v4/operation-server/server.mjs", /from\s+["']node:(?:http|http
 mustNotMatch("src/v4/mcp/stdio-server.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']/, "MCP transport must remain stdio-only");
 mustNotMatch("src/v4/session/store.mjs", /(?:writeFileSync|appendFileSync|renameSync|rmSync)\([^\n]*(?:models\.json|source-project)/, "Agent sessions must not mutate model configuration or source projects");
 mustNotMatch("src/v4/operation-server/server.mjs", /(?:writeFileSync|appendFileSync|renameSync|rmSync)\([^\n]*(?:models\.json|source-project)/, "Operation Server must not mutate model configuration or source projects");
+mustNotContain("src/v3/comparison.mjs", "approveProposal", "comparison evidence must not approve Proposals");
+mustNotContain("src/v3/comparison.mjs", "publishProposal", "comparison evidence must not publish Proposals");
+mustNotContain("src/v3/calibration.mjs", "approveProposal", "calibration must not approve Proposals");
+mustNotContain("src/v3/calibration.mjs", "publishProposal", "calibration must not publish Proposals");
+mustNotMatch("src/v3/comparison.mjs", /\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "comparison evidence must not execute commands");
+mustNotMatch("src/v3/calibration.mjs", /\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "calibration must not execute commands");
+mustNotMatch("src/v3/comparison.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/(?:builtin|organization)/, "comparison evidence must not write Catalog assets");
+mustNotMatch("src/v3/calibration.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/(?:builtin|organization)/, "calibration must not write Catalog assets");
 
 const reasoning = read("src/v3/reasoning.mjs");
 const allowedTools = new Set(["git", "pdftotext", "unzip", "curl"]);
@@ -120,7 +145,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/24 Engine anchors, ${agentAnchors.length}/7 Agent-operation anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length}/7 Agent-operation enforcement anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);

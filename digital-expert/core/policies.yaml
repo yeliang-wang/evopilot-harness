@@ -23,6 +23,8 @@ sourceExecution:
   businessCommands: deny
 humanGates:
   planConfirmation: required
+  comparisonReview: required-before-proposal-approval-when-present
+  calibrationReview: required-before-policy-delta
   proposalApproval: required
   evaluationReview: required
   publicationAuthorization: required-separate
@@ -37,6 +39,8 @@ fallback:
   retryAfterUnknownMutation: deny
   automaticApproval: deny
   automaticPublication: deny
+  automaticRollback: deny
+  automaticPolicyActivation: deny
 cleanup:
   ownedClosedSessionMetadata: explicit-only
   evolutionRuns: preserve

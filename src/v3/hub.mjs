@@ -6,6 +6,8 @@ import { discoverAssets, validateCatalog } from "./catalog.mjs";
 import { digest, readYaml, walkFiles, writeJson } from "./utils.mjs";
 import { workspaceStatus } from "./workspace.mjs";
 import { feedbackSummary } from "./feedback.mjs";
+import { comparisonAssessmentForProposal, comparisonSummary } from "./comparison.mjs";
+import { calibrationSummary } from "./calibration.mjs";
 
 export function buildHubSnapshot(home) {
   const assets = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
@@ -23,6 +25,7 @@ export function buildHubSnapshot(home) {
     reviewReportDigest: proposal.review?.reportDigest,
     reviewReportPath: proposal.review?.reportPath,
     nextAction: proposal.nextAction,
+    controlledComparison: comparisonAssessmentForProposal(home, proposal),
     assetDelta: proposal.assetDeltaProposal ? {
       id: proposal.assetDeltaProposal.metadata.id,
       version: proposal.assetDeltaProposal.metadata.version,
@@ -52,7 +55,8 @@ export function buildHubSnapshot(home) {
   const packs = [
     ...packSummaries(path.join(home, "ontology"), "OntologyPack"),
     ...packSummaries(path.join(home, "policies/matcher"), "MatchPolicyPack"),
-    ...packSummaries(path.join(home, "policies/advisor"), "AdvisorPolicyPack")
+    ...packSummaries(path.join(home, "policies/advisor"), "AdvisorPolicyPack"),
+    ...packSummaries(path.join(home, "policies/comparison"), "ComparisonPolicyPack")
   ];
   const advisorRuns = walkFiles(path.join(home, "evolution-runs"), (file) => path.basename(file) === "advisor-result.json").map((file) => {
     try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch { return null; }
@@ -62,7 +66,7 @@ export function buildHubSnapshot(home) {
   }).filter(Boolean);
   const usage = [...advisorRuns, ...reviewRuns].reduce((result, run) => ({ inputTokens: result.inputTokens + Number(run.usage?.inputTokens ?? 0), outputTokens: result.outputTokens + Number(run.usage?.outputTokens ?? 0), totalTokens: result.totalTokens + Number(run.usage?.totalTokens ?? 0) }), { inputTokens: 0, outputTokens: 0, totalTokens: 0 });
   const records = assets.map((record) => ({ kind: record.asset.kind, id: record.asset.metadata.id, name: record.asset.metadata.name, version: record.asset.metadata.version, lifecycle: record.asset.metadata.lifecycle, description: record.asset.metadata.description, domain: record.asset.spec.classification?.domain, digest: record.digest, file: record.file }));
-  return {
+  const snapshot = {
     schema: "evopilot-harness-hub-snapshot/v3",
     status: catalogValidation.status === "VALIDATED" ? "READY" : "ATTENTION",
     generatedAt: new Date().toISOString(),
@@ -84,6 +88,8 @@ export function buildHubSnapshot(home) {
     llmUsage: { runCount: advisorRuns.length + reviewRuns.length, advisorRunCount: advisorRuns.length, reviewRunCount: reviewRuns.length, ...usage },
     evaluation: evaluationSummary(home),
     feedback: feedbackSummary(home),
+    comparisons: comparisonSummary(home),
+    calibration: calibrationSummary(home),
     sourceTypes: [
       { id: "source-project", label: "Source project", description: "Local project code, manifests, architecture, and design files." },
       { id: "source-root", label: "Project corpus", description: "Valid projects under a root, grouped by v3 reasoning outcomes." },
@@ -91,11 +97,13 @@ export function buildHubSnapshot(home) {
       { id: "attachment", label: "Attachment", description: "PDF, PPTX, DOCX, or text evidence with extraction and redaction." },
       { id: "runtime-log", label: "Production log", description: "Redacted runtime evidence correlated to Harness decisions." },
       { id: "execution-feedback-package", label: "Execution feedback package", description: "Approved, redacted, immutable-Bundle-bound Outcome, Process, Safety, and Cost evidence." },
+      { id: "comparison-evidence-package", label: "Comparison evidence package", description: "Approved, redacted, immutable Baseline/Candidate observations produced by an external evaluator." },
       { id: "operator-note", label: "Operator note", description: "Goal or contextual note; never sufficient by itself for publication." }
     ],
-    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "proposal inspect", "proposal validate", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
+    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "comparison inspect", "comparison validate", "comparison process", "comparison report", "comparison rescore", "calibration validate", "calibration ingest", "calibration run", "calibration report", "proposal inspect", "proposal validate", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
     nextAction: proposals.some((proposal) => proposal.status === "REVIEW_REQUIRED") ? "review-proposals" : "produce-or-review-assets"
   };
+  return sanitizeHubSnapshot(snapshot, home);
 }
 
 export function writeHubSnapshot(home, out) {
@@ -119,6 +127,24 @@ export function serveHubV3(home, { host = "127.0.0.1", port = 4176 } = {}) {
   });
   server.listen(port, host, () => process.stdout.write(`Harness Hub v3 listening on http://${host}:${port}\n`));
   return server;
+}
+
+function sanitizeHubSnapshot(value, home) {
+  const workspaceRoot = path.resolve(home);
+  const packageRoot = path.resolve(PACKAGE_ROOT);
+  const visit = (item) => {
+    if (Array.isArray(item)) return item.map(visit);
+    if (item && typeof item === "object") return Object.fromEntries(Object.entries(item).map(([key, entry]) => [key, visit(entry)]));
+    if (typeof item !== "string") return item;
+    return replaceLocalRoot(replaceLocalRoot(item, workspaceRoot, "workspace"), packageRoot, "package");
+  };
+  return visit(value);
+}
+
+function replaceLocalRoot(value, root, scheme) {
+  return value
+    .split(`${root}${path.sep}`).join(`${scheme}:///`)
+    .split(root).join(`${scheme}:///`);
 }
 
 function packSummaries(root, kind) {

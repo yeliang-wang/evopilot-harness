@@ -9,6 +9,7 @@ import { AGENT_PROTOCOL_VERSION, DEFAULT_MCP_PROTOCOL_VERSION, DIGITAL_EXPERT_SC
 import { StdioMcpServer } from "../mcp/stdio-server.mjs";
 import { TOOL_DEFINITIONS } from "../protocol/tools.mjs";
 import {
+  acknowledgeSessionEvidenceReview,
   approveSessionProposal,
   authorizePlanPublicationOperation,
   authorizeSessionPublication,
@@ -88,6 +89,7 @@ async function callTool(home, name, input, version) {
     else if (name === "execute_operation_plan") result = await executeSessionPlan({ home, ...input });
     else if (name === "authorize_plan_publication_operation") result = authorizePlanPublicationOperation({ home, ...input });
     else if (name === "resolve_interrupted_operation") result = await resolveInterruptedOperation({ home, ...input });
+    else if (name === "acknowledge_evidence_report_review") result = acknowledgeSessionEvidenceReview({ home, ...input });
     else if (name === "review_session_proposals") result = await reviewSessionProposals({ home, ...input });
     else if (name === "approve_session_proposal") result = await approveSessionProposal({ home, ...input });
     else if (name === "authorize_proposal_publication") result = authorizeSessionPublication({ home, ...input });
