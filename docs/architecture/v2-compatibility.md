@@ -4,7 +4,7 @@ This page preserves the architecture map for existing v2 automation. The current
 
 ## Status
 
-The v2 CLI, source packs, Harness Asset envelope, Catalog, and Registry remain available as a compatibility layer in Engine `4.1.0`. EvaluationPack v1 and v2 remain readable while new Proposals use EvaluationPack v3. These legacy surfaces are not the canonical v3 asset and Delta model.
+The v2 CLI, source packs, Harness Asset envelope, Catalog, and Registry remain available as a compatibility layer in Engine `4.1.1`. EvaluationPack v1 and v2 remain readable while new Proposals use EvaluationPack v3. These legacy surfaces are not the canonical v3 asset and Delta model.
 
 | v2 concept | Current role | v3 direction |
 |---|---|---|
@@ -44,6 +44,6 @@ Evidence sources and tests must not generate or overwrite Built-in v3 assets. Ex
 
 `migrate v2-to-v3` reads v2 packs and creates versioned v3 assets in a writable Workspace. Dry-run is non-mutating; `--apply` writes migration output and a rollback journal. The migration does not modify EvoPilot or publish into an external control plane.
 
-v4.1.0 requires no destructive Workspace migration. `workspace init` adds missing `policies/comparison/` and `comparisons/` directories and copies the built-in versioned `ComparisonPolicyPack` without rewriting Organization Catalog assets, accepted comparison history, or active user policy. Existing v4 Sessions without `evidenceReports` are initialized with an empty runtime collection when read or resumed; historical Session files are not bulk-rewritten. Legacy Proposals remain reviewable without comparison evidence unless an explicitly reviewed policy requires it for their risk class.
+The v4.1 release line requires no destructive Workspace migration. `workspace init` adds missing `policies/comparison/` and `comparisons/` directories and copies the built-in versioned `ComparisonPolicyPack` without rewriting Organization Catalog assets, accepted comparison history, or active user policy. Existing v4 Sessions without `evidenceReports` are initialized with an empty runtime collection when read or resumed; historical Session files are not bulk-rewritten. Legacy Proposals remain reviewable without comparison evidence unless an explicitly reviewed policy requires it for their risk class.
 
 See [v2 Compatibility Guide](../guides/v2-compatibility.md) and [v3 Workspace And Migration](../operations/v3-workspace.md).

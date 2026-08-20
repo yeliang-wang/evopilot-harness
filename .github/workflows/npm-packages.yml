@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Separately authorized release tag, for example v4.0.2"
+        description: "Separately authorized release tag, for example v4.1.1"
         required: true
         type: string
 
@@ -30,20 +30,16 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-          registry-url: "https://registry.npmjs.org"
 
       - name: Verify Trusted Publishing runtime
         run: |
           set -euo pipefail
+          node scripts/verify-npm-trusted-publishing-runtime.mjs
           npm install --global npm@11.5.1
           node --version
           NPM_VERSION="$(npm --version)"
           echo "$NPM_VERSION"
           NPM_VERSION="$NPM_VERSION" node -e 'const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number); if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) process.exit(1)'
-          if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::error::Trusted Publishing must not use a long-lived NODE_AUTH_TOKEN"
-            exit 1
-          fi
 
       - run: npm ci
       - run: npm run check

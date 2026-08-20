@@ -22,7 +22,7 @@ test("Digital Expert adapters are generated from one immutable Core", () => {
   execFileSync(process.execPath, ["scripts/generate-digital-expert-adapters.mjs", "--check"], { cwd: root, stdio: "pipe" });
   const lock = JSON.parse(fs.readFileSync(path.join(root, "digital-expert/manifest.lock.json"), "utf8"));
   assert.match(lock.coreDigest, /^sha256:[a-f0-9]{64}$/);
-  assert.equal(lock.expertVersion, "4.1.0");
+  assert.equal(lock.expertVersion, "4.1.1");
   for (const adapter of ["codex/SKILL.md", "workbuddy/WORKBUDDY.md", "claude-code/CLAUDE.md", "mcp/MCP.md", "generic/AGENT.md"]) {
     const content = fs.readFileSync(path.join(root, "digital-expert/adapters", adapter), "utf8");
     assert.match(content, new RegExp(lock.coreDigest.replace(":", "\\:")));

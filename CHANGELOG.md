@@ -2,6 +2,18 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.1.1 - 2026-08-20
+
+### Fixed
+
+- Removed `registry-url` from the normal npm setup-node step so it no longer injects the placeholder `NODE_AUTH_TOKEN` that blocked OIDC Trusted Publishing.
+- Added an executable token-boundary preflight and regression coverage proving the normal workflow has no setup-node auth configuration, npm secret fallback, or token fallback and still fails closed on an explicitly supplied token.
+
+### Boundaries
+
+- The v4.1 controlled-comparison runtime, schemas, Harness reasoning, Digital Expert behavior, MCP contracts, Catalog authority, and external npm configuration are unchanged.
+- Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment.
+
 ## 4.1.0 - 2026-08-20
 
 ### Added

@@ -8,7 +8,7 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current source candidate: [`v4.1.0`](../releases/4.1.0.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current source candidate: [`v4.1.1`](../releases/4.1.1.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Version Policy
 
@@ -58,7 +58,7 @@ Artifact verification checks the expected files, checksums, npm allowlist bounda
 The Git tag must exactly match `package.json`:
 
 ```text
-tag v4.1.0 -> package.json version 4.1.0
+tag v4.1.1 -> package.json version 4.1.1
 ```
 
 `.github/workflows/release-artifacts.yml`:
@@ -78,7 +78,7 @@ GitHub Release, npm publication, optional GHCR publication, and local artifact v
 
 Public npm uses `.github/workflows/npm-packages.yml` only after a separate release authorization. Before dispatch, confirm namespace ownership for `@evopilot/harness` and bind the npm Trusted Publisher to repository `yeliang-wang/evopilot-harness`, workflow `npm-packages.yml`, and GitHub environment `npm`.
 
-The workflow uses GitHub OIDC, npm `>=11.5.1`, and `npm publish --provenance`; it rejects a long-lived `NODE_AUTH_TOKEN` in the default path. It binds tag, package version, and dist-tag, then verifies Registry identity, integrity, signatures, SLSA provenance, exact install, `npm audit signatures`, bootstrap, and `npx` execution. See [npm Distribution](npm-distribution.md).
+The workflow uses GitHub OIDC, npm `>=11.5.1`, and `npm publish --provenance`. The normal setup-node step omits `registry-url` and `always-auth`; a preflight before any npm Registry command rejects an explicitly supplied `NODE_AUTH_TOKEN`, and no token or secret fallback is allowed. It binds tag, package version, and dist-tag, then verifies Registry identity, integrity, signatures, SLSA provenance, exact install, `npm audit signatures`, bootstrap, and `npx` execution. See [npm Distribution](npm-distribution.md).
 
 If the public package does not exist yet, do not weaken the normal workflow. Use the separately reviewed, manual-only `npm-first-publication.yml` Bootstrap once. It fails closed after the package exists and keeps npm identity, scope ownership, 2FA, temporary token, and Environment configuration in the independent [npm First-Publication Release Review](npm-first-publication-review.md). Revoke the temporary token and configure Trusted Publishing immediately after the first publication.
 

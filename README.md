@@ -41,11 +41,11 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.1.0 version
+npm view @evopilot/harness@4.1.1 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.1.0
+npm install --save-exact @evopilot/harness@4.1.1
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host workbuddy \
   --workspace "$HOME/.evopilot-harness" \
@@ -170,9 +170,9 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The Engine `4.1.0` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, v4 Agent Sessions, and EvaluationPack v1/v2 read compatibility. Legacy Sessions without `evidenceReports` remain readable. New approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+The Engine `4.1.1` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, v4 Agent Sessions, and EvaluationPack v1/v2 read compatibility. Legacy Sessions without `evidenceReports` remain readable. New approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
-GitHub Release, npm publication, and optional GHCR publication are separate evidence layers. Check each registry before claiming v4.1.0 is published. The v4.1 source candidate adds controlled comparison and calibration; it does not add v4.2 professional asset learning, automatic policy activation, or source-project execution.
+GitHub Release, npm publication, and optional GHCR publication are separate evidence layers. Check each registry before claiming v4.1.1 is published. The v4.1 release line adds controlled comparison and calibration; it does not add v4.2 professional asset learning, automatic policy activation, or source-project execution.
 
 ## Validate
 

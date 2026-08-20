@@ -7,6 +7,7 @@ import test from "node:test";
 import { parse as parseYaml } from "yaml";
 import { agentBootstrap, BOOTSTRAP_SCHEMA } from "../src/v4/bootstrap.mjs";
 import { classifyRegistryProbe } from "../scripts/npm-first-publication-preflight.mjs";
+import { verifyTrustedPublishingEnvironment } from "../scripts/verify-npm-trusted-publishing-runtime.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 
@@ -18,8 +19,8 @@ test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and e
   assert.equal(result.status, "READY");
   assert.deepEqual(result.package, {
     name: "@evopilot/harness",
-    version: "4.1.0",
-    spec: "@evopilot/harness@4.1.0",
+    version: "4.1.1",
+    spec: "@evopilot/harness@4.1.1",
     root,
     distributionMode: "source-checkout",
     sourceCheckoutRequired: false,
@@ -31,7 +32,7 @@ test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and e
   const canonicalWorkspace = fs.realpathSync(workspace);
   assert.deepEqual(result.mcp.exactNpxCommand, {
     command: "npx",
-    args: ["--yes", "--package", "@evopilot/harness@4.1.0", "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", canonicalWorkspace]
+    args: ["--yes", "--package", "@evopilot/harness@4.1.1", "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", canonicalWorkspace]
   });
   assert.equal(result.mcp.networkListening, false);
   assert.ok(result.mcp.protocols.includes("2025-11-25"));
@@ -57,11 +58,16 @@ test("npm Trusted Publishing workflow is OIDC-only and version-bound", () => {
   const workflowText = fs.readFileSync(path.join(root, ".github/workflows/npm-packages.yml"), "utf8");
   const workflow = parseYaml(workflowText);
   const steps = workflow.jobs.publish.steps;
+  const setupNode = steps.find((item) => item.uses === "actions/setup-node@v4");
+  const runtimeCheck = steps.find((item) => item.name === "Verify Trusted Publishing runtime");
   const publish = steps.find((item) => item.name === "Publish with npm Trusted Publishing");
 
   assert.equal(workflow.permissions.contents, "read");
   assert.equal(workflow.permissions["id-token"], "write");
   assert.equal(workflow.jobs.publish.environment, "npm");
+  assert.equal(Object.hasOwn(setupNode.with, "registry-url"), false);
+  assert.equal(Object.hasOwn(setupNode.with, "always-auth"), false);
+  assert.match(runtimeCheck.run, /^set -euo pipefail\nnode scripts\/verify-npm-trusted-publishing-runtime\.mjs\n/);
   assert.equal(publish.run, "npm publish --access public --provenance --tag \"$DIST_TAG\"");
   assert.match(workflowText, /npm install --global npm@11\.5\.1/);
   assert.match(workflowText, /Tag .* does not match package version/);
@@ -69,7 +75,21 @@ test("npm Trusted Publishing workflow is OIDC-only and version-bound", () => {
   assert.match(workflowText, /\*\) DIST_TAG=latest/);
   assert.match(workflowText, /npm audit signatures/);
   assert.doesNotMatch(workflowText, /secrets\.(?:NPM|NODE_AUTH)|NODE_AUTH_TOKEN:\s*\$\{\{/i);
+  assert.doesNotMatch(workflowText, /registry-url|always-auth/i);
   assert.doesNotMatch(workflowText, /docker\/build-push|ghcr\.io/i);
+});
+
+test("npm Trusted Publishing runtime fails closed on an explicitly supplied token", () => {
+  assert.deepEqual(verifyTrustedPublishingEnvironment({}), {
+    schema: "evopilot-harness-npm-trusted-publishing-runtime/v1",
+    status: "READY",
+    authentication: "OIDC_TRUSTED_PUBLISHING",
+    tokenFallback: false
+  });
+  assert.throws(
+    () => verifyTrustedPublishingEnvironment({ NODE_AUTH_TOKEN: "explicit-token" }),
+    (error) => error.code === "NODE_AUTH_TOKEN_FORBIDDEN" && !error.message.includes("explicit-token")
+  );
 });
 
 test("npm first-publication Bootstrap is manual, environment-isolated, and explicit", () => {

@@ -6,12 +6,12 @@
 2. Load the returned `adapter.path` as WorkBuddy instructions and configure the project MCP server from the returned exact package command. Bootstrap does not edit WorkBuddy configuration.
 3. Approve the project MCP server through WorkBuddy's supported project approval setting, then call `inspect_capabilities` before Workspace mutation and compare its compatibility result with this Adapter.
 
-For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.1.0 version`.
+For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.1.1 version`.
 
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.1.0`
+- Expert version: `4.1.1`
 - Core digest: `sha256:1ab2d6ddbabc3549ae1f7324cb02daa5f4959de878dc35d064d6bbdb0ce81f8a`
 - Agent protocol: `evopilot-harness-agent-operations/v1`
 - Engine API: `harness.evopilot.io/v3`

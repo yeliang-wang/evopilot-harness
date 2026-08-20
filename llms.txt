@@ -38,6 +38,7 @@
 
 - [Workspace and migration](docs/operations/v3-workspace.md)
 - [Testing](docs/operations/testing.md)
+- [v4.1.1 npm OIDC repair acceptance](docs/operations/v4.1.1-acceptance.md)
 - [v4.1 acceptance](docs/operations/v4.1-acceptance.md)
 - [Release management](docs/operations/release-management.md)
 - [Troubleshooting](docs/operations/troubleshooting.md)

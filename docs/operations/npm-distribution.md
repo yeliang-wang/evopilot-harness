@@ -7,10 +7,10 @@
 Source version, GitHub Release, npm package, and optional GHCR image are separate evidence layers. Before using a public package, verify the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.1.0 version
+npm view @evopilot/harness@4.1.1 version
 ```
 
-If the command does not return `4.1.0`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
+If the command does not return `4.1.1`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
 
 ## Choose One Installation Path
 
@@ -22,7 +22,7 @@ Use only after the Registry check succeeds:
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.1.0
+npm install --save-exact @evopilot/harness@4.1.1
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -38,7 +38,7 @@ npm pack --pack-destination /absolute/package/output
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact /absolute/package/output/evopilot-harness-4.1.0.tgz
+npm install --save-exact /absolute/package/output/evopilot-harness-4.1.1.tgz
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -82,7 +82,7 @@ WorkBuddy must load the returned `workbuddy` Adapter and configure a project MCP
 
 WorkBuddy may dispatch an MCP call through its built-in `DeferExecuteTool`. A least-privilege read-only startup check permits only `DeferExecuteTool` and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence.
 
-The previously recorded WorkBuddy acceptance is bounded to the exact CLI path/version and package version used by that run. v4.1.0 separately requires clean-tarball installed-package smoke that uses the installed binary and modules to complete real Comparison and Calibration Sessions through stdio MCP, including report review acknowledgement, with no source-checkout resolution. Neither layer proves public npm publication or every future Agent-host version.
+The previously recorded WorkBuddy acceptance is bounded to the exact CLI path/version and package version used by that run. The v4.1 release line separately requires clean-tarball installed-package smoke that uses the installed binary and modules to complete real Comparison and Calibration Sessions through stdio MCP, including report review acknowledgement, with no source-checkout resolution. Neither layer proves public npm publication or every future Agent-host version.
 
 ## Package Boundary
 
@@ -111,7 +111,7 @@ npm run package:smoke
 - workflow `npm-packages.yml`;
 - GitHub environment `npm`.
 
-The workflow uses GitHub OIDC and `npm publish --provenance`; the default path rejects a long-lived `NODE_AUTH_TOKEN`. Stable versions use `latest`; `alpha`, `beta`, and `rc` versions use matching dist-tags. After publication it verifies exact identity/version, dist-tag, integrity, Registry signatures, SLSA provenance, `npm audit signatures`, clean exact-version installation, bootstrap, and `npx` execution.
+The workflow uses GitHub OIDC and `npm publish --provenance`. Its `actions/setup-node` step deliberately omits `registry-url` and `always-auth`, so setup-node cannot inject the placeholder `NODE_AUTH_TOKEN` that conflicts with npm Trusted Publishing. A preflight runs before any npm Registry command and rejects any explicitly supplied `NODE_AUTH_TOKEN`; there is no secret or token fallback. Stable versions use `latest`; `alpha`, `beta`, and `rc` versions use matching dist-tags. After publication it verifies exact identity/version, dist-tag, integrity, Registry signatures, SLSA provenance, `npm audit signatures`, clean exact-version installation, bootstrap, and `npx` execution.
 
 Publication still requires an approved Evolution Target release gate and separate user authorization. The workflow contract does not grant release authority.
 

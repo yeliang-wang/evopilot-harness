@@ -5,7 +5,7 @@
 Check the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.1.0 version
+npm view @evopilot/harness@4.1.1 version
 ```
 
 If it is missing, stop. Use a locally verified release tarball or a source checkout. Do not silently install `latest`, another version, or an unreviewed package name.
@@ -32,7 +32,7 @@ Bootstrap does not edit Agent configuration or initialize the Workspace.
 
 Verify the project `.mcp.json` uses the exact command from bootstrap. WorkBuddy project MCP servers require explicit approval. In headless mode set `enableAllProjectMcpServers=true` or list `evopilot-harness` in `enabledMcpjsonServers` according to WorkBuddy's documented settings.
 
-If WorkBuddy reports `Unsupported MCP protocol version`, inspect both sides. v4.1.0 supports `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`; do not claim host compatibility outside that list.
+If WorkBuddy reports `Unsupported MCP protocol version`, inspect both sides. The v4.1 release line supports `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`; do not claim host compatibility outside that list.
 
 If `inspect_capabilities` is denied because `DeferExecuteTool` requires approval, permit only `DeferExecuteTool` and `mcp__evopilot-harness__inspect_capabilities` for the read-only startup check. Do not use global `bypassPermissions` as acceptance evidence. Confirm the tool result has schema `evopilot-harness-operation-server-capabilities/v1` and compare every compatibility field before mutation.
 
