@@ -1,42 +1,42 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.0.1",
-  "coreDigest": "sha256:6524e149b49a2164ccc97252d28083789d68ae487b528c36b0e69b2eb415f0e9",
+  "expertVersion": "4.0.2",
+  "coreDigest": "sha256:e8b5c97c539d6a4c0ce512fcfd18ef9c9f54ccdfa82fa3925ff36f57f129c8b3",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:626ee05aeaa4db908c52124ffa92b9a2ee1c4898c60606a203750527aa03a55d",
-      "bytes": 11995
+      "sha256": "sha256:29dd2e98a7c9ba47f7496b994f378fdc02e6f8a6c8a6e1dbeed58a35627725a0",
+      "bytes": 12241
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:a8b20ff3f0523d350a161872558db1c49d231919748618288cbc0d42318ea241",
-      "bytes": 12216
+      "sha256": "sha256:40922e079a28beaa34c92a743aa46259d9242c4b5fa28934670e1bfa30a8ff59",
+      "bytes": 12462
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:4f45031f78b3075f4e76d8ff027dcb5a706a19b61beb14e1c32eabbcbff34e64",
-      "bytes": 11997
+      "sha256": "sha256:a8e01950513be70fb26206990ca471acf2a117ee66b3c7e3a3742b3a685e0bc7",
+      "bytes": 12243
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:986879fbf4044322704556274f9aa209dc08dd3aca95cfdac18d0f0ddbe986cc",
-      "bytes": 11994
+      "sha256": "sha256:3d5e8517ea5ba848a49ae16742c9e34bc0c3647f345ebfdf5bb2afae312b1676",
+      "bytes": 12240
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:cc44951e94d4fe32a870ee8ed60cfa1224534b3ba842ec8d0dbcd388244b54e2",
-      "bytes": 11993
+      "sha256": "sha256:83e0d63e4bd2c5d5e68c88773639e415676ffc950039e63f4395717737d0e7fe",
+      "bytes": 13107
     },
     {
       "path": "conformance/generic-host.mjs",
-      "sha256": "sha256:2dcb29ea941a0fbfa3d1830fc53788009720cbb83cf88389dd8d50ef9fde27cf",
-      "bytes": 7190
+      "sha256": "sha256:bb1518fb1f90417cc1df9d767998645277836e851b4d5028d710dbd4aa02b64f",
+      "bytes": 7232
     },
     {
       "path": "conformance/host-profiles.yaml",
-      "sha256": "sha256:0238c8be198dcb15e26d63fce6b4b1351776357a33e61320677036a8a1bd3b7f",
-      "bytes": 1009
+      "sha256": "sha256:917001e773a417949088646a6fb6062947c006082a303c43c9dfe390d809ade6",
+      "bytes": 1058
     },
     {
       "path": "conformance/scenario-matrix.yaml",
@@ -50,8 +50,8 @@
     },
     {
       "path": "core/instructions.md",
-      "sha256": "sha256:020c49f67de2495674a7f69dcb6ff710301529445efb776541b3560d916b9f70",
-      "bytes": 6003
+      "sha256": "sha256:4b115dc2eb334860fdb97b98d13d80fe20e6da44131ca615060e3d86f9834deb",
+      "bytes": 6249
     },
     {
       "path": "core/policies.yaml",
@@ -70,8 +70,8 @@
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:5ee4a51729651d98a7693bf299a554fab629c91f39633276d86874efc8bfdd2a",
-      "bytes": 2011
+      "sha256": "sha256:db78261894319963fbc3e3d679f1be121947d68cbad4f20404abec4420170e33",
+      "bytes": 2030
     },
     {
       "path": "schemas/adapter-envelope-v1.schema.json",

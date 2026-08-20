@@ -44,6 +44,12 @@ export class TestMcpClient {
     return result;
   }
 
+  async initializeStandard(protocolVersion = "2025-06-18") {
+    const result = await this.request("initialize", { protocolVersion, capabilities: {}, clientInfo: { name: "standard-mcp-test-client", version: "1.0.0" } });
+    this.notify("notifications/initialized");
+    return result;
+  }
+
   async tool(name, args = {}) {
     return this.request("tools/call", { name, arguments: args });
   }

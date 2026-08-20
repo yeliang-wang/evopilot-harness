@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22-339933?logo=nodedotjs&logoColor=white)](package.json)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
 > An Agent-native, user-owned Harness asset factory for turning model-external execution environments, actions, constraints, evidence, and validators into reusable production assets.
@@ -11,7 +11,7 @@
 
 ![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 
-[Documentation](docs/README.md) | [Agent Quickstart](docs/agent/quickstart.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [MCP Reference](docs/agent/mcp-reference.md) | [Release Notes](docs/releases/README.md)
+[Documentation](docs/README.md) | [Agent Quickstart](docs/agent/quickstart.md) | [npm Distribution](docs/operations/npm-distribution.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [MCP Reference](docs/agent/mcp-reference.md) | [Release Notes](docs/releases/README.md)
 
 ## What A Harness Is
 
@@ -34,20 +34,23 @@ This is intentionally narrower than general software classification. Unknown dom
 
 ## Quick Start
 
-Requires Node.js 22 or newer.
+Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm install
-npm run digital-expert:check
+npm view @evopilot/harness@4.0.2 version
+mkdir -p "$HOME/.evopilot-harness-runtime"
+cd "$HOME/.evopilot-harness-runtime"
+npm init -y
+npm install --save-exact @evopilot/harness@4.0.2
+./node_modules/.bin/evopilot-harness agent bootstrap \
+  --host workbuddy \
+  --workspace "$HOME/.evopilot-harness" \
+  --json
 ```
 
-Load [`digital-expert/adapters/codex/SKILL.md`](digital-expert/adapters/codex/SKILL.md) in Codex, or choose another compatible Adapter from `digital-expert/adapters/`. Configure the Agent host to start this local MCP process:
+The `npm view` command is a publication gate, not an optional convenience. Until it returns the exact version, use a locally verified release tarball or a source checkout and do not claim public npm availability. The bootstrap result identifies the packaged Adapter, exact version-pinned `npx` MCP command, supported protocols, and external Workspace without changing the Agent host.
 
-```text
-node /absolute/path/to/evopilot-harness/src/index.mjs mcp serve \
-  --transport stdio \
-  --workspace $HOME/.evopilot-harness
-```
+Load the returned Adapter in Codex, WorkBuddy, Claude Code, or another compatible host. Then configure the host with the returned local stdio MCP command. Source development may use `node /absolute/path/to/evopilot-harness/src/index.mjs`; installed operation does not require the repository checkout.
 
 Then tell the Agent:
 
@@ -59,7 +62,7 @@ Then tell the Agent:
 
 The Digital Expert asks one missing question at a time. The human does not enter Harness lifecycle CLI commands. The Agent starts MCP, prepares the external Workspace, persists an `AgentOperationSession`, calls the Engine, renders the complete Review, and stops for explicit digest-bound decisions. Planned operations use durable idempotency receipts; interrupted unknown outcomes fail closed, and maintenance publication has a separate operation authorization. Project roots, Git repositories, attachments, production logs, historical Harnesses, notes, feedback, maintenance, diagnostics, resume, cancellation, close, and owned-session cleanup are covered. Source ingestion remains static and never runs project build, test, deploy, or business commands.
 
-See [Agent-native quickstart](docs/agent/quickstart.md), [Digital Expert](docs/agent/digital-expert.md), [MCP reference](docs/agent/mcp-reference.md), and [Session protocol](docs/agent/session-protocol.md).
+See [Agent-native quickstart](docs/agent/quickstart.md), [npm distribution](docs/operations/npm-distribution.md), [Digital Expert](docs/agent/digital-expert.md), [MCP reference](docs/agent/mcp-reference.md), and [Session protocol](docs/agent/session-protocol.md).
 
 ## Atomic CLI Compatibility
 
@@ -152,9 +155,9 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The Engine `4.0.1` release retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, and EvaluationPack v1/v2 read compatibility. New v3 approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+The Engine `4.0.2` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, and EvaluationPack v1/v2 read compatibility. New v3 approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
-The latest published Engine baseline is v4.0.1. It does not add v4.1 Pairwise/Champion-Challenger comparison or v4.2 professional asset learning.
+GitHub Release, npm publication, and optional GHCR publication are separate evidence layers. Check each registry before claiming it is published. v4.0.2 does not add v4.1 Pairwise/Champion-Challenger comparison or v4.2 professional asset learning.
 
 ## Validate
 
@@ -174,6 +177,7 @@ Evaluation reports `INSUFFICIENT_EVAL_EVIDENCE` until enough independently revie
 - [Agent-native quickstart](docs/agent/quickstart.md)
 - [Digital Expert and Adapter import](docs/agent/digital-expert.md)
 - [MCP reference](docs/agent/mcp-reference.md)
+- [npm distribution and installed Agent operation](docs/operations/npm-distribution.md)
 - [Agent Operation Session protocol](docs/agent/session-protocol.md)
 - [v3 production lifecycle](docs/guides/v3-production-lifecycle.md)
 - [v3 asset model](docs/architecture/v3-asset-model.md)

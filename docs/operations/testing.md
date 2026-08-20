@@ -23,6 +23,7 @@ architecture-boundary verification
 Node test suite
 v3 schema, asset, reasoning, lifecycle, feedback, and migration validation
 v3 Hub snapshot generation
+npm package allowlist, secret/path policy, and isolated tarball smoke
 ```
 
 The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Inspect `git status` afterward and include only intentional changes.
@@ -39,6 +40,8 @@ The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Ins
 | Feedback contracts | `node --test --test-name-pattern='feedback|EvaluationPack' tests/v3.test.mjs` |
 | Digital Expert generation | `npm run digital-expert:check` |
 | Agent-native protocol and lifecycle | `node --test tests/v4.test.mjs` |
+| npm package contract | `node --test tests/npm-distribution.test.mjs && npm run package:verify && npm run package:smoke` |
+| Actual WorkBuddy installed package | `npm run package:workbuddy -- --evidence-dir /absolute/evidence/directory` |
 | Legacy Catalog | `npm run catalog:publish && npm run catalog:validate` |
 | Legacy Registry | `npm run registry:publish && npm run registry:validate` |
 | Legacy assets | `npm run asset:validate` |
@@ -46,6 +49,8 @@ The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Ins
 | Advisor replay | `npm run llm:replay` |
 | Hub snapshots | `npm run hub:snapshot && npm run hub:v3-snapshot` |
 | Release artifacts | `npm run release:artifact && npm run verify:release-artifact` |
+
+`package:workbuddy` requires a real installed WorkBuddy CLI and network access to its configured model. It is a separate host-integration gate, not part of the portable `npm run check` suite.
 
 ## v3 Workspace Smoke
 

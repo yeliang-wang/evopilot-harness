@@ -17,6 +17,7 @@ const required = [
   `${projectName}-${version}-source.tar.gz`,
   `${projectName}-${version}-sbom.spdx.json`,
   `${projectName}-${version}-provenance.json`,
+  `${projectName}-${version}.tgz`,
   "SHA256SUMS"
 ];
 
@@ -28,11 +29,12 @@ for (const name of required) {
 
 const sbom = JSON.parse(fs.readFileSync(path.join(outDir, `${projectName}-${version}-sbom.spdx.json`), "utf8"));
 assert.equal(sbom.spdxVersion, "SPDX-2.3");
-assert.equal(sbom.packages[0].name, projectName);
+assert.equal(sbom.packages[0].name, packageJson.name);
 assert.equal(sbom.packages[0].versionInfo, version);
 
 const provenance = JSON.parse(fs.readFileSync(path.join(outDir, `${projectName}-${version}-provenance.json`), "utf8"));
 assert.equal(provenance.project, projectName);
+assert.equal(provenance.npmPackage, packageJson.name);
 assert.equal(provenance.version, version);
 assert.equal(provenance.tag, `v${version}`);
 assert.equal(provenance.source.commit, provenance.commit);
@@ -58,6 +60,14 @@ const sourceList = execTarList(path.join(outDir, `${projectName}-${version}-sour
 assert.equal(sourceList.filter((item) => path.basename(item).startsWith("._")).length, 0, "source archive must not contain macOS AppleDouble entries");
 for (const expectedPath of ["src/index.mjs", "src/v3/reasoning.mjs", "src/v3/review.mjs", "src/v3/feedback.mjs", "src/v4/operation-server/server.mjs", "src/v4/session/store.mjs", "assets/v3/components/engineering-validation/asset.yaml", "schemas/harness-asset-v3.schema.json", "schemas/harness-execution-feedback-package-v1.schema.json", "schemas/harness-effectiveness-report-v1.schema.json", "schemas/evaluation-pack-v2.schema.json", "schemas/proposal-review-v1.schema.json", "schemas/proposal-semantic-review-v1.schema.json", "schemas/agent-operation-session-v1.schema.json", "ontology/builtin/software-engineering.yaml", "policies/matcher/default.yaml", "policies/advisor/default.yaml", "governance/roadmap.yaml", "docs/roadmap/ROADMAP.md", "digital-expert/expert-manifest.yaml", "digital-expert/manifest.lock.json", "digital-expert/adapters/codex/SKILL.md", "digital-expert/conformance/generic-host.mjs", ".agents/skills/evopilot-harness-digital-expert/SKILL.md", ".agents/skills/evopilot-harness-guided-operator/SKILL.md", "ui/harness-hub/index.html", "published/CATALOG.md", "docs/guides/feedback-evidence.md", "docs/assets/harness-hub.png", "AGENTS.md", "CONTRIBUTING.md", "SECURITY.md", "LICENSE", "llms.txt", "Dockerfile", "compose.yaml"]) {
   assert.ok(sourceList.some((item) => item.endsWith(expectedPath)), `${expectedPath} should be in source archive`);
+}
+
+const npmList = execFileSync("tar", ["-tzf", path.join(outDir, `${projectName}-${version}.tgz`)], { encoding: "utf8" }).trim().split(/\r?\n/);
+for (const expectedPath of ["package/package.json", "package/src/index.mjs", "package/src/v4/bootstrap.mjs", "package/digital-expert/expert-manifest.yaml", "package/digital-expert/adapters/workbuddy/WORKBUDDY.md"]) {
+  assert.ok(npmList.includes(expectedPath), `${expectedPath} should be in npm artifact`);
+}
+for (const forbiddenPrefix of ["package/tests/", "package/.github/", "package/docs/", "package/models.json", "package/published/"]) {
+  assert.equal(npmList.some((item) => item.startsWith(forbiddenPrefix)), false, `${forbiddenPrefix} must not be in npm artifact`);
 }
 
 const extracted = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-release-verify-"));

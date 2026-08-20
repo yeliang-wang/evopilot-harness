@@ -56,10 +56,11 @@ try {
   const requiredTools = ["start_operation_session", "plan_operation_session", "confirm_operation_plan", "execute_operation_plan", "authorize_plan_publication_operation", "resolve_interrupted_operation", "review_session_proposals", "approve_session_proposal", "authorize_proposal_publication", "publish_session_proposal"];
   const missingTools = requiredTools.filter((name) => !listed.tools.some((tool) => tool.name === name));
   const workflowPassed = !workflow || workflow.renderedDecision.status === "PROPOSAL_REVIEW_REQUIRED";
+  const adapterId = args["adapter-id"] ?? "generic";
   const report = {
     schema: "evopilot-harness-generic-agent-host-conformance/v1",
     status: initialized.protocolVersion === "2025-06-18" && capabilities.status === "READY" && missingTools.length === 0 && manifest.contents?.length === 1 && workflowPassed ? "PASSED" : "FAILED",
-    adapterId: "generic",
+    adapterId,
     protocolVersion: initialized.protocolVersion,
     server: initialized.serverInfo,
     toolCount: listed.tools.length,

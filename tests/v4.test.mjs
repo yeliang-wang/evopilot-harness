@@ -22,7 +22,7 @@ test("Digital Expert adapters are generated from one immutable Core", () => {
   execFileSync(process.execPath, ["scripts/generate-digital-expert-adapters.mjs", "--check"], { cwd: root, stdio: "pipe" });
   const lock = JSON.parse(fs.readFileSync(path.join(root, "digital-expert/manifest.lock.json"), "utf8"));
   assert.match(lock.coreDigest, /^sha256:[a-f0-9]{64}$/);
-  assert.equal(lock.expertVersion, "4.0.1");
+  assert.equal(lock.expertVersion, "4.0.2");
   for (const adapter of ["codex/SKILL.md", "workbuddy/WORKBUDDY.md", "claude-code/CLAUDE.md", "mcp/MCP.md", "generic/AGENT.md"]) {
     const content = fs.readFileSync(path.join(root, "digital-expert/adapters", adapter), "utf8");
     assert.match(content, new RegExp(lock.coreDigest.replace(":", "\\:")));
@@ -516,6 +516,17 @@ test("real stdio MCP rejects incompatible versions and exposes no network transp
   const incompatibleStopped = await incompatible.close();
   assert.equal(incompatibleStopped.code, 0);
   assert.equal(fs.existsSync(path.join(home, "config.yaml")), false, "compatibility mismatch must fail before Workspace initialization");
+
+  const standard = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--transport", "stdio", "--workspace", home], cwd: root });
+  try {
+    const initialized = await standard.initializeStandard("2025-11-25");
+    assert.equal(initialized.protocolVersion, "2025-11-25");
+    const capabilities = structured(await standard.tool("inspect_capabilities"));
+    assert.deepEqual(capabilities.compatibility, operationCompatibility());
+    assert.equal(fs.existsSync(path.join(home, "config.yaml")), false, "standard initialization and capability inspection must remain read-only");
+  } finally {
+    await standard.close();
+  }
 
   const client = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--transport", "stdio", "--workspace", home], cwd: root });
   try {

@@ -59,6 +59,17 @@ async function main(argv) {
     const { serveOperationServer } = await import("./v4/operation-server/server.mjs");
     return serveOperationServer(argv.slice(2));
   }
+  if (argv[0] === "agent" && argv[1] === "bootstrap") {
+    const { agentBootstrap, renderAgentBootstrap, renderAgentBootstrapError } = await import("./v4/bootstrap.mjs");
+    try {
+      const result = agentBootstrap(argv.slice(2));
+      process.stdout.write(renderAgentBootstrap(result, argv.includes("--json")));
+      return 0;
+    } catch (error) {
+      process.stdout.write(renderAgentBootstrapError(error, argv.includes("--json")));
+      return 1;
+    }
+  }
   const v3 = await handleV3Command(argv);
   if (v3.handled) return v3.exitCode;
   const args = parseArgs(argv);
@@ -4682,6 +4693,7 @@ function printHelp() {
   process.stdout.write(`EvoPilot Harness CLI
 
 Usage:
+  evopilot-harness agent bootstrap --host codex|workbuddy|claude-code|mcp|generic [--workspace <dir>] [--json]
   evopilot-harness mcp serve --transport stdio [--workspace <dir>]
   evopilot-harness workspace init|status [--workspace <dir>] [--json]
   evopilot-harness produce --source-project <path>|--source-root <path>|--github-repo <repo> [--attachment <file>] [--production-log <file>] [--goal <text>] [--workspace <dir>] [--json]

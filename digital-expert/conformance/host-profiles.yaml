@@ -7,7 +7,7 @@ profiles:
   - id: workbuddy
     adapter: adapters/workbuddy/WORKBUDDY.md
     requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
-    validation: capability-gated
+    validation: actual-workbuddy-host-plus-installed-package-protocol-conformance
   - id: claude-code
     adapter: adapters/claude-code/CLAUDE.md
     requiredCapabilities: [conversation, project-instructions, stdio-mcp, structured-tool-results]

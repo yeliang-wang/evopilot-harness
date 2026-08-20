@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-19",
+  "updatedAt": "2026-08-20",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -23,8 +23,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "3.3.0",
-    "currentWorkingVersion": "3.4.0",
+    "publishedBaseline": "4.0.1",
+    "currentWorkingVersion": "4.0.2",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
@@ -43,6 +43,11 @@
       "id": "evopilot-harness-evolution-governance",
       "description": "Repository and Codex workflow governance that binds Engine evolution to reviewed evidence, this Roadmap, an approved Evolution Target, deterministic acceptance, and separately authorized release without changing Harness product behavior, asset authority, or boundaries.",
       "signals": ["evolution governance", "roadmap governance", "roadmap binding", "evolution target", "conversational orchestrator", "演进治理", "roadmap 绑定", "演进目标", "对话式编排"]
+    },
+    {
+      "id": "evopilot-harness-4.0-installed-distribution-maintenance",
+      "description": "Maintain the v4.0.x installed Agent distribution, including curated npm packaging, isolated Agent-host conformance, provenance, a one-time first-publication Bootstrap, and subsequent OIDC Trusted Publishing without changing Harness lifecycle behavior or product boundaries. npm account, organization, scope, token, 2FA, and actual Registry publication remain separately reviewed external release configuration.",
+      "signals": ["npm distribution", "installed agent distribution", "npm package", "npm trusted publishing", "first-publication bootstrap", "first publication bootstrap", "npm bootstrap", "workbuddy package conformance", "npm 分发", "npm 包", "npm 首发 bootstrap", "npm 首次发布", "workbuddy 包验收"]
     }
   ],
   "milestones": [
@@ -69,7 +74,7 @@
     },
     {
       "id": "evopilot-harness-3.4-evidence-driven-asset-delta",
-      "status": "PLANNED",
+      "status": "COMPLETE",
       "targetVersion": "3.4.0",
       "releaseLine": "3.4.x",
       "objective": "Produce professional, evidence-linked Harness Asset Delta Proposals with portable evaluation and deterministic impact closure before controlled comparative experiments.",
@@ -91,7 +96,7 @@
     },
     {
       "id": "evopilot-harness-4.0-agent-native-operations",
-      "status": "PLANNED",
+      "status": "COMPLETE",
       "targetVersion": "4.0.0",
       "releaseLine": "4.0.x",
       "objective": "Make a portable, question-driven Digital Expert the supported ordinary human entry while compatible external Agent hosts operate the deterministic Harness Engine through a local, resumable, policy-governed machine protocol.",

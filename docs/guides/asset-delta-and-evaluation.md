@@ -72,7 +72,7 @@ A generated pack starts at `INSUFFICIENT_EVAL_EVIDENCE`. Contract closure proves
 
 Compatibility is additive:
 
-| Version | Purpose | Read status in Engine 4.0.1 |
+| Version | Purpose | Read status in Engine 4.0.2 |
 |---|---|---|
 | `EvaluationPack v1` | Reviewed expected-decision cases | Supported. |
 | `EvaluationPack v2` | Outcome, Process, Safety, and Cost feedback criteria | Supported. |

@@ -8,11 +8,13 @@ evopilot-harness mcp serve \
   --workspace "$HOME/.evopilot-harness"
 ```
 
-From a checkout, replace `evopilot-harness` with `node /absolute/path/src/index.mjs`. v4 supports only local stdio. It opens no listening port and rejects a Workspace inside the Release.
+Use `evopilot-harness agent bootstrap --host <id> --workspace <path> --json` to obtain the exact installed-package command. From a checkout, replace `evopilot-harness` with `node /absolute/path/src/index.mjs`. v4 supports only local stdio. It opens no listening port and rejects a Workspace inside the Release.
 
 ## Protocol
 
-The server accepts one JSON-RPC 2.0 message per line. Supported MCP protocol versions are `2025-06-18`, `2025-03-26`, and `2024-11-05`. Initialization must include `clientInfo.compatibility` with the exact Product version, Expert version, Core digest, Agent protocol, and Engine API declared by the imported Adapter and manifest lock. Any missing or mismatched field fails before Workspace mutation. Initialization must complete before tools or resources are read.
+The server accepts one JSON-RPC 2.0 message per line. Supported MCP protocol versions are `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`. Standard initialization requires `protocolVersion`, `capabilities`, and `clientInfo`; it does not require a non-standard client extension. A host may additionally send `clientInfo.compatibility` with the exact Product version, Expert version, Core digest, Agent protocol, and Engine API. If supplied, any mismatch fails before Workspace mutation.
+
+After standard initialization, the Digital Expert must call `inspect_capabilities` and compare the returned Product, Expert, Core, Agent protocol, and Engine API values with its packaged Adapter and manifest lock before mutation. This post-initialize check is mandatory even when the optional extension was supplied. Initialization must complete before tools or resources are read.
 
 Session and Plan inputs accept references, not credentials. Raw API keys, tokens, passwords, authorization headers, cookies, credentials, and private-key material are rejected. Before Session or receipt persistence and before mutating Engine operations, the Workspace tree is checked for internal symlinks that escape the Workspace. Individual output paths are also resolved through existing ancestors and must remain inside the external Workspace.
 

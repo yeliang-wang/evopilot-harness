@@ -27,4 +27,13 @@ Maintainers should acknowledge the report privately, confirm scope, coordinate a
 - Do not execute source-project build, test, deploy, or business commands during evidence ingestion.
 - Keep Catalog private keys outside the repository and restrict their filesystem permissions.
 
+## Package Supply Chain
+
+- Install an exact `@evopilot/harness@<version>`; do not substitute a similarly named package or an unreviewed dist-tag.
+- Verify Registry integrity, signatures, provenance, and `npm audit signatures` before treating a public package as a released Engine.
+- The default npm publication path uses GitHub OIDC Trusted Publishing. The only token-backed path is the separately reviewed first-publication Bootstrap while the package is absent; use a short-lived, least-privilege token, revoke it immediately after Bootstrap, and never reuse that workflow for later versions.
+- Treat the installed package as read-only. Keep Workspaces, user Catalogs, Sessions, evidence, model configuration, credentials, and keys outside the package root.
+- Bootstrap reports configuration; it must not edit Codex, WorkBuddy, Claude Code, or another host. Project MCP approval and tool permissions remain host-owned decisions.
+- MCP and the Digital Expert are operation surfaces, not sandbox or authentication boundaries. Use host permissions and OS isolation for untrusted environments.
+
 For operational constraints, see [Deployment](docs/operations/deployment.md) and [Troubleshooting](docs/operations/troubleshooting.md).

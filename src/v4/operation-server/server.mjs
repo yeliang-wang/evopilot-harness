@@ -42,7 +42,10 @@ export async function serveOperationServer(argv = [], io = {}) {
     listResources: () => listResources(home),
     readResource: (uri) => readResource(home, uri, version),
     callTool: (name, input) => callTool(home, name, input, version),
-    validateInitialize: (params) => assertOperationCompatibility(params.clientInfo?.compatibility),
+    validateInitialize: (params) => {
+      const compatibility = params.clientInfo?.compatibility;
+      if (compatibility !== undefined) assertOperationCompatibility(compatibility);
+    },
     onInitialized: () => {
       if (workspaceStatus(home).status === "READY") recoverInterruptedSessions(home);
     },

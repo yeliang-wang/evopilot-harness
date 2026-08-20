@@ -1,5 +1,45 @@
 # Troubleshooting
 
+## Public npm Version Is Missing
+
+Check the exact Registry version:
+
+```bash
+npm view @evopilot/harness@4.0.2 version
+```
+
+If it is missing, stop. Use a locally verified release tarball or a source checkout. Do not silently install `latest`, another version, or an unreviewed package name.
+
+## Agent Bootstrap Fails
+
+Run the installed binary with JSON output:
+
+```bash
+evopilot-harness agent bootstrap \
+  --host workbuddy \
+  --workspace "$HOME/.evopilot-harness" \
+  --json
+```
+
+- `MISSING_HOST`: choose a packaged host id.
+- `UNSUPPORTED_HOST`: use one of the Adapters listed in `digital-expert/expert-manifest.yaml`.
+- `ADAPTER_NOT_PACKAGED`: reject the package and reinstall the exact version.
+- Workspace boundary failure: choose a writable path outside the installed package or source checkout.
+
+Bootstrap does not edit Agent configuration or initialize the Workspace.
+
+## WorkBuddy Shows No Harness MCP Tools
+
+Verify the project `.mcp.json` uses the exact command from bootstrap. WorkBuddy project MCP servers require explicit approval. In headless mode set `enableAllProjectMcpServers=true` or list `evopilot-harness` in `enabledMcpjsonServers` according to WorkBuddy's documented settings.
+
+If WorkBuddy reports `Unsupported MCP protocol version`, inspect both sides. v4.0.2 supports `2025-11-25`, `2025-06-18`, `2025-03-26`, and `2024-11-05`; do not claim host compatibility outside that list.
+
+If `inspect_capabilities` is denied because `DeferExecuteTool` requires approval, permit only `DeferExecuteTool` and `mcp__evopilot-harness__inspect_capabilities` for the read-only startup check. Do not use global `bypassPermissions` as acceptance evidence. Confirm the tool result has schema `evopilot-harness-operation-server-capabilities/v1` and compare every compatibility field before mutation.
+
+## Installed Package Resolves Into A Checkout
+
+Reject the result. `agent bootstrap` must report `distributionMode=installed-package` for installed operation, and package/Adapter paths must resolve below the installation's `node_modules/@evopilot/harness`, not the repository checkout. Run `npm run package:smoke` from the source candidate to reproduce the isolated installation contract.
+
 ## Feedback Package Is `REJECTED`
 
 Run validation with JSON and inspect `failures[]`:

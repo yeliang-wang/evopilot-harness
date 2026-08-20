@@ -1,10 +1,18 @@
 # WorkBuddy Adapter
 
+## Installed Package Startup
+
+1. Run `evopilot-harness agent bootstrap --host workbuddy --workspace /absolute/external/workspace --json` from the installed package.
+2. Load the returned `adapter.path` as WorkBuddy instructions and configure the project MCP server from the returned exact package command. Bootstrap does not edit WorkBuddy configuration.
+3. Approve the project MCP server through WorkBuddy's supported project approval setting, then call `inspect_capabilities` before Workspace mutation and compare its compatibility result with this Adapter.
+
+For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.0.2 version`.
+
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.0.1`
-- Core digest: `sha256:6524e149b49a2164ccc97252d28083789d68ae487b528c36b0e69b2eb415f0e9`
+- Expert version: `4.0.2`
+- Core digest: `sha256:e8b5c97c539d6a4c0ce512fcfd18ef9c9f54ccdfa82fa3925ff36f57f129c8b3`
 - Agent protocol: `evopilot-harness-agent-operations/v1`
 - Engine API: `harness.evopilot.io/v3`
 - MCP command: `evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness`
@@ -43,7 +51,7 @@ Ask exactly one shortest missing question. Accept a complete user request withou
 
 ## Required Flow
 
-1. Start the local stdio MCP process and initialize it with the Adapter's exact Product version, Expert version, Core digest, Agent protocol, and Engine API binding. Stop before any Workspace mutation if one field is missing or incompatible, then call `inspect_capabilities`.
+1. Start the local stdio MCP process with the Adapter's exact package command and complete standard MCP initialization. Call `inspect_capabilities` before any Workspace mutation, then compare its Product version, Expert version, Core digest, Agent protocol, and Engine API binding with the loaded Adapter. Stop when one field is missing or incompatible. A host-specific `clientInfo.compatibility` extension may fail an obvious mismatch earlier, but the Digital Expert must not require a non-standard MCP client extension.
 2. Call `prepare_workspace`; all mutable state must remain under the returned external Workspace.
 3. Collect intent and call `start_operation_session`.
 4. Collect the shortest missing source or maintenance input and call `plan_operation_session`.

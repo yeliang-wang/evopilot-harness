@@ -76,7 +76,8 @@ Keep the root README as a concise product entry. Put normative details in one fo
 | CLI or lifecycle | `npm test`, `npm run v3:check`, targeted CLI smoke |
 | Schemas, assets, Packs | `npm run v3:check`, `npm run check` |
 | Hub | Hub API smoke plus desktop and mobile browser checks |
-| Release | `npm run check`, `npm run release:artifact`, `npm run verify:release-artifact` |
+| npm or Agent distribution | `npm run package:verify`, `npm run package:smoke`, and actual-host conformance when support is claimed |
+| Release | `npm run check`, `npm run package:workbuddy`, `npm run release:artifact`, `npm run verify:release-artifact` |
 
 Before submission, run the complete local gate:
 

@@ -17,6 +17,8 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Digital Expert](agent/digital-expert.md) - portable Core, Adapter generation, imports, authority, and support claims.
 - [MCP Reference](agent/mcp-reference.md) - process, protocol, tools, resources, errors, and safety gates.
 - [Agent Operation Session](agent/session-protocol.md) - persisted state, digests, recovery, cross-Agent resume, and cleanup.
+- [npm Distribution](operations/npm-distribution.md) - exact-version installation, package boundary, Agent bootstrap, WorkBuddy startup, Trusted Publishing, and Registry verification.
+- [npm First-Publication Release Review](operations/npm-first-publication-review.md) - one-time package creation, external npm account configuration, stop rules, and mandatory OIDC handoff.
 - [v4 Acceptance](operations/v4-acceptance.md) - deterministic, process, protocol, lifecycle, integrity, and compatibility evidence.
 
 ## Produce And Publish
@@ -66,4 +68,4 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The current published Engine baseline is v4.0.1.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The source working line is v4.0.2. GitHub Release, npm, and optional GHCR publication are independently verified distribution layers; do not infer one from another.

@@ -40,7 +40,7 @@ After v3.4 closes the professional Asset Delta and Evaluation contracts, v4 chan
 
 Feedback remains evidence only. It cannot directly change or publish an asset.
 
-### v3.4.0: Evidence-Driven Asset Delta And Evaluation Closure
+### v3.4.0: Evidence-Driven Asset Delta And Evaluation Closure (Complete)
 
 - Define typed, evidence-linked deltas for Profile, Component, Bundle, Ontology, Policy, and Evaluation assets.
 - Add portable `EvaluationPack v3` cases with positive and negative expectations, context, assertions, validator/scorer versions, baseline references, and regression boundaries.
@@ -49,7 +49,7 @@ Feedback remains evidence only. It cannot directly change or publish an asset.
 
 v3.4.0 uses approved production feedback as one Evidence Source, but it does not introduce Pairwise experiments or claim causal improvement. Every Delta Proposal remains review-stage until deterministic validation, independent review, and explicit human approval complete.
 
-### v4.0.0: Agent-Native Harness Operations
+### v4.0.0: Agent-Native Harness Operations (Complete)
 
 - Publish a portable, question-driven Digital Expert Core with versioned Codex, WorkBuddy, Claude Code, MCP, and generic adapters generated from one authority.
 - Add a local-first Harness Operation Server with `stdio` MCP as the default transport, structured tools/resources, process health, and version negotiation.
@@ -58,6 +58,8 @@ v3.4.0 uses approved production feedback as one Evidence Source, but it does not
 - Cover every released Engine lifecycle branch through real Agent-to-MCP-to-Engine end-to-end validation without requiring a human to enter Harness CLI commands.
 
 The Digital Expert understands and explains intent, but the Engine remains authoritative for evidence, reasoning, review, validation, approval binding, publication, and state. MCP is an operation protocol, not a security boundary. v4.0.0 does not execute source-project commands, own Goal Loops, embed a general Agent runtime, create model credentials, or permit automatic approval or publication.
+
+The published Engine baseline is `v4.0.1`. The `v4.0.2` maintenance release closes npm distribution, isolated Agent-host installation, package provenance, and WorkBuddy conformance for the existing v4.0 operating model; it does not add a new Harness lifecycle capability or change the accepted boundary. Because npm Trusted Publishing can be configured only after the package exists, this release line may include one explicitly selected, token-backed first-publication Bootstrap that refuses to run once the package exists. Every later publication must use the OIDC Trusted Publisher path. npm account creation, organization or scope ownership, token and 2FA configuration, and actual Registry publication remain external Release Review decisions and are never inferred from implementation acceptance.
 
 ### v4.1.0: Controlled Comparative Evidence And Calibration
 

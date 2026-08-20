@@ -48,7 +48,7 @@ The Expert asks exactly one shortest missing question and does not repeat inform
 - Generic or custom Agent: load `digital-expert/adapters/generic/AGENT.md` and implement stdio MCP with structured tool results.
 - MCP-only client: use `digital-expert/adapters/mcp/MCP.md`; it provides transport guidance but not a conversational UI.
 
-Adapter packaging does not prove the host supports local instructions, subprocesses, or stdio MCP. Unsupported hosts must return a capability blocker. This v4 candidate validates the Codex protocol path, the included independent Generic Agent Host, cross-Adapter Plan/Engine-call/stop-point semantics, and the MCP process. It does not claim completed WorkBuddy or Claude Code runtime validation.
+Adapter packaging does not prove the host supports local instructions, subprocesses, or stdio MCP. Unsupported hosts must return a capability blocker. v4.0.2 validates the Codex protocol path, the included independent Generic Agent Host, cross-Adapter Plan/Engine-call/stop-point semantics, the real MCP process, and the WorkBuddy CLI currently installed on the acceptance Mac from an isolated local tarball. The acceptance report records its exact path and version. Claude Code remains package-only until its actual host passes conformance. WorkBuddy acceptance does not prove public npm availability or every later host version.
 
 ## Legacy Skill
 

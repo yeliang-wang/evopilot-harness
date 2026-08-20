@@ -10,6 +10,11 @@ on:
         description: "Release tag to build, for example v1.1.0"
         required: true
         type: string
+      publish_ghcr:
+        description: "Publish GHCR only when separately authorized"
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: release-artifacts-${{ inputs.tag || github.ref }}
@@ -62,9 +67,11 @@ jobs:
         run: npm run roadmap:release -- "$VERSION"
 
       - name: Set up Docker Buildx
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_ghcr }}
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_ghcr }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -72,6 +79,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push immutable image
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_ghcr }}
         id: image
         uses: docker/build-push-action@v6
         with:
@@ -89,14 +97,21 @@ jobs:
           provenance: true
           sbom: true
 
+      - name: Resolve optional image metadata
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          if [ -n "$IMAGE_DIGEST" ]; then
+            echo "EVOPILOT_HARNESS_IMAGE_REF=$IMAGE_REPOSITORY:$VERSION" >> "$GITHUB_ENV"
+            echo "EVOPILOT_HARNESS_IMAGE_DIGEST=$IMAGE_DIGEST" >> "$GITHUB_ENV"
+          fi
+
       - name: Restore release source checkout
         run: git restore harness-registry.yaml published
 
       - name: Build release artifacts
         env:
           CI: "false"
-          EVOPILOT_HARNESS_IMAGE_REF: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
-          EVOPILOT_HARNESS_IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
         run: GITHUB_REF_NAME="$RELEASE_TAG" npm run release:artifact
 
       - name: Verify release artifacts

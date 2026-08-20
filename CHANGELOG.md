@@ -2,6 +2,26 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.0.2 - Unreleased
+
+### Added
+
+- Added the public package identity `@evopilot/harness`, curated runtime allowlist, `evopilot-harness` binary, exact-version Agent bootstrap, and isolated tarball install/MCP smoke validation.
+- Added OIDC Trusted Publishing with provenance, stable/prerelease dist-tag selection, Registry integrity/signature/attestation checks, and exact public-package install verification.
+- Added a manual-only, fail-closed npm first-publication Bootstrap and kept npm account, scope, 2FA, token, and Trusted Publisher configuration in a separate Release Review.
+- Added actual WorkBuddy installed-package conformance from a local tarball, including project MCP approval, minimal deferred-tool permission, a real `inspect_capabilities` call, request ids, and source-checkout exclusion evidence.
+
+### Changed
+
+- Added MCP `2025-11-25` negotiation while retaining `2025-06-18`, `2025-03-26`, and `2024-11-05` compatibility.
+- Standard MCP initialization no longer requires the non-standard `clientInfo.compatibility` extension. When supplied, a mismatch still fails before mutation; the Digital Expert always verifies compatibility after `inspect_capabilities`.
+- GitHub Release artifacts now include the npm tarball. GHCR publication is disabled for tag-triggered releases and remains a separate explicit workflow input.
+
+### Boundaries
+
+- Public npm publication, GitHub Release, GHCR publication, and remote deployment remain separately authorized actions. This source entry does not claim that `@evopilot/harness@4.0.2` already exists in the public Registry.
+- The package excludes user Catalogs, Workspaces, Sessions, source projects, logs, attachments, model configuration, credentials, private keys, tests, governance state, and development evidence.
+
 ## 4.0.1 - 2026-08-19
 
 ### Fixed

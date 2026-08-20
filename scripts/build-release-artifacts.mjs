@@ -10,6 +10,7 @@ const projectName = "evopilot-harness";
 const root = process.cwd();
 const outDir = path.join(root, "dist", "release");
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const npmPackageName = packageJson.name;
 const version = packageJson.version;
 const tag = process.env.GITHUB_REF_NAME || `v${version}`;
 const expectedTag = `v${version}`;
@@ -47,7 +48,7 @@ function safeSpdxId(value) {
 function generateSbom() {
   const lock = JSON.parse(fs.readFileSync(path.join(root, "package-lock.json"), "utf8"));
   const packages = [{
-    name: packageJson.name,
+    name: npmPackageName,
     SPDXID: "SPDXRef-Package-root",
     versionInfo: version,
     downloadLocation: "NOASSERTION",
@@ -111,6 +112,11 @@ run("npm", ["run", "check"], { stdio: "inherit" });
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
 
+const npmPack = JSON.parse(run("npm", ["pack", "--json", "--pack-destination", outDir]));
+if (npmPack.length !== 1 || npmPack[0].filename !== `${projectName}-${version}.tgz`) {
+  throw new Error(`Unexpected npm package output: ${JSON.stringify(npmPack)}`);
+}
+
 const sourceArchive = `${projectName}-${version}-source.tar.gz`;
 const sourceArchivePath = path.join(outDir, sourceArchive);
 const sourceManifest = releaseSourceManifest(root);
@@ -154,6 +160,7 @@ const provenancePath = path.join(outDir, `${projectName}-${version}-provenance.j
 fs.writeFileSync(provenancePath, `${JSON.stringify({
   schema: "evopilot-harness-release-provenance/v1",
   project: projectName,
+  npmPackage: npmPackageName,
   version,
   tag,
   commit,

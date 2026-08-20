@@ -4,23 +4,26 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 
 ## Prerequisites
 
-- Node.js 22 or newer.
-- An installed `evopilot-harness` v4 Release or checkout.
+- Node.js 22.14 or newer.
+- An exact installed `@evopilot/harness` Release, a verified local release tarball, or a development checkout.
 - A compatible Agent host that can load local instructions and call a local stdio MCP server.
 - An external writable Workspace, normally `$HOME/.evopilot-harness`.
 - A manually maintained read-only model configuration when Advisor or Proposal Review requires GLM.
 
 ## Install And Verify
 
-From the Release root:
+For a publicly available version:
 
 ```bash
-npm install
-npm run digital-expert:check
-node src/index.mjs version --json
+npm view @evopilot/harness@4.0.2 version
+mkdir -p "$HOME/.evopilot-harness-runtime"
+cd "$HOME/.evopilot-harness-runtime"
+npm init -y
+npm install --save-exact @evopilot/harness@4.0.2
+./node_modules/.bin/evopilot-harness --version --json
 ```
 
-Expected product version is `4.0.1`. Do not put the Workspace inside the Release directory.
+The Registry command must return `4.0.2`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
 ## Load The Expert
 
@@ -32,19 +35,28 @@ Choose one Adapter under `digital-expert/adapters/`:
 | Generic Agent | `generic/AGENT.md` | Independent executable conformance host included. |
 | MCP client | `mcp/MCP.md` | Real stdio protocol conformance included. |
 | Claude Code | `claude-code/CLAUDE.md` | Packaged; claim full support only after the actual host proves required capabilities. |
-| WorkBuddy | `workbuddy/WORKBUDDY.md` | Packaged; claim full support only after the actual host proves required capabilities. |
+| WorkBuddy | `workbuddy/WORKBUDDY.md` | Installed-package acceptance uses the WorkBuddy CLI currently installed on the acceptance Mac and records its exact path/version (`2.106.4` for the latest local run); public npm remains a separate Registry check. |
 
 All Adapters contain the same Core digest from `digital-expert/manifest.lock.json`. Host-specific instructions cannot change workflow or stop rules.
 
 ## Configure MCP
 
-Configure the Agent host to launch:
+First obtain the package-bound Adapter and MCP command:
 
-```text
-node /absolute/path/to/evopilot-harness/src/index.mjs mcp serve --transport stdio --workspace /absolute/external/workspace
+```bash
+./node_modules/.bin/evopilot-harness agent bootstrap \
+  --host workbuddy \
+  --workspace /absolute/external/workspace \
+  --json
 ```
 
-The process writes only JSON-RPC messages to stdout, uses stderr for process diagnostics, and opens no network listener. v4 rejects non-stdio transports.
+Configure the Agent host to launch the exact command returned under `mcp.exactNpxCommand`. An installed local binary may equivalently launch:
+
+```text
+./node_modules/.bin/evopilot-harness mcp serve --transport stdio --workspace /absolute/external/workspace
+```
+
+Source development may replace the installed binary with `node /absolute/path/to/evopilot-harness/src/index.mjs`. The process writes only JSON-RPC messages to stdout, uses stderr for process diagnostics, and opens no network listener. v4 rejects non-stdio transports.
 
 ## Start A Conversation
 

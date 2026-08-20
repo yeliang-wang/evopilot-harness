@@ -28,7 +28,7 @@ Ask exactly one shortest missing question. Accept a complete user request withou
 
 ## Required Flow
 
-1. Start the local stdio MCP process and initialize it with the Adapter's exact Product version, Expert version, Core digest, Agent protocol, and Engine API binding. Stop before any Workspace mutation if one field is missing or incompatible, then call `inspect_capabilities`.
+1. Start the local stdio MCP process with the Adapter's exact package command and complete standard MCP initialization. Call `inspect_capabilities` before any Workspace mutation, then compare its Product version, Expert version, Core digest, Agent protocol, and Engine API binding with the loaded Adapter. Stop when one field is missing or incompatible. A host-specific `clientInfo.compatibility` extension may fail an obvious mismatch earlier, but the Digital Expert must not require a non-standard MCP client extension.
 2. Call `prepare_workspace`; all mutable state must remain under the returned external Workspace.
 3. Collect intent and call `start_operation_session`.
 4. Collect the shortest missing source or maintenance input and call `plan_operation_session`.

@@ -19,7 +19,19 @@ const adapters = {
     projectCopy: ".agents/skills/evopilot-harness-digital-expert/SKILL.md",
     header: `---\nname: evopilot-harness-digital-expert\ndescription: Question-driven ordinary human entry for evopilot-harness v4. Uses local stdio MCP and the deterministic Engine; never treats conversation as approval or publication.\n---\n\n# Codex Adapter\n`
   },
-  workbuddy: { relative: "adapters/workbuddy/WORKBUDDY.md", header: "# WorkBuddy Adapter\n" },
+  workbuddy: {
+    relative: "adapters/workbuddy/WORKBUDDY.md",
+    header: `# WorkBuddy Adapter
+
+## Installed Package Startup
+
+1. Run \`evopilot-harness agent bootstrap --host workbuddy --workspace /absolute/external/workspace --json\` from the installed package.
+2. Load the returned \`adapter.path\` as WorkBuddy instructions and configure the project MCP server from the returned exact package command. Bootstrap does not edit WorkBuddy configuration.
+3. Approve the project MCP server through WorkBuddy's supported project approval setting, then call \`inspect_capabilities\` before Workspace mutation and compare its compatibility result with this Adapter.
+
+For a least-privilege headless startup check, allow only WorkBuddy's \`DeferExecuteTool\` dispatcher and \`mcp__evopilot-harness__inspect_capabilities\`. Do not use \`bypassPermissions\` as conformance evidence. Public npm availability must be verified separately with \`npm view @evopilot/harness@${manifest.artifact.version} version\`.
+`
+  },
   "claude-code": { relative: "adapters/claude-code/CLAUDE.md", header: "# Claude Code Adapter\n" },
   mcp: { relative: "adapters/mcp/MCP.md", header: "# MCP Client Adapter\n" },
   generic: { relative: "adapters/generic/AGENT.md", header: "# Generic Agent Adapter\n" }

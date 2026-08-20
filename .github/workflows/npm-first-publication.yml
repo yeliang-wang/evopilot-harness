@@ -1,0 +1,142 @@
+name: NPM First Publication Bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Separately authorized first release tag, for example v4.0.2"
+        required: true
+        type: string
+      confirmation:
+        description: "Type FIRST_PUBLISH @evopilot/harness"
+        required: true
+        type: string
+
+concurrency:
+  group: npm-first-publication-bootstrap
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm-bootstrap
+    steps:
+      - name: Require explicit one-time confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRMATION" != "FIRST_PUBLISH @evopilot/harness" ]; then
+            echo "::error::First-publication confirmation does not match"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Verify Bootstrap runtime
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.5.1
+          node --version
+          NPM_VERSION="$(npm --version)"
+          echo "$NPM_VERSION"
+          NPM_VERSION="$NPM_VERSION" node -e 'const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number); if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) process.exit(1)'
+
+      - run: npm ci
+      - run: npm run check
+      - run: npm pack --dry-run --json > npm-pack-manifest.json
+
+      - name: Bind package and first release tag
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$PACKAGE_NAME" != "@evopilot/harness" ]; then
+            echo "::error::Unexpected npm package identity: $PACKAGE_NAME"
+            exit 1
+          fi
+          if [ "${{ inputs.tag }}" != "v$VERSION" ]; then
+            echo "::error::Tag ${{ inputs.tag }} does not match package version $VERSION"
+            exit 1
+          fi
+          case "$VERSION" in
+            *-alpha.*) DIST_TAG=alpha ;;
+            *-beta.*) DIST_TAG=beta ;;
+            *-rc.*) DIST_TAG=rc ;;
+            *) DIST_TAG=latest ;;
+          esac
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DIST_TAG=$DIST_TAG" >> "$GITHUB_ENV"
+
+      - name: Verify token identity, package absence, and publish first version
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+          EXPECTED_NPM_IDENTITY: ${{ vars.NPM_BOOTSTRAP_EXPECTED_IDENTITY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::The independently reviewed npm-bootstrap environment has no NPM_BOOTSTRAP_TOKEN"
+            exit 1
+          fi
+          if [ -z "${EXPECTED_NPM_IDENTITY:-}" ]; then
+            echo "::error::The independently reviewed npm-bootstrap environment has no NPM_BOOTSTRAP_EXPECTED_IDENTITY"
+            exit 1
+          fi
+          ACTUAL_NPM_IDENTITY="$(npm whoami --registry=https://registry.npmjs.org)"
+          if [ "$ACTUAL_NPM_IDENTITY" != "$EXPECTED_NPM_IDENTITY" ]; then
+            echo "::error::Authenticated npm identity does not match the independently reviewed identity"
+            exit 1
+          fi
+          echo "Authenticated npm identity: $ACTUAL_NPM_IDENTITY"
+          npm run package:bootstrap:preflight
+          npm publish --ignore-scripts --access public --provenance --tag "$DIST_TAG"
+
+      - name: Verify first public package and attestation
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 20); do
+            if npm view "$PACKAGE_NAME@$VERSION" --json > npm-metadata.json 2>/dev/null && npm view "$PACKAGE_NAME" dist-tags --json > npm-dist-tags.json 2>/dev/null; then
+              break
+            fi
+            sleep 15
+          done
+          node - <<'NODE'
+          const fs = require('fs');
+          const value = JSON.parse(fs.readFileSync('npm-metadata.json', 'utf8'));
+          const distTags = JSON.parse(fs.readFileSync('npm-dist-tags.json', 'utf8'));
+          if (value.name !== process.env.PACKAGE_NAME || value.version !== process.env.VERSION) throw new Error('npm identity mismatch');
+          if (distTags?.[process.env.DIST_TAG] !== process.env.VERSION) throw new Error('npm dist-tag mismatch');
+          if (!value.dist?.integrity) throw new Error('npm integrity is missing');
+          if (!Array.isArray(value.dist?.signatures) || value.dist.signatures.length === 0) throw new Error('npm signatures are missing');
+          if (value.dist?.attestations?.provenance?.predicateType !== 'https://slsa.dev/provenance/v1') throw new Error('SLSA provenance is missing');
+          NODE
+
+      - name: Verify exact first package installation
+        run: |
+          set -euo pipefail
+          TEMP_DIR="$(mktemp -d)"
+          cd "$TEMP_DIR"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-audit --no-fund "$PACKAGE_NAME@$VERSION"
+          npm audit signatures
+          npx --no-install evopilot-harness --version --json
+          npx --no-install evopilot-harness agent bootstrap --host generic --workspace "$TEMP_DIR/workspace" --json
+          npx --yes --package "$PACKAGE_NAME@$VERSION" evopilot-harness --version --json
+
+      - name: Require post-Bootstrap Trusted Publisher review
+        run: |
+          echo "First publication completed. Revoke NPM_BOOTSTRAP_TOKEN, configure the npm Trusted Publisher, and use npm-packages.yml for every later version."

@@ -8,7 +8,7 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current Engine release: [`v4.0.1`](../releases/4.0.1.md). The `v4.0.0` source tag did not produce a GitHub Release and is superseded. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current source candidate: [`v4.0.2`](../releases/4.0.2.md). Verify the latest completed GitHub Release and public npm version independently. The `v4.0.0` source tag did not produce a GitHub Release and is superseded. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Version Policy
 
@@ -23,7 +23,7 @@ Asset, Ontology, Policy, Evaluation, and Catalog versions remain independent fro
 1. Confirm the intended version and release scope.
 2. Update `package.json`, `package-lock.json`, `CHANGELOG.md`, and `docs/releases/<version>.md` together when a new version is authorized.
 3. Run the complete source and documentation gates.
-4. Build and verify release artifacts.
+4. Build and verify source, npm, SBOM, provenance, and checksum artifacts.
 5. Commit and push the exact validated source.
 6. Create tag `v<package-version>` at that commit.
 7. Let the release workflow publish immutable artifacts and the GitHub Release.
@@ -32,6 +32,7 @@ Local gates:
 
 ```bash
 npm run check
+npm run package:workbuddy
 git diff --check
 npm run release:artifact
 npm run verify:release-artifact
@@ -44,19 +45,20 @@ npm run verify:release-artifact
 ```text
 dist/release/
   evopilot-harness-<version>-source.tar.gz
+  evopilot-harness-<version>.tgz
   evopilot-harness-<version>-sbom.spdx.json
   evopilot-harness-<version>-provenance.json
   SHA256SUMS
 ```
 
-Artifact verification checks the expected files, checksums, package metadata, and release provenance. Release source must match the tagged commit.
+Artifact verification checks the expected files, checksums, npm allowlist boundary, package metadata, and release provenance. Release source must match the tagged commit.
 
 ## Tag And Workflow Contract
 
 The Git tag must exactly match `package.json`:
 
 ```text
-tag v4.0.1 -> package.json version 4.0.1
+tag v4.0.2 -> package.json version 4.0.2
 ```
 
 `.github/workflows/release-artifacts.yml`:
@@ -65,12 +67,20 @@ tag v4.0.1 -> package.json version 4.0.1
 2. installs Node.js 22 dependencies;
 3. rejects a tag/package version mismatch;
 4. runs `npm run check`;
-5. builds and pushes immutable GHCR image tags for version and commit;
-6. builds and verifies source, SBOM, provenance, and checksum artifacts;
+5. builds and verifies source, npm tarball, SBOM, provenance, and checksum artifacts;
+6. optionally builds and pushes immutable GHCR image tags only for a separately authorized manual dispatch with `publish_ghcr=true`;
 7. creates or updates the GitHub Release from `docs/releases/<version>.md`;
 8. uploads the verified artifacts.
 
-GitHub Release, GHCR publication, and local artifact verification are separate evidence layers. Verify each one before claiming the complete release chain succeeded.
+GitHub Release, npm publication, optional GHCR publication, and local artifact verification are separate evidence layers. Verify each one before claiming the complete release chain succeeded.
+
+## npm Trusted Publishing
+
+Public npm uses `.github/workflows/npm-packages.yml` only after a separate release authorization. Before dispatch, confirm namespace ownership for `@evopilot/harness` and bind the npm Trusted Publisher to repository `yeliang-wang/evopilot-harness`, workflow `npm-packages.yml`, and GitHub environment `npm`.
+
+The workflow uses GitHub OIDC, npm `>=11.5.1`, and `npm publish --provenance`; it rejects a long-lived `NODE_AUTH_TOKEN` in the default path. It binds tag, package version, and dist-tag, then verifies Registry identity, integrity, signatures, SLSA provenance, exact install, `npm audit signatures`, bootstrap, and `npx` execution. See [npm Distribution](npm-distribution.md).
+
+If the public package does not exist yet, do not weaken the normal workflow. Use the separately reviewed, manual-only `npm-first-publication.yml` Bootstrap once. It fails closed after the package exists and keeps npm identity, scope ownership, 2FA, temporary token, and Environment configuration in the independent [npm First-Publication Release Review](npm-first-publication-review.md). Revoke the temporary token and configure Trusted Publishing immediately after the first publication.
 
 ## Local-First Boundary
 
@@ -78,4 +88,4 @@ The default product and release contract is local-first. Docker and Compose are 
 
 No release action is implied by documentation edits. Commit, push, tag, GitHub Release, registry publication, or deployment requires separate explicit authorization.
 
-Every future Engine release still requires its own exact release authorization. npm and remote deployment are not part of v4.0.1.
+Every future Engine release still requires its own exact release authorization. npm, GHCR, and remote deployment are separate actions; none is inferred from implementation acceptance or a GitHub Release.

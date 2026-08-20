@@ -1,0 +1,108 @@
+name: NPM Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Separately authorized release tag, for example v4.0.2"
+        required: true
+        type: string
+
+concurrency:
+  group: npm-package-${{ inputs.tag }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Verify Trusted Publishing runtime
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.5.1
+          node --version
+          NPM_VERSION="$(npm --version)"
+          echo "$NPM_VERSION"
+          NPM_VERSION="$NPM_VERSION" node -e 'const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number); if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) process.exit(1)'
+          if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::Trusted Publishing must not use a long-lived NODE_AUTH_TOKEN"
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run check
+      - run: npm pack --dry-run --json > npm-pack-manifest.json
+
+      - name: Bind package and release tag
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "$PACKAGE_NAME" != "@evopilot/harness" ]; then
+            echo "::error::Unexpected npm package identity: $PACKAGE_NAME"
+            exit 1
+          fi
+          if [ "${{ inputs.tag }}" != "v$VERSION" ]; then
+            echo "::error::Tag ${{ inputs.tag }} does not match package version $VERSION"
+            exit 1
+          fi
+          case "$VERSION" in
+            *-alpha.*) DIST_TAG=alpha ;;
+            *-beta.*) DIST_TAG=beta ;;
+            *-rc.*) DIST_TAG=rc ;;
+            *) DIST_TAG=latest ;;
+          esac
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DIST_TAG=$DIST_TAG" >> "$GITHUB_ENV"
+
+      - name: Publish with npm Trusted Publishing
+        run: npm publish --access public --provenance --tag "$DIST_TAG"
+
+      - name: Verify registry metadata and attestation
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 20); do
+            if npm view "$PACKAGE_NAME@$VERSION" --json > npm-metadata.json 2>/dev/null && npm view "$PACKAGE_NAME" dist-tags --json > npm-dist-tags.json 2>/dev/null; then
+              break
+            fi
+            sleep 15
+          done
+          node - <<'NODE'
+          const fs = require('fs');
+          const value = JSON.parse(fs.readFileSync('npm-metadata.json', 'utf8'));
+          const distTags = JSON.parse(fs.readFileSync('npm-dist-tags.json', 'utf8'));
+          if (value.name !== process.env.PACKAGE_NAME || value.version !== process.env.VERSION) throw new Error('npm identity mismatch');
+          if (distTags?.[process.env.DIST_TAG] !== process.env.VERSION) throw new Error('npm dist-tag mismatch');
+          if (!value.dist?.integrity) throw new Error('npm integrity is missing');
+          if (!Array.isArray(value.dist?.signatures) || value.dist.signatures.length === 0) throw new Error('npm signatures are missing');
+          if (value.dist?.attestations?.provenance?.predicateType !== 'https://slsa.dev/provenance/v1') throw new Error('SLSA provenance is missing');
+          NODE
+
+      - name: Verify exact public package install
+        run: |
+          set -euo pipefail
+          TEMP_DIR="$(mktemp -d)"
+          cd "$TEMP_DIR"
+          npm init -y >/dev/null
+          npm install --ignore-scripts --no-audit --no-fund "$PACKAGE_NAME@$VERSION"
+          npm audit signatures
+          npx --no-install evopilot-harness --version --json
+          npx --no-install evopilot-harness agent bootstrap --host generic --workspace "$TEMP_DIR/workspace" --json
+          npx --yes --package "$PACKAGE_NAME@$VERSION" evopilot-harness --version --json
