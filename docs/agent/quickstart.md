@@ -15,15 +15,15 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 For a publicly available version:
 
 ```bash
-npm view @evopilot/harness@4.1.2 version
+npm view @evopilot/harness@4.2.1 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.1.2
+npm install --save-exact @evopilot/harness@4.2.1
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
-The Registry command must return `4.1.2`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
+The Registry command must return `4.2.1`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
 ## Load The Expert
 

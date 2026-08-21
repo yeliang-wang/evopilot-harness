@@ -1,4 +1,17 @@
-# Generic Agent Adapter
+---
+name: evopilot-harness-digital-expert
+description: Operate evopilot-harness through its complete generated WorkBuddy Adapter and local stdio MCP.
+---
+
+# WorkBuddy Adapter
+
+## Installed Package Startup
+
+1. Run `evopilot-harness agent bootstrap --host workbuddy --workspace /absolute/external/workspace --json` from the installed package.
+2. Load the returned `adapter.path` as WorkBuddy instructions and configure the project MCP server from the returned exact package command. Bootstrap does not edit WorkBuddy configuration.
+3. Approve the project MCP server through WorkBuddy's supported project approval setting, then call `inspect_capabilities` before Workspace mutation and compare its compatibility result with this Adapter.
+
+For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.2.1 version`.
 
 Adapter metadata:
 

@@ -23,8 +23,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.1.2",
-    "currentWorkingVersion": "4.1.2",
+    "publishedBaseline": "4.2.0",
+    "currentWorkingVersion": "4.2.1",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
@@ -46,8 +46,8 @@
     },
     {
       "id": "evopilot-harness-4.0-installed-distribution-maintenance",
-      "description": "Maintain the v4.0.x installed Agent distribution, including curated npm packaging, isolated Agent-host conformance, provenance, a one-time first-publication Bootstrap, and subsequent OIDC Trusted Publishing without changing Harness lifecycle behavior or product boundaries. npm account, organization, scope, token, 2FA, and actual Registry publication remain separately reviewed external release configuration.",
-      "signals": ["npm distribution", "installed agent distribution", "npm package", "npm trusted publishing", "first-publication bootstrap", "first publication bootstrap", "npm bootstrap", "workbuddy package conformance", "npm 分发", "npm 包", "npm 首发 bootstrap", "npm 首次发布", "workbuddy 包验收"]
+      "description": "Maintain the installed Agent distribution, including curated npm packaging, isolated Agent-host conformance, provenance, host-neutral installer lifecycle contracts, and host-specific adapters such as WorkBuddy without changing Harness lifecycle behavior or product boundaries. npm account, organization, scope, token, 2FA, and actual Registry publication remain separately reviewed external release configuration.",
+      "signals": ["npm distribution", "installed agent distribution", "npm package", "npm trusted publishing", "first-publication bootstrap", "first publication bootstrap", "npm bootstrap", "agent host installer", "workbuddy expert install", "workbuddy package conformance", "npm 分发", "npm 包", "npm 首发 bootstrap", "npm 首次发布", "第三方 agent 安装", "workbuddy 数字专家", "workbuddy 包验收"]
     },
     {
       "id": "evopilot-harness-open-source-productization",
@@ -146,7 +146,7 @@
     },
     {
       "id": "evopilot-harness-4.2-professional-asset-learning",
-      "status": "PLANNED",
+      "status": "COMPLETE",
       "targetVersion": "4.2.0",
       "releaseLine": "4.2.x",
       "objective": "Continuously improve Harness asset precision and professional completeness from accumulated governed evidence and bounded external research rather than hard-coded domain lists.",

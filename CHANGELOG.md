@@ -2,6 +2,23 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.2.1 - 2026-08-21
+
+### Added
+
+- Added the host-neutral Agent Host Installer lifecycle with preview-bound install, status, upgrade, repair, and uninstall operations.
+- Added WorkBuddy 5.x as the first production host adapter, including supported expert-manager registration, one visible Harness Digital Expert, exact installed-package stdio MCP binding, ownership manifests, backups, rollback, and content-drift detection.
+- Added a generated WorkBuddy expert Skill that embeds the complete version-matched Adapter and Digital Expert Core from the same authority.
+
+### Validation
+
+- Passed all 18 approved Target criteria, the complete 127-test repository suite, Roadmap and architecture gates, clean npm-tarball installation and MCP smoke, and actual WorkBuddy 5.2.6 UI/MCP acceptance.
+
+### Boundaries
+
+- Bootstrap remains read-only, external Workspace state is preserved, and Agent hosts gain no Harness reasoning, approval, or publication authority.
+- The supported release boundary is GitHub Release, npm, and local stdio MCP. Container publication and deployment are outside this release.
+
 ## 4.1.2 - 2026-08-21
 
 ### Fixed

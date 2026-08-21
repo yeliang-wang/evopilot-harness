@@ -44,18 +44,23 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.1.2 version
+npm view @evopilot/harness@4.2.1 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.1.2
+npm install --save-exact @evopilot/harness@4.2.1
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host workbuddy \
   --workspace "$HOME/.evopilot-harness" \
   --json
 ```
 
-The `npm view` command is a publication gate, not an optional convenience. Until it returns the exact version, use a locally verified release tarball or a source checkout and do not claim public npm availability. The bootstrap result identifies the packaged Adapter, exact version-pinned `npx` MCP command, supported protocols, and external Workspace without changing the Agent host.
+The `npm view` command is a publication gate, not an optional convenience. Until it returns the exact version, use a locally verified release tarball or a source checkout and do not claim public npm availability. Bootstrap identifies the packaged Adapter, exact version-pinned `npx` MCP command, supported protocols, and external Workspace without changing the Agent host. WorkBuddy initialization is a separate explicit, preview-bound step:
+
+```bash
+evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --json
+# Review the plan, then repeat with --confirm <planDigest>.
+```
 
 Load the returned Adapter in Codex, WorkBuddy, Claude Code, or another compatible host. Then configure the host with the returned local stdio MCP command. Source development may use `node /absolute/path/to/evopilot-harness/src/index.mjs`; installed operation does not require the repository checkout.
 
@@ -177,7 +182,7 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 The Engine `4.1.2` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, v4 Agent Sessions, and EvaluationPack v1/v2 read compatibility. Legacy Sessions without `evidenceReports` remain readable. New approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
 
-GitHub Release, npm publication, and optional GHCR publication are separate evidence layers. For v4.1.2, GitHub Release and npm are verified; GHCR was not part of the authorized release. The v4.1 release line adds controlled comparison and calibration; it does not add v4.2 professional asset learning, automatic policy activation, or source-project execution.
+GitHub Release and npm publication are separate release evidence layers and require explicit authorization. Container publication and deployment are outside this npm-and-MCP distribution scope and are not release prompts.
 
 ## Validate
 

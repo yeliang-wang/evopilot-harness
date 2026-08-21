@@ -4,15 +4,15 @@
 
 ## Publication State
 
-Source version, GitHub Release, npm package, and optional GHCR image are separate evidence layers. Before using a public package, verify the exact Registry version:
+Source version, GitHub Release, and npm package are separate evidence layers. Container publication and deployment are outside this distribution scope. Before using a public package, verify the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.1.2 version
+npm view @evopilot/harness@4.2.0 version
 ```
 
-If the command does not return `4.1.2`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
+If the command does not return `4.2.0`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
 
-For the current release, the command returns `4.1.2`; npm reports it as `latest` with Registry signatures and SLSA provenance. The corresponding [GitHub Release](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.1.2) remains a separate distribution layer.
+For the current release, the command returns `4.2.0`; npm reports it as `latest` with Registry signatures and SLSA provenance. The corresponding [GitHub Release](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.2.0) remains a separate distribution layer.
 
 ## Choose One Installation Path
 
@@ -24,7 +24,7 @@ Use only after the Registry check succeeds:
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.1.2
+npm install --save-exact @evopilot/harness@4.2.1
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -40,7 +40,7 @@ npm pack --pack-destination /absolute/package/output
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact /absolute/package/output/evopilot-harness-4.1.2.tgz
+npm install --save-exact /absolute/package/output/evopilot-harness-4.2.1.tgz
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -79,6 +79,16 @@ The result is read-only. It reports:
 Bootstrap never edits Agent configuration or initializes the Workspace. The Agent loads the returned Adapter and starts the exact MCP command. Its first product call is `inspect_capabilities`; it compares the Engine result with the Adapter before calling `prepare_workspace`.
 
 ## WorkBuddy
+
+The installed package initializes a visible WorkBuddy Digital Expert through WorkBuddy's supported `expert-manager` validation and registration interface. Installation is never implicit in `agent bootstrap`; first preview the exact owned paths and MCP entry, then repeat with the returned digest:
+
+```bash
+evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --json
+evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --confirm 'sha256:<planDigest>' --json
+evopilot-harness agent status --host workbuddy --workspace "$HOME/.evopilot-harness" --json
+```
+
+`upgrade`, `repair`, and `uninstall` use the same preview-bound confirmation. The installer backs up managed configuration, preserves unrelated MCP servers, refuses to replace an unowned conflicting expert, and never removes the external Workspace. WorkBuddy is the first host implementation; the public lifecycle contract is host-neutral so another host can add its own supported adapter without exposing private fields in the core contract.
 
 WorkBuddy must load the returned `workbuddy` Adapter and configure a project MCP server named `evopilot-harness` using the bootstrap command. Project MCP servers require explicit host approval. In headless mode use WorkBuddy's documented `enableAllProjectMcpServers` or `enabledMcpjsonServers` setting; do not modify user-global configuration during package acceptance.
 

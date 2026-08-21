@@ -44,6 +44,11 @@ for (const [id, config] of Object.entries(adapters)) {
   expected.set(path.join(expertRoot, config.relative), content);
   if (config.projectCopy) expected.set(path.join(root, config.projectCopy), content);
 }
+const workbuddyAdapter = expected.get(path.join(expertRoot, adapters.workbuddy.relative));
+expected.set(
+  path.join(expertRoot, "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md"),
+  `---\nname: evopilot-harness-digital-expert\ndescription: Operate evopilot-harness through its complete generated WorkBuddy Adapter and local stdio MCP.\n---\n\n${workbuddyAdapter}`
+);
 
 const copiedSchemas = ["agent-operation-session-v1.schema.json", "operation-plan-v1.schema.json"];
 for (const file of copiedSchemas) expected.set(path.join(expertRoot, "schemas", file), fs.readFileSync(path.join(root, "schemas", file), "utf8"));

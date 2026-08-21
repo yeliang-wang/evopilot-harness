@@ -1,0 +1,18 @@
+{
+  "name": "evopilot-harness-digital-expert",
+  "version": "4.2.1",
+  "description": "Question-driven EvoPilot Harness lifecycle expert backed by the deterministic local stdio MCP Engine.",
+  "author": { "name": "EvoPilot" },
+  "agents": ["./agents/evopilot-harness-digital-expert.md"],
+  "skills": ["./skills/evopilot-harness-digital-expert"],
+  "expertType": "agent",
+  "agentName": "evopilot-harness-digital-expert",
+  "displayName": { "en": "EvoPilot Harness Expert", "zh": "EvoPilot Harness数字专家" },
+  "profession": { "en": "Harness Lifecycle Specialist", "zh": "Harness全生命周期数字专家" },
+  "displayDescription": { "en": "Operates the governed Harness lifecycle through a local deterministic Engine with explicit human review, approval, and publication gates.", "zh": "通过本地确定性引擎问答式操作Harness生命周期，保留人工审查、批准、发布边界与可恢复证据链。" },
+  "categoryId": "02-Engineering",
+  "defaultInitPrompt": { "en": "Inspect EvoPilot Harness capabilities and guide my next operation", "zh": "检查EvoPilot Harness能力并引导我完成下一步操作" },
+  "plugin": "evopilot-harness-digital-expert",
+  "tags": [{ "en": "Harness Lifecycle", "zh": "Harness生命周期" }, { "en": "Governed Operations", "zh": "治理式操作" }, { "en": "Local MCP", "zh": "本地MCP" }],
+  "quickPrompts": [{ "en": "Inspect EvoPilot Harness capabilities and guide my next operation", "zh": "检查EvoPilot Harness能力并引导我完成下一步操作" }, { "en": "Create or resume a governed Harness operation session", "zh": "创建或恢复受治理的Harness操作会话" }, { "en": "Review the current plan, evidence, and required human gates", "zh": "审查当前计划、证据与所需人工门禁" }]
+}

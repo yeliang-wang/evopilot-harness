@@ -70,6 +70,17 @@ async function main(argv) {
       return 1;
     }
   }
+  if (argv[0] === "agent" && ["install", "status", "upgrade", "repair", "uninstall"].includes(argv[1])) {
+    const { runAgentHostCommand, renderAgentHostResult, renderAgentHostError } = await import("./v4/agent-host-installer.mjs");
+    try {
+      const result = runAgentHostCommand(argv[1], argv.slice(2));
+      process.stdout.write(renderAgentHostResult(result, argv.includes("--json")));
+      return result.status === "CONFIRMATION_REQUIRED" ? 2 : 0;
+    } catch (error) {
+      process.stdout.write(renderAgentHostError(error, argv.includes("--json")));
+      return 1;
+    }
+  }
   const v3 = await handleV3Command(argv);
   if (v3.handled) return v3.exitCode;
   const args = parseArgs(argv);
@@ -4694,6 +4705,7 @@ function printHelp() {
 
 Usage:
   evopilot-harness agent bootstrap --host codex|workbuddy|claude-code|mcp|generic [--workspace <dir>] [--json]
+  evopilot-harness agent install|status|upgrade|repair|uninstall --host workbuddy [--workspace <dir>] [--confirm <plan-digest>] [--json]
   evopilot-harness mcp serve --transport stdio [--workspace <dir>]
   evopilot-harness workspace init|status [--workspace <dir>] [--json]
   evopilot-harness produce --source-project <path>|--source-root <path>|--github-repo <repo> [--attachment <file>] [--production-log <file>] [--goal <text>] [--workspace <dir>] [--json]

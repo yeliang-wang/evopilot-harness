@@ -10,7 +10,7 @@
 - [MCP reference](docs/agent/mcp-reference.md)
 - [Agent Operation Session](docs/agent/session-protocol.md)
 - [npm distribution and installed Agent operation](docs/operations/npm-distribution.md)
-- [Current v4.1.2 release notes](docs/releases/4.1.2.md)
+- [Current v4.2.0 release notes](docs/releases/4.2.0.md)
 - [npm first-publication release review](docs/operations/npm-first-publication-review.md)
 - [Atomic CLI compatibility](docs/cli/quickstart.md)
 - [How Harness works](docs/guides/how-harness-works.md)

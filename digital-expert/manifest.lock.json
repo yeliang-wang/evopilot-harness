@@ -1,31 +1,31 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.2.0",
+  "expertVersion": "4.2.1",
   "coreDigest": "sha256:8f8eefef6e0a88baa501ebd99bb6eac1a3bd02806dfc0f48fef8d88ca09323d4",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:080218fbc7e41a9741356b9351a697bd5699c43a64c352b2cf4f72fd869065c3",
+      "sha256": "sha256:1c77542d7c9842c32c994f0fe1a8d22f2e1db39cf86dabe70d04197056b3411d",
       "bytes": 15563
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:ad2c9bf717a1ac5dce9ddc22aa424b879b910137f674761f8e06705e6c2161f2",
+      "sha256": "sha256:523f52961d503bd847b811f4e4783bbf9aae91a905dc400abb2bc54d26b9d1f1",
       "bytes": 15784
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:b6a8abb8dd28cad0b75a427bd39b1ebcde35a33633344d85f7849b41d5031576",
+      "sha256": "sha256:b2ddfd00d44bbbf343db992f8b0a98187afe86f91674c80437a30496cdbcc7c9",
       "bytes": 15565
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:b6ba8e689f7455bf9a9605a0726c566227f59de9ceb1476f6259adc15f6b2277",
+      "sha256": "sha256:f34de3cda38ac14b4fec390c389d6f0389642935b01b9294263d2e1ea392e13c",
       "bytes": 15562
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:17fb49e38115b8c6f272b25b8efe81e4d89bd16058bb19c8878f71461df90afa",
+      "sha256": "sha256:849f6d493a92e5afa2746d8316f3ef7e95b1b22bee906402ca689eb5d45de79a",
       "bytes": 16429
     },
     {
@@ -70,8 +70,13 @@
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:26c28a628fe52f09e4a6d2197bcc841e0803ecb44d7492fc762cdf49cf0da5a3",
+      "sha256": "sha256:87ae588801beadeeded949d103d8627b10e624e9c790e614a8a48af60ea0c2b9",
       "bytes": 2030
+    },
+    {
+      "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
+      "sha256": "sha256:07062d30c1fe1649864d255af95ca26dc8cc4faf91685a9eef94a9281a480caf",
+      "bytes": 16584
     },
     {
       "path": "schemas/adapter-envelope-v1.schema.json",
