@@ -2,6 +2,22 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.2.3 - 2026-08-21
+
+### Added
+
+- Added Harness-owned LLM initialization readiness across Workspace, Agent bootstrap, WorkBuddy installer status, CLI, MCP, and the generated Digital Expert.
+- Added a minimal live doctor initialization operation that persists only a secret-free, mode-`0600` verification receipt and invalidates it when the human-maintained model configuration changes.
+
+### Fixed
+
+- Separated successful product installation from incomplete LLM initialization and made later Advisor and Proposal Review operations default to the verified Workspace configuration.
+
+### Boundaries
+
+- Harness never reads Agent-host credentials, never stores raw model credentials in Session or receipt state, and never substitutes the host conversation LLM for the independent Harness Advisor or semantic Reviewer.
+- GitHub Release and npm remain the supported publication boundary; GHCR and deployment are not part of this release.
+
 ## 4.2.2 - 2026-08-21
 
 ### Fixed

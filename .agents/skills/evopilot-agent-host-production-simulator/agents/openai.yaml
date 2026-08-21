@@ -1,0 +1,4 @@
+interface:
+  display_name: "EvoPilot Agent Host Production Simulator"
+  short_description: "Validate released Harness operation in a real Agent host"
+  default_prompt: "Simulate an ordinary human using the released EvoPilot Harness Digital Expert in a real third-party Agent host and produce redacted acceptance evidence."

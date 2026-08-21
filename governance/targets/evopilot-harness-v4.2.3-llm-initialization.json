@@ -1,0 +1,98 @@
+{
+  "schema": "evopilot-evolution-target/v1",
+  "id": "evopilot-harness-v4.2.3-llm-initialization",
+  "revision": 2,
+  "status": "RELEASE_AUTHORIZED",
+  "intent": "为 evopilot-harness 增加 Harness 专用 LLM 初始化闭环：WorkBuddy 等第三方 Agent Host 安装或升级数字专家后，检查外部 Workspace 的模型配置；引导用户在本机安全创建或选择 models.json；执行配置校验和最小连通性 doctor；只有达到 CONFIGURED_AND_VERIFIED 才完成初始化；后续 Advisor 和 Proposal Review 默认复用该 Workspace 配置；不得读取或导入 Host 凭据、不得将密钥写入聊天或 Session、不得让 Host LLM 取代独立 Reviewer",
+  "objective": "在不接触第三方 Agent Host 凭据的前提下，使 Harness 专用 LLM 完成一次安全配置、连通性验证和后续 Workspace 默认复用，并准确区分产品安装状态与 LLM 初始化状态。",
+  "evidence": [
+    {
+      "ref": "user-approved-target-revision-1",
+      "authority": "explicit-user-target-approval"
+    },
+    {
+      "ref": "local-v4.2.2-llm-v3-models-status-NOT_CONFIGURED",
+      "authority": "diagnostic-evidence-only"
+    }
+  ],
+  "roadmapBindings": [
+    {
+      "repo": "/Users/wangyejing/project/harness/evopilot-harness",
+      "project": "evopilot-harness",
+      "matchedMilestone": "evopilot-harness-4.0-agent-native-operations",
+      "matchedStandingWork": "evopilot-harness-maintenance",
+      "targetVersion": "4.2.3",
+      "classification": "ALIGNED",
+      "roadmapDigest": "sha256:6bd8877addc5b0999bd4d5c4146791546ec3709c540084499e235abfce253e73"
+    }
+  ],
+  "scope": {
+    "include": [
+      "Separate installed-product status from Harness LLM initialization readiness",
+      "Expose host-neutral LLM readiness through Agent bootstrap and installer lifecycle results",
+      "Prepare a credential-free Workspace model template without creating or overwriting models.json",
+      "Guide local human configuration and run configuration inspection plus a minimal live doctor",
+      "Persist a secret-free verification binding and default Advisor and Proposal Review to the Workspace model configuration",
+      "Provide WorkBuddy guidance while keeping the common contract host-neutral",
+      "Add deterministic tests, public-package checks, documentation, migration compatibility, and real WorkBuddy acceptance evidence"
+    ],
+    "exclude": [
+      "Reading, copying, importing, or exposing WorkBuddy or another Agent host credential",
+      "Passing raw credentials through conversation, MCP arguments, Session state, logs, screenshots, or acceptance artifacts",
+      "Using the host conversation LLM as the Harness Advisor or independent Proposal semantic reviewer",
+      "Overwriting a human-maintained models.json or silently changing Advisor mode",
+      "Changing Engine approval, publication, Catalog, source-execution, or product-boundary authority",
+      "Commit, push, tag, GitHub Release, npm publication, GHCR, cloud deployment, or remote-service deployment"
+    ]
+  },
+  "acceptance": [
+    { "id": "AC01", "criterion": "Installed-product and LLM-initialization states are structurally separate.", "requiredEvidence": "Schema and lifecycle tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC02", "criterion": "Agent bootstrap returns structured LLM readiness.", "requiredEvidence": "Bootstrap contract tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC03", "criterion": "An absent configuration produces only a credential-free example and guidance.", "requiredEvidence": "Fresh Workspace negative test", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC04", "criterion": "Existing models.json content is never overwritten.", "requiredEvidence": "Digest preservation test", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC05", "criterion": "Model paths and file permissions remain inside the approved external configuration boundary.", "requiredEvidence": "Path, symlink, and permission tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC06", "criterion": "The operator can explicitly select a models file and profile without exposing credentials.", "requiredEvidence": "CLI and MCP binding tests", "status": "PASSED", "evidenceRefs": ["tests/v4.test.mjs", "tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC07", "criterion": "Configuration inspection never returns API keys or other secrets.", "requiredEvidence": "Redaction and output tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC08", "criterion": "Doctor performs a minimal live connectivity check.", "requiredEvidence": "Deterministic local provider integration test", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs", "tests/v4.test.mjs"] },
+    { "id": "AC09", "criterion": "Successful inspection and doctor yield CONFIGURED_AND_VERIFIED with a secret-free binding.", "requiredEvidence": "Readiness state tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC10", "criterion": "Later Sessions default to the verified Workspace model configuration.", "requiredEvidence": "Cross-session reuse test", "status": "PASSED", "evidenceRefs": ["tests/v3.test.mjs", "tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC11", "criterion": "The WorkBuddy Digital Expert presents the initialization journey in natural language.", "requiredEvidence": "Generated adapter and real-host evidence", "status": "PASSED", "evidenceRefs": ["digital-expert/adapters/workbuddy/WORKBUDDY.md", "outputs:evopilot-harness-v4.2.3-workbuddy-candidate/report.json"] },
+    { "id": "AC12", "criterion": "The shared Core contains no WorkBuddy-private fields or operations.", "requiredEvidence": "Host-neutral conformance test", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs"] },
+    { "id": "AC13", "criterion": "Deterministic flows that do not require an LLM remain operable when LLM readiness is incomplete.", "requiredEvidence": "Optional-Advisor regression test", "status": "PASSED", "evidenceRefs": ["tests/catalog.test.mjs"] },
+    { "id": "AC14", "criterion": "LLM-required Advisor or Review stops with an exact actionable readiness blocker.", "requiredEvidence": "Required-LLM negative tests", "status": "PASSED", "evidenceRefs": ["tests/catalog.test.mjs", "tests/v3.test.mjs"] },
+    { "id": "AC15", "criterion": "Advisor and Proposal Review resolve the same verified configuration binding.", "requiredEvidence": "Binding consistency test", "status": "PASSED", "evidenceRefs": ["tests/v3.test.mjs", "tests/v4.test.mjs"] },
+    { "id": "AC16", "criterion": "Conversation, Session, log, and evidence surfaces contain no model credential.", "requiredEvidence": "Secret-scanning tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.3-llm-initialization.test.mjs", "npm-run-package-verify"] },
+    { "id": "AC17", "criterion": "Install, upgrade, and repair are idempotent and preserve human configuration.", "requiredEvidence": "Installer lifecycle and digest tests", "status": "PASSED", "evidenceRefs": ["tests/v4.2.1-agent-host-installer.test.mjs"] },
+    { "id": "AC18", "criterion": "A v4.2.3 npm candidate tarball completes LLM initialization and default Workspace reuse in a real WorkBuddy host without source-checkout resolution.", "requiredEvidence": "Candidate-package real-host end-to-end acceptance", "status": "PASSED", "evidenceRefs": ["/Users/wangyejing/Documents/Codex/2026-08-21/wo-gan/outputs/evopilot-harness-v4.2.3-workbuddy-llm-e2e/report.json"] }
+  ],
+  "approvals": {
+    "target": {
+      "decision": "APPROVED",
+      "by": "user",
+      "evidenceRef": "conversation:approved-evopilot-harness-v4.2.3-llm-initialization-target-revision-2",
+      "authorizationDigest": "sha256:3c6938ff9ddfb82e8eeaef8043e05af2e5c474dbec9f8acb7d027bcca85eaa3b"
+    },
+    "release": {
+      "decision": "AUTHORIZED",
+      "by": "user",
+      "evidenceRef": "conversation:authorized-commit-push-tag-github-release-npm-publish",
+      "authorizationDigest": "sha256:a9c2c2d32a0e9b611eabcd30c11a7e0450d5559f7be014d9f27bc96b614435d8"
+    }
+  },
+  "release": {
+    "actions": [
+      "commit",
+      "push",
+      "tag",
+      "github-release",
+      "npm"
+    ],
+    "versions": {
+      "evopilot-harness": "4.2.3"
+    },
+    "postReleaseVerification": [
+      "Verify npm view @evopilot/harness@4.2.3 returns 4.2.3",
+      "Rerun the real WorkBuddy acceptance from the exact public Registry package and retain redacted evidence"
+    ]
+  }
+}

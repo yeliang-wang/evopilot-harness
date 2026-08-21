@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 
@@ -13,19 +15,25 @@ const packageDir = path.join(temporary, "package");
 const app = path.join(temporary, "app");
 const workspace = path.join(temporary, "workspace");
 const evidenceDir = path.resolve(option("evidence-dir") ?? path.join(os.tmpdir(), `evopilot-harness-workbuddy-evidence-${Date.now()}`));
+const packageSpec = option("package-spec");
+const exerciseLlmInitialization = process.argv.includes("--exercise-llm-initialization");
 const workbuddy = resolveWorkBuddyBinary();
 const keepTemporary = process.argv.includes("--keep-temp");
 let passed = false;
+let modelService = null;
 
 fs.mkdirSync(packageDir, { recursive: true });
 fs.mkdirSync(app, { recursive: true });
 fs.mkdirSync(evidenceDir, { recursive: true });
 
 try {
-  const packed = JSON.parse(run("npm", ["pack", "--json", "--pack-destination", packageDir], root))[0];
-  const tarball = path.join(packageDir, packed.filename);
   fs.writeFileSync(path.join(app, "package.json"), `${JSON.stringify({ name: "evopilot-harness-workbuddy-acceptance", private: true })}\n`);
-  run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", tarball], app);
+  let installSpec = packageSpec;
+  if (!installSpec) {
+    const packed = JSON.parse(run("npm", ["pack", "--json", "--pack-destination", packageDir], root))[0];
+    installSpec = path.join(packageDir, packed.filename);
+  }
+  run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund", installSpec], app);
 
   const packageRoot = fs.realpathSync(path.join(app, "node_modules", "@evopilot", "harness"));
   const cli = fs.realpathSync(path.join(app, "node_modules", ".bin", "evopilot-harness"));
@@ -51,13 +59,33 @@ try {
     }
   }, null, 2)}\n`);
 
-  const prompt = [
+  let modelsFile = null;
+  let modelsBefore = null;
+  const testSecret = "workbuddy-acceptance-secret-never-output";
+  if (exerciseLlmInitialization) {
+    modelService = await startModelService();
+    fs.mkdirSync(workspace, { recursive: true });
+    modelsFile = path.join(workspace, "models.json");
+    fs.writeFileSync(modelsFile, `${JSON.stringify({ models: [{ id: "glm-workbuddy-acceptance", name: "WorkBuddy Acceptance GLM", vendor: "zhipu", apiKey: testSecret, url: modelService.url }] }, null, 2)}\n`, { mode: 0o600 });
+    modelsBefore = digestBytes(fs.readFileSync(modelsFile));
+  }
+  const prompt = exerciseLlmInitialization ? [
+    "Operate as the packaged EvoPilot Harness Digital Expert.",
+    "Use only the evopilot-harness MCP server and call inspect_capabilities exactly once before any mutation.",
+    "I confirm that the human-maintained local model configuration is complete and authorize the minimal live model doctor; this is not Plan approval or publication authorization.",
+    "Call prepare_workspace with initialize true, then call initialize_model_configuration with the configured Workspace default and model glm-workbuddy-acceptance, then call run_engine_diagnostic for llm.readiness with an empty input.",
+    "Do not run shell commands, read models.json, start a Session, approve, or publish.",
+    "Return the exact final LLM readiness status, initializationStatus, connectionVerified, model id, and nextAction."
+  ].join(" ") : [
     "Operate as the packaged EvoPilot Harness Digital Expert.",
     "Use only the evopilot-harness MCP server and call inspect_capabilities exactly once.",
     "This is a read-only startup check: do not prepare a Workspace, start a Session, run shell commands, or read project files.",
     "Return the exact Engine status, productVersion, expertVersion, engineApiVersion, supported MCP protocols, and nextAction from the tool result."
   ].join(" ");
-  const completed = spawnSync(workbuddy, [
+  const allowedTools = exerciseLlmInitialization
+    ? ["DeferExecuteTool", "mcp__evopilot-harness__inspect_capabilities", "mcp__evopilot-harness__prepare_workspace", "mcp__evopilot-harness__initialize_model_configuration", "mcp__evopilot-harness__run_engine_diagnostic"]
+    : ["DeferExecuteTool", "mcp__evopilot-harness__inspect_capabilities"];
+  const completed = await runWorkBuddy(workbuddy, [
     "--print",
     "--output-format", "stream-json",
     "--include-partial-messages",
@@ -65,19 +93,13 @@ try {
     "--settings", JSON.stringify({
       enableAllProjectMcpServers: true,
       enabledMcpjsonServers: ["evopilot-harness"],
-      permissions: { allow: ["DeferExecuteTool", "mcp__evopilot-harness__inspect_capabilities"] }
+      permissions: { allow: allowedTools }
     }),
     "--system-prompt-file", adapter,
     "--disallowedTools", "Bash", "Read", "Edit", "Write", "Glob", "Grep", "WebFetch", "WebSearch",
-    "--max-turns", "4",
+    "--max-turns", exerciseLlmInitialization ? "10" : "4",
     prompt
-  ], {
-    cwd: app,
-    encoding: "utf8",
-    env: { ...process.env, npm_config_update_notifier: "false" },
-    timeout: 240_000,
-    maxBuffer: 32 * 1024 * 1024
-  });
+  ], app, 240_000);
 
   fs.writeFileSync(path.join(evidenceDir, "workbuddy-transcript.ndjson"), completed.stdout ?? "");
   fs.writeFileSync(path.join(evidenceDir, "workbuddy-stderr.log"), completed.stderr ?? "");
@@ -101,12 +123,42 @@ try {
   assert.deepEqual(learningOperations, ["learning.artifact", "learning.ingest", "learning.inspect", "learning.rescore", "learning.run-manifest", "learning.score", "learning.snapshot", "learning.validate"]);
   assert.equal(capabilityCall.result.nextAction, "prepare-workspace");
 
+  let llmInitialization = null;
+  if (exerciseLlmInitialization) {
+    const results = collectStructuredResults(transcript);
+    const initializedModel = results.find((result) => result.schema === "evopilot-harness-model-readiness/v1" && result.status === "CONFIGURED_AND_VERIFIED" && result.doctor?.connectionVerified === true);
+    const finalReadiness = results.filter((result) => result.schema === "evopilot-harness-model-readiness/v1" && result.status === "CONFIGURED_AND_VERIFIED").at(-1);
+    assert.ok(initializedModel, "WorkBuddy did not complete initialize_model_configuration with live doctor evidence");
+    assert.ok(finalReadiness, "WorkBuddy did not return CONFIGURED_AND_VERIFIED readiness");
+    assert.equal(finalReadiness.initializationStatus, "READY");
+    assert.equal(finalReadiness.connectionVerified, true);
+    assert.equal(finalReadiness.verification?.model?.id, "glm-workbuddy-acceptance");
+    assert.equal(digestBytes(fs.readFileSync(modelsFile)), modelsBefore, "WorkBuddy initialization rewrote models.json");
+    assert.equal(fs.statSync(path.join(canonicalWorkspace, "model-readiness.json")).mode & 0o777, 0o600);
+    assert.equal(transcript.includes(testSecret), false, "WorkBuddy transcript exposed the model credential");
+    llmInitialization = {
+      status: finalReadiness.status,
+      initializationStatus: finalReadiness.initializationStatus,
+      connectionVerified: finalReadiness.connectionVerified,
+      configurationDigest: finalReadiness.configurationDigest,
+      model: finalReadiness.verification.model,
+      receiptMode: "0600",
+      modelsFilePreserved: true,
+      credentialExposed: false
+    };
+  }
+
   const hostVersion = run(workbuddy, ["--version"], app);
   const report = {
     schema: "evopilot-harness-workbuddy-installed-package-acceptance/v1",
     status: "PASSED",
     host: { id: "workbuddy", version: hostVersion, binary: workbuddy },
-    package: { spec: `${packageJson.name}@${packageJson.version}`, root: packageRoot, sourceCheckoutUsed: false },
+    package: {
+      spec: packageSpec ?? `${packageJson.name}@${packageJson.version}`,
+      distributionMode: packageSpec ? "public-registry" : "local-package-candidate",
+      root: packageRoot,
+      sourceCheckoutUsed: false
+    },
     adapter: { id: bootstrap.adapter.id, path: adapter, coreDigest: bootstrap.digitalExpert.compatibility.coreDigest },
     mcp: {
       transport: "stdio",
@@ -117,17 +169,19 @@ try {
       ,professionalLearningOperations: learningOperations
     },
     workspace: { path: canonicalWorkspace, mutated: fs.existsSync(canonicalWorkspace) },
-    operation: "inspect_capabilities",
+    operation: exerciseLlmInitialization ? "inspect_capabilities-prepare_workspace-initialize_model_configuration-llm_readiness" : "inspect_capabilities",
+    ...(llmInitialization ? { llmInitialization } : {}),
     evidence: {
       transcript: path.join(evidenceDir, "workbuddy-transcript.ndjson"),
       bootstrap: path.join(evidenceDir, "bootstrap.json")
     }
   };
-  assert.equal(report.workspace.mutated, false, "read-only WorkBuddy startup check mutated the Workspace");
+  assert.equal(report.workspace.mutated, exerciseLlmInitialization, exerciseLlmInitialization ? "LLM initialization did not prepare its isolated Workspace" : "read-only WorkBuddy startup check mutated the Workspace");
   fs.writeFileSync(path.join(evidenceDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
   passed = true;
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 } finally {
+  if (modelService) await modelService.close();
   if (!keepTemporary || passed) fs.rmSync(temporary, { recursive: true, force: true });
   else process.stderr.write(`WorkBuddy acceptance temporary directory preserved: ${temporary}\n`);
 }
@@ -198,4 +252,52 @@ function collectCapabilityResults(transcript) {
     }
   }
   return calls;
+}
+
+function collectStructuredResults(transcript) {
+  const results = [];
+  for (const value of parseTranscript(transcript)) {
+    if (value.type !== "user" || !Array.isArray(value.message?.content)) continue;
+    for (const item of value.message.content) {
+      if (item.type !== "tool_result" || !Array.isArray(item.content)) continue;
+      for (const content of item.content) {
+        if (content.type !== "text") continue;
+        try {
+          const result = JSON.parse(content.text);
+          if (result?.schema) results.push(result);
+        } catch { /* ignore host prose */ }
+      }
+    }
+  }
+  return results;
+}
+
+function runWorkBuddy(binary, args, cwd, timeoutMs) {
+  return new Promise((resolve) => {
+    const child = spawn(binary, args, { cwd, env: { ...process.env, npm_config_update_notifier: "false" }, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    const timer = setTimeout(() => child.kill("SIGTERM"), timeoutMs);
+    child.stdout.on("data", (chunk) => { stdout += chunk; });
+    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    child.on("close", (status) => { clearTimeout(timer); resolve({ status, stdout, stderr }); });
+  });
+}
+
+function startModelService() {
+  const server = http.createServer((request, response) => {
+    request.resume();
+    request.on("end", () => {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ status: "ok" }) } }], usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 } }));
+    });
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({
+    url: `http://127.0.0.1:${server.address().port}/v4`,
+    close: () => new Promise((done) => server.close(done))
+  })));
+}
+
+function digestBytes(value) {
+  return `sha256:${crypto.createHash("sha256").update(value).digest("hex")}`;
 }

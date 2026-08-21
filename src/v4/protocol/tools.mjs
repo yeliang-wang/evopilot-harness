@@ -41,6 +41,11 @@ export const TOOL_DEFINITIONS = [
   tool("prepare_workspace", "Initialize or inspect the explicit external Harness Workspace. This never writes the Release or a source project.", {
     initialize: { type: "boolean", default: true }
   }),
+  tool("initialize_model_configuration", "Verify the human-maintained Harness model configuration with a minimal live doctor and persist only a secret-free Workspace readiness receipt. Never include credentials in tool arguments.", {
+    modelsFile: { type: "string" },
+    model: { type: "string" },
+    timeoutMs: { type: "integer", minimum: 1 }
+  }),
   tool("start_operation_session", "Start a persistent Agent Operation Session from a human intent.", {
     intent: { type: "string", minLength: 1 },
     adapterId: { type: "string", minLength: 2 }

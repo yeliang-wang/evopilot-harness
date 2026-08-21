@@ -18,13 +18,14 @@ import { validateDocument, validateFile, validateTree } from "./schema.mjs";
 import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, resolveWorkspaceModelsFile, workspaceStatus } from "./workspace.mjs";
+import { inspectModelReadiness, recordModelVerification } from "./model-readiness.mjs";
 
 const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
 
 export async function handleV3Command(argv) {
   const args = parseCli(argv);
   const [group, action, id] = args.positionals;
-  const explicitV3 = V3_COMMANDS.has(group) || action?.startsWith("v3-") || (group === "eval" && action === "v3-run") || (group === "registry" && action?.startsWith("v3-")) || (group === "llm" && action === "v3-models");
+  const explicitV3 = V3_COMMANDS.has(group) || action?.startsWith("v3-") || (group === "eval" && action === "v3-run") || (group === "registry" && action?.startsWith("v3-")) || (group === "llm" && action?.startsWith("v3-"));
   if (!explicitV3) return { handled: false };
   try {
     const code = await dispatch(args, group, action, id);
@@ -273,6 +274,21 @@ async function dispatch(args, group, action, id) {
     const result = await diagnoseModel(file, option(args, "model"), Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
     return output(args, result, result.status === "READY" ? 0 : 2);
   }
+  if (group === "llm" && action === "v3-readiness") {
+    const file = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
+    return output(args, inspectModelReadiness(home, file));
+  }
+  if (group === "llm" && action === "v3-initialize") {
+    requireWorkspace(home);
+    const file = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
+    const readiness = inspectModelReadiness(home, file);
+    if (readiness.status === "INVALID_CONFIGURATION_BOUNDARY") return output(args, readiness, 2);
+    const inspected = inspectModels(file, option(args, "model"));
+    if (inspected.status !== "READY") return output(args, { ...inspectModelReadiness(home, file), inspection: inspected }, 2);
+    const doctor = await diagnoseModel(file, option(args, "model"), Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
+    if (doctor.status !== "READY") return output(args, { ...inspectModelReadiness(home, file), doctor, nextAction: "repair-model-configuration-or-connectivity" }, 2);
+    return output(args, { ...recordModelVerification(home, file, doctor), inspection: inspected, doctor });
+  }
   if (group === "hub" && action === "v3-snapshot") return output(args, writeHubSnapshot(home, option(args, "out", path.join(home, "cache/hub-snapshot.json"))));
   if (group === "hub" && action === "v3-serve") {
     serveHubV3(home, { host: option(args, "host", "127.0.0.1"), port: Number(option(args, "port", 4176)) });
@@ -282,7 +298,7 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, learning inspect|validate|ingest|snapshot|run-manifest|score|rescore|artifact, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, learning inspect|validate|ingest|snapshot|run-manifest|score|rescore|artifact, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor|v3-readiness|v3-initialize, or eval v3-run.");
 }
 
 function listOption(args, name) { return String(option(args, name, "")).split(",").map((item) => item.trim()).filter(Boolean); }

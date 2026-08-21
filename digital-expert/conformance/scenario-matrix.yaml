@@ -26,6 +26,7 @@ engineOperations:
   - workspace.inspect
   - llm.inspect
   - llm.diagnose
+  - llm.readiness
   - evidence.produce
   - proposal.inspect
   - proposal.validate
@@ -197,6 +198,9 @@ coverage:
     llm.diagnose:
       <<: *llm_operations
       marker: llm.diagnose
+    llm.readiness:
+      <<: *llm_operations
+      marker: llm.readiness
     evidence.produce:
       testFile: tests/v4.test.mjs
       testName: real stdio MCP executes every Evidence Source through Digital Expert Session and Engine

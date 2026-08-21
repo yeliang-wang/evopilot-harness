@@ -4716,7 +4716,7 @@ Usage:
   evopilot-harness ontology inspect|validate|diff|publish [--workspace <dir>] [--json]
   evopilot-harness policy inspect|validate|diff|publish [--type matcher|advisor] [--workspace <dir>] [--json]
   evopilot-harness migrate v2-to-v3|rollback [migration-id] [--workspace <dir>] [--json]
-  evopilot-harness llm v3-models|v3-doctor [--models-file models.json] [--workspace <dir>] [--json]
+  evopilot-harness llm v3-models|v3-doctor|v3-readiness|v3-initialize [--models-file models.json] [--model <id>] [--workspace <dir>] [--json]
   evopilot-harness eval v3-run [--workspace <dir>] [--json]
   evopilot-harness hub v3-snapshot|v3-serve [--workspace <dir>] [--json]
   evopilot-harness keys generate [--workspace <dir>] [--json]

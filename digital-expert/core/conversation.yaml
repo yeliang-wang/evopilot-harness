@@ -5,6 +5,7 @@ skipKnownInputs: true
 stages:
   - capability-check
   - workspace-preparation
+  - model-readiness-inspection-and-initialization
   - intent-collection
   - evidence-source-collection
   - operation-plan-review

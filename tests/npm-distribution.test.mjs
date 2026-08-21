@@ -142,9 +142,17 @@ test("GHCR publication remains disabled for tag releases and requires manual aut
   }
 });
 
-test("WorkBuddy acceptance grants only the target MCP tool and its deferred dispatcher", () => {
+test("WorkBuddy acceptance grants only the MCP tools required by the selected scenario", () => {
   const script = fs.readFileSync(path.join(root, "scripts/validate-workbuddy-package.mjs"), "utf8");
-  assert.match(script, /permissions: \{ allow: \["DeferExecuteTool", "mcp__evopilot-harness__inspect_capabilities"\] \}/);
+  assert.match(script, /const allowedTools = exerciseLlmInitialization/);
+  assert.match(script, /: \["DeferExecuteTool", "mcp__evopilot-harness__inspect_capabilities"\];/);
+  for (const tool of ["prepare_workspace", "initialize_model_configuration", "run_engine_diagnostic"]) {
+    assert.match(script, new RegExp(`mcp__evopilot-harness__${tool}`));
+  }
+  assert.match(script, /permissions: \{ allow: allowedTools \}/);
   assert.match(script, /WorkBuddy must complete exactly one inspect_capabilities call/);
+  assert.match(script, /option\("package-spec"\)/);
+  assert.match(script, /process\.argv\.includes\("--exercise-llm-initialization"\)/);
+  assert.match(script, /distributionMode: packageSpec \? "public-registry" : "local-package-candidate"/);
   assert.doesNotMatch(script, /permission-mode["', ]+bypassPermissions|\s-y(?:\s|["'])/);
 });

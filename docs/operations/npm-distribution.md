@@ -78,6 +78,8 @@ The result is read-only. It reports:
 
 Bootstrap never edits Agent configuration or initializes the Workspace. The Agent loads the returned Adapter and starts the exact MCP command. Its first product call is `inspect_capabilities`; it compares the Engine result with the Adapter before calling `prepare_workspace`.
 
+Bootstrap and `agent status` report Harness LLM initialization independently from package installation. An installed expert can therefore report `status=INSTALLED` with `initializationStatus=ACTION_REQUIRED`. After the human edits the external Workspace `models.json` locally, the Digital Expert calls `initialize_model_configuration`. A configuration-only inspection plus a successful minimal live doctor yields `CONFIGURED_AND_VERIFIED` and a secret-free mode-`0600` receipt in the external Workspace. Harness never imports the Agent host's model credential, and an upgrade or repair never overwrites the human-maintained configuration.
+
 ## WorkBuddy
 
 The installed package initializes a visible WorkBuddy Digital Expert through WorkBuddy's supported `expert-manager` validation and registration interface. Installation is never implicit in `agent bootstrap`; first preview the exact owned paths and MCP entry, then repeat with the returned digest:

@@ -6,13 +6,13 @@
 2. Load the returned `adapter.path` as WorkBuddy instructions and configure the project MCP server from the returned exact package command. Bootstrap does not edit WorkBuddy configuration.
 3. Approve the project MCP server through WorkBuddy's supported project approval setting, then call `inspect_capabilities` before Workspace mutation and compare its compatibility result with this Adapter.
 
-For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.2.2 version`.
+For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.2.3 version`.
 
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.2.2`
-- Core digest: `sha256:8f8eefef6e0a88baa501ebd99bb6eac1a3bd02806dfc0f48fef8d88ca09323d4`
+- Expert version: `4.2.3`
+- Core digest: `sha256:5ad7806c5942196f47fe7f5a40e84062634f00851965a0430c7886bc0a4cab01`
 - Agent protocol: `evopilot-harness-agent-operations/v1`
 - Engine API: `harness.evopilot.io/v3`
 - MCP command: `evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness`
@@ -52,7 +52,7 @@ Ask exactly one shortest missing question. Accept a complete user request withou
 ## Required Flow
 
 1. Start the local stdio MCP process with the Adapter's exact package command and complete standard MCP initialization. Call `inspect_capabilities` before any Workspace mutation, then compare its Product version, Expert version, Core digest, Agent protocol, and Engine API binding with the loaded Adapter. Stop when one field is missing or incompatible. A host-specific `clientInfo.compatibility` extension may fail an obvious mismatch earlier, but the Digital Expert must not require a non-standard MCP client extension.
-2. Call `prepare_workspace`; all mutable state must remain under the returned external Workspace.
+2. Call `prepare_workspace`; all mutable state must remain under the returned external Workspace. Render `models.readiness`, `models.initializationStatus`, and the credential-free next action in the Execution Brief. When readiness is not `CONFIGURED_AND_VERIFIED`, explain that the human must edit the referenced `models.json` locally without pasting credentials into chat. Call `initialize_model_configuration` only after the human confirms that local configuration is complete; it performs configuration inspection and a minimal live doctor, then persists only a secret-free verification receipt. Never read the file contents through the Agent host. LLM-optional deterministic work may continue when policy does not require an Advisor, but any required Advisor or Proposal Review must stop until readiness is `CONFIGURED_AND_VERIFIED`.
 3. Collect intent and call `start_operation_session`.
 4. Collect the shortest missing evolve, feedback, comparison, calibration, professional learning, or maintenance input and call `plan_operation_session`.
 5. Render the exact Plan and `planDigest`; ask for a plan decision. “Continue”, “开始”, or Execution Brief acceptance is not confirmation unless the human explicitly approves the displayed digest.
@@ -61,7 +61,7 @@ Ask exactly one shortest missing question. Accept a complete user request withou
 8. For a comparison scenario, render the complete Engine `HarnessComparisonReport`, including comparability checks and strata, every metric, pair and missing counts, uncertainty, conflicts, recommendation, reasons, limitations, bindings, and authority. Do not ask the human to compare raw Harness files and do not reinterpret the recommendation. After presentation, call `acknowledge_evidence_report_review` only when the human confirms they reviewed the exact report digest; that acknowledgement is not approval, rollback, or publication authorization. `NON_COMPARABLE`, `NEED_MORE_EVIDENCE`, `CONFLICT`, `KEEP_BASELINE`, `REVISE_CANDIDATE`, and `ROLLBACK_RECOMMENDED` are stop outcomes, not approval shortcuts.
 9. For a calibration scenario, render the complete `HarnessCalibrationReport`, including reviewed case count, baseline and candidate policy bindings, ranking, every case result, false-upgrade and false-new-profile rates, abstention, regressions, conflicts, uncertainty, recommendation, and non-mutation authority. Record review of the exact report through `acknowledge_evidence_report_review`; calibration review never activates a candidate policy.
 10. For a professional learning scenario, accept only static reviewed imports, render exact Curriculum and Professional Completeness vectors with missing/error accounting and limitations, and require `ACKNOWLEDGE_COMPLETENESS_REVIEW:<reportId>:<reportDigest>` for the immutable report. Never fetch research, execute adapter code, infer domain/role quality from generic concepts, or treat acknowledgement as approval or publication authority.
-11. When Proposals exist, call `review_session_proposals` automatically and render every Engine Review field, including `comparisonAssessment`, before asking for approval.
+11. When Proposals exist, require `CONFIGURED_AND_VERIFIED` model readiness, then call `review_session_proposals` automatically without re-asking for a models path when the verified Workspace default applies. Render every Engine Review field, including `comparisonAssessment`, before asking for approval.
 12. Call `approve_session_proposal` only after explicit approval of the exact Proposal, Review, Evaluation, and any controlled-comparison bindings. Approval never authorizes publication.
 13. Ask a separate publication question. Call `authorize_proposal_publication`, then `publish_session_proposal`, only for the exact approved Proposal digest.
 14. Render Catalog validation and final state. Ask whether to close, preserve for resume, or explicitly clean only owned closed-session metadata.
@@ -104,6 +104,7 @@ skipKnownInputs: true
 stages:
   - capability-check
   - workspace-preparation
+  - model-readiness-inspection-and-initialization
   - intent-collection
   - evidence-source-collection
   - operation-plan-review

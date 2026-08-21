@@ -17,6 +17,7 @@ const DEFINITIONS = {
   "workspace.inspect": definition(["workspace", "status"], [], "direct"),
   "llm.inspect": definition(["llm", "v3-models"], ["modelsFile", "model"], "direct"),
   "llm.diagnose": definition(["llm", "v3-doctor"], ["modelsFile", "model", "timeoutMs"], "direct"),
+  "llm.readiness": definition(["llm", "v3-readiness"], ["modelsFile"], "direct"),
   "evidence.produce": definition(["produce"], COMMON_SOURCE_FIELDS, "planned"),
   "proposal.inspect": definition(["proposal", "inspect"], ["proposalId"], "direct", "proposalId"),
   "proposal.validate": definition(["proposal", "validate"], ["proposalId"], "direct", "proposalId"),

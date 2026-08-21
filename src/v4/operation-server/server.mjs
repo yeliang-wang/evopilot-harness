@@ -4,6 +4,7 @@ import { parse as parseYaml } from "yaml";
 import { defaultHarnessHome, PACKAGE_ROOT } from "../../v3/constants.mjs";
 import { parseCli } from "../../v3/utils.mjs";
 import { initializeWorkspace, workspaceStatus } from "../../v3/workspace.mjs";
+import { executeV3Operation } from "../../v3/cli.mjs";
 import { engineCapabilities, invokeEngineOperation, isReadOnlyOperation } from "../engine-adapter.mjs";
 import { AGENT_PROTOCOL_VERSION, DEFAULT_MCP_PROTOCOL_VERSION, DIGITAL_EXPERT_SCHEMA, ENGINE_PROTOCOL_RANGE, MCP_PROTOCOL_VERSIONS, assertExternalWorkspace, assertOperationCompatibility, assertWorkspaceTreeConfined, operationCompatibility } from "../constants.mjs";
 import { StdioMcpServer } from "../mcp/stdio-server.mjs";
@@ -82,6 +83,11 @@ async function callTool(home, name, input, version) {
     else if (name === "prepare_workspace") {
       assertWorkspaceTreeConfined(home);
       result = input.initialize === false ? workspaceStatus(home) : initializeWorkspace(home);
+    }
+    else if (name === "initialize_model_configuration") {
+      assertWorkspaceTreeConfined(home);
+      const response = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home, "models-file": input.modelsFile, model: input.model, "timeout-ms": input.timeoutMs } });
+      result = response.result;
     }
     else if (name === "start_operation_session") result = createAgentSession({ home, ...input });
     else if (name === "plan_operation_session") result = createSessionPlan({ home, ...input });

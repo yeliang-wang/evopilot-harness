@@ -390,6 +390,10 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
     await diagnostic("workspace.inspect");
     await diagnostic("llm.inspect", { modelsFile, model: "glm-conformance" });
     await diagnostic("llm.diagnose", { modelsFile, model: "glm-conformance", timeoutMs: 5000 });
+    await diagnostic("llm.readiness", { modelsFile });
+    const initializedModel = structured(await client.tool("initialize_model_configuration", { modelsFile, model: "glm-conformance", timeoutMs: 5000 }));
+    assert.equal(initializedModel.status, "CONFIGURED_AND_VERIFIED");
+    assert.equal(initializedModel.connectionVerified, true);
 
     const assetRoot = path.join(home, "catalogs/builtin/assets");
     const assetFile = path.join(assetRoot, "profiles/observability-apm/1.2.0/asset.yaml");

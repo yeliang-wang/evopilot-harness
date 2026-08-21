@@ -4,6 +4,7 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
+- [4.2.3 candidate](4.2.3.md) - Harness-owned LLM initialization readiness, live doctor verification, safe receipt, and default Workspace reuse.
 - [4.2.2 candidate](4.2.2.md) - external Workspace model configuration repair for installed Agent hosts, safe v4.2.1 migration, and consistent Advisor/Review/doctor resolution.
 - [4.2.1](4.2.1.md) - extensible Agent-host installer lifecycle with WorkBuddy expert registration, preview-bound mutation, ownership-safe repair and uninstall, and installed-package stdio MCP operation.
 - [4.2.0 candidate](4.2.0.md) - governed professional Asset learning, static research and contribution evidence, immutable curriculum/run bindings, completeness vectors, and evidence-only domain/role proposals. Not released.

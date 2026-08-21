@@ -24,6 +24,8 @@ Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [npm First-Publication Release Review](operations/npm-first-publication-review.md) - one-time package creation, external npm account configuration, stop rules, and mandatory OIDC handoff.
 - [v4.1.2 Acceptance](operations/v4.1.2-acceptance.md) - documentation synchronization, drift guards, package, regression, artifact, and release-gate evidence.
 - [v4.2.0 Candidate Acceptance](operations/v4.2.0-acceptance.md) - Target revision 2's 15 criteria, professional-learning contracts, installed-package and real WorkBuddy evidence, compatibility, security, and release boundary.
+- [v4.2.3 Candidate Acceptance](operations/v4.2.3-acceptance.md) - Harness LLM initialization closure, 18 passing criteria, real WorkBuddy candidate-package evidence, and mandatory post-release public-package verification.
+- [Agent Host Production Simulator Acceptance](operations/agent-host-production-simulator-acceptance.md) - Target revision 1's host-neutral Skill, WorkBuddy profile, public-Release Host run, authority boundaries, and 15 acceptance criteria.
 - [v4.1.1 Acceptance](operations/v4.1.1-acceptance.md) - historical npm OIDC repair, package, regression, artifact, and release-gate evidence.
 - [v4.1 Acceptance](operations/v4.1-acceptance.md) - controlled-comparison, calibration, package, protocol, lifecycle, integrity, and compatibility evidence.
 - [v4.0 Acceptance](operations/v4-acceptance.md) - historical Agent-native baseline evidence.

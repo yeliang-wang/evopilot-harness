@@ -25,7 +25,16 @@ npm install --save-exact @evopilot/harness@4.2.2
 
 The Registry command must return `4.2.2`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
-On the first `prepare_workspace`, Harness writes `models.example.json` into that external Workspace and points `config.yaml` at the external `models.json`. It never creates or overwrites `models.json` and never imports a credential. When Advisor or Proposal Review is needed, copy the example to `models.json`, replace the placeholder locally, and run the model doctor; do not paste the key into Agent chat.
+On the first `prepare_workspace`, Harness writes `models.example.json` into that external Workspace and points `config.yaml` at the external `models.json`. It never creates or overwrites `models.json` and never imports a credential. The Digital Expert reports LLM initialization separately from product installation. When readiness is incomplete, copy the example to `models.json`, replace the placeholder locally, and tell the Expert only that local editing is complete; do not paste the key into Agent chat. The Expert calls `initialize_model_configuration`, which performs safe inspection and a minimal live doctor and stores only a secret-free receipt. `CONFIGURED_AND_VERIFIED` is the completed state and is reused by later Sessions.
+
+For release-candidate diagnosis outside an Agent host, the equivalent compatibility commands are:
+
+```bash
+evopilot-harness llm v3-readiness --workspace "$HOME/.evopilot-harness" --json
+evopilot-harness llm v3-initialize --workspace "$HOME/.evopilot-harness" --json
+```
+
+The second command makes a minimal live model call. It never rewrites `models.json`; changing that file invalidates the old verification receipt and requires another initialization check.
 
 ## Load The Expert
 

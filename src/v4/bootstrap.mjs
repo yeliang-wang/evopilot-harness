@@ -5,6 +5,8 @@ import path from "node:path";
 import { parse as parseYaml } from "yaml";
 import { PACKAGE_ROOT } from "../v3/constants.mjs";
 import { MCP_PROTOCOL_VERSIONS, operationCompatibility, assertExternalWorkspace } from "./constants.mjs";
+import { resolveWorkspaceModelsFile } from "../v3/workspace.mjs";
+import { inspectModelReadiness } from "../v3/model-readiness.mjs";
 
 export const BOOTSTRAP_SCHEMA = "evopilot-harness-agent-bootstrap/v1";
 
@@ -30,6 +32,7 @@ export function agentBootstrap(argv) {
   const packageSpec = `${packageJson.name}@${packageJson.version}`;
   const mcpArgs = ["mcp", "serve", "--transport", "stdio", "--workspace", workspace];
   const installed = PACKAGE_ROOT.split(path.sep).includes("node_modules");
+  const llmInitialization = inspectModelReadiness(workspace, resolveWorkspaceModelsFile(workspace));
   return {
     schema: BOOTSTRAP_SCHEMA,
     status: "READY",
@@ -71,13 +74,16 @@ export function agentBootstrap(argv) {
       externalToRelease: true,
       ownsMutableState: true
     },
+    llmInitialization,
     authority: {
       engineAuthoritative: true,
       agentMayApprove: false,
       agentMayPublish: false,
       automaticPublication: false
     },
-    nextAction: "load-packaged-adapter-and-start-exact-package-mcp"
+    nextAction: llmInitialization.status === "CONFIGURED_AND_VERIFIED"
+      ? "load-packaged-adapter-and-start-exact-package-mcp"
+      : "load-packaged-adapter-prepare-workspace-and-complete-llm-initialization"
   };
 }
 

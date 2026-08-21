@@ -5,6 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { PACKAGE_ROOT } from "../v3/constants.mjs";
 import { agentBootstrap } from "./bootstrap.mjs";
+import { resolveWorkspaceModelsFile } from "../v3/workspace.mjs";
+import { inspectModelReadiness } from "../v3/model-readiness.mjs";
 
 export const HOST_INSTALLER_SCHEMA = "evopilot-harness-agent-host-installer/v1";
 export const AGENT_HOST_INSTALLER_OPERATIONS = Object.freeze(["discover", "preview", "install", "status", "upgrade", "repair", "uninstall"]);
@@ -115,7 +117,7 @@ function applyPlan(operation, context, plan) {
   }
   const status = inspectStatus(context);
   if (status.status !== "INSTALLED") throw hostError("POST_INSTALL_VERIFICATION_FAILED", "WorkBuddy expert registration did not pass post-install verification.", "run-agent-repair");
-  return { ...plan, status: "INSTALLED", backupRoot, verification: status.verification, nextAction: "restart-or-refresh-workbuddy-and-open-evopilot-harness-expert" };
+  return { ...plan, status: "INSTALLED", initializationStatus: status.initializationStatus, llmInitialization: status.llmInitialization, backupRoot, verification: status.verification, nextAction: status.initializationStatus === "READY" ? "restart-or-refresh-workbuddy-and-open-evopilot-harness-expert" : "restart-or-refresh-workbuddy-open-expert-and-complete-llm-initialization" };
 }
 
 function uninstall(context, plan) {
@@ -154,7 +156,9 @@ function inspectStatus(context) {
   const mcpOwned = mcp?.managedBy === "@evopilot/harness";
   const mcpVersionMatch = mcp?.package === `${context.packageJson.name}@${context.packageJson.version}`;
   const healthy = expertExists && isOwned && ownedFilesMatch && registered && mcpOwned && mcpVersionMatch;
-  return { schema: HOST_INSTALLER_SCHEMA, operation: "status", status: healthy ? "INSTALLED" : expertExists || registered || mcp ? "DRIFTED" : "NOT_INSTALLED", host: { id: context.host, version: context.hostVersion, configRoot: context.configRoot }, verification: { expertExists, owned: isOwned, ownedFilesMatch, registered, mcpConfigured: Boolean(mcp), mcpOwned, mcpVersionMatch, workspaceExists: fs.existsSync(context.workspace), expertManagerAvailable: Boolean(context.manager) }, nextAction: healthy ? "use-evopilot-harness-expert" : expertExists || registered || mcp ? "run-agent-repair" : "run-agent-install" };
+  const llmInitialization = inspectModelReadiness(context.workspace, resolveWorkspaceModelsFile(context.workspace));
+  const initializationStatus = healthy && llmInitialization.status === "CONFIGURED_AND_VERIFIED" ? "READY" : "ACTION_REQUIRED";
+  return { schema: HOST_INSTALLER_SCHEMA, operation: "status", status: healthy ? "INSTALLED" : expertExists || registered || mcp ? "DRIFTED" : "NOT_INSTALLED", initializationStatus, host: { id: context.host, version: context.hostVersion, configRoot: context.configRoot }, verification: { expertExists, owned: isOwned, ownedFilesMatch, registered, mcpConfigured: Boolean(mcp), mcpOwned, mcpVersionMatch, workspaceExists: fs.existsSync(context.workspace), expertManagerAvailable: Boolean(context.manager) }, llmInitialization, nextAction: healthy ? initializationStatus === "READY" ? "use-evopilot-harness-expert" : "complete-harness-llm-initialization" : expertExists || registered || mcp ? "run-agent-repair" : "run-agent-install" };
 }
 
 function backupManaged(context) {

@@ -3,6 +3,7 @@ import path from "node:path";
 import { CATALOG_SCHEMA, PACKAGE_ROOT, REGISTRY_SCHEMA, WORKSPACE_SCHEMA } from "./constants.mjs";
 import { publishCatalog } from "./catalog.mjs";
 import { copyTree, digest, readYaml, writeYaml } from "./utils.mjs";
+import { inspectModelReadiness } from "./model-readiness.mjs";
 
 const DIRECTORIES = [
   "catalogs/builtin",
@@ -144,6 +145,7 @@ export function workspaceStatus(home, { modelMigration } = {}) {
   try { config = readYaml(path.join(resolved, "config.yaml")); } catch { /* reported below */ }
   const modelsFile = resolveWorkspaceModelsFile(resolved);
   const modelsTemplate = path.join(resolved, "models.example.json");
+  const modelReadiness = inspectModelReadiness(resolved, modelsFile);
   return {
     schema: "evopilot-harness-workspace-status/v3",
     status: missing.length === 0 && config?.schema === WORKSPACE_SCHEMA ? "READY" : "NOT_INITIALIZED",
@@ -157,7 +159,12 @@ export function workspaceStatus(home, { modelMigration } = {}) {
       template: modelsTemplate,
       templateAvailable: fs.existsSync(modelsTemplate),
       migratedLegacyDefault: Boolean(modelMigration?.migrated),
-      nextAction: fs.existsSync(modelsFile) ? "inspect-model-configuration" : "copy-template-and-add-api-key"
+      readiness: modelReadiness.status,
+      connectionVerified: modelReadiness.connectionVerified,
+      initializationStatus: modelReadiness.initializationStatus,
+      verification: modelReadiness.verification,
+      receiptFile: modelReadiness.receiptFile,
+      nextAction: modelReadiness.nextAction
     },
     paths: {
       config: path.join(resolved, "config.yaml"),
