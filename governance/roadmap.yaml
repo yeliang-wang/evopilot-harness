@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-20",
+  "updatedAt": "2026-08-21",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -23,8 +23,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.0.1",
-    "currentWorkingVersion": "4.0.2",
+    "publishedBaseline": "4.1.2",
+    "currentWorkingVersion": "4.1.2",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
@@ -48,6 +48,11 @@
       "id": "evopilot-harness-4.0-installed-distribution-maintenance",
       "description": "Maintain the v4.0.x installed Agent distribution, including curated npm packaging, isolated Agent-host conformance, provenance, a one-time first-publication Bootstrap, and subsequent OIDC Trusted Publishing without changing Harness lifecycle behavior or product boundaries. npm account, organization, scope, token, 2FA, and actual Registry publication remain separately reviewed external release configuration.",
       "signals": ["npm distribution", "installed agent distribution", "npm package", "npm trusted publishing", "first-publication bootstrap", "first publication bootstrap", "npm bootstrap", "workbuddy package conformance", "npm 分发", "npm 包", "npm 首发 bootstrap", "npm 首次发布", "workbuddy 包验收"]
+    },
+    {
+      "id": "evopilot-harness-open-source-productization",
+      "description": "Harden public contribution, repository metadata, dependency and security automation, product-native wording, and deterministic Roadmap/Release synchronization without changing Harness behavior, product boundaries, or supported distribution channels.",
+      "signals": ["open source productization", "open-source productization", "open-source governance", "issue forms", "pull request template", "dependabot", "github metadata", "security automation", "external reference cleanup", "release state drift", "开源产品化", "开源治理", "贡献模板", "依赖维护", "github 元数据", "安全自动化", "发布状态漂移"]
     }
   ],
   "milestones": [
@@ -120,7 +125,7 @@
     },
     {
       "id": "evopilot-harness-4.1-controlled-comparative-evidence",
-      "status": "PLANNED",
+      "status": "COMPLETE",
       "targetVersion": "4.1.0",
       "releaseLine": "4.1.x",
       "objective": "Compare Baseline and Candidate Harness assets under governed, replayable, and context-equivalent evidence before calibrating matching or Proposal quality.",

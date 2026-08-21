@@ -19,7 +19,17 @@ const SCHEMAS = {
   HarnessComparisonReport: "harness-comparison-report-v1.schema.json",
   HarnessComparisonRescoreRecord: "harness-comparison-rescore-record-v1.schema.json",
   HarnessCalibrationCaseSet: "harness-calibration-case-set-v1.schema.json",
-  HarnessCalibrationReport: "harness-calibration-report-v1.schema.json"
+  HarnessCalibrationReport: "harness-calibration-report-v1.schema.json",
+  ResearchAdapterManifest: "research-adapter-manifest-v1.schema.json",
+  ResearchEvidencePackage: "research-evidence-package-v1.schema.json",
+  EvidenceRunManifest: "evidence-run-manifest-v1.schema.json",
+  AssetCurriculumEntry: "asset-curriculum-entry-v1.schema.json",
+  AssetCurriculumSnapshot: "asset-curriculum-snapshot-v1.schema.json",
+  ProfessionalCompletenessPolicyPack: "professional-completeness-policy-pack-v1.schema.json",
+  ProfessionalCompletenessReport: "professional-completeness-report-v1.schema.json",
+  ProfessionalCompletenessRescoreRecord: "professional-completeness-rescore-record-v1.schema.json",
+  ContributionEvidencePackage: "contribution-evidence-package-v1.schema.json",
+  DomainRoleProposal: "domain-role-proposal-v1.schema.json"
 };
 
 const VERSIONED_SCHEMAS = {

@@ -14,21 +14,29 @@ test("active documentation binds the current package and released version", () =
   const docsIndex = read("docs/README.md");
   const releaseIndex = read("docs/releases/README.md");
   const releaseNote = read(`docs/releases/${version}.md`);
+  const roadmap = JSON.parse(read("governance/roadmap.yaml"));
+  const publishedVersion = roadmap.versionPolicy.publishedBaseline;
+  const escapedPublishedVersion = publishedVersion.replaceAll(".", "\\.");
   const releaseManagement = read("docs/operations/release-management.md");
   const npmDistribution = read("docs/operations/npm-distribution.md");
   const troubleshooting = read("docs/operations/troubleshooting.md");
   const llms = read("llms.txt");
 
-  assert.match(readme, new RegExp(`@evopilot/harness@${escapedVersion}`));
-  assert.match(readme, new RegExp(`/releases/tag/v${escapedVersion}`));
-  assert.match(docsIndex, new RegExp(`Current release:.*v${escapedVersion}`));
-  assert.match(releaseIndex, new RegExp(`\\[${escapedVersion} current release\\]`));
-  assert.doesNotMatch(releaseIndex, new RegExp(`\\[${escapedVersion} candidate\\]`));
-  assert.match(releaseNote, /> Status: released/);
-  assert.match(releaseManagement, new RegExp(`Current published Engine release:.*v${escapedVersion}`));
-  assert.match(npmDistribution, new RegExp(`npm view @evopilot/harness@${escapedVersion} version`));
-  assert.match(troubleshooting, new RegExp(`npm view @evopilot/harness@${escapedVersion}`));
-  assert.match(llms, new RegExp(`Current v${escapedVersion} release notes`));
+  if (version === publishedVersion) {
+    assert.match(readme, new RegExp(`@evopilot/harness@${escapedVersion}`));
+    assert.match(readme, new RegExp(`/releases/tag/v${escapedVersion}`));
+    assert.match(docsIndex, new RegExp(`Current release:.*v${escapedVersion}`));
+    assert.match(releaseIndex, new RegExp(`\\[${escapedVersion} current release\\]`));
+    assert.match(releaseNote, /> Status: released/);
+  } else {
+    assert.match(releaseIndex, new RegExp(`\\[${escapedVersion} candidate\\]`));
+    assert.match(releaseNote, /> Status: candidate/);
+    assert.doesNotMatch(releaseNote, new RegExp(`/releases/tag/v${escapedVersion}|npmjs\\.com/package/@evopilot/harness/v/${escapedVersion}`));
+  }
+  assert.match(releaseManagement, new RegExp(`Current published Engine release:.*v${escapedPublishedVersion}`));
+  assert.match(npmDistribution, new RegExp(`npm view @evopilot/harness@${escapedPublishedVersion} version`));
+  assert.match(troubleshooting, new RegExp(`npm view @evopilot/harness@${escapedPublishedVersion}`));
+  assert.match(llms, new RegExp(`Current v${escapedPublishedVersion} release notes`));
 });
 
 test("the legacy Guided Operator alias resolves to the packaged Digital Expert", () => {

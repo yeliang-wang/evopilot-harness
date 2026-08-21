@@ -62,6 +62,14 @@ const DEFINITIONS = {
   "calibration.ingest": definition(["calibration", "ingest"], ["file"], "planned", "file"),
   "calibration.run": definition(["calibration", "run"], ["caseSet", "caseSetId", "baselineMatchPolicy", "candidateMatchPolicy", "baselineComparisonPolicy", "candidateComparisonPolicy", "now"], "planned"),
   "calibration.report": definition(["calibration", "report"], ["reportId"], "direct", "reportId"),
+  "learning.inspect": definition(["learning", "inspect"], ["file", "type"], "direct", "file"),
+  "learning.validate": definition(["learning", "validate"], ["file", "type"], "direct", "file"),
+  "learning.ingest": definition(["learning", "ingest"], ["file", "type", "now"], "planned", "file"),
+  "learning.snapshot": definition(["learning", "snapshot"], ["snapshotId", "entryIds", "policyRef", "timeBoundary", "now"], "planned", "snapshotId"),
+  "learning.run-manifest": definition(["learning", "run-manifest"], ["runId", "input", "now"], "planned", "runId"),
+  "learning.score": definition(["learning", "score"], ["reportId", "runId", "snapshotId", "policyFile", "now"], "planned", "reportId"),
+  "learning.rescore": definition(["learning", "rescore"], ["reportId", "policyFile", "reason", "now"], "planned", "reportId"),
+  "learning.artifact": definition(["learning", "artifact"], ["id", "area"], "direct", "id"),
   "migration.plan": definition(["migrate", "v2-to-v3"], ["source"], "direct"),
   "migration.apply": definition(["migrate", "v2-to-v3"], ["source"], "planned", null, { apply: true }),
   "migration.rollback": definition(["migrate", "rollback"], ["migrationId"], "planned", "migrationId"),
@@ -92,6 +100,13 @@ const OPTION_NAMES = {
   publicKey: "public-key",
   catalogId: "catalog-id",
   generatedAt: "generated-at"
+  ,entryIds: "entry-ids",
+  policyRef: "policy-ref",
+  timeBoundary: "time-boundary",
+  snapshotId: "snapshot-id",
+  reportId: "report-id",
+  runId: "run-id",
+  policyFile: "policy-file"
 };
 
 export function engineCapabilities() {
@@ -269,6 +284,7 @@ function inside(root, target) {
 function normalizeOption(value) {
   if (Array.isArray(value)) return value.map((item) => String(item));
   if (typeof value === "boolean" || typeof value === "number") return value;
+  if (value && typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
 

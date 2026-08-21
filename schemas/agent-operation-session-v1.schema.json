@@ -85,7 +85,7 @@
         "additionalProperties": true,
         "required": ["type", "reportId", "reportDigest", "reviewed", "nextAction"],
         "properties": {
-          "type": { "enum": ["COMPARISON", "CALIBRATION"] },
+          "type": { "enum": ["COMPARISON", "CALIBRATION", "COMPLETENESS"] },
           "reportId": { "type": "string", "minLength": 1 },
           "reportDigest": { "$ref": "#/$defs/digest" },
           "reviewed": { "type": "boolean" },

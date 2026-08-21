@@ -67,7 +67,7 @@ Then tell the Agent:
 自动展示 Engine Proposal Review，并分别停在批准和发布决策点。
 ```
 
-The Digital Expert asks one missing question at a time. The human does not enter Harness lifecycle CLI commands. The Agent starts MCP, prepares the external Workspace, persists an `AgentOperationSession`, calls the Engine, renders the complete Review, and stops for explicit digest-bound decisions. Planned operations use durable idempotency receipts; interrupted unknown outcomes fail closed, and maintenance publication has a separate operation authorization. Project roots, Git repositories, attachments, production logs, historical Harnesses, notes, feedback, controlled Baseline/Candidate comparison, matching and Proposal calibration, maintenance, diagnostics, resume, cancellation, close, and owned-session cleanup are covered. Comparison and calibration reports enter a separate digest-bound review acknowledgement state. Source ingestion remains static and never runs project build, test, deploy, or business commands.
+The Digital Expert asks one missing question at a time. The human does not enter Harness lifecycle CLI commands. The Agent starts MCP, prepares the external Workspace, persists an `AgentOperationSession`, calls the Engine, renders the complete Review, and stops for explicit digest-bound decisions. Planned operations use durable idempotency receipts; interrupted unknown outcomes fail closed, and maintenance publication has a separate operation authorization. Project roots, Git repositories, attachments, production logs, historical Harnesses, notes, feedback, controlled Baseline/Candidate comparison, matching and Proposal calibration, governed professional-learning evidence, maintenance, diagnostics, resume, cancellation, close, and owned-session cleanup are covered. Comparison, calibration, and Professional Completeness reports enter a separate digest-bound review acknowledgement state. Source and research ingestion remains static and never runs project build, test, deploy, business, adapter, or network acquisition commands.
 
 See [Agent-native quickstart](docs/agent/quickstart.md), [npm distribution](docs/operations/npm-distribution.md), [Digital Expert](docs/agent/digital-expert.md), [MCP reference](docs/agent/mcp-reference.md), and [Session protocol](docs/agent/session-protocol.md).
 
@@ -94,6 +94,8 @@ node src/index.mjs comparison process /path/to/comparison.yaml \
 ```
 
 The report is valid only for its exact task, source snapshot, environment, model, toolchain, Evaluation, scorer, metrics, and asset bindings. Rescoring appends a new report and preserves every accepted observation and prior report. Independently reviewed calibration cases replay explicit Baseline/Candidate policy versions without mutating the active policy. See [Controlled Comparative Evidence](docs/guides/controlled-comparative-evidence.md).
+
+The v4.2 candidate adds append-only Asset Curriculum, reviewed static Research and Contribution evidence, immutable Evidence Run manifests, vector Professional Completeness reporting, and evidence-derived Domain/Role proposals. It does not add web crawling, executable adapters, model training, automatic approval, or automatic publication. See [Professional Asset Learning](docs/guides/professional-asset-learning.md).
 
 ## Reasoning And Review
 

@@ -1,0 +1,18 @@
+apiVersion: learning.evopilot.io/v1
+kind: ProfessionalCompletenessPolicyPack
+metadata:
+  id: professional-completeness-default
+  version: 1.0.0
+dimensions:
+  - id: contract-schema-coverage
+  - id: positive-negative-boundary-coverage
+  - id: evaluation-case-coverage
+  - id: evidence-source-diversity
+  - id: conflict-closure
+  - id: production-failure-coverage
+  - id: regression-history
+  - id: independently-reviewed-accuracy
+decisionRules:
+  missingAndErrorsRemainVisible: true
+  uncertaintyRequired: true
+  universalOrCausalClaimsForbidden: true

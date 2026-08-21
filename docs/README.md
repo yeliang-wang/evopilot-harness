@@ -23,6 +23,7 @@ Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [npm Distribution](operations/npm-distribution.md) - exact-version installation, package boundary, Agent bootstrap, WorkBuddy startup, Trusted Publishing, and Registry verification.
 - [npm First-Publication Release Review](operations/npm-first-publication-review.md) - one-time package creation, external npm account configuration, stop rules, and mandatory OIDC handoff.
 - [v4.1.2 Acceptance](operations/v4.1.2-acceptance.md) - documentation synchronization, drift guards, package, regression, artifact, and release-gate evidence.
+- [v4.2.0 Candidate Acceptance](operations/v4.2.0-acceptance.md) - Target revision 2's 15 criteria, professional-learning contracts, installed-package and real WorkBuddy evidence, compatibility, security, and release boundary.
 - [v4.1.1 Acceptance](operations/v4.1.1-acceptance.md) - historical npm OIDC repair, package, regression, artifact, and release-gate evidence.
 - [v4.1 Acceptance](operations/v4.1-acceptance.md) - controlled-comparison, calibration, package, protocol, lifecycle, integrity, and compatibility evidence.
 - [v4.0 Acceptance](operations/v4-acceptance.md) - historical Agent-native baseline evidence.
@@ -37,6 +38,7 @@ Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [Asset Delta And Evaluation](guides/asset-delta-and-evaluation.md) - typed before/after changes, portable v3 cases, impact closure, terminal decisions, and lifecycle gates.
 - [Feedback Evidence](guides/feedback-evidence.md) - structured feedback contract, validation, ingestion, four-dimensional effectiveness, and authority limits.
 - [Controlled Comparative Evidence](guides/controlled-comparative-evidence.md) - Baseline/Candidate contracts, exact-context comparison, immutable rescoring, policy calibration, Agent flow, and CLI.
+- [Professional Asset Learning](guides/professional-asset-learning.md) - v4.2 candidate contracts for static research, curriculum, run manifests, completeness vectors, contributions, domain/role evidence, Agent flow, and authority boundaries.
 
 ## Integrate A Consumer
 

@@ -9,6 +9,7 @@ import { serveHubV3, writeHubSnapshot } from "./hub.mjs";
 import { aggregateFeedback, ingestFeedbackPackage, inspectFeedbackPackage, processFeedbackPackage, readEffectivenessReport, validateFeedbackPackage } from "./feedback.mjs";
 import { ingestComparisonPackage, inspectComparisonPackage, processComparisonPackage, readComparisonReport, rescoreComparison, scoreComparison, validateComparisonPackage } from "./comparison.mjs";
 import { ingestCalibrationCaseSet, readCalibrationReport, runCalibration, validateCalibrationCaseSet } from "./calibration.mjs";
+import { createCurriculumSnapshot, createEvidenceRunManifest, ingestLearningDocument, inspectLearningDocument, readLearningArtifact, rescoreProfessionalCompleteness, scoreProfessionalCompleteness, validateLearningFile } from "./learning.mjs";
 import { applyV2Migration, planV2Migration, rollbackMigration } from "./migration.mjs";
 import { collectEvidence, reasonCorpus, reasonEvidence } from "./reasoning.mjs";
 import { buildAssetDeltaProposal, buildEvaluationPackV3, validateAssetDeltaClosure } from "./delta.mjs";
@@ -18,7 +19,7 @@ import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, workspaceStatus } from "./workspace.mjs";
 
-const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration"]);
+const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
 
 export async function handleV3Command(argv) {
   const args = parseCli(argv);
@@ -85,7 +86,35 @@ async function dispatch(args, group, action, id) {
     const result = inspectComparisonPackage(id ?? requiredFileOption(args));
     return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
+  if (group === "learning" && action === "inspect") {
+    const result = inspectLearningDocument(requiredOption(args, "type"), id ?? requiredFileOption(args));
+    return output(args, result, result.status === "INSPECTED" ? 0 : 2);
+  }
   requireWorkspace(home);
+  if (group === "learning" && action === "validate") {
+    const result = validateLearningFile(requiredOption(args, "type"), id ?? requiredFileOption(args));
+    return output(args, result, result.status === "VALIDATED" ? 0 : 2);
+  }
+  if (group === "learning" && action === "ingest") {
+    const result = ingestLearningDocument({ type: requiredOption(args, "type"), file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    return output(args, result, ["ACCEPTED", "DUPLICATE"].includes(result.status) ? 0 : 2);
+  }
+  if (group === "learning" && action === "snapshot") {
+    const result = createCurriculumSnapshot({ home, snapshotId: id ?? requiredIdOption(args, "snapshot-id"), entryIds: listOption(args, "entry-ids"), policyRef: parseJsonOption(args, "policy-ref"), timeBoundary: option(args, "time-boundary"), now: option(args, "now", new Date().toISOString()) });
+    return output(args, result);
+  }
+  if (group === "learning" && action === "run-manifest") {
+    const input = parseJsonOption(args, "input", {});
+    return output(args, createEvidenceRunManifest({ home, ...input, runId: id ?? input.runId, now: option(args, "now", input.now ?? new Date().toISOString()) }));
+  }
+  if (group === "learning" && action === "score") {
+    const result = scoreProfessionalCompleteness({ home, reportId: id ?? requiredIdOption(args, "report-id"), runId: requiredOption(args, "run-id"), curriculumSnapshotId: requiredOption(args, "snapshot-id"), policyFile: requiredOption(args, "policy-file"), now: option(args, "now", new Date().toISOString()) });
+    return output(args, result);
+  }
+  if (group === "learning" && action === "rescore") {
+    return output(args, rescoreProfessionalCompleteness({ home, reportId: id ?? requiredIdOption(args, "report-id"), policyFile: requiredOption(args, "policy-file"), reason: requiredOption(args, "reason"), now: option(args, "now", new Date().toISOString()) }));
+  }
+  if (group === "learning" && action === "artifact") return output(args, readLearningArtifact({ home, area: requiredOption(args, "area"), id: id ?? requiredIdOption(args, "id") }));
   if (group === "asset" && action === "v3-validate") {
     const roots = assetRoots(args, home);
     const result = validateAssets(roots);
@@ -253,8 +282,11 @@ async function dispatch(args, group, action, id) {
     const result = runV3Evaluation(home);
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
-  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
+  throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, learning inspect|validate|ingest|snapshot|run-manifest|score|rescore|artifact, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor, or eval v3-run.");
 }
+
+function listOption(args, name) { return String(option(args, name, "")).split(",").map((item) => item.trim()).filter(Boolean); }
+function parseJsonOption(args, name, fallback = null) { const value = option(args, name); if (value === undefined) return fallback; try { return JSON.parse(String(value)); } catch { throw usage(`--${name} must contain valid JSON.`); } }
 
 async function produce(args, home) {
   if (option(args, "source-root")) {

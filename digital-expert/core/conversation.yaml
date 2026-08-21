@@ -23,7 +23,7 @@ internalDecisionTokens:
   publication: AUTHORIZE_PUBLICATION:<proposalId>:<approvedProposalDigest>
   interruptedReceipt: ACCEPT_OPERATION_RECEIPT:<sessionId>:<attemptDigest>:<receiptDigest>
   interruptedRetry: CONFIRM_RETRY_UNCHANGED_OPERATION:<sessionId>:<attemptDigest>:<workspaceDigest>
-  evidenceReview: ACKNOWLEDGE_<COMPARISON|CALIBRATION>_REVIEW:<reportId>:<reportDigest>
+  evidenceReview: ACKNOWLEDGE_<COMPARISON|CALIBRATION|COMPLETENESS>_REVIEW:<reportId>:<reportDigest>
   cancellation: CANCEL_SESSION:<sessionId>:<sessionDigest>
   close: CLOSE_SESSION:<sessionId>:<sessionDigest>
   cleanup: DELETE_SESSION_STATE:<sessionId>:<sessionDigest>

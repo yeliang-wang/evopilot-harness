@@ -97,6 +97,8 @@ try {
   assert.equal(capabilityCall.result.compatibility?.expertVersion, packageJson.version);
   assert.equal(capabilityCall.result.compatibility?.engineApiVersion, "harness.evopilot.io/v3");
   assert.ok(capabilityCall.result.mcp?.supportedProtocolVersions?.includes("2025-11-25"));
+  const learningOperations = capabilityCall.result.operations?.filter((item) => item.id.startsWith("learning.")).map((item) => item.id).sort();
+  assert.deepEqual(learningOperations, ["learning.artifact", "learning.ingest", "learning.inspect", "learning.rescore", "learning.run-manifest", "learning.score", "learning.snapshot", "learning.validate"]);
   assert.equal(capabilityCall.result.nextAction, "prepare-workspace");
 
   const hostVersion = run(workbuddy, ["--version"], app);
@@ -112,6 +114,7 @@ try {
       hostRequestId: capabilityCall.hostRequestId,
       engineVersion: capabilityCall.result.productVersion,
       protocols: capabilityCall.result.mcp.supportedProtocolVersions
+      ,professionalLearningOperations: learningOperations
     },
     workspace: { path: canonicalWorkspace, mutated: fs.existsSync(canonicalWorkspace) },
     operation: "inspect_capabilities",

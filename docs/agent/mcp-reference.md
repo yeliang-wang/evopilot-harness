@@ -37,7 +37,7 @@ Supported MCP methods:
 | `inspect_capabilities` | Versions, operations, safety, Workspace state | Read-only |
 | `prepare_workspace` | Initialize external Workspace | External Workspace only |
 | `start_operation_session` | Bind human intent and Adapter | Session mutation |
-| `plan_operation_session` | Build evolve, feedback, comparison, calibration, or maintenance Plan | Review stage |
+| `plan_operation_session` | Build evolve, feedback, comparison, calibration, professional-learning, or maintenance Plan | Review stage |
 | `confirm_operation_plan` | Record exact human Plan confirmation | Digest-bound human gate |
 | `execute_operation_plan` | Run only confirmed Engine operations | Planned Engine authority |
 | `authorize_plan_publication_operation` | Authorize one Catalog/Ontology/Policy publication in a confirmed Plan | Separate digest-bound human gate |
@@ -55,7 +55,7 @@ Supported MCP methods:
 | `cleanup_operation_session` | Delete only owned closed-session metadata | Explicit destructive gate |
 | `run_engine_diagnostic` | Run declared read-only Engine inspection/validation | Mutations rejected |
 
-Every tool schema recursively rejects unknown fields where the contract is closed. Engine operation inputs pass a second field whitelist, secret-material check, and write-boundary check. Proposal approval, publication, and planned comparison/calibration mutations are not exposed through the generic diagnostic tool. `run_engine_diagnostic` may inspect or validate comparison and calibration inputs and read reports. `comparison.process`, `comparison.ingest|score|rescore`, `calibration.ingest`, and `calibration.run` require a confirmed Plan. `catalog.publish`, `ontology.publish`, and `policy.publish` stop after Plan confirmation and require their own operation authorization before the Engine may write.
+Every tool schema recursively rejects unknown fields where the contract is closed. Engine operation inputs pass a second field whitelist, secret-material check, and write-boundary check. Proposal approval, publication, and planned comparison/calibration/learning mutations are not exposed through the generic diagnostic tool. `run_engine_diagnostic` may inspect or validate evidence inputs and read reports. `comparison.process`, `comparison.ingest|score|rescore`, `calibration.ingest|run`, and `learning.ingest|snapshot|run-manifest|score|rescore` require a confirmed Plan. `catalog.publish`, `ontology.publish`, and `policy.publish` stop after Plan confirmation and require their own operation authorization before the Engine may write.
 
 `acknowledge_evidence_report_review` requires `reportType`, `reportId`, `expectedReportDigest`, `confirmedBy`, the current `sessionDigest`, and the exact internally constructed acknowledgement. It re-reads the persisted report and rejects stale or tampered content. Success proves review only; it does not approve a Proposal, activate a policy, authorize rollback, publish, or execute.
 

@@ -6,7 +6,7 @@
   "required": ["schema", "scenario", "goal", "createdAt", "sources", "operations", "stopPoints", "authority"],
   "properties": {
     "schema": { "const": "evopilot-harness-operation-plan/v1" },
-    "scenario": { "enum": ["evolve", "feedback", "comparison", "calibration", "maintenance"] },
+    "scenario": { "enum": ["evolve", "feedback", "comparison", "calibration", "learning", "maintenance"] },
     "goal": { "type": "string", "minLength": 1 },
     "createdAt": { "type": "string", "minLength": 1 },
     "sources": {

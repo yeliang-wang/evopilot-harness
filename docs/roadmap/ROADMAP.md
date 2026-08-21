@@ -61,7 +61,7 @@ The Digital Expert understands and explains intent, but the Engine remains autho
 
 The published Engine baseline is `v4.0.1`. The `v4.0.2` maintenance release closes npm distribution, isolated Agent-host installation, package provenance, and WorkBuddy conformance for the existing v4.0 operating model; it does not add a new Harness lifecycle capability or change the accepted boundary. Because npm Trusted Publishing can be configured only after the package exists, this release line may include one explicitly selected, token-backed first-publication Bootstrap that refuses to run once the package exists. Every later publication must use the OIDC Trusted Publisher path. npm account creation, organization or scope ownership, token and 2FA configuration, and actual Registry publication remain external Release Review decisions and are never inferred from implementation acceptance.
 
-### v4.1.0: Controlled Comparative Evidence And Calibration
+### v4.1.0: Controlled Comparative Evidence And Calibration (Complete)
 
 - Define governed Baseline/Candidate comparison evidence bound to the same task, environment, scorer, and Evaluation cases.
 - Preserve immutable raw results and append independently versioned rescoring rather than overwriting history.
@@ -69,6 +69,8 @@ The published Engine baseline is `v4.0.1`. The `v4.0.2` maintenance release clos
 - Calibrate matching and Proposal quality with independently reviewed cases and cross-version regression evidence.
 
 Pairwise evidence may recommend keeping, revising, or rolling back an asset candidate. It cannot approve or publish an asset, override deterministic gates, or turn confounded observations into causal claims.
+
+The published Engine baseline for this milestone is `v4.1.2`.
 
 ### v4.2.0: Professional Asset Learning And Research
 
@@ -111,6 +113,8 @@ EvoPilot exports approved HarnessExecutionFeedbackPackage
 ## Standing Work
 
 Bug fixes, security repairs, documentation synchronization, dependency maintenance, compatibility work, and regressions are continuously allowed when they do not add an unplanned capability or change an accepted boundary.
+
+Open-source productization hardening is standing work when it is limited to contribution templates, accurate repository metadata, dependency and security automation, product-native public wording, and deterministic checks that keep Roadmap and Release state synchronized. It must not add Harness behavior, expand a distribution channel, copy another project's product boundary, or use workflow count as an acceptance target.
 
 Codex workflow governance is also standing work when it only binds Engine evolution to reviewed evidence, this Roadmap, an approved `evopilot-evolution-target/v1`, deterministic acceptance, and separately authorized Engine release. It must not change Harness product behavior, asset authority, milestones, versions, or boundaries under the label of governance. User Organization Catalog assets retain their independent review, approval, and publication lifecycle.
 

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.io/schemas/evidence-run-manifest-v1.schema.json",
+  "title": "EvidenceRunManifest v1",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata"],
+  "properties": {
+    "apiVersion": { "const": "learning.evopilot.io/v1" },
+    "kind": { "const": "EvidenceRunManifest" },
+    "metadata": {
+      "type": "object",
+      "required": ["version", "documentDigest"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "documentDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

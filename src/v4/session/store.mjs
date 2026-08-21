@@ -8,6 +8,7 @@ import { inspectProposal } from "../../v3/lifecycle.mjs";
 import { inspectProposalReview, reviewInputDigest } from "../../v3/review.mjs";
 import { readComparisonReport } from "../../v3/comparison.mjs";
 import { readCalibrationReport } from "../../v3/calibration.mjs";
+import { readLearningArtifact } from "../../v3/learning.mjs";
 import { requireWorkspace } from "../../v3/workspace.mjs";
 import { engineOperationDefinition, inspectEngineOperationReceipt, invokeEngineOperation, validateEngineOperationRequest } from "../engine-adapter.mjs";
 import { AGENT_SESSION_SCHEMA, OPERATION_PLAN_SCHEMA, assertExternalWorkspace, assertOperationCompatibility, assertWorkspaceTreeConfined, operationCompatibility, resolveWorkspacePath } from "../constants.mjs";
@@ -255,14 +256,16 @@ export async function resolveInterruptedOperation({ home, sessionId, expectedSes
 export function acknowledgeSessionEvidenceReview({ home, sessionId, expectedSessionDigest, reportType, reportId, expectedReportDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["EVIDENCE_REVIEW_REQUIRED"]);
   const type = String(reportType ?? "").toUpperCase();
-  if (!["COMPARISON", "CALIBRATION"].includes(type)) throw sessionError("EVIDENCE_REPORT_TYPE_REQUIRED", "Report review type must be COMPARISON or CALIBRATION.", "choose-evidence-report-type");
+  if (!["COMPARISON", "CALIBRATION", "COMPLETENESS"].includes(type)) throw sessionError("EVIDENCE_REPORT_TYPE_REQUIRED", "Report review type must be COMPARISON, CALIBRATION, or COMPLETENESS.", "choose-evidence-report-type");
   const report = session.evidenceReports.find((item) => item.type === type && item.reportId === reportId);
   if (!report) throw sessionError("EVIDENCE_REPORT_NOT_IN_SESSION", `Report ${reportId} is not bound to this Session.`, "reload-session-evidence-reports");
   if (report.reportDigest !== expectedReportDigest) throw sessionError("EVIDENCE_REPORT_DIGEST_MISMATCH", "The presented evidence report digest is stale.", "reload-evidence-report");
-  const current = type === "COMPARISON"
-    ? readComparisonReport({ home: session.workspace.home, reportId })
-    : readCalibrationReport({ home: session.workspace.home, reportId });
-  if (current.status !== "FOUND" || current.report.metadata.reportDigest !== expectedReportDigest) {
+  const current = type === "COMPARISON" ? readComparisonReport({ home: session.workspace.home, reportId })
+    : type === "CALIBRATION" ? readCalibrationReport({ home: session.workspace.home, reportId })
+    : readLearningArtifact({ home: session.workspace.home, area: "report", id: reportId });
+  const currentDocument = current.report ?? current.document;
+  const currentDigest = currentDocument?.metadata?.reportDigest ?? currentDocument?.metadata?.documentDigest;
+  if (current.status !== "FOUND" || currentDigest !== expectedReportDigest) {
     throw sessionError("EVIDENCE_REPORT_INTEGRITY_FAILURE", "The persisted evidence report no longer matches the presented digest.", "stop-and-inspect-evidence-report");
   }
   const expected = `ACKNOWLEDGE_${type}_REVIEW:${reportId}:${expectedReportDigest}`;
@@ -568,6 +571,10 @@ function buildPlan({ home, scenario, goal, sources, operations, now }) {
       candidateComparisonPolicy: input.candidateComparisonPolicy,
       now: input.now
     });
+  } else if (normalizedScenario === "learning") {
+    assertKnownSourceFields(sources, []);
+    plannedOperations = normalizeLearningOperations(home, operations);
+    persistedSources = {};
   } else if (normalizedScenario === "maintenance") {
     assertKnownSourceFields(sources, []);
     plannedOperations = normalizeMaintenanceOperations(home, operations);
@@ -582,7 +589,7 @@ function buildPlan({ home, scenario, goal, sources, operations, now }) {
     createdAt: now,
     sources: persistedJson(persistedSources),
     operations: plannedOperations,
-    stopPoints: ["plan-confirmation", "engine-blocker", "comparison-review", "calibration-review", "proposal-review", "human-approval", "separate-publication-authorization", "close-or-resume"],
+    stopPoints: ["plan-confirmation", "engine-blocker", "comparison-review", "calibration-review", "completeness-review", "proposal-review", "human-approval", "separate-publication-authorization", "close-or-resume"],
     authority: { engineAuthoritative: true, humanApprovalRequired: true, publicationSeparate: true, sourceExecutionAllowed: false }
   };
 }
@@ -627,6 +634,18 @@ function normalizeMaintenanceOperations(home, operations) {
   });
 }
 
+function normalizeLearningOperations(home, operations) {
+  if (!Array.isArray(operations) || !operations.length) throw sessionError("LEARNING_OPERATION_REQUIRED", "Professional learning Plan requires at least one learning operation.", "select-learning-operation");
+  return operations.map((item) => {
+    const operation = String(item?.operation ?? "");
+    const definition = engineOperationDefinition(operation);
+    if (!operation.startsWith("learning.") || !definition || definition.access !== "planned") throw sessionError("OPERATION_NOT_LEARNING_ELIGIBLE", `${operation} cannot run in a professional learning Plan.`, "select-learning-operation");
+    const input = persistedJson(item.input ?? {});
+    validateEngineOperationRequest({ home, operation, input });
+    return { operation, input };
+  });
+}
+
 function assertKnownSourceFields(value, allowed) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw sessionError("INVALID_SOURCES", "Plan sources must be an object.", "repair-plan-sources");
   const known = new Set(allowed);
@@ -656,8 +675,13 @@ function bindEvidenceReport(session, operation, operationResult) {
   } else if (operation.startsWith("calibration.")) {
     type = "CALIBRATION";
     report = result.report;
+  } else if (operation === "learning.score" || operation === "learning.rescore") {
+    type = "COMPLETENESS";
+    report = result.document ?? result.report?.document;
   }
-  if (!type || !report?.metadata?.reportId || !report?.metadata?.reportDigest) return;
+  const reportId = report?.metadata?.reportId;
+  const reportDigest = report?.metadata?.reportDigest ?? report?.metadata?.documentDigest;
+  if (!type || !reportId || !reportDigest) return;
   const rendered = type === "COMPARISON"
     ? {
         comparisonId: report.metadata.comparisonId,
@@ -669,7 +693,7 @@ function bindEvidenceReport(session, operation, operationResult) {
         limitations: report.limitations,
         authority: report.authority
       }
-    : {
+    : type === "CALIBRATION" ? {
         caseSetRef: report.caseSetRef,
         policyBindings: report.policyBindings,
         summary: report.summary,
@@ -679,11 +703,21 @@ function bindEvidenceReport(session, operation, operationResult) {
         ranking: report.ranking,
         recommendation: report.recommendation,
         authority: report.authority
+      } : {
+        runRef: report.runRef,
+        curriculumSnapshotRef: report.curriculumSnapshotRef,
+        policyRef: report.policyRef,
+        dimensions: report.dimensions,
+        accounting: report.accounting,
+        blockers: report.blockers,
+        recommendation: report.recommendation,
+        claims: report.claims,
+        authority: report.authority
       };
   const reference = {
     type,
-    reportId: report.metadata.reportId,
-    reportDigest: report.metadata.reportDigest,
+    reportId,
+    reportDigest,
     reviewed: false,
     nextAction,
     ...persistedJson(rendered)
@@ -695,7 +729,9 @@ function bindEvidenceReport(session, operation, operationResult) {
 
 function nextEvidenceReviewAction(session) {
   const pending = session.evidenceReports?.find((item) => item.reviewed !== true);
-  return pending?.type === "CALIBRATION" ? "present-calibration-report-and-request-review-acknowledgement" : "present-comparison-report-and-request-review-acknowledgement";
+  if (pending?.type === "CALIBRATION") return "present-calibration-report-and-request-review-acknowledgement";
+  if (pending?.type === "COMPLETENESS") return "present-completeness-report-and-request-review-acknowledgement";
+  return "present-comparison-report-and-request-review-acknowledgement";
 }
 
 function loadForMutation(home, sessionId, expectedSessionDigest, allowedStatuses) {

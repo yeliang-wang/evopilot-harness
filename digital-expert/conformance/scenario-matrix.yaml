@@ -11,6 +11,7 @@ evidenceSources:
   - feedbackFile
   - comparisonFile
   - calibrationCaseSet
+  - learningOperations
 terminalDecisions:
   - NOT_HARNESS_ELIGIBLE
   - NO_CHANGE
@@ -70,6 +71,14 @@ engineOperations:
   - calibration.ingest
   - calibration.run
   - calibration.report
+  - learning.inspect
+  - learning.validate
+  - learning.ingest
+  - learning.snapshot
+  - learning.run-manifest
+  - learning.score
+  - learning.rescore
+  - learning.artifact
   - migration.plan
   - migration.apply
   - migration.rollback
@@ -87,6 +96,7 @@ lifecycleBranches:
   - catalog-validation
   - comparison-review
   - calibration-review
+  - completeness-review
   - evidence-report-digest-drift
   - process-interruption
   - digest-drift
@@ -101,6 +111,7 @@ conformanceEvidence:
     - tests/v3.4.test.mjs
     - tests/v4.test.mjs
     - tests/v4.1.test.mjs
+    - tests/v4.2.test.mjs
   realSessionProtocol:
     - digital-expert/conformance/generic-host.mjs
     - docs/operations/v4-acceptance.md
@@ -141,6 +152,10 @@ coverage:
     calibrationCaseSet:
       <<: *comparative_evidence
       marker: calibrationCaseSet
+    learningOperations:
+      testFile: tests/v4.2.test.mjs
+      testName: v4.2 Engine exposes the complete governed professional learning operation family
+      marker: learning.ingest
   terminalDecisions:
     NOT_HARNESS_ELIGIBLE: &reasoning_decisions
       testFile: tests/v4.test.mjs
@@ -322,6 +337,31 @@ coverage:
     calibration.report:
       <<: *calibration_operations
       marker: calibration.report
+    learning.inspect: &learning_operations
+      testFile: tests/v4.2.test.mjs
+      testName: v4.2 Engine exposes the complete governed professional learning operation family
+      marker: learning.inspect
+    learning.validate:
+      <<: *learning_operations
+      marker: learning.validate
+    learning.ingest:
+      <<: *learning_operations
+      marker: learning.ingest
+    learning.snapshot:
+      <<: *learning_operations
+      marker: learning.snapshot
+    learning.run-manifest:
+      <<: *learning_operations
+      marker: learning.run-manifest
+    learning.score:
+      <<: *learning_operations
+      marker: learning.score
+    learning.rescore:
+      <<: *learning_operations
+      marker: learning.rescore
+    learning.artifact:
+      <<: *learning_operations
+      marker: learning.artifact
     migration.plan: &migration_operations
       testFile: tests/v4.test.mjs
       testName: real stdio MCP routes every maintenance Engine operation through its authority gate
@@ -378,6 +418,10 @@ coverage:
     calibration-review:
       <<: *comparative_review
       marker: ACKNOWLEDGE_CALIBRATION_REVIEW
+    completeness-review:
+      testFile: tests/v4.2.test.mjs
+      testName: v4.2 completeness binds an immutable run, exposes accounting vectors, and rescoring is append-only
+      marker: reviewedAccuracySeparate
     evidence-report-digest-drift:
       testFile: tests/v4.1.test.mjs
       testName: Proposal Review, approval, and publication fail closed on comparison contradiction or digest drift

@@ -8,6 +8,7 @@ import { workspaceStatus } from "./workspace.mjs";
 import { feedbackSummary } from "./feedback.mjs";
 import { comparisonAssessmentForProposal, comparisonSummary } from "./comparison.mjs";
 import { calibrationSummary } from "./calibration.mjs";
+import { learningSummary } from "./learning.mjs";
 
 export function buildHubSnapshot(home) {
   const assets = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
@@ -90,6 +91,7 @@ export function buildHubSnapshot(home) {
     feedback: feedbackSummary(home),
     comparisons: comparisonSummary(home),
     calibration: calibrationSummary(home),
+    professionalLearning: learningSummary(home),
     sourceTypes: [
       { id: "source-project", label: "Source project", description: "Local project code, manifests, architecture, and design files." },
       { id: "source-root", label: "Project corpus", description: "Valid projects under a root, grouped by v3 reasoning outcomes." },
@@ -98,9 +100,11 @@ export function buildHubSnapshot(home) {
       { id: "runtime-log", label: "Production log", description: "Redacted runtime evidence correlated to Harness decisions." },
       { id: "execution-feedback-package", label: "Execution feedback package", description: "Approved, redacted, immutable-Bundle-bound Outcome, Process, Safety, and Cost evidence." },
       { id: "comparison-evidence-package", label: "Comparison evidence package", description: "Approved, redacted, immutable Baseline/Candidate observations produced by an external evaluator." },
+      { id: "research-evidence-package", label: "Research evidence package", description: "Reviewed static supplemental snapshot with provenance, license, redaction, and integrity bindings." },
+      { id: "contribution-evidence-package", label: "Contribution evidence package", description: "Reviewed evidence-only community contribution with positive, negative, duplicate, and Catalog-overlap analysis." },
       { id: "operator-note", label: "Operator note", description: "Goal or contextual note; never sufficient by itself for publication." }
     ],
-    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "comparison inspect", "comparison validate", "comparison process", "comparison report", "comparison rescore", "calibration validate", "calibration ingest", "calibration run", "calibration report", "proposal inspect", "proposal validate", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
+    lifecycleCommands: ["workspace init", "produce", "feedback inspect", "feedback validate", "feedback process", "feedback aggregate", "feedback report", "comparison inspect", "comparison validate", "comparison process", "comparison report", "comparison rescore", "calibration validate", "calibration ingest", "calibration run", "calibration report", "learning inspect", "learning validate", "learning ingest", "learning snapshot", "learning run-manifest", "learning score", "learning rescore", "learning artifact", "proposal inspect", "proposal validate", "proposal review", "proposal review-inspect", "proposal approve", "proposal publish", "asset v3-validate", "catalog v3-publish", "catalog v3-sign", "registry v3-validate", "eval v3-run"],
     nextAction: proposals.some((proposal) => proposal.status === "REVIEW_REQUIRED") ? "review-proposals" : "produce-or-review-assets"
   };
   return sanitizeHubSnapshot(snapshot, home);

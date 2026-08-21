@@ -14,6 +14,7 @@ const DIRECTORIES = [
   "policies/matcher",
   "policies/advisor",
   "policies/comparison",
+  "policies/completeness",
   "evidence",
   "evaluations",
   "feedback/packages",
@@ -25,6 +26,17 @@ const DIRECTORIES = [
   "comparisons/rescores",
   "comparisons/calibration/case-sets",
   "comparisons/calibration/reports",
+  "learning/adapters",
+  "learning/research/packages",
+  "learning/research/rejected",
+  "learning/contributions/packages",
+  "learning/contributions/rejected",
+  "learning/curriculum/entries",
+  "learning/curriculum/snapshots",
+  "learning/runs",
+  "learning/completeness/reports",
+  "learning/completeness/rescores",
+  "learning/domain-role/proposals",
   "evolution-runs",
   "cache/github",
   "migrations",
@@ -42,7 +54,7 @@ export function initializeWorkspace(home, { force = false } = {}) {
       engine: { mode: "read-only", packageRoot: PACKAGE_ROOT },
       catalogs: { builtin: "./catalogs/builtin", organization: "./catalogs/organization" },
       ontology: "./ontology",
-      policies: { matcher: "./policies/matcher", advisor: "./policies/advisor", comparison: "./policies/comparison" },
+      policies: { matcher: "./policies/matcher", advisor: "./policies/advisor", comparison: "./policies/comparison", completeness: "./policies/completeness" },
       models: { mode: "manual-read-only", file: path.join(PACKAGE_ROOT, "models.json") }
     });
   }
@@ -70,6 +82,7 @@ export function syncBuiltin(home, force = false) {
   copyTree(path.join(PACKAGE_ROOT, "policies/matcher"), path.join(home, "policies/matcher"));
   syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/advisor"), path.join(home, "policies/advisor"), force);
   syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/comparison"), path.join(home, "policies/comparison"), force);
+  syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/completeness"), path.join(home, "policies/completeness"), force);
   const catalogFile = path.join(builtinRoot, "catalog.yaml");
   writeYaml(catalogFile, {
     schema: CATALOG_SCHEMA,
@@ -112,6 +125,7 @@ export function workspaceStatus(home) {
       organizationCatalog: path.join(resolved, "catalogs/organization"),
       feedback: path.join(resolved, "feedback"),
       comparisons: path.join(resolved, "comparisons")
+      ,learning: path.join(resolved, "learning")
     }
   };
 }

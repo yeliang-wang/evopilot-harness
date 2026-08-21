@@ -27,6 +27,9 @@ workflows:
   - id: calibrate-matching-and-proposal-quality
     scenario: calibration
     sources: [calibrationCaseSet, calibrationCaseSetId, baselineMatchPolicy, candidateMatchPolicy, baselineComparisonPolicy, candidateComparisonPolicy]
+  - id: govern-professional-asset-learning
+    scenario: learning
+    sources: [learningOperations]
   - id: maintain-assets-catalog-registry-policies
     scenario: maintenance
     sources: [operations]

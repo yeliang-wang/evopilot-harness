@@ -80,6 +80,8 @@ To review externally produced Baseline/Candidate evidence instead of producing a
 
 For calibration, provide the reviewed case set plus explicit Baseline and Candidate policy files. The Expert presents ranking, abstention, false-upgrade, false-new-profile, regressions, conflicts, uncertainty, and recommendation. See [Controlled Comparative Evidence](../guides/controlled-comparative-evidence.md).
 
+For the v4.2 candidate professional-learning flow, provide only reviewed local Research, Contribution, Curriculum, or Domain/Role documents. The Engine does not fetch a URL or execute adapter code. The Expert creates a `learning` Plan, presents immutable Curriculum and Completeness bindings, and stops for review of the exact report digest. See [Professional Asset Learning](../guides/professional-asset-learning.md).
+
 ## Mandatory Decisions
 
 The human answers one plain-language question about the Plan, Proposal, publication, or recovery action currently on screen. The Expert then builds and submits the Engine's exact digest-bound token internally. A human never copies or types these protocol values:
@@ -88,6 +90,7 @@ The human answers one plain-language question about the Plan, Proposal, publicat
 CONFIRM_OPERATION_PLAN:<planDigest>
 ACKNOWLEDGE_COMPARISON_REVIEW:<reportId>:<reportDigest>
 ACKNOWLEDGE_CALIBRATION_REVIEW:<reportId>:<reportDigest>
+ACKNOWLEDGE_COMPLETENESS_REVIEW:<reportId>:<reportDigest>
 AUTHORIZE_PLAN_PUBLICATION:<sessionId>:<planDigest>:<operationIndex>:<operationDigest>
 APPROVE_PROPOSAL:<proposalId>:<proposalDigest>:<reviewDigest>
 AUTHORIZE_PUBLICATION:<proposalId>:<approvedProposalDigest>

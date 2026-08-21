@@ -45,10 +45,10 @@ export const TOOL_DEFINITIONS = [
     intent: { type: "string", minLength: 1 },
     adapterId: { type: "string", minLength: 2 }
   }, ["intent", "adapterId"]),
-  tool("plan_operation_session", "Create a digest-bound evolve, feedback, comparison, calibration, or maintenance plan. Present it to the human before confirmation.", {
+  tool("plan_operation_session", "Create a digest-bound evolve, feedback, comparison, calibration, professional-learning, or maintenance plan. Present it to the human before confirmation.", {
     sessionId,
     expectedSessionDigest: digest,
-    scenario: { enum: ["evolve", "feedback", "comparison", "calibration", "maintenance"], default: "evolve" },
+    scenario: { enum: ["evolve", "feedback", "comparison", "calibration", "learning", "maintenance"], default: "evolve" },
     goal: { type: "string", minLength: 1 },
     sources: planSources,
     operations: {
@@ -93,10 +93,10 @@ export const TOOL_DEFINITIONS = [
     confirmedBy: { type: "string", minLength: 1 },
     confirmation: { type: "string", minLength: 1 }
   }, ["sessionId", "expectedSessionDigest", "expectedAttemptDigest", "confirmedBy", "confirmation"]),
-  tool("acknowledge_evidence_report_review", "Record that the human reviewed the exact deterministic comparison or calibration report. This is not Proposal approval, policy activation, rollback, or publication authorization.", {
+  tool("acknowledge_evidence_report_review", "Record that the human reviewed the exact deterministic comparison, calibration, or professional completeness report. This is not Proposal approval, policy activation, rollback, or publication authorization.", {
     sessionId,
     expectedSessionDigest: digest,
-    reportType: { enum: ["COMPARISON", "CALIBRATION"] },
+    reportType: { enum: ["COMPARISON", "CALIBRATION", "COMPLETENESS"] },
     reportId: { type: "string", minLength: 1 },
     expectedReportDigest: digest,
     confirmedBy: { type: "string", minLength: 1 },

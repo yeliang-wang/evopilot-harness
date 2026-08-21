@@ -462,7 +462,8 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
     const proposalFamily = new Set(["proposal.inspect", "proposal.validate", "proposal.review", "proposal.review.inspect", "proposal.approve", "proposal.publish"]);
     const evidenceFamily = new Set(["evidence.produce"]);
     const comparativeFamily = new Set(engineCapabilities().map((item) => item.id).filter((operation) => operation.startsWith("comparison.") || operation.startsWith("calibration.")));
-    const expected = engineCapabilities().map((item) => item.id).filter((operation) => !proposalFamily.has(operation) && !evidenceFamily.has(operation) && !comparativeFamily.has(operation));
+    const learningFamily = new Set(engineCapabilities().map((item) => item.id).filter((operation) => operation.startsWith("learning.")));
+    const expected = engineCapabilities().map((item) => item.id).filter((operation) => !proposalFamily.has(operation) && !evidenceFamily.has(operation) && !comparativeFamily.has(operation) && !learningFamily.has(operation));
     assert.deepEqual([...covered].sort(), expected.sort());
   } finally {
     await client.close();

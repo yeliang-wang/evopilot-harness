@@ -45,8 +45,18 @@ const agentAnchors = [
   ["digital-expert/conformance/generic-host.mjs", "generic-agent-host-conformance", "Independent Generic Agent Host"]
 ];
 
+const learningAnchors = [
+  ["src/v3/learning.mjs", "ingestLearningDocument", "Curriculum/Research/Contribution Immutable Intake"],
+  ["src/v3/learning.mjs", "createEvidenceRunManifest", "Evidence Run Manifest"],
+  ["src/v3/learning.mjs", "createCurriculumSnapshot", "Curriculum Snapshot"],
+  ["src/v3/learning.mjs", "scoreProfessionalCompleteness", "Professional Completeness"],
+  ["src/v3/learning.mjs", "rescoreProfessionalCompleteness", "Append-only Completeness Rescoring"],
+  ["schemas/domain-role-proposal-v1.schema.json", "DomainRoleProposal", "Domain and Role Proposal"]
+];
+
 for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of agentAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
+for (const [file, needle, moduleName] of learningAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
 mustContain("AGENTS.md", "28 enforced Engine module boundaries", "root agent instructions must reference the complete Engine module boundary set");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
@@ -72,7 +82,7 @@ mustContain("package.json", '"verify:architecture"', "package scripts must expos
 mustContain("package.json", "npm run verify:architecture", "npm run check must execute architecture verification");
 mustContain("package.json", '"digital-expert:check"', "package scripts must expose deterministic Digital Expert validation");
 const packageVersion = JSON.parse(read("package.json")).version;
-if (!/^4\.1\.\d+$/.test(packageVersion)) failures.push("Controlled comparative evidence release must remain in the approved 4.1.x line");
+if (!/^4\.2\.\d+$/.test(packageVersion)) failures.push("Professional Asset Learning candidate must remain in the approved 4.2.x line");
 mustContain("src/index.mjs", 'argv[0] === "mcp" && argv[1] === "serve"', "CLI must expose the local MCP process entry");
 mustContain("src/v4/constants.mjs", "assertExternalWorkspace", "Agent state must remain outside the Release");
 mustContain("src/v4/session/store.mjs", "CONFIRM_OPERATION_PLAN", "Plan confirmation must be explicit and digest-bound");
@@ -123,6 +133,10 @@ mustNotMatch("src/v3/comparison.mjs", /\b(?:execFileSync|execSync|spawn|spawnSyn
 mustNotMatch("src/v3/calibration.mjs", /\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "calibration must not execute commands");
 mustNotMatch("src/v3/comparison.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/(?:builtin|organization)/, "comparison evidence must not write Catalog assets");
 mustNotMatch("src/v3/calibration.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/(?:builtin|organization)/, "calibration must not write Catalog assets");
+mustNotMatch("src/v3/learning.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "professional learning must not access network or execute code");
+mustNotMatch("src/v3/learning.mjs", /(?:writeYaml|writeJson|writeFileSync|copyFileSync)\([^\n]*catalogs\/(?:builtin|organization)/, "professional learning must not write Catalog assets");
+mustNotContain("src/v3/learning.mjs", "approveProposal", "professional learning must not approve Proposals");
+mustNotContain("src/v3/learning.mjs", "publishProposal", "professional learning must not publish Proposals");
 
 const reasoning = read("src/v3/reasoning.mjs");
 const allowedTools = new Set(["git", "pdftotext", "unzip", "curl"]);
@@ -145,7 +159,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length}/7 Agent-operation enforcement anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length}/7 Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);
