@@ -4,7 +4,8 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
-- [4.2.1 candidate](4.2.1.md) - extensible Agent-host installer lifecycle with WorkBuddy expert registration, preview-bound mutation, ownership-safe repair and uninstall, and installed-package stdio MCP operation. Not released.
+- [4.2.2 candidate](4.2.2.md) - external Workspace model configuration repair for installed Agent hosts, safe v4.2.1 migration, and consistent Advisor/Review/doctor resolution.
+- [4.2.1](4.2.1.md) - extensible Agent-host installer lifecycle with WorkBuddy expert registration, preview-bound mutation, ownership-safe repair and uninstall, and installed-package stdio MCP operation.
 - [4.2.0 candidate](4.2.0.md) - governed professional Asset learning, static research and contribution evidence, immutable curriculum/run bindings, completeness vectors, and evidence-only domain/role proposals. Not released.
 - [4.1.2 current release](4.1.2.md) - documentation-system synchronization, Agent-link correction, and deterministic release-state drift guards for the unchanged v4.1 runtime.
 - [4.1.1](4.1.1.md) - npm OIDC Trusted Publishing repair for the unchanged v4.1 runtime, published through GitHub Release and npm with provenance.

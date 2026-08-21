@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PACKAGE_ROOT } from "./constants.mjs";
 import { digest, option, readYaml, walkFiles, writeJson } from "./utils.mjs";
+import { resolveWorkspaceModelsFile } from "./workspace.mjs";
 
 export const DEFAULT_ADVISOR_TIMEOUT_MS = 180_000;
 export const DEFAULT_DOCTOR_TIMEOUT_MS = 60_000;
@@ -30,7 +31,7 @@ export async function runAdvisor({ args, home, graph, reasoning, knowledge, runR
   const advisorPolicyFile = latestPack(path.join(home, "policies/advisor"), "AdvisorPolicyPack");
   if (!advisorPolicyFile) return complete("UNAVAILABLE", { failureType: "ADVISOR_POLICY_UNAVAILABLE", reason: "No published AdvisorPolicyPack is installed." });
   const advisorPolicy = readYaml(advisorPolicyFile);
-  const modelsFile = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
+  const modelsFile = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
   const profileId = option(args, "model", process.env.EVOPILOT_HARNESS_LLM_PROFILE_ID);
   const model = loadConfiguredModel(modelsFile, profileId);
   if (!model) return complete("UNAVAILABLE", { failureType: "MODEL_NOT_CONFIGURED", reason: `No usable Zhipu GLM profile is configured in the manually maintained file ${modelsFile}.`, modelsFile });

@@ -23,6 +23,7 @@ const required = [
   "README.md",
   "LICENSE",
   "NOTICE",
+  "models.example.json",
   "src/index.mjs",
   "src/v4/bootstrap.mjs",
   "src/v4/operation-server/server.mjs",

@@ -55,9 +55,10 @@ export function initializeWorkspace(home, { force = false } = {}) {
       catalogs: { builtin: "./catalogs/builtin", organization: "./catalogs/organization" },
       ontology: "./ontology",
       policies: { matcher: "./policies/matcher", advisor: "./policies/advisor", comparison: "./policies/comparison", completeness: "./policies/completeness" },
-      models: { mode: "manual-read-only", file: path.join(PACKAGE_ROOT, "models.json") }
+      models: { mode: "manual-read-only", file: path.join(resolved, "models.json") }
     });
   }
+  const modelMigration = prepareWorkspaceModelConfiguration(resolved);
   syncBuiltin(home, force);
   const registryFile = path.join(resolved, "harness-registry.yaml");
   if (!fs.existsSync(registryFile) || force) {
@@ -70,7 +71,36 @@ export function initializeWorkspace(home, { force = false } = {}) {
       ]
     });
   }
-  return workspaceStatus(resolved);
+  return workspaceStatus(resolved, { modelMigration });
+}
+
+function prepareWorkspaceModelConfiguration(home) {
+  const configFile = path.join(home, "config.yaml");
+  const config = readYaml(configFile);
+  const configured = config.models?.file;
+  const legacyPackageRoot = config.engine?.packageRoot;
+  const legacyDefault = typeof legacyPackageRoot === "string" ? path.join(legacyPackageRoot, "models.json") : null;
+  let migrated = false;
+  if (typeof configured === "string" && legacyDefault && path.resolve(configured) === path.resolve(legacyDefault) && !fs.existsSync(configured)) {
+    config.models.file = path.join(home, "models.json");
+    writeYaml(configFile, config);
+    migrated = true;
+  }
+  const template = path.join(home, "models.example.json");
+  if (!fs.existsSync(template)) fs.copyFileSync(path.join(PACKAGE_ROOT, "models.example.json"), template);
+  return { migrated, legacyDefault: migrated ? legacyDefault : undefined };
+}
+
+export function resolveWorkspaceModelsFile(home, explicit) {
+  if (typeof explicit === "string" && explicit.trim()) return path.resolve(explicit.trim());
+  const resolved = path.resolve(home);
+  try {
+    const configured = readYaml(path.join(resolved, "config.yaml"))?.models?.file;
+    if (typeof configured === "string" && configured.trim()) {
+      return path.resolve(resolved, configured.trim());
+    }
+  } catch { /* an uninitialized Workspace uses the documented external default */ }
+  return path.join(resolved, "models.json");
 }
 
 export function syncBuiltin(home, force = false) {
@@ -106,18 +136,29 @@ function syncVersionedPacks(source, target, force) {
   }
 }
 
-export function workspaceStatus(home) {
+export function workspaceStatus(home, { modelMigration } = {}) {
   const resolved = path.resolve(home);
   const requiredFiles = ["config.yaml", "harness-registry.yaml"];
   const missing = requiredFiles.filter((file) => !fs.existsSync(path.join(resolved, file)));
   let config = null;
   try { config = readYaml(path.join(resolved, "config.yaml")); } catch { /* reported below */ }
+  const modelsFile = resolveWorkspaceModelsFile(resolved);
+  const modelsTemplate = path.join(resolved, "models.example.json");
   return {
     schema: "evopilot-harness-workspace-status/v3",
     status: missing.length === 0 && config?.schema === WORKSPACE_SCHEMA ? "READY" : "NOT_INITIALIZED",
     home: resolved,
     engine: { packageRoot: PACKAGE_ROOT, mode: "read-only", mutationAllowed: false, filesystemWritable: canWrite(PACKAGE_ROOT) },
     workspace: { writable: canWrite(resolved), missing },
+    models: {
+      mode: "manual-read-only",
+      file: modelsFile,
+      configured: fs.existsSync(modelsFile),
+      template: modelsTemplate,
+      templateAvailable: fs.existsSync(modelsTemplate),
+      migratedLegacyDefault: Boolean(modelMigration?.migrated),
+      nextAction: fs.existsSync(modelsFile) ? "inspect-model-configuration" : "copy-template-and-add-api-key"
+    },
     paths: {
       config: path.join(resolved, "config.yaml"),
       registry: path.join(resolved, "harness-registry.yaml"),

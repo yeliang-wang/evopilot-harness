@@ -24,7 +24,7 @@ Use only after the Registry check succeeds:
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.2.1
+npm install --save-exact @evopilot/harness@4.2.2
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -40,7 +40,7 @@ npm pack --pack-destination /absolute/package/output
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact /absolute/package/output/evopilot-harness-4.2.1.tgz
+npm install --save-exact /absolute/package/output/evopilot-harness-4.2.2.tgz
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 

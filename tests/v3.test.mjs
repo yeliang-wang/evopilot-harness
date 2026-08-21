@@ -66,6 +66,12 @@ test("v3 workspace keeps the Engine read-only and installs complete versioned bo
   assert.equal(result.engine.mutationAllowed, false);
   assert.equal(typeof result.engine.filesystemWritable, "boolean");
   assert.equal(result.workspace.writable, true);
+  assert.equal(result.models.file, path.join(home, "models.json"));
+  assert.equal(result.models.configured, false);
+  assert.equal(result.models.template, path.join(home, "models.example.json"));
+  assert.equal(result.models.templateAvailable, true);
+  assert.equal(fs.existsSync(path.join(home, "models.json")), false);
+  assert.match(fs.readFileSync(path.join(home, "models.example.json"), "utf8"), /<manual-local-api-key>/);
   assert.equal(treeDigest(path.join(root, "src")), engineBefore);
 
   const assets = runJson(["asset", "v3-validate", "--workspace", home, "--json"]);
@@ -81,6 +87,49 @@ test("v3 workspace keeps the Engine read-only and installs complete versioned bo
   assert.equal(registry.status, "VALIDATED");
   const advisorPolicies = runJson(["policy", "inspect", "--workspace", home, "--type", "advisor", "--json"]);
   assert.ok(advisorPolicies.packs.some((pack) => pack.document.metadata.version === "1.2.1" && pack.document.spec.reviewContract));
+});
+
+test("workspace init repairs only the absent package-local model default and preserves user configuration", () => {
+  const legacyHome = initializedHome();
+  const legacyConfigFile = path.join(legacyHome, "config.yaml");
+  const legacyConfig = readYaml(legacyConfigFile);
+  legacyConfig.engine.packageRoot = "/tmp/installed/node_modules/@evopilot/harness";
+  legacyConfig.models.file = "/tmp/installed/node_modules/@evopilot/harness/models.json";
+  writeYaml(legacyConfigFile, legacyConfig);
+  const repaired = runJson(["workspace", "init", "--workspace", legacyHome, "--json"]);
+  assert.equal(repaired.models.file, path.join(legacyHome, "models.json"));
+  assert.equal(repaired.models.migratedLegacyDefault, true);
+  assert.equal(readYaml(legacyConfigFile).models.file, path.join(legacyHome, "models.json"));
+
+  const customHome = initializedHome();
+  const customConfigFile = path.join(customHome, "config.yaml");
+  const customConfig = readYaml(customConfigFile);
+  const customModels = path.join(customHome, "private", "models.json");
+  customConfig.models.file = customModels;
+  writeYaml(customConfigFile, customConfig);
+  const customTemplate = path.join(customHome, "models.example.json");
+  fs.writeFileSync(customTemplate, "user-maintained-template\n");
+  const custom = runJson(["workspace", "init", "--workspace", customHome, "--json"]);
+  assert.equal(custom.models.file, customModels);
+  assert.equal(custom.models.migratedLegacyDefault, false);
+  assert.equal(fs.readFileSync(customTemplate, "utf8"), "user-maintained-template\n");
+});
+
+test("LLM commands use Workspace model configuration unless CLI or environment overrides it", () => {
+  const home = initializedHome();
+  const configured = path.join(home, "private-models.json");
+  const config = readYaml(path.join(home, "config.yaml"));
+  config.models.file = "./private-models.json";
+  writeYaml(path.join(home, "config.yaml"), config);
+  fs.writeFileSync(configured, JSON.stringify({ models: [{ id: "glm-workspace", name: "Workspace GLM", vendor: "zhipu", apiKey: "test-only", url: "https://example.invalid/v4" }] }));
+  const inspected = runJson(["llm", "v3-models", "--workspace", home, "--json"]);
+  assert.equal(inspected.status, "READY");
+  assert.equal(inspected.modelsFile, configured);
+  assert.equal(inspected.selected.id, "glm-workspace");
+  const explicitMissing = path.join(home, "explicit-missing.json");
+  const overridden = runJson(["llm", "v3-models", "--workspace", home, "--models-file", explicitMissing, "--json"]);
+  assert.equal(overridden.status, "NOT_CONFIGURED");
+  assert.equal(overridden.modelsFile, explicitMissing);
 });
 
 test("v3 formal schemas reject incomplete assets and validate governance packs", () => {

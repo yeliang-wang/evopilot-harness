@@ -1,31 +1,31 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.2.1",
+  "expertVersion": "4.2.2",
   "coreDigest": "sha256:8f8eefef6e0a88baa501ebd99bb6eac1a3bd02806dfc0f48fef8d88ca09323d4",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:1c77542d7c9842c32c994f0fe1a8d22f2e1db39cf86dabe70d04197056b3411d",
+      "sha256": "sha256:9e83b31a286d1405562f1521b51e6f57d9b5ced15daf7090d981e1f1cd940fe9",
       "bytes": 15563
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:523f52961d503bd847b811f4e4783bbf9aae91a905dc400abb2bc54d26b9d1f1",
+      "sha256": "sha256:e0c96579c8f4a7112087790fc062a41ebd0e1d2a4740cdc3a7f2ac91ecd39882",
       "bytes": 15784
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:b2ddfd00d44bbbf343db992f8b0a98187afe86f91674c80437a30496cdbcc7c9",
+      "sha256": "sha256:d2c593da567b64179c8a7ea4a19d80b1c747fefb5e4a64ea7610a87928701bb9",
       "bytes": 15565
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:f34de3cda38ac14b4fec390c389d6f0389642935b01b9294263d2e1ea392e13c",
+      "sha256": "sha256:5bc6f38ac23c90692c751b22333c2e21f9ac6177a00a53933fbf862e01e37289",
       "bytes": 15562
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:849f6d493a92e5afa2746d8316f3ef7e95b1b22bee906402ca689eb5d45de79a",
+      "sha256": "sha256:67ee73b4514b8d3b2b0045b1689c313f04d22f082558771543bce4041de32ec6",
       "bytes": 16429
     },
     {
@@ -70,12 +70,12 @@
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:87ae588801beadeeded949d103d8627b10e624e9c790e614a8a48af60ea0c2b9",
+      "sha256": "sha256:3be0d7e3ad9ea1d7dfc62dd53e1ea891e662afd73aaaa6836b54937736a569ce",
       "bytes": 2030
     },
     {
       "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
-      "sha256": "sha256:07062d30c1fe1649864d255af95ca26dc8cc4faf91685a9eef94a9281a480caf",
+      "sha256": "sha256:5f23fe16acb49a2f82d593875cc7ae0cd6b095f88b31d3b7d88a209a9f3b8c53",
       "bytes": 16584
     },
     {

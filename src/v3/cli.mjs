@@ -17,7 +17,7 @@ import { inspectProposalReview, reviewProposal } from "./review.mjs";
 import { validateDocument, validateFile, validateTree } from "./schema.mjs";
 import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { defaultHarnessHome } from "./constants.mjs";
-import { initializeWorkspace, requireWorkspace, workspaceStatus } from "./workspace.mjs";
+import { initializeWorkspace, requireWorkspace, resolveWorkspaceModelsFile, workspaceStatus } from "./workspace.mjs";
 
 const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
 
@@ -265,11 +265,11 @@ async function dispatch(args, group, action, id) {
     return output(args, result, result.status === "PUBLISHED" ? 0 : 2);
   }
   if (group === "llm" && action === "v3-models") {
-    const file = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
+    const file = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
     return output(args, inspectModels(file, option(args, "model")));
   }
   if (group === "llm" && action === "v3-doctor") {
-    const file = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
+    const file = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
     const result = await diagnoseModel(file, option(args, "model"), Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
     return output(args, result, result.status === "READY" ? 0 : 2);
   }

@@ -93,6 +93,11 @@ async function runInstalledMcpScenario({ app, cli, packageRoot, workspace }) {
 
   const initialized = JSON.parse(run(cli, ["workspace", "init", "--workspace", workspace, "--json"], app));
   assert.equal(initialized.status, "READY");
+  assert.equal(initialized.models.file, path.join(workspace, "models.json"));
+  assert.equal(initialized.models.configured, false);
+  assert.equal(initialized.models.templateAvailable, true);
+  assert.equal(fs.existsSync(path.join(workspace, "models.json")), false);
+  assert.ok(fs.existsSync(path.join(workspace, "models.example.json")));
   const profiles = catalog.discoverAssets([path.join(workspace, "catalogs/builtin/assets")])
     .filter((item) => item.asset.kind === "HarnessProfile" && item.asset.metadata.lifecycle === "published");
   assert.ok(profiles.length >= 2, "installed package must provide at least two immutable published profiles for the smoke comparison");

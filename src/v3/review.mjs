@@ -8,6 +8,7 @@ import { loadConfiguredModel, modelEndpoint, normalizeUsage, parseJsonContent, p
 import { digest, option, persistedJson, readYaml, safeId, unique, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { comparisonAssessmentForProposal } from "./comparison.mjs";
 import { reviewInputDigest } from "./proposal-digest.mjs";
+import { resolveWorkspaceModelsFile } from "./workspace.mjs";
 
 export { reviewInputDigest } from "./proposal-digest.mjs";
 
@@ -92,7 +93,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
     ...extra
   });
   if (!contract) return complete("UNAVAILABLE", { failureType: "REVIEW_CONTRACT_UNAVAILABLE", reason: "AdvisorPolicyPack does not define a proposal Review Contract." });
-  const modelsFile = path.resolve(option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE || path.join(PACKAGE_ROOT, "models.json")));
+  const modelsFile = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
   const model = loadConfiguredModel(modelsFile, option(args, "model", process.env.EVOPILOT_HARNESS_LLM_PROFILE_ID));
   if (!model) return complete("UNAVAILABLE", { failureType: "MODEL_NOT_CONFIGURED", reason: `No usable Zhipu GLM profile is configured in the manually maintained file ${modelsFile}.`, modelsFile });
   const projection = projectAdvisorEvidence(graph, reasoning, policy);

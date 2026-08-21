@@ -2,6 +2,22 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.2.2 - 2026-08-21
+
+### Fixed
+
+- Bound the default manual LLM configuration to the external Harness Workspace instead of the immutable installed npm package.
+- Added a narrow migration for the absent v4.2.1 package-local default while preserving custom model paths, real model files, templates, and credentials.
+- Unified Advisor, Proposal Review, model inspection, and model doctor resolution across explicit CLI, environment, and Workspace configuration.
+
+### Added
+
+- Added a safe external `models.example.json` bootstrap template and non-secret Workspace/MCP readiness fields with actionable next steps.
+
+### Boundaries
+
+- Harness never creates, imports, logs, or overwrites `models.json` or API keys. GHCR and deployment remain outside the supported release boundary.
+
 ## 4.2.1 - 2026-08-21
 
 ### Added

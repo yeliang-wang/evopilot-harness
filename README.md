@@ -44,11 +44,11 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.2.1 version
+npm view @evopilot/harness@4.2.2 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.2.1
+npm install --save-exact @evopilot/harness@4.2.2
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host workbuddy \
   --workspace "$HOME/.evopilot-harness" \
