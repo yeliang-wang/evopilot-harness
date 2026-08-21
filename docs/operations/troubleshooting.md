@@ -5,10 +5,30 @@
 Check the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.1.1 version
+npm view @evopilot/harness@4.1.2 version
 ```
 
 If it is missing, stop. Use a locally verified release tarball or a source checkout. Do not silently install `latest`, another version, or an unreviewed package name.
+
+## `npm audit signatures` Returns `E404` After Publication
+
+npm package metadata can become visible before the attestations endpoint has propagated. First confirm whether the immutable package was already published:
+
+```bash
+npm view @evopilot/harness@4.1.2 name version dist-tags dist.integrity dist.signatures dist.attestations --json
+```
+
+If the exact version, integrity, signatures, and provenance are present, do not rerun `npm publish`. Wait for Registry propagation, install the exact package in a clean directory, and repeat the read-only audit:
+
+```bash
+mkdir -p /tmp/evopilot-harness-signature-check
+cd /tmp/evopilot-harness-signature-check
+npm init -y
+npm install --ignore-scripts --no-audit --no-fund @evopilot/harness@4.1.2
+npm audit signatures
+```
+
+Also inspect the GitHub Actions steps separately. A successful `npm publish` followed by a failed post-publication audit means the version may already be immutable in the Registry even though the overall workflow is red. Preserve that run as audit evidence and repair retry behavior only through a separately reviewed future change.
 
 ## Agent Bootstrap Fails
 

@@ -8,7 +8,19 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current source candidate: [`v4.1.1`](../releases/4.1.1.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current published Engine release: [`v4.1.2`](../releases/4.1.2.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, npm, GHCR, or deployment. Historical notes are indexed in [Release Notes](../releases/README.md).
+
+## Current Publication Ledger
+
+| Layer | v4.1.2 evidence | Status |
+|---|---|---|
+| Source | Tag `v4.1.2` | Published on `main` and bound to the immutable release tag. |
+| CI | Commit and tag workflows for `v4.1.2` | Required to complete before release closure. |
+| GitHub artifacts | `v4.1.2` source archive, npm tarball, SPDX SBOM, provenance, and checksums | Built and verified by the tag workflow. |
+| GitHub Release | [v4.1.2](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.1.2) | Published, not draft or prerelease. |
+| npm | [`@evopilot/harness@4.1.2`](https://www.npmjs.com/package/@evopilot/harness/v/4.1.2) | Published as `latest` with Registry signatures and SLSA provenance. |
+| npm workflow | Trusted Publishing for tag `v4.1.2` | OIDC-only publication with exact-version installation and Agent/MCP smoke. |
+| GHCR / remote deployment | Not included in the v4.1.2 authorization | Not published or deployed by this release. |
 
 ## Version Policy
 
@@ -58,7 +70,7 @@ Artifact verification checks the expected files, checksums, npm allowlist bounda
 The Git tag must exactly match `package.json`:
 
 ```text
-tag v4.1.1 -> package.json version 4.1.1
+tag v4.1.2 -> package.json version 4.1.2
 ```
 
 `.github/workflows/release-artifacts.yml`:
@@ -79,6 +91,8 @@ GitHub Release, npm publication, optional GHCR publication, and local artifact v
 Public npm uses `.github/workflows/npm-packages.yml` only after a separate release authorization. Before dispatch, confirm namespace ownership for `@evopilot/harness` and bind the npm Trusted Publisher to repository `yeliang-wang/evopilot-harness`, workflow `npm-packages.yml`, and GitHub environment `npm`.
 
 The workflow uses GitHub OIDC, npm `>=11.5.1`, and `npm publish --provenance`. The normal setup-node step omits `registry-url` and `always-auth`; a preflight before any npm Registry command rejects an explicitly supplied `NODE_AUTH_TOKEN`, and no token or secret fallback is allowed. It binds tag, package version, and dist-tag, then verifies Registry identity, integrity, signatures, SLSA provenance, exact install, `npm audit signatures`, bootstrap, and `npx` execution. See [npm Distribution](npm-distribution.md).
+
+npm may expose package metadata before its attestations endpoint is globally readable. If publication succeeded but `npm audit signatures` returns `E404`, do not rerun `npm publish` for the immutable version. Verify the exact package and completed workflow steps, wait for Registry propagation, and repeat only the read-only audit and installation checks.
 
 If the public package does not exist yet, do not weaken the normal workflow. Use the separately reviewed, manual-only `npm-first-publication.yml` Bootstrap once. It fails closed after the package exists and keeps npm identity, scope ownership, 2FA, temporary token, and Environment configuration in the independent [npm First-Publication Release Review](npm-first-publication-review.md). Revoke the temporary token and configure Trusted Publishing immediately after the first publication.
 

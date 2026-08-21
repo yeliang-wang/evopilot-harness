@@ -10,6 +10,7 @@
 - [MCP reference](docs/agent/mcp-reference.md)
 - [Agent Operation Session](docs/agent/session-protocol.md)
 - [npm distribution and installed Agent operation](docs/operations/npm-distribution.md)
+- [Current v4.1.2 release notes](docs/releases/4.1.2.md)
 - [npm first-publication release review](docs/operations/npm-first-publication-review.md)
 - [Atomic CLI compatibility](docs/cli/quickstart.md)
 - [How Harness works](docs/guides/how-harness-works.md)
@@ -38,6 +39,7 @@
 
 - [Workspace and migration](docs/operations/v3-workspace.md)
 - [Testing](docs/operations/testing.md)
+- [v4.1.2 documentation release acceptance](docs/operations/v4.1.2-acceptance.md)
 - [v4.1.1 npm OIDC repair acceptance](docs/operations/v4.1.1-acceptance.md)
 - [v4.1 acceptance](docs/operations/v4.1-acceptance.md)
 - [Release management](docs/operations/release-management.md)

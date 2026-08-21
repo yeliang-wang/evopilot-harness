@@ -2,6 +2,20 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.1.2 - 2026-08-21
+
+### Fixed
+
+- Synchronized the README, documentation index, Agent discovery files, current-release ledger, npm distribution guidance, troubleshooting, and v4.1 contract documentation with the verified v4.1.1 publication state.
+- Corrected the legacy Guided Operator compatibility link so it resolves to the packaged Digital Expert Skill.
+- Expanded Markdown link validation across root governance, Agent Skills, docs, Harness definitions, and published Catalog documentation.
+- Added release-state drift tests and made npm package/version smoke assertions derive from package metadata instead of requiring manual version edits.
+
+### Boundaries
+
+- Harness reasoning, matching, comparison, calibration, schemas, MCP, CLI, Hub, Catalog, Registry, and user Harness assets are unchanged.
+- EvoPilot, evopilot-dashboard, GHCR, ECS, and remote deployment are outside this release.
+
 ## 4.1.1 - 2026-08-20
 
 ### Fixed

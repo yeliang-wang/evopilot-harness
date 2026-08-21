@@ -2,6 +2,8 @@
 
 Use this index to choose the shortest path for your task. Generic architecture and lifecycle pages describe the current v3 product; legacy behavior is routed through explicit v2 compatibility pages.
 
+Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.1.2), published on GitHub and as [`@evopilot/harness@4.1.2`](https://www.npmjs.com/package/@evopilot/harness/v/4.1.2). See [Release Notes](releases/4.1.2.md) for the documentation-system maintenance scope and publication contract.
+
 ## Learn The Product
 
 1. [Product Roadmap](roadmap/ROADMAP.md) - accepted production-feedback, asset-quality, Agent-native operations, version, and deviation plan.
@@ -9,7 +11,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 3. [Architecture Overview](architecture/overview.md) - current v3 modules, data flow, storage, and system boundary.
 4. [v3 Asset Model](architecture/v3-asset-model.md) - Component, Profile, Bundle, and governance Packs.
 5. [v3 Product Boundary](architecture/v3-product-boundary.md) - what this project owns and explicitly does not own.
-6. [ADR 0002: Agent-Native Harness Operations](architecture/adr/0002-agent-native-harness-operations.md) - accepted and implemented v4 candidate operating model.
+6. [ADR 0002: Agent-Native Harness Operations](architecture/adr/0002-agent-native-harness-operations.md) - accepted and released v4 operating model.
 7. [ADR 0003: Controlled Comparative Evidence](architecture/adr/0003-controlled-comparative-evidence.md) - immutable comparison, paired scoring, rescoring, calibration, and authority boundaries.
 
 ## Operate Through An Agent
@@ -20,7 +22,8 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Agent Operation Session](agent/session-protocol.md) - persisted state, digests, recovery, cross-Agent resume, and cleanup.
 - [npm Distribution](operations/npm-distribution.md) - exact-version installation, package boundary, Agent bootstrap, WorkBuddy startup, Trusted Publishing, and Registry verification.
 - [npm First-Publication Release Review](operations/npm-first-publication-review.md) - one-time package creation, external npm account configuration, stop rules, and mandatory OIDC handoff.
-- [v4.1.1 Acceptance](operations/v4.1.1-acceptance.md) - npm OIDC repair, package, regression, artifact, and release-gate evidence.
+- [v4.1.2 Acceptance](operations/v4.1.2-acceptance.md) - documentation synchronization, drift guards, package, regression, artifact, and release-gate evidence.
+- [v4.1.1 Acceptance](operations/v4.1.1-acceptance.md) - historical npm OIDC repair, package, regression, artifact, and release-gate evidence.
 - [v4.1 Acceptance](operations/v4.1-acceptance.md) - controlled-comparison, calibration, package, protocol, lifecycle, integrity, and compatibility evidence.
 - [v4.0 Acceptance](operations/v4-acceptance.md) - historical Agent-native baseline evidence.
 
@@ -72,4 +75,4 @@ Use this index to choose the shortest path for your task. Generic architecture a
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md) and extended for controlled comparative evidence by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The source working version is v4.1.1. GitHub Release, npm, and optional GHCR publication are independently verified distribution layers; do not infer one from another.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md) and extended for controlled comparative evidence by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md). The current Engine and public npm version is v4.1.2. GitHub Release, npm, and optional GHCR publication are independently verified distribution layers; do not infer one from another.

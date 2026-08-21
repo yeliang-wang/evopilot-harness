@@ -28,7 +28,7 @@ Use [llms.txt](llms.txt) for the shortest machine-readable documentation map and
 - Produce and Proposal generation never publish. Only explicit review, approval, validation, and publication may write Organization Catalog assets.
 - Evidence Sources and tests must never generate, overwrite, or publish Built-in Catalog assets.
 - LLM Advisor is advisory only and cannot execute, approve, publish, mutate models, invent evidence, or override gates.
-- The v4 candidate makes a portable, question-driven Digital Expert the ordinary human entry and uses a local stdio MCP Harness Operation Server for Agent access. Atomic JSON CLI remains a compatibility, CI, and emergency-diagnostic surface.
+- The v4 release line makes a portable, question-driven Digital Expert the ordinary human entry and uses a local stdio MCP Harness Operation Server for Agent access. Atomic JSON CLI remains a compatibility, CI, and emergency-diagnostic surface.
 - The v4 Digital Expert, Agent adapters, and MCP surface may operate the Engine but must not own Harness reasoning, Review verdicts, approval, publication authority, credentials, or runtime state.
 - Engine, Asset, Ontology, Policy, Evaluation, Catalog, EvoPilot, and Dashboard versions are independent.
 - Harness publication does not require an EvoPilot or Dashboard release.
@@ -52,7 +52,7 @@ The four controlled comparative-evidence module boundaries are defined in [ADR 0
 
 No Engine module may bypass Proposal approval, write Built-in assets from evidence, give LLM authority, execute source-project commands, mutate active policy from calibration, overwrite comparison history, or make Engine source files the runtime state store.
 
-The five v4 operating-module boundaries are defined in [ADR 0002](docs/architecture/adr/0002-agent-native-harness-operations.md): Digital Expert Core, Agent Adapter, Harness Operation Server, AgentOperationSession, and External Agent Host. Together with the 28 Engine modules, the v4.1 candidate has 33 enforced component/module boundaries.
+The five v4 operating-module boundaries are defined in [ADR 0002](docs/architecture/adr/0002-agent-native-harness-operations.md): Digital Expert Core, Agent Adapter, Harness Operation Server, AgentOperationSession, and External Agent Host. Together with the 28 Engine modules, the v4.1 release line has 33 enforced component/module boundaries.
 
 - One Agent-neutral Core must generate every Adapter workflow and stop rule. Do not edit generated Adapter semantics directly.
 - MCP tools may coordinate the Engine but cannot bypass Engine validation or Session human gates.

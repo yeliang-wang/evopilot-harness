@@ -4,7 +4,8 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
-- [4.1.1 candidate](4.1.1.md) - npm OIDC Trusted Publishing repair for the unchanged v4.1 runtime; release remains separately unauthorized.
+- [4.1.2 current release](4.1.2.md) - documentation-system synchronization, Agent-link correction, and deterministic release-state drift guards for the unchanged v4.1 runtime.
+- [4.1.1](4.1.1.md) - npm OIDC Trusted Publishing repair for the unchanged v4.1 runtime, published through GitHub Release and npm with provenance.
 - [4.1.0](4.1.0.md) - controlled Baseline/Candidate evidence, immutable rescoring, matching and Proposal policy calibration, Agent report review gates, and clean installed-package MCP operation. The GitHub Release completed; npm publication did not.
 - [4.0.2](4.0.2.md) - curated npm runtime package, Agent bootstrap, Trusted Publishing contract, and real WorkBuddy installed-package conformance.
 - [4.0.1](4.0.1.md) - first completed Agent-native release, including portable listener validation on macOS and Linux CI.

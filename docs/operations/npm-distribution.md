@@ -7,10 +7,12 @@
 Source version, GitHub Release, npm package, and optional GHCR image are separate evidence layers. Before using a public package, verify the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.1.1 version
+npm view @evopilot/harness@4.1.2 version
 ```
 
-If the command does not return `4.1.1`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
+If the command does not return `4.1.2`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
+
+For the current release, the command returns `4.1.2`; npm reports it as `latest` with Registry signatures and SLSA provenance. The corresponding [GitHub Release](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.1.2) remains a separate distribution layer.
 
 ## Choose One Installation Path
 
@@ -22,7 +24,7 @@ Use only after the Registry check succeeds:
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.1.1
+npm install --save-exact @evopilot/harness@4.1.2
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -38,7 +40,7 @@ npm pack --pack-destination /absolute/package/output
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact /absolute/package/output/evopilot-harness-4.1.1.tgz
+npm install --save-exact /absolute/package/output/evopilot-harness-4.1.2.tgz
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -112,6 +114,8 @@ npm run package:smoke
 - GitHub environment `npm`.
 
 The workflow uses GitHub OIDC and `npm publish --provenance`. Its `actions/setup-node` step deliberately omits `registry-url` and `always-auth`, so setup-node cannot inject the placeholder `NODE_AUTH_TOKEN` that conflicts with npm Trusted Publishing. A preflight runs before any npm Registry command and rejects any explicitly supplied `NODE_AUTH_TOKEN`; there is no secret or token fallback. Stable versions use `latest`; `alpha`, `beta`, and `rc` versions use matching dist-tags. After publication it verifies exact identity/version, dist-tag, integrity, Registry signatures, SLSA provenance, `npm audit signatures`, clean exact-version installation, bootstrap, and `npx` execution.
+
+Registry metadata and the attestations endpoint can propagate at different times. During v4.1.1 publication, OIDC publish, metadata verification, and exact install succeeded, but the immediate signature audit received a transient attestations-endpoint `E404`; an independent audit passed after propagation. Treat this as a post-publication verification failure, not permission to republish the immutable version. See [Troubleshooting](troubleshooting.md#npm-audit-signatures-returns-e404-after-publication).
 
 Publication still requires an approved Evolution Target release gate and separate user authorization. The workflow contract does not grant release authority.
 

@@ -4,13 +4,26 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const rootsToScan = ["README.md", "docs"];
+const rootsToScan = [
+  "README.md",
+  "AGENTS.md",
+  "CHANGELOG.md",
+  "CODE_OF_CONDUCT.md",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "llms.txt",
+  ".agents/skills",
+  "docs",
+  "eval",
+  "harnesses",
+  "published"
+];
 const failures = [];
 
 for (const entry of rootsToScan) {
   const absolute = path.join(root, entry);
   if (!fs.existsSync(absolute)) continue;
-  for (const file of listMarkdownFiles(absolute)) checkLinks(file);
+  for (const file of listDocumentationFiles(absolute)) checkLinks(file);
 }
 
 if (failures.length > 0) {
@@ -20,15 +33,19 @@ if (failures.length > 0) {
   console.log("Markdown link check passed.");
 }
 
-function listMarkdownFiles(target) {
-  if (fs.statSync(target).isFile()) return target.endsWith(".md") ? [target] : [];
+function listDocumentationFiles(target) {
+  if (fs.statSync(target).isFile()) return isDocumentationFile(target) ? [target] : [];
   const files = [];
   for (const entry of fs.readdirSync(target, { withFileTypes: true })) {
     const absolute = path.join(target, entry.name);
-    if (entry.isDirectory()) files.push(...listMarkdownFiles(absolute));
-    else if (entry.isFile() && entry.name.endsWith(".md")) files.push(absolute);
+    if (entry.isDirectory()) files.push(...listDocumentationFiles(absolute));
+    else if (entry.isFile() && isDocumentationFile(absolute)) files.push(absolute);
   }
   return files;
+}
+
+function isDocumentationFile(target) {
+  return target.endsWith(".md") || path.basename(target) === "llms.txt";
 }
 
 function checkLinks(file) {

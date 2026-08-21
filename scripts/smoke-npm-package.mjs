@@ -9,6 +9,9 @@ import readline from "node:readline";
 import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
+const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const expectedVersion = manifest.version;
+const expectedPackage = `${manifest.name}@${expectedVersion}`;
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-npm-smoke-"));
 const packageDir = path.join(temporary, "package");
 const app = path.join(temporary, "app");
@@ -26,19 +29,19 @@ try {
   const cli = path.join(app, "node_modules", ".bin", "evopilot-harness");
   assert.ok(fs.existsSync(cli), "installed evopilot-harness binary is missing");
   const version = JSON.parse(run(cli, ["--version", "--json"], app));
-  assert.equal(version.version, "4.1.1");
+  assert.equal(version.version, expectedVersion);
 
   const bootstrap = JSON.parse(run(cli, ["agent", "bootstrap", "--host", "workbuddy", "--workspace", workspace, "--json"], app));
   assert.equal(bootstrap.status, "READY");
   assert.equal(bootstrap.package.name, "@evopilot/harness");
-  assert.equal(bootstrap.package.version, "4.1.1");
+  assert.equal(bootstrap.package.version, expectedVersion);
   assert.equal(bootstrap.package.distributionMode, "installed-package");
   assert.equal(bootstrap.package.sourceCheckoutRequired, false);
   assert.ok(fs.realpathSync(bootstrap.package.root).startsWith(packageRoot));
   assert.ok(fs.realpathSync(bootstrap.adapter.path).startsWith(packageRoot));
   assert.deepEqual(bootstrap.mcp.exactNpxCommand, {
     command: "npx",
-    args: ["--yes", "--package", "@evopilot/harness@4.1.1", "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", bootstrap.workspace.path]
+    args: ["--yes", "--package", expectedPackage, "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", bootstrap.workspace.path]
   });
   assert.equal(bootstrap.workspace.externalToRelease, true);
 
@@ -49,14 +52,14 @@ try {
   ], app));
   assert.equal(conformance.status, "PASSED");
   assert.equal(conformance.adapterId, "workbuddy");
-  assert.equal(conformance.server.version, "4.1.1");
+  assert.equal(conformance.server.version, expectedVersion);
 
   const installedMcp = await runInstalledMcpScenario({ app, cli, packageRoot, workspace });
 
   console.log(JSON.stringify({
     schema: "evopilot-harness-npm-package-smoke/v1",
     status: "PASSED",
-    package: "@evopilot/harness@4.1.1",
+    package: expectedPackage,
     cli,
     packageRoot,
     sourceCheckoutUsed: false,

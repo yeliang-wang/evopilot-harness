@@ -10,6 +10,9 @@ import { classifyRegistryProbe } from "../scripts/npm-first-publication-prefligh
 import { verifyTrustedPublishingEnvironment } from "../scripts/verify-npm-trusted-publishing-runtime.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const expectedVersion = manifest.version;
+const expectedPackage = `${manifest.name}@${expectedVersion}`;
 
 test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and external Workspace", () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-bootstrap-"));
@@ -19,8 +22,8 @@ test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and e
   assert.equal(result.status, "READY");
   assert.deepEqual(result.package, {
     name: "@evopilot/harness",
-    version: "4.1.1",
-    spec: "@evopilot/harness@4.1.1",
+    version: expectedVersion,
+    spec: expectedPackage,
     root,
     distributionMode: "source-checkout",
     sourceCheckoutRequired: false,
@@ -32,7 +35,7 @@ test("Agent Bootstrap binds the exact package, adapter, stdio MCP command, and e
   const canonicalWorkspace = fs.realpathSync(workspace);
   assert.deepEqual(result.mcp.exactNpxCommand, {
     command: "npx",
-    args: ["--yes", "--package", "@evopilot/harness@4.1.1", "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", canonicalWorkspace]
+    args: ["--yes", "--package", expectedPackage, "evopilot-harness", "mcp", "serve", "--transport", "stdio", "--workspace", canonicalWorkspace]
   });
   assert.equal(result.mcp.networkListening, false);
   assert.ok(result.mcp.protocols.includes("2025-11-25"));

@@ -2,7 +2,7 @@
 
 Introduced in Engine 3.4.0 and retained in v4, Harness evolution is represented as an evidence-linked `AssetDeltaProposal` plus a portable `EvaluationPack v3`. These contracts make the proposed change, its expected effect, its affected dependencies, and its rollback path reviewable before approval or immutable publication.
 
-The current v4 candidate includes this contract. It is not a published Engine release until the separate release process is authorized and completed.
+The published v4.1.2 release includes this contract. Asset publication remains a separate user lifecycle and does not require another Engine release.
 
 ## Supported Delta Assets
 

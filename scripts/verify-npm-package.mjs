@@ -11,7 +11,7 @@ const packed = JSON.parse(execFileSync("npm", ["pack", "--dry-run", "--json"], {
 const files = packed.files.map((entry) => entry.path).sort();
 
 assert.equal(manifest.name, "@evopilot/harness");
-assert.equal(manifest.version, "4.1.1");
+assert.match(manifest.version, /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/);
 assert.equal(manifest.private, false);
 assert.equal(manifest.publishConfig?.access, "public");
 assert.equal(manifest.publishConfig?.provenance, true);

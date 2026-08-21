@@ -17,12 +17,13 @@ import { cancelAgentSession, createAgentSession, createSessionPlan, confirmSessi
 import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 
 test("Digital Expert adapters are generated from one immutable Core", () => {
   execFileSync(process.execPath, ["scripts/generate-digital-expert-adapters.mjs", "--check"], { cwd: root, stdio: "pipe" });
   const lock = JSON.parse(fs.readFileSync(path.join(root, "digital-expert/manifest.lock.json"), "utf8"));
   assert.match(lock.coreDigest, /^sha256:[a-f0-9]{64}$/);
-  assert.equal(lock.expertVersion, "4.1.1");
+  assert.equal(lock.expertVersion, manifest.version);
   for (const adapter of ["codex/SKILL.md", "workbuddy/WORKBUDDY.md", "claude-code/CLAUDE.md", "mcp/MCP.md", "generic/AGENT.md"]) {
     const content = fs.readFileSync(path.join(root, "digital-expert/adapters", adapter), "utf8");
     assert.match(content, new RegExp(lock.coreDigest.replace(":", "\\:")));
