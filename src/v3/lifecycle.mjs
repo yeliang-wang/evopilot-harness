@@ -207,7 +207,19 @@ export function publishProposal(home, proposalId) {
   proposal.publication = { publishedAt: new Date().toISOString(), assets: published, evaluationPath: evaluationDestination, evaluationDigest: digest(publishedEvaluation), assetDeltaPath: deltaDestination, assetDeltaDigest: digest(publishedDelta) };
   writeYaml(file, proposal);
   const catalog = publishCatalog({ roots: [path.join(home, "catalogs/organization/assets")], out: path.join(home, "catalogs/organization"), catalogId: "organization" });
-  return { schema: "evopilot-harness-proposal-publication/v3", status: catalog.status === "PUBLISHED" ? "PUBLISHED" : "FAILED", proposalId, assets: published, assetDelta: { path: deltaDestination, digest: digest(publishedDelta) }, evaluation: { path: evaluationDestination, digest: digest(publishedEvaluation) }, catalog, nextAction: "catalog-sign" };
+  const bundles = published.filter((asset) => asset.kind === "HarnessBundle").map((asset) => ({ kind: asset.kind, id: asset.id, version: asset.version, digest: asset.digest, path: asset.path }));
+  const evopilotHandoff = {
+    schema: "evopilot-harness-evopilot-consumer-handoff/v1",
+    mode: "READ_ONLY",
+    registryPath: path.join(home, "harness-registry.yaml"),
+    catalogId: "organization",
+    catalogRoot: catalog.catalogRoot,
+    catalogDigest: catalog.catalogDigest,
+    bundles,
+    status: bundles.length ? "READY" : "AWAITING_PUBLISHED_BUNDLE",
+    mutationAllowed: false
+  };
+  return { schema: "evopilot-harness-proposal-publication/v3", status: catalog.status === "PUBLISHED" ? "PUBLISHED" : "FAILED", proposalId, assets: published, assetDelta: { path: deltaDestination, digest: digest(publishedDelta) }, evaluation: { path: evaluationDestination, digest: digest(publishedEvaluation) }, catalog, evopilotHandoff, nextAction: bundles.length ? "bind-bundle-from-registry" : "publish-or-select-immutable-bundle" };
 }
 
 function proposalCatalogRecords(home) {

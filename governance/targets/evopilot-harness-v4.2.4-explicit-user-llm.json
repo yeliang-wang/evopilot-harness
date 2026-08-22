@@ -1,0 +1,69 @@
+{
+  "schema": "evopilot-evolution-target/v1",
+  "id": "evopilot-harness-v4.2.4-explicit-user-llm-configuration",
+  "revision": 4,
+  "status": "APPROVED",
+  "intent": "Implement explicit user LLM configuration and zero default LLM in evopilot-harness v4.2.4: remove every built-in or generated default provider, model, endpoint, profile, and credential assumption; require user-owned external Workspace configuration and live verification for LLM-required operations; preserve deterministic non-LLM operation; synchronize WorkBuddy installed runtime; and expose immutable Bundle handoff for EvoPilot read-only consumption.",
+  "objective": "Ship a provider-neutral Harness release that never distributes the operator's GLM profile or borrows an Agent-host model, while preserving existing user configuration and making model readiness, WorkBuddy runtime binding, and Registry/Catalog/Bundle consumption explicit and verifiable.",
+  "evidence": [
+    { "ref": "conversation:approved-evopilot-harness-v4.2.4-target-revision-4", "authority": "explicit-user-target-and-roadmap-revision-approval" },
+    { "ref": "local:glm-5.1-live-doctor-ready", "authority": "diagnostic-evidence-only" }
+  ],
+  "roadmapBindings": [
+    {
+      "repo": "/Users/wangyejing/project/harness/evopilot-harness",
+      "project": "evopilot-harness",
+      "matchedStandingWork": "evopilot-harness-4.2-explicit-user-llm-configuration",
+      "targetVersion": "4.2.4",
+      "classification": "ALIGNED",
+      "roadmapDigest": "sha256:8b05fb8d7b38cb7f9ca9040cf322abcee137f6964c1349b996480723bb001bff"
+    }
+  ],
+  "scope": {
+    "include": [
+      "Remove built-in and generated default provider, model, endpoint, profile, and credential assumptions",
+      "Require explicit user-owned external Workspace model configuration and a successful live doctor for LLM-required operations",
+      "Preserve existing human-maintained models.json byte-for-byte across initialization, install, upgrade, repair, and restart",
+      "Support user-selected profile and local credential binding with structured readiness and drift states",
+      "Keep deterministic non-LLM operations usable while model readiness is incomplete",
+      "Synchronize WorkBuddy expert, MCP entry, isolated npm runtime, and persistent external Workspace binding",
+      "Report Registry path, Organization Catalog digest, and immutable Bundle identity/digest for EvoPilot read-only consumption",
+      "Add deterministic tests, documentation, package checks, migration coverage, and candidate-package real WorkBuddy evidence"
+    ],
+    "exclude": [
+      "Shipping or generating the operator's GLM profile, API endpoint, or credential",
+      "Selecting any provider or model by default",
+      "Borrowing the WorkBuddy or other Agent-host conversation model",
+      "Automatic approval or publication",
+      "EvoPilot mutation of Harness producer state",
+      "Commit, push, tag, GitHub Release, npm publication, GHCR, container, cloud, or deployment actions"
+    ]
+  },
+  "acceptance": [
+    { "id": "AC01", "criterion": "Release contains no built-in or generated default LLM profile.", "requiredEvidence": "Package and source scan tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-explicit-user-llm", "package:verify-4.2.4"] },
+    { "id": "AC02", "criterion": "Release contains no default provider, model, endpoint, or credential assumption.", "requiredEvidence": "Configuration and documentation tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-explicit-user-llm", "docs:4.2.4-release-note"] },
+    { "id": "AC03", "criterion": "A fresh Workspace does not create a provider-specific models.json.", "requiredEvidence": "Fresh Workspace test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-fresh-workspace"] },
+    { "id": "AC04", "criterion": "A missing model profile reports NOT_CONFIGURED.", "requiredEvidence": "Readiness test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-readiness-states"] },
+    { "id": "AC05", "criterion": "A profile without an available credential reports CREDENTIAL_REQUIRED.", "requiredEvidence": "Credential-negative test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-readiness-states"] },
+    { "id": "AC06", "criterion": "Configuration and credential without a current doctor receipt report CONFIGURED_UNVERIFIED.", "requiredEvidence": "Unverified-state test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-readiness-states"] },
+    { "id": "AC07", "criterion": "Only a successful live doctor produces CONFIGURED_AND_VERIFIED.", "requiredEvidence": "Provider doctor integration test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-doctor", "workbuddy:glm-5.1-live-doctor-ready"] },
+    { "id": "AC08", "criterion": "Doctor transport or authentication failure never falls back or reports readiness.", "requiredEvidence": "Failure tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-doctor-failure"] },
+    { "id": "AC09", "criterion": "Configuration drift invalidates the verification receipt.", "requiredEvidence": "Digest drift test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-readiness-drift"] },
+    { "id": "AC10", "criterion": "Advisor and Proposal Review bind the same explicit Workspace model configuration digest.", "requiredEvidence": "Cross-operation binding test", "status": "PASS", "evidenceRefs": ["test:v4.2.4-model-digest-binding", "workbuddy:proposal-review-glm-5.1"] },
+    { "id": "AC11", "criterion": "Explicit profile and Workspace configuration follow one provider-neutral precedence contract with no fallback.", "requiredEvidence": "Precedence matrix tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-provider-neutral-precedence"] },
+    { "id": "AC12", "criterion": "Existing human-maintained models.json remains byte-for-byte unchanged.", "requiredEvidence": "Digest preservation tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-model-preservation", "workbuddy:restart-model-checksum-preserved"] },
+    { "id": "AC13", "criterion": "Legacy configuration migration is idempotent, auditable, and never overwrites an external target.", "requiredEvidence": "Migration tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-migration"] },
+    { "id": "AC14", "criterion": "CLI, MCP, Session, logs, receipts, and acceptance evidence expose no credential.", "requiredEvidence": "Redaction and secret-scan tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-redaction", "acceptance:workbuddy-redacted-evidence"] },
+    { "id": "AC15", "criterion": "Deterministic non-LLM operations remain usable while LLM readiness is incomplete.", "requiredEvidence": "Optional-advisor regression tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-optional-advisor"] },
+    { "id": "AC16", "criterion": "LLM-required Advisor and Proposal Review stop accurately until verification succeeds.", "requiredEvidence": "Required-LLM tests", "status": "PASS", "evidenceRefs": ["test:v4.2.4-required-llm"] },
+    { "id": "AC17", "criterion": "WorkBuddy install, upgrade, and repair synchronize the expert, MCP entry, isolated npm runtime, and preserve unrelated state.", "requiredEvidence": "Installer lifecycle tests", "status": "PASS", "evidenceRefs": ["test:v4.2.1-agent-host-installer", "workbuddy:candidate-runtime-installed"] },
+    { "id": "AC18", "criterion": "WorkBuddy restart preserves one user-selected external Workspace and reports Product, Expert, Core, and MCP version 4.2.4.", "requiredEvidence": "Real-host binding evidence", "status": "PASS", "evidenceRefs": ["workbuddy:post-restart-agent-status-4.2.4"] },
+    { "id": "AC19", "criterion": "The exact candidate npm package completes explicit LLM configuration, doctor, DOCX evidence, and Proposal human gates in real WorkBuddy without source-checkout resolution.", "requiredEvidence": "Candidate-package real WorkBuddy end-to-end evidence", "status": "PASS", "evidenceRefs": ["package:candidate-evopilot-harness-4.2.4.tgz", "workbuddy:plan-sha256-5f33338df7ee62ee0ab984e137b919dc666e3391ca6004b0d31ff915420859fc", "workbuddy:proposal-sha256-b6a6e10294aac94f038aa071e95e854650c1e69e51127a406730c0b43dcff6cf", "workbuddy:publication-decision-required"] },
+    { "id": "AC20", "criterion": "Publication reports Registry path, Organization Catalog digest, immutable Bundle identity and digest for EvoPilot read-only binding without mutation.", "requiredEvidence": "Publication and consumer handoff test", "status": "PASS", "evidenceRefs": ["test:v3-publication-evopilot-handoff"] }
+  ],
+  "approvals": {
+    "target": { "decision": "APPROVED", "by": "user", "evidenceRef": "conversation:approved-evopilot-harness-v4.2.4-target-revision-4", "authorizationDigest": "sha256:e171ac7058046db33fe56f5a56e81b4a25ac5d97a220de118c6fb895fc764cb5" },
+    "release": { "decision": "AUTHORIZED", "by": "user", "evidenceRef": "conversation:authorized-commit-push-github-npm-v4.2.4" }
+  },
+  "release": { "actions": ["commit", "push", "tag", "github-release", "npm-publish"], "versions": { "evopilot-harness": "4.2.4" } }
+}

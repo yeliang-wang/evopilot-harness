@@ -25,9 +25,6 @@ const HARNESS_TEMPLATE_SCHEMA_V2 = "evopilot-harness-template/v2";
 const AUTO_MATCH_SCHEMA = "evopilot-harness-auto-match/v2";
 const DEFAULT_EVAL_FIXTURE_ROOT = path.join(PACKAGE_ROOT, "eval", "unknown-source", "cases");
 const DEFAULT_LLM_REPLAY_FIXTURE_ROOT = path.join(PACKAGE_ROOT, "eval", "llm-replay", "cases");
-const DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/coding/paas/v4";
-const DEFAULT_GLM_MODEL = "glm-5.1";
-const DEFAULT_LLM_PROFILE_ID = "evopilot-glm";
 const DEFAULT_LLM_MODELS_FILE = path.join(PACKAGE_ROOT, "models.json");
 const DEFAULT_MATCH_THRESHOLD = 0.45;
 const AMBIGUOUS_MATCH_DELTA = 0.1;
@@ -1363,7 +1360,7 @@ function lifecycleCommandModel() {
     { id: "corpus-scan", label: "Scan and group a source corpus", command: "evopilot-harness corpus scan --source-root /path/to/project-root --json" },
     { id: "corpus-plan", label: "Generate reviewable corpus Harness drafts", command: "evopilot-harness corpus plan --source-root /path/to/project-root --include-modules --json" },
     { id: "corpus-evolve", label: "One-command corpus evolution", command: "evopilot-harness evolve corpus --source-root /path/to/project-root --json" },
-    { id: "llm-models", label: "Inspect local EvoPilot GLM config", command: "evopilot-harness llm models --json" },
+    { id: "llm-models", label: "Inspect explicit local LLM configuration", command: "evopilot-harness llm models --json" },
     { id: "asset-validate", label: "Validate Harness Asset v2 envelopes", command: "evopilot-harness asset validate --source published --json" },
     { id: "unknown-source-eval", label: "Run unknown-source matching evals", command: "evopilot-harness eval run --json" },
     { id: "llm-replay", label: "Replay LLM Advisor fixtures", command: "evopilot-harness llm replay --json" },
@@ -2783,7 +2780,7 @@ function inspectLlmModels(args) {
       sourceType: config.sourceType,
       error: config.error
     },
-    defaultProfileId: DEFAULT_LLM_PROFILE_ID,
+    defaultProfileId: null,
     selectedProfile: safeLlmProfile(selected),
     models: config.models.map(safeLlmProfile),
     nextAction: apiKeyConfigured ? "run-harness-evolution" : "open-models-json-and-configure-api-key"
@@ -3075,37 +3072,12 @@ function selectLlmProfile(args, config) {
   const models = Array.isArray(config.models) ? config.models : [];
   const matched = requested ? models.find((model) => sameModelSelector(model, requested)) : undefined;
   if (matched) return matched;
-  const preferred = preferredGlmProfile(models);
-  return preferred ?? models[0] ?? builtinGlmProfile();
+  return models[0];
 }
 
 function sameModelSelector(model, requested) {
   const target = String(requested ?? "").trim().toLowerCase();
   return [model.id, model.name, model.modelName].some((value) => String(value ?? "").trim().toLowerCase() === target);
-}
-
-function preferredGlmProfile(models) {
-  const glmModels = models.filter((model) => normalizeLlmPreset(`${model.vendor} ${model.providerName} ${model.id} ${model.modelName}`) === "glm");
-  return glmModels.find((model) => /glm[-_ ]?5\.?2/i.test(`${model.id} ${model.name} ${model.modelName}`))
-    ?? glmModels.find((model) => /glm[-_ ]?5/i.test(`${model.id} ${model.name} ${model.modelName}`))
-    ?? glmModels[0];
-}
-
-function builtinGlmProfile() {
-  return {
-    id: DEFAULT_LLM_PROFILE_ID,
-    name: "EvoPilot GLM",
-    providerPreset: "glm",
-    providerName: "zhipu",
-    vendor: "zhipu",
-    baseUrl: DEFAULT_GLM_BASE_URL,
-    modelName: DEFAULT_GLM_MODEL,
-    apiKey: "",
-    apiKeyEnv: "EVOPILOT_HARNESS_LLM_API_KEY",
-    supportsToolCall: true,
-    supportsReasoning: true,
-    source: "builtin"
-  };
 }
 
 function normalizeLlmPreset(value) {
@@ -3218,20 +3190,20 @@ function llmAdvisorControl(args) {
 function llmAdvisorConfig(args) {
   const modelsConfig = loadLlmModelsConfig(args);
   const selectedProfile = selectLlmProfile(args, modelsConfig);
-  const preset = (stringOption(args, "llm-provider-preset") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_PRESET ?? selectedProfile.providerPreset ?? "glm").toLowerCase();
-  const providerName = stringOption(args, "llm-provider-name") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_NAME ?? selectedProfile.providerName ?? (preset === "glm" ? "zhipu" : "openai-compatible");
-  const baseUrl = stringOption(args, "llm-base-url") ?? process.env.EVOPILOT_HARNESS_LLM_BASE_URL ?? process.env.EVOPILOT_LLM_BASE_URL ?? selectedProfile.baseUrl ?? (preset === "glm" ? DEFAULT_GLM_BASE_URL : "");
-  const modelName = stringOption(args, "llm-model") ?? stringOption(args, "llm-model-name") ?? process.env.EVOPILOT_HARNESS_LLM_MODEL_NAME ?? process.env.EVOPILOT_LLM_MODEL_NAME ?? selectedProfile.modelName ?? (preset === "glm" ? DEFAULT_GLM_MODEL : "");
-  const apiKeyEnv = stringOption(args, "llm-api-key-env") ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY_ENV ?? selectedProfile.apiKeyEnv ?? "EVOPILOT_HARNESS_LLM_API_KEY";
-  const apiKey = process.env[apiKeyEnv] ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY ?? process.env.EVOPILOT_LLM_API_KEY ?? selectedProfile.apiKey ?? "";
+  const preset = (stringOption(args, "llm-provider-preset") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_PRESET ?? selectedProfile?.providerPreset ?? "custom").toLowerCase();
+  const providerName = stringOption(args, "llm-provider-name") ?? process.env.EVOPILOT_HARNESS_LLM_PROVIDER_NAME ?? selectedProfile?.providerName ?? "";
+  const baseUrl = stringOption(args, "llm-base-url") ?? process.env.EVOPILOT_HARNESS_LLM_BASE_URL ?? selectedProfile?.baseUrl ?? "";
+  const modelName = stringOption(args, "llm-model") ?? stringOption(args, "llm-model-name") ?? process.env.EVOPILOT_HARNESS_LLM_MODEL_NAME ?? selectedProfile?.modelName ?? "";
+  const apiKeyEnv = stringOption(args, "llm-api-key-env") ?? process.env.EVOPILOT_HARNESS_LLM_API_KEY_ENV ?? selectedProfile?.apiKeyEnv;
+  const apiKey = (apiKeyEnv ? process.env[apiKeyEnv] : undefined) ?? selectedProfile?.apiKey ?? "";
   const missing = [];
   if (!baseUrl) missing.push("llm-base-url");
   if (!modelName) missing.push("llm-model");
-  if (!apiKey) missing.push(`env:${apiKeyEnv}`);
+  if (!apiKey) missing.push(apiKeyEnv ? `env:${apiKeyEnv}` : "llm-api-key-or-env");
   return {
     preset,
-    profileId: selectedProfile.id,
-    profileName: selectedProfile.name,
+    profileId: selectedProfile?.id,
+    profileName: selectedProfile?.name,
     modelsFile: modelsConfig.path,
     modelsFileExists: modelsConfig.exists,
     providerName,
@@ -4753,7 +4725,7 @@ LLM Advisor:
   --apply-llm-advisor                   Use a high-confidence Advisor target for draft generation.
   --llm-models-file <file>              CodeBuddy-style JSON file: {"models":[{"id","name","vendor","apiKey","url"}]}.
   --llm-profile <id>                    Select a model entry by id, name, or modelName.
-  --llm-provider-preset glm             Override provider preset. Defaults to EvoPilot GLM when no file exists.
+  --llm-provider-preset <id>            Classify an explicitly configured provider; supplies no defaults.
   --llm-base-url <url> --llm-model <id>  Override OpenAI-compatible chat/completions endpoint and model.
   --llm-api-key-env <env>               Environment variable containing the API key when models.json does not hold one.
 

@@ -33,9 +33,12 @@ test("WorkBuddy installer is preview-bound, idempotent, repairable, and ownershi
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-host-installer-"));
   const hostHome = path.join(temp, "workbuddy");
   const workspace = path.join(temp, "workspace");
+  const runtimeRoot = path.join(hostHome, "binaries", "node", "workspace");
   fs.mkdirSync(hostHome, { recursive: true });
+  fs.mkdirSync(runtimeRoot, { recursive: true });
+  fs.writeFileSync(path.join(runtimeRoot, "package.json"), JSON.stringify({ private: true }));
   fs.writeFileSync(path.join(hostHome, "mcp.json"), JSON.stringify({ mcpServers: { unrelated: { type: "stdio", command: "true" } } }));
-  const common = ["--host", "workbuddy", "--host-home", hostHome, "--workspace", workspace, "--manager-root", manager];
+  const common = ["--host", "workbuddy", "--host-home", hostHome, "--workspace", workspace, "--manager-root", manager, "--runtime-root", runtimeRoot, "--runtime-package-spec", root];
   const preview = run(["agent", "install", ...common], 2);
   assert.equal(preview.status, "CONFIRMATION_REQUIRED");
   const mismatch = run(["agent", "install", ...common, "--confirm", "sha256:wrong"], 1);
@@ -48,6 +51,8 @@ test("WorkBuddy installer is preview-bound, idempotent, repairable, and ownershi
   const config = JSON.parse(fs.readFileSync(path.join(hostHome, "mcp.json"), "utf8"));
   assert.ok(config.mcpServers.unrelated);
   assert.equal(config.mcpServers["evopilot-harness"].managedBy, "@evopilot/harness");
+  assert.equal(JSON.parse(fs.readFileSync(path.join(runtimeRoot, "node_modules", "@evopilot", "harness", "package.json"), "utf8")).version, "4.2.4");
+  assert.equal(run(["agent", "status", ...common]).verification.mcpWorkspaceMatch, true);
   const upgradePreview = run(["agent", "upgrade", ...common], 2);
   assert.equal(run(["agent", "upgrade", ...common, "--confirm", upgradePreview.planDigest]).status, "INSTALLED");
   const skill = path.join(hostHome, "plugins", "marketplaces", "my-experts", "plugins", "evopilot-harness-digital-expert", "skills", "evopilot-harness-digital-expert", "SKILL.md");

@@ -1,31 +1,31 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.2.3",
+  "expertVersion": "4.2.4",
   "coreDigest": "sha256:5ad7806c5942196f47fe7f5a40e84062634f00851965a0430c7886bc0a4cab01",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:33da8d11929a4ab51118a7577f5e4915bcd277fc84b958265d812e615dc6d8da",
+      "sha256": "sha256:a02c9b25b79581267bb9d34e153792a17fb64d1c2c89289699551daecce8d8d5",
       "bytes": 16486
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:7fc0182fac6a6aa2f3bee5f15f63f6142bf749c4cbf735475d91eff8015e89a3",
+      "sha256": "sha256:28e13cee4051f78b7e89f22660bb39230debf3205e61ba6e9890699db6d3dbc9",
       "bytes": 16707
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:61bd95b6f60b615f0ba58d5f44c96bcd394e85bd1a7a6ac6dda61683b468afb2",
+      "sha256": "sha256:2510078bf13b9b484ff17a664e8cdda5b2702c116f9cda7eaf6efee81063111a",
       "bytes": 16488
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:8d704615f38acdeee40fa157d300a66dac7b575db8ba54e003f0b21dc9ee6fe4",
+      "sha256": "sha256:67e8dae2c345b05528f695773bd5c956c6d793f729271adfe0cebe98ca2e74ea",
       "bytes": 16485
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:498e754c592117d5c015c3ec584281fa98e3d10e9962e3c6a2bd4565a9019e47",
+      "sha256": "sha256:daf96c2f5f3ffb60b4f6c03e618d61b1b302f28a298123ee0bbb6b4af820e3b9",
       "bytes": 17352
     },
     {
@@ -70,12 +70,12 @@
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:1eb291869c3026e0e0550d98654db83c64596bfc695c27d0bb62560e54f4272c",
+      "sha256": "sha256:713ced172a7c8e03a1b2fd37effd4c258d5c3c4be5dcbe0d7315e4bfb4fe4d50",
       "bytes": 2030
     },
     {
       "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
-      "sha256": "sha256:d9a403225576d4dc9561f3d5ee64fe5250a0f20a00e2d8fd848ba4ebf4851a31",
+      "sha256": "sha256:dc2c084fce2576326f3b9f00dc8e095cf5260adafc0459a97b364a2593d7b294",
       "bytes": 17507
     },
     {

@@ -25,6 +25,23 @@ export function inspectModelReadiness(home, modelsFile) {
     nextAction: "configure-models-json-locally"
   });
   const configurationDigest = digestBytes(fs.readFileSync(resolvedModels));
+  const profile = configuredProfile(resolvedModels);
+  if (!profile) return result("NOT_CONFIGURED", workspace, resolvedModels, receiptFile, {
+    configured: false,
+    connectionVerified: false,
+    initializationStatus: "ACTION_REQUIRED",
+    configurationDigest,
+    nextAction: "configure-model-profile-locally"
+  });
+  if (!profile.credentialConfigured) return result("CREDENTIAL_REQUIRED", workspace, resolvedModels, receiptFile, {
+    configured: true,
+    credentialConfigured: false,
+    connectionVerified: false,
+    initializationStatus: "ACTION_REQUIRED",
+    configurationDigest,
+    model: profile.model,
+    nextAction: profile.apiKeyEnv ? `set-local-environment-variable:${profile.apiKeyEnv}` : "configure-model-credential-locally"
+  });
   let receipt = null;
   try { receipt = JSON.parse(fs.readFileSync(receiptFile, "utf8")); } catch { /* absent or invalid receipt is unverified */ }
   const verified = receipt?.schema === RECEIPT_SCHEMA
@@ -33,12 +50,26 @@ export function inspectModelReadiness(home, modelsFile) {
     && receipt.connectionVerified === true;
   return result(verified ? "CONFIGURED_AND_VERIFIED" : "CONFIGURED_UNVERIFIED", workspace, resolvedModels, receiptFile, {
     configured: true,
+    credentialConfigured: true,
     connectionVerified: verified,
     initializationStatus: verified ? "READY" : "ACTION_REQUIRED",
     configurationDigest,
     ...(verified ? { verification: publicReceipt(receipt) } : {}),
     nextAction: verified ? "use-workspace-model-configuration" : "run-llm-v3-initialize"
   });
+}
+
+function configuredProfile(modelsFile) {
+  let document;
+  try { document = JSON.parse(fs.readFileSync(modelsFile, "utf8")); } catch { return null; }
+  const profile = (Array.isArray(document.models) ? document.models : []).find((item) => item?.vendor && (item.id ?? item.modelName) && item.url);
+  if (!profile) return null;
+  const apiKeyEnv = typeof profile.apiKeyEnv === "string" && profile.apiKeyEnv.trim() ? profile.apiKeyEnv.trim() : undefined;
+  return {
+    apiKeyEnv,
+    credentialConfigured: Boolean(profile.apiKey || (apiKeyEnv && process.env[apiKeyEnv])),
+    model: { id: profile.id, name: profile.name, provider: profile.vendor, model: profile.modelName ?? profile.id, url: profile.url, apiKeyEnv: profile.apiKey ? undefined : apiKeyEnv }
+  };
 }
 
 export function recordModelVerification(home, modelsFile, doctor) {

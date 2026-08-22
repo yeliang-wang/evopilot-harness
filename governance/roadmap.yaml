@@ -24,7 +24,7 @@
   },
   "versionPolicy": {
     "publishedBaseline": "4.2.0",
-    "currentWorkingVersion": "4.2.1",
+    "currentWorkingVersion": "4.2.4",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
@@ -48,6 +48,11 @@
       "id": "evopilot-harness-4.0-installed-distribution-maintenance",
       "description": "Maintain the installed Agent distribution, including curated npm packaging, isolated Agent-host conformance, provenance, host-neutral installer lifecycle contracts, and host-specific adapters such as WorkBuddy without changing Harness lifecycle behavior or product boundaries. npm account, organization, scope, token, 2FA, and actual Registry publication remain separately reviewed external release configuration.",
       "signals": ["npm distribution", "installed agent distribution", "npm package", "npm trusted publishing", "first-publication bootstrap", "first publication bootstrap", "npm bootstrap", "agent host installer", "workbuddy expert install", "workbuddy package conformance", "npm 分发", "npm 包", "npm 首发 bootstrap", "npm 首次发布", "第三方 agent 安装", "workbuddy 数字专家", "workbuddy 包验收"]
+    },
+    {
+      "id": "evopilot-harness-4.2-explicit-user-llm-configuration",
+      "description": "Maintain a provider-neutral installed Harness by requiring every operator to explicitly bind and verify user-owned LLM configuration in an external Workspace. Release packages and Agent hosts must not supply, infer, or borrow a default provider, model, endpoint, or credential.",
+      "signals": ["explicit user llm configuration", "zero default llm", "no default model", "user-owned model profile", "llm configuration required", "provider-neutral llm", "显式用户 llm 配置", "零缺省 llm", "无默认模型", "用户自定义模型", "必须配置 llm"]
     },
     {
       "id": "evopilot-harness-open-source-productization",

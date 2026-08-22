@@ -83,15 +83,15 @@ The repository is cloned or fetched into `.evopilot-harness/github-sources/` by 
 
 ## LLM Advisor Review
 
-The LLM Advisor is optional by default. It uses deterministic auto-match as the baseline, then calls the same GLM used by EvoPilot through a manually maintained CodeBuddy-style `models.json`. `evopilot-harness` only reads this file; operators edit it manually, and its content should contain only EvoPilot GLM.
+The LLM Advisor is optional by default. It uses deterministic auto-match as the baseline and reads an explicitly selected, operator-maintained OpenAI-compatible profile from the external Workspace. The Release supplies no default provider, model, endpoint, profile, or credential.
 
 Default lookup:
 
 ```text
 --llm-models-file <path>
 EVOPILOT_HARNESS_LLM_MODELS_FILE
-./models.json
-built-in evopilot-glm metadata + EVOPILOT_HARNESS_LLM_API_KEY or EVOPILOT_LLM_API_KEY
+<workspace>/models.json
+no fallback
 ```
 
 `models.json` format:
@@ -100,11 +100,12 @@ built-in evopilot-glm metadata + EVOPILOT_HARNESS_LLM_API_KEY or EVOPILOT_LLM_AP
 {
   "models": [
     {
-      "id": "glm-5.1",
-      "name": "EvoPilot GLM",
-      "vendor": "zhipu",
-      "apiKey": "<manual-local-api-key>",
-      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "id": "operator-model",
+      "name": "Operator-selected model",
+      "vendor": "openai-compatible",
+      "apiKeyEnv": "MY_LLM_API_KEY",
+      "url": "https://provider.example/v1",
+      "modelName": "operator-model",
       "supportsToolCall": true,
       "supportsReasoning": true
     }
@@ -118,7 +119,7 @@ Inspect the selected profile without printing the API key:
 node src/index.mjs llm models --json
 ```
 
-Run with required GLM review:
+Run with required model review:
 
 ```bash
 node src/index.mjs evolve \

@@ -1,6 +1,6 @@
 {
   "name": "@evopilot/harness",
-  "version": "4.2.3",
+  "version": "4.2.4",
   "private": false,
   "description": "Agent-native, user-owned Harness asset factory with a portable Digital Expert, local MCP operations, deterministic reasoning, lifecycle, and Catalog.",
   "license": "Apache-2.0",
@@ -81,5 +81,12 @@
   },
   "engines": {
     "node": ">=22.14.0"
-  }
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "devDependencies": {},
+  "author": ""
 }

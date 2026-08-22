@@ -71,7 +71,7 @@ test("v3 workspace keeps the Engine read-only and installs complete versioned bo
   assert.equal(result.models.template, path.join(home, "models.example.json"));
   assert.equal(result.models.templateAvailable, true);
   assert.equal(fs.existsSync(path.join(home, "models.json")), false);
-  assert.match(fs.readFileSync(path.join(home, "models.example.json"), "utf8"), /<manual-local-api-key>/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(home, "models.example.json"), "utf8")), { models: [] });
   assert.equal(treeDigest(path.join(root, "src")), engineBefore);
 
   const assets = runJson(["asset", "v3-validate", "--workspace", home, "--json"]);
@@ -451,6 +451,17 @@ test("all mutating decisions require reviewed Evaluation cases before approval",
     assert.equal(review.verdict, "READY_FOR_HUMAN_APPROVAL");
     const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--json"]);
     assert.deepEqual(blocked.blockers, ["evaluation-review-required"]);
+    if (expectedDecision === "COMPOSE_NEW_BUNDLE") {
+      assert.equal(runJson(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed Bundle and Evaluation.", "--evaluation-reviewed", "--json"]).status, "APPROVED");
+      const publication = runJson(["proposal", "publish", produced.runId, "--workspace", home, "--json"]);
+      assert.equal(publication.evopilotHandoff.status, "READY");
+      assert.equal(publication.evopilotHandoff.mode, "READ_ONLY");
+      assert.equal(publication.evopilotHandoff.mutationAllowed, false);
+      assert.equal(publication.evopilotHandoff.registryPath, path.join(home, "harness-registry.yaml"));
+      assert.match(publication.evopilotHandoff.catalogDigest, /^sha256:[a-f0-9]{64}$/);
+      assert.equal(publication.evopilotHandoff.bundles.length, 1);
+      assert.match(publication.evopilotHandoff.bundles[0].digest, /^sha256:[a-f0-9]{64}$/);
+    }
   }
 });
 

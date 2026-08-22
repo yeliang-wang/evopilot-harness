@@ -305,7 +305,7 @@ test("default optional LLM Advisor without models config does not block determin
   assert.equal(result.status, "REVIEW_REQUIRED");
   assert.equal(result.llmAdvisor.status, "SKIPPED");
   assert.equal(result.llmAdvisor.mode, "optional");
-  assert.equal(result.llmAdvisor.llmProfileId, "evopilot-glm");
+  assert.equal(result.llmAdvisor.llmProfileId, undefined);
   assert.equal(result.nextAction, "review-approve-harness");
 });
 

@@ -363,8 +363,9 @@ export function inspectModels(modelsFile, selectedId) {
     vendor: model.vendor,
     url: model.url,
     modelName: model.modelName ?? model.id,
-    apiKeyConfigured: Boolean(model.apiKey),
-    eligible: model.vendor === "zhipu" && /^glm/i.test(String(model.id ?? model.modelName ?? ""))
+    apiKeyConfigured: Boolean(model.apiKey || (model.apiKeyEnv && process.env[model.apiKeyEnv])),
+    apiKeyEnv: model.apiKey ? undefined : model.apiKeyEnv,
+    eligible: Boolean(model.vendor && (model.id ?? model.modelName) && model.url)
   }));
   const selected = models.find((model) => model.id === selectedId) ?? models.find((model) => model.eligible);
   return {
@@ -462,9 +463,10 @@ export function loadConfiguredModel(modelsFile, selectedId) {
   let parsed;
   try { parsed = JSON.parse(fs.readFileSync(modelsFile, "utf8")); } catch { return null; }
   const candidates = Array.isArray(parsed.models) ? parsed.models : [];
-  const model = candidates.find((item) => item.id === selectedId) ?? candidates.find((item) => item.vendor === "zhipu" && /^glm/i.test(String(item.id ?? item.modelName ?? "")));
-  if (!model || model.vendor !== "zhipu" || !model.apiKey || !model.url) return null;
-  return { id: model.id, name: model.name, vendor: model.vendor, modelName: model.modelName ?? model.id, apiKey: model.apiKey, url: model.url };
+  const model = candidates.find((item) => item.id === selectedId) ?? candidates.find((item) => item.vendor && (item.id ?? item.modelName) && item.url);
+  const apiKey = model?.apiKey || (model?.apiKeyEnv && process.env[model.apiKeyEnv]);
+  if (!model || !apiKey || !model.url) return null;
+  return { id: model.id, name: model.name, vendor: model.vendor, modelName: model.modelName ?? model.id, apiKey, apiKeyEnv: model.apiKey ? undefined : model.apiKeyEnv, url: model.url };
 }
 
 export function publicModel(model) {

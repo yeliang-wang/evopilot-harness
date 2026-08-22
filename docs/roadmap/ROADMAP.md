@@ -81,6 +81,8 @@ The published Engine baseline for this milestone is `v4.1.2`.
 
 The objective is more accurate, professional, and fine-grained Harness definitions. It is not large-scale training throughput or an ever-growing hard-coded domain list.
 
+The `v4.2.4` maintenance line also closes explicit user-owned LLM configuration for installed Agent-host operation. Release packages remain provider-neutral: they do not contain or generate a default provider, model, endpoint, profile, or credential, and they never borrow the host conversation model. An operator binds model configuration in an explicit external Workspace and completes a live doctor before LLM-required operations proceed. Deterministic non-LLM operations remain available while configuration is incomplete. Existing human-maintained configuration is preserved across install, upgrade, repair, and Agent-host restart.
+
 ## Evidence Basis
 
 This milestone order reflects a reviewed comparison with adjacent mature open-source systems rather than copying another project's product boundary:

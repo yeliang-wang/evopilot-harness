@@ -532,11 +532,11 @@ Accepted source inputs:
 | `--no-llm-advisor` | Disable Advisor and use deterministic auto-match only. |
 | `--apply-llm-advisor` | Use a high-confidence Advisor recommendation for draft target selection. |
 | `--llm-models-file <file>` | CodeBuddy-style model file. Default: `./models.json`. |
-| `--llm-profile <id>` | Select a model entry by `id`, `name`, or `modelName`. Default: GLM profile. |
-| `--llm-provider-preset glm` | Override provider preset. Built-in fallback is EvoPilot GLM: provider `zhipu`, model `glm-5.1`, base URL `https://open.bigmodel.cn/api/coding/paas/v4`. |
+| `--llm-profile <id>` | Explicitly select a model entry by `id`, `name`, or `modelName`. Without a selection, the first user-configured profile is used; there is no Release fallback. |
+| `--llm-provider-preset <id>` | Classify an explicitly configured provider. It never supplies a model or endpoint. |
 | `--llm-base-url <url>` | Override OpenAI-compatible chat completions base URL. |
 | `--llm-model <id>` | Override model name for the Advisor. |
-| `--llm-api-key-env <env>` | Environment variable that holds the API key when `models.json` does not hold one. Default: `EVOPILOT_HARNESS_LLM_API_KEY`. |
+| `--llm-api-key-env <env>` | Explicit environment variable holding the API key. There is no default credential environment variable. |
 
 JSON schema:
 
@@ -552,13 +552,13 @@ Generated drafts include `draft.template.definitionQuality`. The default objecti
 
 ## LLM Models And Advisor
 
-`evopilot-harness` reads EvoPilot GLM from a local CodeBuddy-style `models.json`. The file is manually maintained by an operator and ignored by Git. The CLI does not create, update, import, or publish model configuration. The format matches CodeBuddy, but the content should contain only the GLM used by EvoPilot.
+`evopilot-harness` reads an operator-selected OpenAI-compatible profile from an external Workspace `models.json`. The Release contains no default provider, model, endpoint, profile, or credential. The file is manually maintained, ignored by Git, and never published.
 
 Inspect selected model metadata without printing API keys:
 
 ```bash
 node src/index.mjs llm models --json
-node src/index.mjs llm models --llm-models-file /path/to/models.json --llm-profile glm-5.1 --json
+node src/index.mjs llm models --llm-models-file /path/to/models.json --llm-profile operator-model --json
 ```
 
 Expected `models.json` shape:
@@ -567,11 +567,12 @@ Expected `models.json` shape:
 {
   "models": [
     {
-      "id": "glm-5.1",
-      "name": "EvoPilot GLM",
-      "vendor": "zhipu",
-      "apiKey": "<manual-local-api-key>",
-      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "id": "operator-model",
+      "name": "Operator-selected model",
+      "vendor": "openai-compatible",
+      "apiKeyEnv": "MY_LLM_API_KEY",
+      "url": "https://provider.example/v1",
+      "modelName": "operator-model",
       "supportsToolCall": true,
       "supportsReasoning": true
     }

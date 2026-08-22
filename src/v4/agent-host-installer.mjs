@@ -55,7 +55,9 @@ function workbuddyContext(options) {
   const manager = resolveManager(options["manager-root"]);
   const hostVersion = String(options["host-version"] ?? detectWorkbuddyVersion() ?? "unknown");
   const cliEntry = path.resolve(process.argv[1]);
-  return { host: "workbuddy", hostVersion, configRoot, packageJson, source, marketplace, expert, mcpPath, workspace, manager, cliEntry };
+  const runtimeRoot = path.resolve(String(options["runtime-root"] ?? path.join(configRoot, "binaries", "node", "workspace")));
+  const runtimePackageSpec = String(options["runtime-package-spec"] ?? `${packageJson.name}@${packageJson.version}`);
+  return { host: "workbuddy", hostVersion, configRoot, packageJson, source, marketplace, expert, mcpPath, workspace, manager, cliEntry, runtimeRoot, runtimePackageSpec };
 }
 
 function detectWorkbuddyVersion() {
@@ -79,6 +81,7 @@ function buildPlan(operation, context) {
     changes.push({ action: fs.existsSync(context.expert) ? "replace-owned-expert" : "create-owned-expert", path: context.expert });
     changes.push({ action: "merge-owned-mcp-entry", path: context.mcpPath });
     changes.push({ action: "register-through-workbuddy-expert-manager", path: context.marketplace });
+    if (fs.existsSync(path.join(context.runtimeRoot, "package.json"))) changes.push({ action: "synchronize-isolated-npm-runtime", path: context.runtimeRoot, package: context.runtimePackageSpec });
   }
   const stable = { schema: HOST_INSTALLER_SCHEMA, operation, host: context.host, package: `${context.packageJson.name}@${context.packageJson.version}`, workspace: context.workspace, changes };
   return { ...stable, host: { id: context.host, configRoot: context.configRoot }, planDigest: digest(stable), safety: { bootstrapReadOnly: true, previewBoundConfirmation: true, preservesUnrelatedConfiguration: true, workspaceRemovedOnUninstall: false }, bootstrap };
@@ -108,6 +111,7 @@ function applyPlan(operation, context, plan) {
     ownership.managedFiles = managedFileDigests(context.expert);
     fs.writeFileSync(path.join(context.expert, ".evopilot-harness-owner.json"), `${JSON.stringify(ownership, null, 2)}\n`);
     mergeMcp(context);
+    synchronizeRuntime(context);
     const managerEnv = { ...process.env, WORKBUDDY_CONFIG_DIR: context.configRoot };
     execFileSync("python3", [path.join(context.manager, "scripts", "validate_expert.py"), context.expert], { stdio: "pipe", env: managerEnv });
     execFileSync("python3", [path.join(context.manager, "scripts", "register_expert.py"), context.expert, "--marketplace-dir", context.marketplace, "--session-id", `evopilot-harness-${context.packageJson.version}`], { stdio: "pipe", env: managerEnv });
@@ -155,10 +159,23 @@ function inspectStatus(context) {
   const mcp = config.mcpServers?.[MCP_ID];
   const mcpOwned = mcp?.managedBy === "@evopilot/harness";
   const mcpVersionMatch = mcp?.package === `${context.packageJson.name}@${context.packageJson.version}`;
-  const healthy = expertExists && isOwned && ownedFilesMatch && registered && mcpOwned && mcpVersionMatch;
+  const mcpWorkspaceMatch = Array.isArray(mcp?.args) && mcp.args.includes(context.workspace);
+  const runtimeDetected = fs.existsSync(path.join(context.runtimeRoot, "package.json"));
+  const runtimePackage = path.join(context.runtimeRoot, "node_modules", "@evopilot", "harness", "package.json");
+  const runtimeVersion = fs.existsSync(runtimePackage) ? readJson(runtimePackage).version : null;
+  const runtimeVersionMatch = !runtimeDetected || runtimeVersion === context.packageJson.version;
+  const healthy = expertExists && isOwned && ownedFilesMatch && registered && mcpOwned && mcpVersionMatch && mcpWorkspaceMatch && runtimeVersionMatch;
   const llmInitialization = inspectModelReadiness(context.workspace, resolveWorkspaceModelsFile(context.workspace));
   const initializationStatus = healthy && llmInitialization.status === "CONFIGURED_AND_VERIFIED" ? "READY" : "ACTION_REQUIRED";
-  return { schema: HOST_INSTALLER_SCHEMA, operation: "status", status: healthy ? "INSTALLED" : expertExists || registered || mcp ? "DRIFTED" : "NOT_INSTALLED", initializationStatus, host: { id: context.host, version: context.hostVersion, configRoot: context.configRoot }, verification: { expertExists, owned: isOwned, ownedFilesMatch, registered, mcpConfigured: Boolean(mcp), mcpOwned, mcpVersionMatch, workspaceExists: fs.existsSync(context.workspace), expertManagerAvailable: Boolean(context.manager) }, llmInitialization, nextAction: healthy ? initializationStatus === "READY" ? "use-evopilot-harness-expert" : "complete-harness-llm-initialization" : expertExists || registered || mcp ? "run-agent-repair" : "run-agent-install" };
+  return { schema: HOST_INSTALLER_SCHEMA, operation: "status", status: healthy ? "INSTALLED" : expertExists || registered || mcp ? "DRIFTED" : "NOT_INSTALLED", initializationStatus, host: { id: context.host, version: context.hostVersion, configRoot: context.configRoot }, verification: { expertExists, owned: isOwned, ownedFilesMatch, registered, mcpConfigured: Boolean(mcp), mcpOwned, mcpVersionMatch, mcpWorkspaceMatch, workspaceExists: fs.existsSync(context.workspace), runtimeDetected, runtimeRoot: context.runtimeRoot, runtimeVersion, runtimeVersionMatch, expertManagerAvailable: Boolean(context.manager) }, llmInitialization, nextAction: healthy ? initializationStatus === "READY" ? "use-evopilot-harness-expert" : "complete-harness-llm-initialization" : expertExists || registered || mcp ? "run-agent-repair" : "run-agent-install" };
+}
+
+function synchronizeRuntime(context) {
+  const manifest = path.join(context.runtimeRoot, "package.json");
+  if (!fs.existsSync(manifest)) return;
+  const installed = path.join(context.runtimeRoot, "node_modules", "@evopilot", "harness", "package.json");
+  if (fs.existsSync(installed) && readJson(installed).version === context.packageJson.version) return;
+  execFileSync("npm", ["install", "--prefix", context.runtimeRoot, "--save-exact", "--ignore-scripts", context.runtimePackageSpec], { stdio: "pipe", env: process.env });
 }
 
 function backupManaged(context) {

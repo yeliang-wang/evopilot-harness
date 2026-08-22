@@ -8,24 +8,24 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 - An exact installed `@evopilot/harness` Release, a verified local release tarball, or a development checkout.
 - A compatible Agent host that can load local instructions and call a local stdio MCP server.
 - An external writable Workspace, normally `$HOME/.evopilot-harness`.
-- A manually maintained read-only model configuration when Advisor or Proposal Review requires GLM.
+- A manually maintained external model configuration when Advisor or Proposal Review requires an LLM. The Release supplies no default provider, model, endpoint, or credential.
 
 ## Install And Verify
 
 For a publicly available version:
 
 ```bash
-npm view @evopilot/harness@4.2.2 version
+npm view @evopilot/harness@4.2.4 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.2.2
+npm install --save-exact @evopilot/harness@4.2.4
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
-The Registry command must return `4.2.2`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
+The Registry command must return `4.2.4`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
-On the first `prepare_workspace`, Harness writes `models.example.json` into that external Workspace and points `config.yaml` at the external `models.json`. It never creates or overwrites `models.json` and never imports a credential. The Digital Expert reports LLM initialization separately from product installation. When readiness is incomplete, copy the example to `models.json`, replace the placeholder locally, and tell the Expert only that local editing is complete; do not paste the key into Agent chat. The Expert calls `initialize_model_configuration`, which performs safe inspection and a minimal live doctor and stores only a secret-free receipt. `CONFIGURED_AND_VERIFIED` is the completed state and is reused by later Sessions.
+On the first `prepare_workspace`, Harness writes only a provider-neutral empty `models.example.json` and points `config.yaml` at the external `models.json`. It never creates or overwrites `models.json`, imports a credential, or borrows the Agent host's conversation model. The operator creates the profile locally and may reference an explicitly named environment variable or use a `0600` file. The Expert calls `initialize_model_configuration`, which performs safe inspection and a minimal live doctor and stores only a secret-free receipt. `CONFIGURED_AND_VERIFIED` is the completed state and is reused by later Sessions.
 
 For release-candidate diagnosis outside an Agent host, the equivalent compatibility commands are:
 

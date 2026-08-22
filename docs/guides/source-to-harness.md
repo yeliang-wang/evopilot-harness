@@ -164,7 +164,7 @@ For example, a Java Spring Data Redis/Jedis wrapper should be classified as `red
 
 ## LLM Advisor
 
-After deterministic auto-match, the LLM Advisor can review whether the source project truly belongs to the matched Harness domain. It is optional by default and uses the same GLM as EvoPilot through a manually maintained CodeBuddy-style `models.json`; the CLI only reads this file and never writes model configuration.
+After deterministic auto-match, the LLM Advisor can review whether the source project truly belongs to the matched Harness domain. It is optional by default and uses only an explicitly configured, operator-owned external Workspace profile; the CLI never supplies a provider/model fallback or writes model credentials.
 
 Inspect the selected model without printing the API key:
 
@@ -178,11 +178,12 @@ node src/index.mjs llm models --json
 {
   "models": [
     {
-      "id": "glm-5.1",
-      "name": "EvoPilot GLM",
-      "vendor": "zhipu",
-      "apiKey": "<manual-local-api-key>",
-      "url": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "id": "operator-model",
+      "name": "Operator-selected model",
+      "vendor": "openai-compatible",
+      "apiKeyEnv": "MY_LLM_API_KEY",
+      "url": "https://provider.example/v1",
+      "modelName": "operator-model",
       "supportsToolCall": true,
       "supportsReasoning": true
     }
