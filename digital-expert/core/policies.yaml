@@ -15,6 +15,12 @@ compatibility:
   agentProtocol: exact
   engineApi: exact
   mismatchBeforeMutation: block
+hostInteraction:
+  governedHumanGateLevel: GOVERNED_HUMAN_GATE_COMPATIBLE
+  requiredCapabilities: [deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding]
+  unsupportedHost: fail-closed-before-governed-gate
+  hostAssertionAloneIsEvidence: false
+  collapsedContentSubstitute: deny
 sourceExecution:
   build: deny
   test: deny

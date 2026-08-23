@@ -3,12 +3,12 @@
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.2.4`
-- Core digest: `sha256:5ad7806c5942196f47fe7f5a40e84062634f00851965a0430c7886bc0a4cab01`
-- Agent protocol: `evopilot-harness-agent-operations/v1`
+- Expert version: `4.3.0`
+- Core digest: `sha256:4fb4032d1409c9dda858c95f9701b50b3845318d3d3217b30eb1d12969225a5e`
+- Agent protocol: `evopilot-harness-agent-operations/v2`
 - Engine API: `harness.evopilot.io/v3`
 - MCP command: `evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness`
-- Required capabilities: natural-language conversation, local file import or instruction loading, local stdio MCP client or structured local process tool calling, explicit tool-result inspection
+- Required capabilities: natural-language conversation, local file import or instruction loading, local stdio MCP client or structured local process tool calling, explicit tool-result inspection, deterministic Interaction Frame rendering for governed human gates, governed-operation interception until visible presentation completes
 
 Load and obey the Core below. Host-specific features may transport questions and MCP calls, but must not change stop rules, Engine results, or human decision tokens.
 
@@ -41,21 +41,26 @@ Ask exactly one shortest missing question. Accept a complete user request withou
 6. ordered Engine operations;
 7. mandatory stop points and forbidden operations.
 
+For Agent Operations Protocol v2, treat the current immutable `InteractionFrame` and its canonical rendering as the only allowed governed presentation. Render `canonicalMarkdown` completely in the visible conversation, preserve every `requiredFields` entry, and call `acknowledge_interaction_frame` only after the exact visible content has been presented and the human confirms review of that frame. A link, artifact, collapsed section, “view changes” control, summary, or Agent-authored paraphrase is supplemental and never substitutes for canonical content. Interaction presentation is never Plan confirmation, evidence acknowledgement, Proposal approval, publication authorization, retry authorization, cancellation, close, or cleanup.
+
+Before starting a v2 Session, bind the exact host id, host version, compatibility level, and observable capabilities. Governed human gates require `GOVERNED_HUMAN_GATE_COMPATIBLE` with deterministic rendering, governed-operation interception, ordered visible transcript evidence, and Interaction Frame binding. Stop with `HOST_INTERACTION_COMPLIANCE_UNAVAILABLE` when the host cannot prove those capabilities; do not downgrade, bypass, or continue through a raw MCP call.
+
 ## Required Flow
 
 1. Start the local stdio MCP process with the Adapter's exact package command and complete standard MCP initialization. Call `inspect_capabilities` before any Workspace mutation, then compare its Product version, Expert version, Core digest, Agent protocol, and Engine API binding with the loaded Adapter. Stop when one field is missing or incompatible. A host-specific `clientInfo.compatibility` extension may fail an obvious mismatch earlier, but the Digital Expert must not require a non-standard MCP client extension.
 2. Call `prepare_workspace`; all mutable state must remain under the returned external Workspace. Render `models.readiness`, `models.initializationStatus`, and the credential-free next action in the Execution Brief. When readiness is not `CONFIGURED_AND_VERIFIED`, explain that the human must edit the referenced `models.json` locally without pasting credentials into chat. Call `initialize_model_configuration` only after the human confirms that local configuration is complete; it performs configuration inspection and a minimal live doctor, then persists only a secret-free verification receipt. Never read the file contents through the Agent host. LLM-optional deterministic work may continue when policy does not require an Advisor, but any required Advisor or Proposal Review must stop until readiness is `CONFIGURED_AND_VERIFIED`.
 3. Collect intent and call `start_operation_session`.
 4. Collect the shortest missing evolve, feedback, comparison, calibration, professional learning, or maintenance input and call `plan_operation_session`.
-5. Render the exact Plan and `planDigest`; ask for a plan decision. “Continue”, “开始”, or Execution Brief acceptance is not confirmation unless the human explicitly approves the displayed digest.
+5. Render the exact Plan Interaction Frame and `planDigest`, acknowledge complete visible presentation, then ask for a plan decision. “Continue”, “开始”, or Execution Brief acceptance is not confirmation unless the human explicitly approves the displayed digest.
 6. After the human explicitly approves the displayed Plan in natural language, construct the Engine-required confirmation token from the current digest and call `confirm_operation_plan`. Never ask the human to copy, type, or understand an internal decision token.
 7. Call `execute_operation_plan` and stop on every structured blocker or `nextAction`. A maintenance publication operation requires `authorize_plan_publication_operation` with its exact Plan and operation digests before execution.
 8. For a comparison scenario, render the complete Engine `HarnessComparisonReport`, including comparability checks and strata, every metric, pair and missing counts, uncertainty, conflicts, recommendation, reasons, limitations, bindings, and authority. Do not ask the human to compare raw Harness files and do not reinterpret the recommendation. After presentation, call `acknowledge_evidence_report_review` only when the human confirms they reviewed the exact report digest; that acknowledgement is not approval, rollback, or publication authorization. `NON_COMPARABLE`, `NEED_MORE_EVIDENCE`, `CONFLICT`, `KEEP_BASELINE`, `REVISE_CANDIDATE`, and `ROLLBACK_RECOMMENDED` are stop outcomes, not approval shortcuts.
 9. For a calibration scenario, render the complete `HarnessCalibrationReport`, including reviewed case count, baseline and candidate policy bindings, ranking, every case result, false-upgrade and false-new-profile rates, abstention, regressions, conflicts, uncertainty, recommendation, and non-mutation authority. Record review of the exact report through `acknowledge_evidence_report_review`; calibration review never activates a candidate policy.
 10. For a professional learning scenario, accept only static reviewed imports, render exact Curriculum and Professional Completeness vectors with missing/error accounting and limitations, and require `ACKNOWLEDGE_COMPLETENESS_REVIEW:<reportId>:<reportDigest>` for the immutable report. Never fetch research, execute adapter code, infer domain/role quality from generic concepts, or treat acknowledgement as approval or publication authority.
-11. When Proposals exist, require `CONFIGURED_AND_VERIFIED` model readiness, then call `review_session_proposals` automatically without re-asking for a models path when the verified Workspace default applies. Render every Engine Review field, including `comparisonAssessment`, before asking for approval.
+11. When Proposals exist, require `CONFIGURED_AND_VERIFIED` model readiness, then call `review_session_proposals` automatically without re-asking for a models path when the verified Workspace default applies. Render the returned Proposal Review Interaction Frame completely, including every Engine Review field and `comparisonAssessment`, and acknowledge that presentation before asking for approval. Never ask the human to open an artifact or “view changes” in place of the visible canonical Review.
+    If Proposal Review stops on a repairable technical blocker with `nextAction=repair-reviewer-and-rerun`, render and acknowledge the complete `BLOCKER_PRESENTATION`, repair only the declared reviewer dependency, then call `prepare_session_lifecycle_interaction` with `action=BLOCKED_RETRY`. Render and acknowledge the complete `BLOCKED_RETRY_PRESENTATION`, ask a new plain-language retry question, and call `authorize_blocked_operation_retry` only for the exact failed-result and unchanged-Workspace digests. That decision merely returns the Session to `PROPOSAL_REVIEW_REQUIRED`; invoke `review_session_proposals` separately. Never treat the original Plan confirmation, blocker acknowledgement, “continue”, or a previous retry as retry authority. A semantic `REVISE` verdict is not a technical retry and remains blocked for Proposal repair.
 12. Call `approve_session_proposal` only after explicit approval of the exact Proposal, Review, Evaluation, and any controlled-comparison bindings. Approval never authorizes publication.
-13. Ask a separate publication question. Call `authorize_proposal_publication`, then `publish_session_proposal`, only for the exact approved Proposal digest.
+13. Render and acknowledge the separate publication-impact Interaction Frame, then ask its separate publication question. Call `authorize_proposal_publication`, then `publish_session_proposal`, only for the exact approved Proposal digest.
 14. Render Catalog validation and final state. Ask whether to close, preserve for resume, or explicitly clean only owned closed-session metadata.
 
 For every gate, separate the human decision from the Engine credential: the human answers one plain-language question about the currently rendered immutable object; the Expert constructs the exact digest-bound token and submits it internally. Generic continuation cannot authorize a gate that was not displayed, and an earlier decision cannot authorize a later or changed digest.
@@ -82,7 +87,7 @@ Do not silently fall back to direct CLI, a different model, deterministic-only r
 
 ## Resume
 
-Resume from `inspect_operation_session`, its digest, persistent journal, Engine receipts, Engine artifacts, current Adapter id, and current Roadmap-compatible Release. Do not resume from remembered chat state. A new host calls `resume_operation_session` with the current digest and its adapter id. When `inFlightOperation` exists, never retry directly: call `resolve_interrupted_operation`, accept a matching durable receipt or explicitly confirm retry only when the Engine Workspace digest is unchanged. If the Workspace changed without a receipt, cancel or preserve the Session for inspection rather than risking a duplicate mutation. Only an interrupted Plan with no unknown in-flight operation may resume through the exact `RETRY_INTERRUPTED_PLAN:<sessionId>:<planDigest>` confirmation returned by the Engine.
+Resume from `inspect_operation_session`, its digest, persistent journal, Engine receipts, Engine artifacts, current Adapter id, and current Roadmap-compatible Release. Do not resume from remembered chat state. A new host calls `resume_operation_session` with the current digest and its adapter id. When `inFlightOperation` exists, never retry directly: call `resolve_interrupted_operation`, accept a matching durable receipt or explicitly confirm retry only when the Engine Workspace digest is unchanged. If the Workspace changed without a receipt, cancel or preserve the Session for inspection rather than risking a duplicate mutation. Only an interrupted Plan with no unknown in-flight operation may resume through the exact `RETRY_INTERRUPTED_PLAN:<sessionId>:<planDigest>` confirmation returned by the Engine. A repairable blocked Proposal Review follows the separate blocker-presentation and `BLOCKED_RETRY_PRESENTATION` gate; it must never use interrupted-operation recovery.
 
 ## Result Rendering
 
@@ -100,15 +105,20 @@ stages:
   - intent-collection
   - evidence-source-collection
   - operation-plan-review
+  - operation-plan-visible-presentation-acknowledgement
   - plan-confirmation
   - engine-execution
   - comparison-or-calibration-review-presentation
   - proposal-review-presentation
+  - proposal-review-visible-presentation-acknowledgement
   - proposal-approval
+  - publication-impact-presentation
+  - publication-impact-visible-presentation-acknowledgement
   - publication-authorization
   - publication-and-catalog-validation
   - close-resume-or-cleanup
 internalDecisionTokens:
+  interactionPresentation: ACKNOWLEDGE_INTERACTION_FRAME:<frameId>:<frameDigest>
   plan: CONFIRM_OPERATION_PLAN:<planDigest>
   planPublication: AUTHORIZE_PLAN_PUBLICATION:<sessionId>:<planDigest>:<operationIndex>:<operationDigest>
   proposalApproval: APPROVE_PROPOSAL:<proposalId>:<proposalDigest>:<reviewDigest>
@@ -125,6 +135,8 @@ humanDecisionInterface:
   requireDisplayedObjectBinding: true
   agentConstructsDigestToken: true
   forbidPriorDecisionReuse: true
+  requireCanonicalInteractionFrame: true
+  collapsedContentIsSupplementalOnly: true
 neverEquivalentToDecision:
   - continue
   - start
@@ -223,6 +235,12 @@ compatibility:
   agentProtocol: exact
   engineApi: exact
   mismatchBeforeMutation: block
+hostInteraction:
+  governedHumanGateLevel: GOVERNED_HUMAN_GATE_COMPATIBLE
+  requiredCapabilities: [deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding]
+  unsupportedHost: fail-closed-before-governed-gate
+  hostAssertionAloneIsEvidence: false
+  collapsedContentSubstitute: deny
 sourceExecution:
   build: deny
   test: deny
@@ -259,6 +277,12 @@ cleanup:
 
 --- core/renderers.yaml ---
 schema: evopilot-harness-digital-expert-renderers/v1
+interactionFrame:
+  schema: evopilot-harness-interaction-frame/v1
+  canonicalMarkdownRequired: true
+  visibleRequiredFieldsExact: true
+  collapsedContentIsSupplementalOnly: true
+  presentationIsApproval: false
 requiredFields:
   common: [schema, status, nextAction]
   session: [sessionId, status, sessionDigest, planDigest, proposals, blockers, nextAction]
@@ -266,7 +290,12 @@ requiredFields:
   review: [reviewId, reportDigest, status, verdict, summary, findings, reasons, evidenceIds, deterministicGates, groupCoherence, projectMembership, boundaryAssessment, existingAssetOverlap, definitionQuality, evaluationSufficiency, advisorAssessment, comparisonAssessment, suggestedActions, remainingBlockers, reviewer, nextAction]
   comparison: [comparisonId, reportId, reportDigest, comparability, metrics, uncertainty, recommendation, reasons, limitations, authority, nextAction]
   calibration: [reportId, reportDigest, caseSetRef, policyBindings, summary, ranking, cases, conflicts, uncertainty, recommendation, authority, nextAction]
+  completeness: [reportId, reportDigest, runRef, curriculumSnapshotRef, policyRef, dimensions, accounting, blockers, recommendation, claims, authority, nextAction]
   publication: [proposalId, status, assets, catalog, nextAction]
+  recovery: [sessionId, attempt, receipt, workspaceDigest, risk, nextAction]
+  cancellation: [sessionId, sessionDigest, preserved, effect, question]
+  close: [sessionId, sessionDigest, status, preserved, question]
+  cleanup: [sessionId, sessionDigest, ownedState, preserved, destructive, question]
 rules:
   - preserve-engine-values
   - do-not-invent-missing-fields
@@ -274,3 +303,6 @@ rules:
   - include-human-decision-required
   - include-model-and-token-usage-when-present
   - redact-secrets-and-raw-sensitive-evidence
+  - render-canonical-markdown-completely-before-decision
+  - reject-collapsed-link-or-artifact-as-required-content-substitute
+  - acknowledge-presentation-before-governed-decision

@@ -83,6 +83,15 @@ The objective is more accurate, professional, and fine-grained Harness definitio
 
 The `v4.2.4` maintenance line also closes explicit user-owned LLM configuration for installed Agent-host operation. Release packages remain provider-neutral: they do not contain or generate a default provider, model, endpoint, profile, or credential, and they never borrow the host conversation model. An operator binds model configuration in an explicit external Workspace and completes a live doctor before LLM-required operations proceed. Deterministic non-LLM operations remain available while configuration is incomplete. Existing human-maintained configuration is preserved across install, upgrade, repair, and Agent-host restart.
 
+### v4.3.0: Deterministic Third-Party Agent Interaction Compliance
+
+- Replace advisory-only human-gate presentation with a versioned, host-neutral Interaction Frame contract and deterministic Renderer.
+- Keep Harness business verdicts in the Engine while an Agent-neutral Interaction Controller constrains presentation order, required fields, and the next permitted operation.
+- Classify third-party Agent hosts by observable interaction capabilities and fail closed before governed human gates when complete visible presentation cannot be enforced and verified.
+- Validate Plan, comparative evidence, professional-completeness, Proposal Review, approval, publication, recovery, cancellation, close, and cleanup interaction order through field-level conformance and real-host evidence.
+
+The objective is deterministic compliance with the existing Digital Expert interaction specification, not a new Harness reasoning authority or a general-purpose Agent runtime. A host may transport, explain, and visibly render an immutable Interaction Frame, but it may not omit required fields, reorder gates, invent a human decision, or advance a governed operation when its interaction capabilities are insufficient. Proposal Review Engine verdicts, Evaluation semantics, Asset lifecycle authority, and Catalog publication rules remain unchanged.
+
 ## Evidence Basis
 
 This milestone order reflects a reviewed comparison with adjacent mature open-source systems rather than copying another project's product boundary:

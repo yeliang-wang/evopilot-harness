@@ -39,6 +39,7 @@ stateDiagram-v2
   INTERRUPTED --> CANCELLED: outcome remains uncertain
   PROPOSAL_REVIEW_REQUIRED --> HUMAN_APPROVAL_REQUIRED: Engine Review ready
   PROPOSAL_REVIEW_REQUIRED --> BLOCKED: review/evidence blocker
+  BLOCKED --> PROPOSAL_REVIEW_REQUIRED: repairable review retry explicitly authorized
   HUMAN_APPROVAL_REQUIRED --> PUBLICATION_DECISION_REQUIRED: all Proposals approved
   PUBLICATION_DECISION_REQUIRED --> PUBLICATION_AUTHORIZED: separate decisions recorded
   PUBLICATION_AUTHORIZED --> COMPLETED: publish + Catalog validate
@@ -57,6 +58,7 @@ stateDiagram-v2
 - An evidence report reference binds report type, id, digest, rendered deterministic fields, review status, reviewer value, and review time. Acknowledgement revalidates the persisted report before changing Session state.
 - Proposal approval binds Engine `reviewInputDigest`, Review `reportDigest`, Evaluation review, confirmation, and reviewer value.
 - Publication authorization binds the full approved Proposal digest after approval.
+- A repairable blocked Proposal Review retry binds the failed Review result digest, unchanged external Workspace digest, complete blocker and retry-frame presentation receipts, and a separate human decision. It grants retry only; it grants no Proposal approval or publication authority.
 - Publication rechecks the authorization and current Proposal before writing.
 
 Natural-language continuation is never a gate token. The Digital Expert asks one plain-language decision about the immutable object currently presented, then constructs and submits the exact token internally. It never asks a human to transcribe protocol values or reuses a decision for a later digest.
@@ -76,6 +78,8 @@ Recovery is fail-closed:
 When no unknown in-flight operation exists, the human may resume the remaining confirmed Plan with the exact `RETRY_INTERRUPTED_PLAN:<sessionId>:<planDigest>` token. This plan-level token never reconciles or authorizes repetition of an uncertain Engine mutation.
 
 An Agent may not convert process restart, “continue”, or a previous chat statement into retry authority.
+
+A `BLOCKED` Proposal Review with `nextAction=repair-reviewer-and-rerun` uses a distinct fail-closed path. The Agent must first complete `BLOCKER_PRESENTATION`, repair the declared reviewer dependency, prepare and completely display `BLOCKED_RETRY_PRESENTATION`, and obtain a new digest-bound decision through `authorize_blocked_operation_retry`. Only then does the Session return to `PROPOSAL_REVIEW_REQUIRED`; `review_session_proposals` remains a separate call. Semantic `REVISE` outcomes are not eligible for this technical retry path.
 
 ## Cleanup
 

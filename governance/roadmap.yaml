@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-21",
+  "updatedAt": "2026-08-22",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -24,7 +24,7 @@
   },
   "versionPolicy": {
     "publishedBaseline": "4.2.0",
-    "currentWorkingVersion": "4.2.4",
+    "currentWorkingVersion": "4.3.0",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
@@ -169,6 +169,28 @@
       ],
       "signals": ["professional asset learning", "asset curriculum", "research evidence adapter", "long-horizon asset quality", "domain role inference", "专业资产学习", "资产课程", "研究证据", "长期资产质量", "领域角色推理"],
       "exclusions": ["embedded model trainer", "unrestricted internet authority", "automatic publication", "hard-coded domain expansion"]
+    },
+    {
+      "id": "evopilot-harness-4.3-deterministic-agent-interaction-compliance",
+      "status": "PLANNED",
+      "targetVersion": "4.3.0",
+      "releaseLine": "4.3.x",
+      "objective": "Make every governed Digital Expert human gate deterministic, ordered, field-complete, observable, and fail-closed across certified third-party Agent hosts without moving Harness business authority into the host.",
+      "outcomes": [
+        "versioned host-neutral Interaction Frame contract and deterministic Renderer for every governed human gate",
+        "Agent-neutral Interaction Controller that constrains required presentation fields, stage order, and permitted next operations",
+        "host capability negotiation with explicit governed-gate compatibility levels and fail-closed unsupported-host behavior",
+        "field-level transcript conformance plus real WorkBuddy Desktop evidence for visible Plan, Review, approval, and publication separation"
+      ],
+      "acceptance": [
+        "a governed decision tool cannot advance before the complete immutable Interaction Frame for that gate is rendered in the required order",
+        "missing fields, collapsed substitutes, stale digests, reordered gates, and unobservable host presentation fail closed",
+        "all generated adapters retain one Core while host profiles add transport mechanics only and cannot change Harness semantics",
+        "Proposal Review Engine verdicts, Evaluation semantics, Asset lifecycle authority, model configuration, source integrity, and Catalog publication rules remain unchanged",
+        "real WorkBuddy production simulation verifies visible frame content and order rather than inferring success from Session status or tool completion"
+      ],
+      "signals": ["deterministic agent interaction compliance", "interaction frame", "interaction controller", "governed human gate compatible", "third-party agent interaction", "workbuddy interaction compliance", "确定性 agent 交互合规", "交互帧", "交互控制器", "第三方 agent 交互", "workbuddy 交互合规"],
+      "exclusions": ["Proposal Review Engine semantic changes", "general-purpose Agent runtime", "automatic approval", "automatic publication", "source-project execution", "EvoPilot Goal Loop", "cloud or remote Agent service"]
     }
   ],
   "boundaryRules": [

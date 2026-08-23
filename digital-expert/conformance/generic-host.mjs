@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
+import crypto from "node:crypto";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const args = parseArgs(process.argv.slice(2));
@@ -41,19 +42,22 @@ try {
     const prepared = structured(await request("tools/call", { name: "prepare_workspace", arguments: { initialize: true } }));
     const adapterId = args["adapter-id"] ?? "generic-agent-host";
     const intent = args.goal ?? "Produce or evolve a reusable Harness from static evidence";
-    const started = structured(await request("tools/call", { name: "start_operation_session", arguments: { intent, adapterId } }));
+    const hostInteraction = { id: "generic-agent-host", version: "1.0.0", level: "GOVERNED_HUMAN_GATE_COMPATIBLE", capabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"] };
+    const started = structured(await request("tools/call", { name: "start_operation_session", arguments: { intent, adapterId, hostInteraction } }));
     const planned = structured(await request("tools/call", { name: "plan_operation_session", arguments: { sessionId: started.sessionId, expectedSessionDigest: started.sessionDigest, scenario: "evolve", goal: intent, sources: { sourceProjects: [path.resolve(args.source)], advisor: "off" } } }));
-    const confirmed = structured(await request("tools/call", { name: "confirm_operation_plan", arguments: { sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedPlanDigest: planned.planDigest, confirmedBy: "generic-host-conformance", confirmation: `CONFIRM_OPERATION_PLAN:${planned.planDigest}` } }));
+    const frame = planned.interaction.currentFrame;
+    const presented = structured(await request("tools/call", { name: "acknowledge_interaction_frame", arguments: { sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedFrameDigest: frame.frameDigest, presentedFields: frame.requiredFields, visibleTranscriptDigest: sha256(frame.canonicalMarkdown), confirmedBy: "generic-host-conformance", confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}` } }));
+    const confirmed = structured(await request("tools/call", { name: "confirm_operation_plan", arguments: { sessionId: presented.sessionId, expectedSessionDigest: presented.sessionDigest, expectedPlanDigest: presented.planDigest, confirmedBy: "generic-host-conformance", confirmation: `CONFIRM_OPERATION_PLAN:${presented.planDigest}` } }));
     const produced = structured(await request("tools/call", { name: "execute_operation_plan", arguments: { sessionId: confirmed.sessionId, expectedSessionDigest: confirmed.sessionDigest, expectedPlanDigest: confirmed.planDigest } }));
     workflow = {
       statuses: [prepared.status, started.status, planned.status, confirmed.status, produced.status],
       plan: { scenario: planned.plan.scenario, operations: planned.plan.operations.map((item) => item.operation), stopPoints: planned.plan.stopPoints },
       engineCalls: produced.operations.filter((item) => item.phase === "plan" && item.planCompleted === true).map((item) => item.operation),
-      renderedDecision: { status: produced.status, nextAction: produced.nextAction, proposalCount: produced.proposals.length },
+      renderedDecision: { status: produced.status, nextAction: produced.nextAction, proposalCount: produced.proposals.length, frameStage: frame.stage, requiredFields: frame.requiredFields, canonicalMarkdownDigest: sha256(frame.canonicalMarkdown), presentationReceiptDigest: presented.interaction.presentationReceipts.at(-1).receiptDigest },
       session: { sessionId: produced.sessionId, sessionDigest: produced.sessionDigest }
     };
   }
-  const requiredTools = ["start_operation_session", "plan_operation_session", "confirm_operation_plan", "execute_operation_plan", "authorize_plan_publication_operation", "resolve_interrupted_operation", "acknowledge_evidence_report_review", "review_session_proposals", "approve_session_proposal", "authorize_proposal_publication", "publish_session_proposal"];
+  const requiredTools = ["start_operation_session", "plan_operation_session", "acknowledge_interaction_frame", "confirm_operation_plan", "execute_operation_plan", "authorize_plan_publication_operation", "prepare_session_lifecycle_interaction", "resolve_interrupted_operation", "acknowledge_evidence_report_review", "review_session_proposals", "approve_session_proposal", "authorize_proposal_publication", "publish_session_proposal"];
   const missingTools = requiredTools.filter((name) => !listed.tools.some((tool) => tool.name === name));
   const workflowPassed = !workflow || workflow.renderedDecision.status === "PROPOSAL_REVIEW_REQUIRED";
   const adapterId = args["adapter-id"] ?? "generic";
@@ -99,6 +103,10 @@ function structured(result) {
   return result.structuredContent;
 }
 
+function sha256(value) {
+  return `sha256:${crypto.createHash("sha256").update(String(value)).digest("hex")}`;
+}
+
 function parseArgs(values) {
   const result = {};
   for (let index = 0; index < values.length; index += 1) {
@@ -115,7 +123,7 @@ function clientCompatibility() {
     productVersion: packageJson.version,
     expertVersion: lock.expertVersion,
     coreDigest: lock.coreDigest,
-    agentProtocolVersion: "evopilot-harness-agent-operations/v1",
+    agentProtocolVersion: "evopilot-harness-agent-operations/v2",
     engineApiVersion: "harness.evopilot.io/v3"
   };
 }

@@ -13,8 +13,9 @@ import { requireWorkspace } from "../../v3/workspace.mjs";
 import { engineOperationDefinition, inspectEngineOperationReceipt, invokeEngineOperation, validateEngineOperationRequest } from "../engine-adapter.mjs";
 import { AGENT_SESSION_SCHEMA, OPERATION_PLAN_SCHEMA, assertExternalWorkspace, assertOperationCompatibility, assertWorkspaceTreeConfined, operationCompatibility, resolveWorkspacePath } from "../constants.mjs";
 import { assertNoSensitiveMaterial } from "../security/sensitive.mjs";
+import { createInteractionFrame, createPresentationReceipt, requirePresentedFrame } from "../interaction/controller.mjs";
 
-const sessionSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/agent-operation-session-v1.schema.json"), "utf8"));
+const sessionSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/agent-operation-session-v2.schema.json"), "utf8"));
 const planSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/operation-plan-v1.schema.json"), "utf8"));
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validateSessionSchema = ajv.compile(sessionSchema);
@@ -22,7 +23,7 @@ const validatePlanSchema = ajv.compile(planSchema);
 
 const TERMINAL = new Set(["COMPLETED", "BLOCKED", "CANCELLED", "CLOSED"]);
 
-export function createAgentSession({ home, intent, adapterId, compatibility = operationCompatibility(), now = new Date().toISOString() }) {
+export function createAgentSession({ home, intent, adapterId, hostInteraction, compatibility = operationCompatibility(), now = new Date().toISOString() }) {
   const workspace = assertExternalWorkspace(home);
   requireWorkspace(workspace);
   assertWorkspaceTreeConfined(workspace);
@@ -31,6 +32,7 @@ export function createAgentSession({ home, intent, adapterId, compatibility = op
   assertNoSensitiveMaterial(text, "intent");
   const adapter = safeAdapter(adapterId);
   const compatibilityBinding = assertOperationCompatibility(compatibility);
+  const host = normalizeHostInteraction(hostInteraction, adapter);
   const sessionId = safeId(`session-${Date.now().toString(36)}-${randomId()}`);
   const session = {
     schema: AGENT_SESSION_SCHEMA,
@@ -52,6 +54,7 @@ export function createAgentSession({ home, intent, adapterId, compatibility = op
     pendingOperationAuthorization: null,
     proposals: [],
     evidenceReports: [],
+    interaction: { protocolVersion: compatibilityBinding.agentProtocolVersion, host, currentFrame: null, presentationReceipts: [] },
     sequence: 0,
     nextAction: "create-operation-plan"
   };
@@ -70,6 +73,14 @@ export function createSessionPlan({ home, sessionId, expectedSessionDigest, scen
   session.pendingOperationAuthorization = null;
   session.proposals = [];
   session.evidenceReports = [];
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: "PLAN_PRESENTATION",
+    subject: { type: "OPERATION_PLAN", id: session.sessionId, digest: session.planDigest, bindings: { sessionDigest: expectedSessionDigest } },
+    renderModel: { ...plan, planDigest: session.planDigest },
+    decision: { kind: "PLAN_CONFIRMATION", question: "Do you approve this exact Operation Plan?" },
+    allowedNextOperations: ["acknowledge_interaction_frame"]
+  });
   session.status = "PLAN_REVIEW_REQUIRED";
   session.nextAction = "present-plan-and-request-explicit-confirmation";
   return persist(session, { event: "PLAN_CREATED", actor: session.adapter.current, details: { planDigest: session.planDigest, scenario } });
@@ -77,6 +88,7 @@ export function createSessionPlan({ home, sessionId, expectedSessionDigest, scen
 
 export function confirmSessionPlan({ home, sessionId, expectedSessionDigest, expectedPlanDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["PLAN_REVIEW_REQUIRED"]);
+  requirePresentedFrame(session, "PLAN_PRESENTATION");
   if (session.planDigest !== expectedPlanDigest) throw sessionError("PLAN_DIGEST_MISMATCH", "The reviewed Operation Plan is stale.", "reload-and-review-operation-plan");
   const expected = `CONFIRM_OPERATION_PLAN:${session.planDigest}`;
   if (confirmation !== expected || !String(confirmedBy ?? "").trim()) {
@@ -109,6 +121,14 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
       session.pendingOperationAuthorization = { operationIndex: index, operation: planned.operation, operationDigest, inputDigest: digest(planned.input), planDigest: session.planDigest };
       session.status = "OPERATION_AUTHORIZATION_REQUIRED";
       session.nextAction = "present-publication-operation-and-request-explicit-authorization";
+      session.interaction.currentFrame = createInteractionFrame({
+        session,
+        stage: "OPERATION_AUTHORIZATION_PRESENTATION",
+        subject: { type: "MAINTENANCE_PUBLICATION_OPERATION", id: `${session.sessionId}:${index}`, digest: operationDigest, bindings: { planDigest: session.planDigest } },
+        renderModel: { ...session.pendingOperationAuthorization, impact: "This authorized maintenance operation may publish or mutate governed Harness lifecycle state." },
+        decision: { kind: "MAINTENANCE_PUBLICATION_AUTHORIZATION", question: "Do you authorize this exact publication operation?" },
+        allowedNextOperations: ["acknowledge_interaction_frame"]
+      });
       return persist(session, { event: "PLAN_PUBLICATION_AUTHORIZATION_REQUIRED", actor: "operation-server", details: session.pendingOperationAuthorization });
     }
 
@@ -157,12 +177,14 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
       session.status = "BLOCKED";
       session.blockers = result.result?.blockers ?? [result.result?.error ?? `operation-status:${result.status}`];
       session.nextAction = result.nextAction;
+      bindBlockerFrame(session, { reasons: result.result?.reasons ?? session.blockers, evidenceRefs: result.result?.evidenceRefs ?? [], now });
       return persist(session, { event: "PLAN_EXECUTION_BLOCKED", actor: "deterministic-engine", details: { operation: planned.operation, nextAction: result.nextAction } });
     }
   }
   if (session.evidenceReports?.some((item) => item.reviewed !== true)) {
     session.status = "EVIDENCE_REVIEW_REQUIRED";
     session.nextAction = nextEvidenceReviewAction(session);
+    bindCurrentEvidenceFrame(session, now);
   } else if (session.proposals.length) {
     session.status = "PROPOSAL_REVIEW_REQUIRED";
     session.nextAction = "run-engine-proposal-review";
@@ -175,6 +197,7 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
 
 export function authorizePlanPublicationOperation({ home, sessionId, expectedSessionDigest, expectedPlanDigest, operationIndex, expectedOperationDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["OPERATION_AUTHORIZATION_REQUIRED"]);
+  requirePresentedFrame(session, "OPERATION_AUTHORIZATION_PRESENTATION");
   if (session.planDigest !== expectedPlanDigest) throw sessionError("PLAN_DIGEST_MISMATCH", "The confirmed Operation Plan is stale.", "reload-and-review-operation-plan");
   const pending = session.pendingOperationAuthorization;
   if (!pending || pending.operationIndex !== operationIndex || pending.operationDigest !== expectedOperationDigest || pending.planDigest !== expectedPlanDigest) {
@@ -196,6 +219,7 @@ export function authorizePlanPublicationOperation({ home, sessionId, expectedSes
 
 export async function resolveInterruptedOperation({ home, sessionId, expectedSessionDigest, expectedAttemptDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["INTERRUPTED"]);
+  requirePresentedFrame(session, "RECOVERY_PRESENTATION");
   const attempt = session.inFlightOperation;
   if (!attempt || attempt.attemptDigest !== expectedAttemptDigest) {
     throw sessionError("INTERRUPTED_ATTEMPT_DIGEST_MISMATCH", "The interrupted operation attempt is missing or stale.", "reload-interrupted-session");
@@ -253,8 +277,34 @@ export async function resolveInterruptedOperation({ home, sessionId, expectedSes
   return persist(session, { event: "INTERRUPTED_OPERATION_RECONCILED", actor: confirmedBy, details: { attemptDigest: expectedAttemptDigest, resolution: receipt ? "RECEIPT_ACCEPTED" : "UNCHANGED_RETRY_AUTHORIZED" } });
 }
 
+export function authorizeBlockedOperationRetry({ home, sessionId, expectedSessionDigest, expectedFailedResultDigest, expectedWorkspaceDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
+  const session = loadForMutation(home, sessionId, expectedSessionDigest, ["BLOCKED"]);
+  const { frame } = requirePresentedFrame(session, "BLOCKED_RETRY_PRESENTATION");
+  const failed = session.operations.at(-1);
+  if (!failed || failed.operation !== "proposal.review" || failed.status !== "BLOCKED" || failed.resultDigest !== expectedFailedResultDigest) {
+    throw sessionError("BLOCKED_OPERATION_DIGEST_MISMATCH", "The blocked Proposal Review result is missing or stale.", "reload-blocked-session");
+  }
+  if (frame.renderModel.failedResultDigest !== expectedFailedResultDigest || frame.renderModel.workspaceDigest !== expectedWorkspaceDigest) {
+    throw sessionError("BLOCKED_RETRY_FRAME_MISMATCH", "The presented blocked retry frame no longer matches the requested retry.", "reload-blocked-retry-frame");
+  }
+  const currentWorkspaceDigest = workspaceStateDigest(session.workspace.home);
+  if (currentWorkspaceDigest !== expectedWorkspaceDigest) {
+    throw sessionError("BLOCKED_RETRY_WORKSPACE_CHANGED", "The external Workspace changed after the retry frame was prepared.", "inspect-workspace-and-prepare-new-retry-frame");
+  }
+  const expected = `AUTHORIZE_BLOCKED_OPERATION_RETRY:${sessionId}:${expectedFailedResultDigest}:${expectedWorkspaceDigest}`;
+  if (confirmation !== expected || !String(confirmedBy ?? "").trim()) {
+    throw sessionError("EXPLICIT_BLOCKED_RETRY_REQUIRED", `Blocked operation retry authorization must equal ${expected} and include confirmedBy.`, "request-explicit-blocked-operation-retry");
+  }
+  session.humanDecisions.push(decision("BLOCKED_OPERATION_RETRY_AUTHORIZED", confirmedBy, confirmation, { operation: failed.operation, failedResultDigest: expectedFailedResultDigest, workspaceDigest: expectedWorkspaceDigest }, now));
+  session.status = "PROPOSAL_REVIEW_REQUIRED";
+  session.blockers = [];
+  session.nextAction = "run-engine-proposal-review";
+  return persist(session, { event: "BLOCKED_OPERATION_RETRY_AUTHORIZED", actor: confirmedBy, details: { operation: failed.operation, failedResultDigest: expectedFailedResultDigest, workspaceDigest: expectedWorkspaceDigest } });
+}
+
 export function acknowledgeSessionEvidenceReview({ home, sessionId, expectedSessionDigest, reportType, reportId, expectedReportDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["EVIDENCE_REVIEW_REQUIRED"]);
+  requirePresentedFrame(session, "EVIDENCE_REPORT_PRESENTATION");
   const type = String(reportType ?? "").toUpperCase();
   if (!["COMPARISON", "CALIBRATION", "COMPLETENESS"].includes(type)) throw sessionError("EVIDENCE_REPORT_TYPE_REQUIRED", "Report review type must be COMPARISON, CALIBRATION, or COMPLETENESS.", "choose-evidence-report-type");
   const report = session.evidenceReports.find((item) => item.type === type && item.reportId === reportId);
@@ -279,6 +329,7 @@ export function acknowledgeSessionEvidenceReview({ home, sessionId, expectedSess
   if (session.evidenceReports.some((item) => item.reviewed !== true)) {
     session.status = "EVIDENCE_REVIEW_REQUIRED";
     session.nextAction = nextEvidenceReviewAction(session);
+    bindCurrentEvidenceFrame(session, now);
   } else if (session.proposals.length) {
     session.status = "PROPOSAL_REVIEW_REQUIRED";
     session.nextAction = "run-engine-proposal-review";
@@ -287,6 +338,25 @@ export function acknowledgeSessionEvidenceReview({ home, sessionId, expectedSess
     session.nextAction = "close-session";
   }
   return persist(session, { event: `${type}_REPORT_REVIEWED`, actor: confirmedBy, details: { reportId, reportDigest: expectedReportDigest } });
+}
+
+export function acknowledgeInteractionFramePresentation({ home, sessionId, expectedSessionDigest, expectedFrameDigest, presentedFields, visibleTranscriptDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
+  const session = loadForMutation(home, sessionId, expectedSessionDigest);
+  const frame = session.interaction?.currentFrame;
+  if (!frame || frame.frameDigest !== expectedFrameDigest) throw sessionError("INTERACTION_FRAME_DIGEST_MISMATCH", "The visible Interaction Frame is missing or stale.", "reload-current-interaction-frame");
+  const expected = `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`;
+  if (confirmation !== expected || !String(confirmedBy ?? "").trim()) throw sessionError("EXPLICIT_INTERACTION_PRESENTATION_ACKNOWLEDGEMENT_REQUIRED", `Interaction acknowledgement must equal ${expected} and include confirmedBy.`, "request-exact-interaction-frame-acknowledgement");
+  const receipt = createPresentationReceipt({ frame, host: session.interaction.host, presentedFields, visibleTranscriptDigest, now });
+  session.interaction.presentationReceipts.push(receipt);
+  session.humanDecisions.push(decision("INTERACTION_FRAME_PRESENTED", confirmedBy, confirmation, { frameId: frame.frameId, frameDigest: frame.frameDigest, receiptDigest: receipt.receiptDigest, stage: frame.stage }, now));
+  if (frame.stage === "PROPOSAL_REVIEW_PRESENTATION") {
+    session.status = "HUMAN_APPROVAL_REQUIRED";
+    session.nextAction = "request-explicit-proposal-approval";
+  } else if (frame.stage === "PUBLICATION_PRESENTATION") {
+    session.status = "PUBLICATION_DECISION_REQUIRED";
+    session.nextAction = "request-separate-publication-authorization";
+  }
+  return persist(session, { event: "INTERACTION_FRAME_PRESENTED", actor: confirmedBy, details: { frameId: frame.frameId, frameDigest: frame.frameDigest, receiptDigest: receipt.receiptDigest, stage: frame.stage } });
 }
 
 export async function reviewSessionProposals({ home, sessionId, expectedSessionDigest, modelsFile, model, advisorTimeoutMs, reviewTimeoutMs, now = new Date().toISOString() }) {
@@ -298,14 +368,7 @@ export async function reviewSessionProposals({ home, sessionId, expectedSessionD
       input: compact({ proposalId: reference.proposalId, modelsFile, model, advisorTimeoutMs, reviewTimeoutMs }),
       authority: "session"
     });
-    reference.review = result.result ? {
-      reviewId: result.result.reviewId,
-      status: result.result.status,
-      verdict: result.result.verdict,
-      reportDigest: result.result.reportDigest,
-      proposalDigest: result.result.proposalDigest,
-      nextAction: result.result.nextAction
-    } : null;
+    reference.review = result.result ? persistedJson(result.result) : null;
     if (reference.review?.proposalDigest) reference.proposalDigest = reference.review.proposalDigest;
     session.operations.push(operationRecord({ operation: "proposal.review", input: { proposalId: reference.proposalId } }, result, now));
     persist(session, { event: "PROPOSAL_REVIEW_COMPLETED", actor: "deterministic-engine", details: { proposalId: reference.proposalId, reportDigest: reference.review?.reportDigest, verdict: reference.review?.verdict } });
@@ -313,14 +376,17 @@ export async function reviewSessionProposals({ home, sessionId, expectedSessionD
   const ready = session.proposals.every((item) => item.review?.status === "REVIEWED" && item.review?.verdict === "READY_FOR_HUMAN_APPROVAL");
   const noChange = session.proposals.every((item) => item.decision === "NO_CHANGE");
   const needMoreEvidence = session.proposals.some((item) => item.decision === "NEED_MORE_EVIDENCE");
-  session.status = noChange ? "COMPLETED" : needMoreEvidence ? "BLOCKED" : ready ? "HUMAN_APPROVAL_REQUIRED" : "BLOCKED";
-  session.nextAction = noChange ? "close-session" : needMoreEvidence ? "collect-more-evidence" : ready ? "present-engine-review-and-request-explicit-approval" : firstReviewNextAction(session.proposals);
+  session.status = noChange ? "COMPLETED" : needMoreEvidence ? "BLOCKED" : ready ? "PROPOSAL_REVIEW_PRESENTATION_REQUIRED" : "BLOCKED";
+  session.nextAction = noChange ? "close-session" : needMoreEvidence ? "collect-more-evidence" : ready ? "present-complete-engine-review" : firstReviewNextAction(session.proposals);
   if (!ready) session.blockers = session.proposals.flatMap((item) => item.review?.verdict === "READY_FOR_HUMAN_APPROVAL" ? [] : [`proposal-review:${item.proposalId}:${item.review?.verdict ?? "unavailable"}`]);
-  return persist(session, { event: ready ? "HUMAN_APPROVAL_REQUIRED" : "PROPOSAL_REVIEW_BLOCKED", actor: "deterministic-engine", details: { proposalCount: session.proposals.length } });
+  if (ready) bindProposalReviewFrame(session, session.proposals[0], now);
+  else if (session.status === "BLOCKED") bindBlockerFrame(session, { reasons: session.proposals.map((item) => item.review?.summary ?? item.review?.verdict ?? item.decision), evidenceRefs: session.proposals.flatMap((item) => item.review?.evidenceRefs ?? []), now });
+  return persist(session, { event: ready ? "PROPOSAL_REVIEW_PRESENTATION_REQUIRED" : "PROPOSAL_REVIEW_BLOCKED", actor: "deterministic-engine", details: { proposalCount: session.proposals.length } });
 }
 
 export async function approveSessionProposal({ home, sessionId, proposalId, expectedSessionDigest, expectedProposalDigest, expectedReviewDigest, confirmedBy, confirmation, evaluationReviewed, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["HUMAN_APPROVAL_REQUIRED"]);
+  requirePresentedFrame(session, "PROPOSAL_REVIEW_PRESENTATION");
   const reference = requireProposalReference(session, proposalId);
   const current = inspectProposal(session.workspace.home, proposalId);
   const review = inspectProposalReview(session.workspace.home, proposalId);
@@ -350,13 +416,16 @@ export async function approveSessionProposal({ home, sessionId, proposalId, expe
   reference.approval = result.result.approval;
   session.humanDecisions.push(decision("PROPOSAL_APPROVED", confirmedBy, confirmation, { proposalId, proposalDigest: expectedProposalDigest, reviewDigest: expectedReviewDigest }, now));
   const allApproved = session.proposals.every((item) => item.status === "APPROVED");
-  session.status = allApproved ? "PUBLICATION_DECISION_REQUIRED" : "HUMAN_APPROVAL_REQUIRED";
-  session.nextAction = allApproved ? "request-separate-publication-authorization" : "request-next-proposal-approval";
+  session.status = allApproved ? "PUBLICATION_PRESENTATION_REQUIRED" : "PROPOSAL_REVIEW_PRESENTATION_REQUIRED";
+  session.nextAction = allApproved ? "present-publication-impact" : "present-next-proposal-review";
+  if (allApproved) bindPublicationFrame(session, reference, approved, now);
+  else bindProposalReviewFrame(session, session.proposals.find((item) => item.status !== "APPROVED"), now);
   return persist(session, { event: "PROPOSAL_APPROVED", actor: confirmedBy, details: { proposalId, approvedProposalDigest: reference.approvedProposalDigest } });
 }
 
 export function authorizeSessionPublication({ home, sessionId, proposalId, expectedSessionDigest, expectedProposalDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["PUBLICATION_DECISION_REQUIRED", "PUBLICATION_AUTHORIZED"]);
+  requirePresentedFrame(session, "PUBLICATION_PRESENTATION");
   const reference = requireProposalReference(session, proposalId);
   const currentDigest = digest(inspectProposal(session.workspace.home, proposalId));
   if (reference.status !== "APPROVED" || reference.approvedProposalDigest !== expectedProposalDigest || currentDigest !== expectedProposalDigest) {
@@ -389,6 +458,7 @@ export async function publishSessionProposal({ home, sessionId, proposalId, expe
     session.status = "BLOCKED";
     session.blockers = result.result?.blockers ?? ["proposal-publication-blocked"];
     session.nextAction = result.nextAction;
+    bindBlockerFrame(session, { reasons: result.result?.reasons ?? session.blockers, evidenceRefs: result.result?.evidenceRefs ?? [], now });
     return persist(session, { event: "PROPOSAL_PUBLICATION_BLOCKED", actor: "deterministic-engine", details: { proposalId, resultDigest: digest(result) } });
   }
   const catalog = await invokeEngineOperation({ home: session.workspace.home, operation: "catalog.validate", input: {}, authority: "direct" });
@@ -401,10 +471,12 @@ export async function publishSessionProposal({ home, sessionId, proposalId, expe
     session.status = "BLOCKED";
     session.nextAction = "repair-catalog-validation";
     session.blockers = ["catalog-validation-failed"];
+    bindBlockerFrame(session, { reasons: [catalog.result?.error ?? "Catalog validation failed after publication."], evidenceRefs: [], now });
   } else if (complete) {
     session.status = "COMPLETED";
     session.nextAction = "close-session";
     session.blockers = [];
+    bindCatalogValidationFrame(session, reference, now);
   } else {
     session.status = "PUBLICATION_AUTHORIZED";
     session.nextAction = "publish-next-authorized-proposal";
@@ -430,9 +502,84 @@ export function resumeAgentSession({ home, sessionId, expectedSessionDigest, ada
   return persist(session, { event: "SESSION_RESUMED", actor: adapter, details: { priorStatus: session.status } });
 }
 
+export function prepareSessionLifecycleInteraction({ home, sessionId, expectedSessionDigest, action, now = new Date().toISOString() }) {
+  const session = loadForMutation(home, sessionId, expectedSessionDigest);
+  const normalized = String(action ?? "").toUpperCase();
+  const configuration = {
+    RECOVERY: {
+      statuses: ["INTERRUPTED"],
+      stage: "RECOVERY_PRESENTATION",
+      subjectType: "INTERRUPTED_OPERATION",
+      renderModel: () => ({
+        sessionId,
+        attempt: session.inFlightOperation ?? { status: "MISSING" },
+        receipt: session.inFlightOperation ? (inspectEngineOperationReceipt(session.workspace.home, session.inFlightOperation.idempotencyKey) ?? { status: "NOT_FOUND" }) : { status: "NOT_FOUND" },
+        workspaceDigest: workspaceStateDigest(session.workspace.home),
+        risk: "Accept only a matching durable receipt, or retry only when the Workspace digest is unchanged.",
+        nextAction: session.nextAction
+      })
+    },
+    BLOCKED_RETRY: {
+      statuses: ["BLOCKED"],
+      stage: "BLOCKED_RETRY_PRESENTATION",
+      subjectType: "BLOCKED_ENGINE_OPERATION",
+      beforePrepare: () => {
+        requirePresentedFrame(session, "BLOCKER_PRESENTATION");
+        const failed = session.operations.at(-1);
+        if (!failed || failed.operation !== "proposal.review" || failed.status !== "BLOCKED" || session.nextAction !== "repair-reviewer-and-rerun") {
+          throw sessionError("BLOCKED_OPERATION_NOT_RETRYABLE", "The current blocker is not an explicitly repairable Proposal Review failure.", "inspect-session-and-preserve-blocker");
+        }
+      },
+      renderModel: () => {
+        const failed = session.operations.at(-1);
+        return {
+          sessionId,
+          blockedOperation: failed.operation,
+          failedResultDigest: failed.resultDigest,
+          workspaceDigest: workspaceStateDigest(session.workspace.home),
+          risk: "Retry reruns only Proposal Review. It does not approve a Proposal, publish, close, clean up, or change Evidence Sources.",
+          nextAction: "request-explicit-blocked-operation-retry"
+        };
+      }
+    },
+    CANCEL: {
+      statuses: [...new Set(["CREATED", "PLAN_REVIEW_REQUIRED", "READY_TO_EXECUTE", "RUNNING", "INTERRUPTED", "OPERATION_AUTHORIZATION_REQUIRED", "EVIDENCE_REVIEW_REQUIRED", "PROPOSAL_REVIEW_REQUIRED", "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "PUBLICATION_PRESENTATION_REQUIRED", "PUBLICATION_DECISION_REQUIRED", "PUBLICATION_AUTHORIZED"])],
+      stage: "CANCELLATION_PRESENTATION",
+      subjectType: "AGENT_OPERATION_SESSION",
+      renderModel: () => ({ sessionId, sessionDigest: expectedSessionDigest, preserved: ["Session audit state", "Harness assets", "Evidence Sources", "model configuration"], effect: "Stops this non-terminal Session without deleting owned state or published assets.", question: "Do you want to cancel this exact Session?" })
+    },
+    CLOSE: {
+      statuses: ["COMPLETED", "BLOCKED", "CANCELLED"],
+      stage: "CLOSE_PRESENTATION",
+      subjectType: "AGENT_OPERATION_SESSION",
+      renderModel: () => ({ sessionId, sessionDigest: expectedSessionDigest, status: session.status, preserved: ["Session audit state", "Harness assets", "Engine artifacts", "Evidence Sources"], question: "Do you want to close this exact Session while preserving its state?" })
+    },
+    CLEANUP: {
+      statuses: ["CLOSED"],
+      stage: "CLEANUP_PRESENTATION",
+      subjectType: "SESSION_OWNED_STATE",
+      renderModel: () => ({ sessionId, sessionDigest: expectedSessionDigest, ownedState: [sessionDirectory(session.workspace.home, sessionId)], preserved: ["Harness assets", "Engine artifacts", "Evidence Sources", "Release", "model configuration"], destructive: true, question: "Do you want to delete only the proven Session-owned state?" })
+    }
+  }[normalized];
+  if (!configuration) throw sessionError("LIFECYCLE_INTERACTION_ACTION_REQUIRED", "Lifecycle interaction action must be RECOVERY, BLOCKED_RETRY, CANCEL, CLOSE, or CLEANUP.", "choose-lifecycle-interaction-action");
+  if (!configuration.statuses.includes(session.status)) throw sessionError("INVALID_SESSION_STATE", `${normalized} presentation is not available from ${session.status}.`, "inspect-session");
+  configuration.beforePrepare?.();
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: configuration.stage,
+    subject: { type: configuration.subjectType, id: sessionId, digest: expectedSessionDigest, bindings: { action: normalized, status: session.status } },
+    renderModel: configuration.renderModel(),
+    decision: { kind: `${normalized}_DECISION`, question: configuration.renderModel().question ?? `Do you authorize ${normalized}?` },
+    allowedNextOperations: ["acknowledge_interaction_frame"]
+  });
+  session.nextAction = `present-${normalized.toLowerCase()}-interaction`;
+  return persist(session, { event: `${normalized}_INTERACTION_PREPARED`, actor: "interaction-controller", details: { frameDigest: session.interaction.currentFrame.frameDigest } });
+}
+
 export function cancelAgentSession({ home, sessionId, expectedSessionDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest);
   if (TERMINAL.has(session.status)) throw sessionError("SESSION_TERMINAL", `Session is already ${session.status}.`, "inspect-session");
+  requirePresentedFrame(session, "CANCELLATION_PRESENTATION");
   const expected = `CANCEL_SESSION:${sessionId}:${expectedSessionDigest}`;
   if (confirmation !== expected || !String(confirmedBy ?? "").trim()) throw sessionError("EXPLICIT_CANCELLATION_REQUIRED", `Cancellation must equal ${expected} and include confirmedBy.`, "request-explicit-cancellation");
   session.humanDecisions.push(decision("SESSION_CANCELLED", confirmedBy, confirmation, {}, now));
@@ -443,6 +590,7 @@ export function cancelAgentSession({ home, sessionId, expectedSessionDigest, con
 
 export function closeAgentSession({ home, sessionId, expectedSessionDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["COMPLETED", "BLOCKED", "CANCELLED"]);
+  requirePresentedFrame(session, "CLOSE_PRESENTATION");
   const expected = `CLOSE_SESSION:${sessionId}:${expectedSessionDigest}`;
   if (confirmation !== expected || !String(confirmedBy ?? "").trim()) throw sessionError("EXPLICIT_CLOSE_REQUIRED", `Close confirmation must equal ${expected} and include confirmedBy.`, "request-explicit-close");
   session.humanDecisions.push(decision("SESSION_CLOSED", confirmedBy, confirmation, {}, now));
@@ -454,6 +602,7 @@ export function closeAgentSession({ home, sessionId, expectedSessionDigest, conf
 
 export function cleanupAgentSession({ home, sessionId, expectedSessionDigest, confirmedBy, confirmation }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["CLOSED"]);
+  requirePresentedFrame(session, "CLEANUP_PRESENTATION");
   const expected = `DELETE_SESSION_STATE:${sessionId}:${expectedSessionDigest}`;
   if (confirmation !== expected || !String(confirmedBy ?? "").trim()) throw sessionError("EXPLICIT_CLEANUP_REQUIRED", `Cleanup confirmation must equal ${expected} and include confirmedBy.`, "request-explicit-session-cleanup");
   const directory = sessionDirectory(session.workspace.home, sessionId);
@@ -727,6 +876,88 @@ function bindEvidenceReport(session, operation, operationResult) {
   if (!existing) session.evidenceReports.push(reference);
 }
 
+function bindCurrentEvidenceFrame(session, now) {
+  const report = session.evidenceReports.find((item) => item.reviewed !== true);
+  if (!report) return;
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: "EVIDENCE_REPORT_PRESENTATION",
+    subject: { type: `${report.type}_REPORT`, id: report.reportId, digest: report.reportDigest, bindings: { sessionId: session.sessionId } },
+    renderModel: { type: report.type, reportId: report.reportId, reportDigest: report.reportDigest, report, authority: report.authority ?? { evidenceOnly: true }, nextAction: report.nextAction },
+    decision: { kind: `${report.type}_REVIEW_ACKNOWLEDGEMENT`, question: "Have you reviewed this complete immutable evidence report?" },
+    allowedNextOperations: ["acknowledge_interaction_frame"] ,
+    now
+  });
+}
+
+function bindProposalReviewFrame(session, reference, now) {
+  if (!reference) return;
+  const proposal = inspectProposal(session.workspace.home, reference.proposalId);
+  const review = inspectProposalReview(session.workspace.home, reference.proposalId);
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: "PROPOSAL_REVIEW_PRESENTATION",
+    subject: { type: "PROPOSAL_REVIEW", id: reference.proposalId, digest: review.reportDigest, bindings: { proposalDigest: reference.proposalDigest, reviewDigest: review.reportDigest } },
+    renderModel: {
+      proposal,
+      proposalDigest: reference.proposalDigest,
+      review,
+      reviewDigest: review.reportDigest,
+      evaluation: proposal.evaluationCoverage ?? proposal.evaluationPack ?? { status: "BOUND_IN_PROPOSAL", proposedAssets: proposal.proposedAssets ?? [] },
+      comparisonAssessment: review.comparisonAssessment ?? { status: "NOT_PROVIDED" },
+      authority: { engineAuthoritative: true, presentationIsApproval: false },
+      nextAction: "acknowledge-complete-review-before-proposal-approval"
+    },
+    decision: { kind: "PROPOSAL_REVIEW_COMPLETION", question: "Have you completed review of this exact Proposal, Review, Evaluation, and comparison binding?" },
+    allowedNextOperations: ["acknowledge_interaction_frame"],
+    now
+  });
+}
+
+function bindPublicationFrame(session, reference, proposal, now) {
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: "PUBLICATION_PRESENTATION",
+    subject: { type: "APPROVED_PROPOSAL_PUBLICATION", id: reference.proposalId, digest: reference.approvedProposalDigest, bindings: { approvalDigest: reference.approval?.approvalDigest } },
+    renderModel: {
+      proposalId: reference.proposalId,
+      approvedProposalDigest: reference.approvedProposalDigest,
+      assets: proposal.proposedAssets ?? proposal.assetDelta?.assets ?? [],
+      catalog: { destination: "organization-catalog", validationRequired: true },
+      impact: "Publishing writes immutable approved Harness assets and Evaluation assets to the Organization Catalog.",
+      nonPublicationOutcome: "The approved Proposal remains in the external Workspace review area and may be preserved or closed without publication.",
+      authority: { approvalIsPublication: false, separateHumanAuthorizationRequired: true }
+    },
+    decision: { kind: "PUBLICATION_AUTHORIZATION", question: "Do you authorize publication of this exact approved Proposal to the Organization Catalog?" },
+    allowedNextOperations: ["acknowledge_interaction_frame"],
+    now
+  });
+}
+
+function bindBlockerFrame(session, { reasons = [], evidenceRefs = [], now }) {
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: "BLOCKER_PRESENTATION",
+    subject: { type: "SESSION_BLOCKER", id: session.sessionId, digest: digest({ status: session.status, blockers: session.blockers, reasons, evidenceRefs }), bindings: { sessionStatus: session.status } },
+    renderModel: { status: session.status, blockers: session.blockers ?? [], reasons, evidenceRefs, nextAction: session.nextAction },
+    decision: null,
+    allowedNextOperations: ["inspect_operation_session", "prepare_session_lifecycle_interaction"],
+    now
+  });
+}
+
+function bindCatalogValidationFrame(session, reference, now) {
+  session.interaction.currentFrame = createInteractionFrame({
+    session,
+    stage: "CATALOG_VALIDATION_PRESENTATION",
+    subject: { type: "CATALOG_VALIDATION", id: reference.proposalId, digest: reference.publication.catalogDigest ?? reference.publication.resultDigest, bindings: { proposalId: reference.proposalId, publicationResultDigest: reference.publication.resultDigest } },
+    renderModel: { proposalId: reference.proposalId, publication: reference.publication, catalogStatus: reference.publication.catalogStatus, catalogDigest: reference.publication.catalogDigest ?? reference.publication.resultDigest, nextAction: "close-session" },
+    decision: null,
+    allowedNextOperations: ["inspect_operation_session", "prepare_session_lifecycle_interaction"],
+    now
+  });
+}
+
 function nextEvidenceReviewAction(session) {
   const pending = session.evidenceReports?.find((item) => item.reviewed !== true);
   if (pending?.type === "CALIBRATION") return "present-calibration-report-and-request-review-acknowledgement";
@@ -737,6 +968,15 @@ function nextEvidenceReviewAction(session) {
 function loadForMutation(home, sessionId, expectedSessionDigest, allowedStatuses) {
   const session = inspectAgentSession(home, sessionId);
   if (session.sessionDigest !== expectedSessionDigest) throw sessionError("SESSION_DIGEST_MISMATCH", "Agent Operation Session changed since the caller last read it.", "reload-session");
+  try {
+    assertOperationCompatibility(session.compatibility);
+  } catch (error) {
+    throw sessionError(
+      "SESSION_COMPATIBILITY_BINDING_MISMATCH",
+      "The Session is not bound to the current Product, Digital Expert Core, Agent protocol, and Engine API.",
+      error.nextAction ?? "start-compatible-session-or-use-matching-release"
+    );
+  }
   if (allowedStatuses && !allowedStatuses.includes(session.status)) throw sessionError("INVALID_SESSION_STATE", `Session ${sessionId} is ${session.status}; expected ${allowedStatuses.join(" or ")}.`, session.nextAction);
   ensureV41SessionFields(session);
   return session;
@@ -745,6 +985,18 @@ function loadForMutation(home, sessionId, expectedSessionDigest, allowedStatuses
 function ensureV41SessionFields(session) {
   if (!Array.isArray(session.evidenceReports)) session.evidenceReports = [];
   return session;
+}
+
+function normalizeHostInteraction(value, adapterId = "unknown-host") {
+  const host = value && typeof value === "object" && !Array.isArray(value) ? persistedJson(value) : {};
+  const required = ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"];
+  if (!Object.keys(host).length) return { id: adapterId, version: "unverified", level: "TRANSPORT_ONLY", capabilities: [] };
+  if (!String(host.id ?? "").trim() || !String(host.version ?? "").trim()) throw sessionError("HOST_INTERACTION_CAPABILITIES_REQUIRED", "Agent Operations Protocol v2 requires an exact host id and version.", "inspect-and-bind-host-interaction-capabilities");
+  if (!["TRANSPORT_ONLY", "CONVERSATIONAL_COMPATIBLE", "OBSERVABLE_INTERACTION_COMPATIBLE", "GOVERNED_HUMAN_GATE_COMPATIBLE"].includes(host.level)) throw sessionError("HOST_INTERACTION_LEVEL_INVALID", "Unknown host interaction compatibility level.", "inspect-and-bind-host-interaction-capabilities");
+  const capabilities = [...new Set(Array.isArray(host.capabilities) ? host.capabilities.map(String) : [])];
+  const missing = host.level === "GOVERNED_HUMAN_GATE_COMPATIBLE" ? required.filter((item) => !capabilities.includes(item)) : [];
+  if (missing.length) throw sessionError("HOST_INTERACTION_CAPABILITIES_REQUIRED", `Host interaction capabilities are missing: ${missing.join(", ")}.`, "use-certified-host-or-enable-supported-integration");
+  return { id: String(host.id).trim(), version: String(host.version).trim(), level: host.level, capabilities };
 }
 
 function persist(session, journal) {

@@ -47,11 +47,12 @@
     "membership": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["sourceId", "sourceType", "sourceRef", "status", "rationale", "evidenceIds"],
+      "required": ["sourceId", "sourceType", "sourceRef", "sourceDigest", "status", "rationale", "evidenceIds"],
       "properties": {
         "sourceId": { "type": "string", "minLength": 1 },
         "sourceType": { "type": "string", "minLength": 1 },
         "sourceRef": { "type": "string", "minLength": 1 },
+        "sourceDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
         "status": { "enum": ["IN_SCOPE", "OUT_OF_SCOPE", "UNCERTAIN"] },
         "rationale": { "type": "string", "minLength": 1 },
         "evidenceIds": { "$ref": "#/$defs/evidenceIds" }

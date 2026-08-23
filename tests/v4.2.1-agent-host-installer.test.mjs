@@ -51,7 +51,7 @@ test("WorkBuddy installer is preview-bound, idempotent, repairable, and ownershi
   const config = JSON.parse(fs.readFileSync(path.join(hostHome, "mcp.json"), "utf8"));
   assert.ok(config.mcpServers.unrelated);
   assert.equal(config.mcpServers["evopilot-harness"].managedBy, "@evopilot/harness");
-  assert.equal(JSON.parse(fs.readFileSync(path.join(runtimeRoot, "node_modules", "@evopilot", "harness", "package.json"), "utf8")).version, "4.2.4");
+  assert.equal(JSON.parse(fs.readFileSync(path.join(runtimeRoot, "node_modules", "@evopilot", "harness", "package.json"), "utf8")).version, "4.3.0");
   assert.equal(run(["agent", "status", ...common]).verification.mcpWorkspaceMatch, true);
   const upgradePreview = run(["agent", "upgrade", ...common], 2);
   assert.equal(run(["agent", "upgrade", ...common, "--confirm", upgradePreview.planDigest]).status, "INSTALLED");

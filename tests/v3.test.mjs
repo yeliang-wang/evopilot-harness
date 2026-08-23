@@ -544,6 +544,59 @@ test("proposal review still blocks production-shaped output with missing source 
   assert.doesNotMatch(JSON.stringify(review), /missing-citation-secret/);
 });
 
+test("proposal review repairs a 13-source membership response with complete Engine-owned source bindings", async (t) => {
+  const home = initializedHome();
+  const service = await createProposalReviewService(t, { multiSourceRepair: true });
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "multi-source-secret", url: service.url }] }));
+  const attachment = path.join(home, "material.txt");
+  fs.writeFileSync(attachment, "A reusable Java code-generation workflow with evidence, validation, and rollback constraints.");
+  const notes = Array.from({ length: 11 }, (_, index) => ["--note", `Capability ${index + 1} contributes a bounded code-generation rule and validation case.`]).flat();
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--attachment", attachment, ...notes, "--goal", "Produce a reusable Java code-generation Harness Profile.", "--models-file", modelsFile, "--json"]);
+
+  const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  const reviewRequests = service.requests.map((item) => item.request).filter((request) => {
+    const task = JSON.parse(request.messages[1].content).task;
+    return task?.startsWith("Independently review") || task?.startsWith("Repair the previous Proposal Review");
+  });
+  const initialPrompt = JSON.parse(reviewRequests[0].messages[1].content);
+  const repairPrompt = JSON.parse(reviewRequests[1].messages[1].content);
+  assert.equal(initialPrompt.sources.length, 13);
+  assert.equal(repairPrompt.requiredSources.length, 13);
+  assert.equal(Object.hasOwn(repairPrompt, "requiredSourceIds"), false);
+  assert.equal(review.reviewer.attempts.length, 2);
+  assert.equal(review.reviewer.attempts[0].validation.checks.find((check) => check.id === "source-membership-closure").status, "FAIL");
+  assert.equal(review.reviewer.status, "SUCCEEDED");
+  assert.notEqual(review.status, "BLOCKED");
+  assert.equal(review.projectMembership.length, 13);
+  for (const membership of review.projectMembership) {
+    const source = initialPrompt.sources.find((item) => item.sourceId === membership.sourceId);
+    assert.equal(membership.sourceType, source.sourceType);
+    assert.equal(membership.sourceRef, source.sourceRef);
+    assert.equal(membership.sourceDigest, source.sourceDigest);
+  }
+  assert.doesNotMatch(JSON.stringify(review), /multi-source-secret/);
+});
+
+test("proposal review rejects identity mutation during bounded multi-source repair", async (t) => {
+  const home = initializedHome();
+  const service = await createProposalReviewService(t, { multiSourceRepair: true, mutateRepairIdentity: true });
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "glm-5.1", name: "EvoPilot GLM", vendor: "zhipu", apiKey: "identity-secret", url: service.url }] }));
+  const attachment = path.join(home, "material.txt");
+  fs.writeFileSync(attachment, "A reusable Java code-generation workflow with evidence, validation, and rollback constraints.");
+  const notes = Array.from({ length: 11 }, (_, index) => ["--note", `Capability ${index + 1} contributes a bounded code-generation rule and validation case.`]).flat();
+  const produced = await runJsonAsync(["produce", "--workspace", home, "--attachment", attachment, ...notes, "--goal", "Produce a reusable Java code-generation Harness Profile.", "--models-file", modelsFile, "--json"]);
+
+  const review = await runJsonAsyncFailure(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
+  assert.equal(review.status, "BLOCKED", JSON.stringify(review));
+  assert.equal(review.reviewer.attempts.length, 2);
+  const closure = review.reviewer.attempts[1].validation.checks.find((check) => check.id === "source-membership-closure");
+  assert.equal(closure.status, "FAIL");
+  assert.ok(closure.evidence.includes("source-001:sourceRef"));
+  assert.doesNotMatch(JSON.stringify(review), /identity-secret/);
+});
+
 test("proposal review blocks when the independent semantic reviewer is unavailable", () => {
   const home = initializedHome();
   const project = createDistributedCacheProduct(path.join(home, "fixtures/distributed-cache"));
@@ -1139,8 +1192,9 @@ async function createModelService(t, { evidenceId = "evidence-0001" } = {}) {
   return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
 }
 
-async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPROVAL", productionShape = false, missingSourceCitations = false } = {}) {
+async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPROVAL", productionShape = false, missingSourceCitations = false, multiSourceRepair = false, mutateRepairIdentity = false } = {}) {
   const requests = [];
+  let initialReviewPrompt;
   const server = http.createServer((request, response) => {
     const chunks = [];
     request.on("data", (chunk) => chunks.push(chunk));
@@ -1150,7 +1204,22 @@ async function createProposalReviewService(t, { verdict = "READY_FOR_HUMAN_APPRO
       requests.push({ authorization: request.headers.authorization, body, request: envelope });
       const prompt = JSON.parse(envelope.messages[1].content);
       const reviewPrompt = prompt.task?.startsWith("Independently review") || prompt.task?.startsWith("Repair the previous Proposal Review");
-      const reviewShape = prompt.previousOutput ?? (productionShape ? productionShapeReviewAssessment(prompt, verdict) : readyReviewAssessment(prompt, verdict));
+      const repairPrompt = prompt.task?.startsWith("Repair the previous Proposal Review");
+      if (reviewPrompt && !repairPrompt) initialReviewPrompt = prompt;
+      let reviewShape;
+      if (multiSourceRepair && reviewPrompt) {
+        reviewShape = readyReviewAssessment(initialReviewPrompt, verdict);
+        if (!repairPrompt) reviewShape.projectMembership = reviewShape.projectMembership.slice(0, 2);
+        else {
+          reviewShape.projectMembership = prompt.requiredSources.map((source) => ({
+            sourceId: source.sourceId,
+            status: "IN_SCOPE",
+            rationale: "The source contributes cited evidence to this Proposal.",
+            evidenceIds: [source.allowedEvidenceIds[0]]
+          }));
+          if (mutateRepairIdentity) reviewShape.projectMembership[0].sourceRef = "tampered-source-ref";
+        }
+      } else reviewShape = prompt.previousOutput ?? (productionShape ? productionShapeReviewAssessment(prompt, verdict) : readyReviewAssessment(prompt, verdict));
       if (missingSourceCitations && reviewShape?.projectMembership) {
         reviewShape.projectMembership = reviewShape.projectMembership.map((item) => ({ ...item, evidenceIds: [] }));
         reviewShape.boundaryAssessment = { ...reviewShape.boundaryAssessment, evidenceIds: [] };

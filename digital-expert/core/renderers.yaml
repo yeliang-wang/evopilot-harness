@@ -1,4 +1,10 @@
 schema: evopilot-harness-digital-expert-renderers/v1
+interactionFrame:
+  schema: evopilot-harness-interaction-frame/v1
+  canonicalMarkdownRequired: true
+  visibleRequiredFieldsExact: true
+  collapsedContentIsSupplementalOnly: true
+  presentationIsApproval: false
 requiredFields:
   common: [schema, status, nextAction]
   session: [sessionId, status, sessionDigest, planDigest, proposals, blockers, nextAction]
@@ -6,7 +12,12 @@ requiredFields:
   review: [reviewId, reportDigest, status, verdict, summary, findings, reasons, evidenceIds, deterministicGates, groupCoherence, projectMembership, boundaryAssessment, existingAssetOverlap, definitionQuality, evaluationSufficiency, advisorAssessment, comparisonAssessment, suggestedActions, remainingBlockers, reviewer, nextAction]
   comparison: [comparisonId, reportId, reportDigest, comparability, metrics, uncertainty, recommendation, reasons, limitations, authority, nextAction]
   calibration: [reportId, reportDigest, caseSetRef, policyBindings, summary, ranking, cases, conflicts, uncertainty, recommendation, authority, nextAction]
+  completeness: [reportId, reportDigest, runRef, curriculumSnapshotRef, policyRef, dimensions, accounting, blockers, recommendation, claims, authority, nextAction]
   publication: [proposalId, status, assets, catalog, nextAction]
+  recovery: [sessionId, attempt, receipt, workspaceDigest, risk, nextAction]
+  cancellation: [sessionId, sessionDigest, preserved, effect, question]
+  close: [sessionId, sessionDigest, status, preserved, question]
+  cleanup: [sessionId, sessionDigest, ownedState, preserved, destructive, question]
 rules:
   - preserve-engine-values
   - do-not-invent-missing-fields
@@ -14,3 +25,6 @@ rules:
   - include-human-decision-required
   - include-model-and-token-usage-when-present
   - redact-secrets-and-raw-sensitive-evidence
+  - render-canonical-markdown-completely-before-decision
+  - reject-collapsed-link-or-artifact-as-required-content-substitute
+  - acknowledge-presentation-before-governed-decision

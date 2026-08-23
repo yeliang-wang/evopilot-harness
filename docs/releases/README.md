@@ -4,6 +4,7 @@ Release notes document shipped behavior and validation for each Engine version. 
 
 ## Current
 
+- [4.3.0 candidate](4.3.0.md) - deterministic third-party Agent interaction compliance, Agent Operations Protocol v2, complete canonical Interaction Frames, visible transcript receipts, and fail-closed human gates.
 - [4.2.4 candidate](4.2.4.md) - explicit user-owned LLM configuration, zero Release defaults, WorkBuddy isolated runtime synchronization, persistent Workspace binding, and EvoPilot Bundle handoff.
 - [4.2.3 candidate](4.2.3.md) - Harness-owned LLM initialization readiness, live doctor verification, safe receipt, and default Workspace reuse.
 - [4.2.2 candidate](4.2.2.md) - external Workspace model configuration repair for installed Agent hosts, safe v4.2.1 migration, and consistent Advisor/Review/doctor resolution.

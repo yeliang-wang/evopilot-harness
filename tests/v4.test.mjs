@@ -13,8 +13,8 @@ import { discoverAssets } from "../src/v3/catalog.mjs";
 import { feedbackPackageDigest, feedbackPayloadDigest } from "../src/v3/feedback.mjs";
 import { engineCapabilities, engineOperationDefinition, invokeEngineOperation } from "../src/v4/engine-adapter.mjs";
 import { assertExternalWorkspace, operationCompatibility } from "../src/v4/constants.mjs";
-import { cancelAgentSession, createAgentSession, createSessionPlan, confirmSessionPlan, inspectAgentSession, recoverInterruptedSessions, resumeAgentSession, validateAgentSession, validateOperationPlan } from "../src/v4/session/store.mjs";
-import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
+import { acknowledgeInteractionFramePresentation, cancelAgentSession, createAgentSession, createSessionPlan, confirmSessionPlan, inspectAgentSession, prepareSessionLifecycleInteraction, recoverInterruptedSessions, resumeAgentSession, validateAgentSession, validateOperationPlan } from "../src/v4/session/store.mjs";
+import { governedHostInteraction, TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
@@ -44,7 +44,7 @@ test("Digital Expert scenario matrix closes every declared source, decision, ope
   assert.deepEqual([...matrix.terminalDecisions].sort(), [...workflows.terminalDecisions].sort());
   const workflowSources = new Set(workflows.workflows.flatMap((item) => item.sources ?? []));
   for (const source of matrix.evidenceSources) assert.ok(workflowSources.has(source), `missing workflow source ${source}`);
-  for (const branch of ["plan-review", "publication-operation-authorization", "proposal-approval", "separate-publication-authorization", "process-interruption", "digest-drift", "cancellation", "close", "cleanup", "unsupported-capability"]) {
+  for (const branch of ["plan-review", "publication-operation-authorization", "proposal-approval", "separate-publication-authorization", "process-interruption", "blocked-proposal-review-retry", "digest-drift", "cancellation", "close", "cleanup", "unsupported-capability"]) {
     assert.ok(matrix.lifecycleBranches.includes(branch), `missing lifecycle branch ${branch}`);
   }
 });
@@ -261,7 +261,6 @@ test("real stdio MCP persists a REVISE Proposal Review as a blocked Session", as
     await client.initialize();
     structured(await client.tool("prepare_workspace", { initialize: true }));
     const produced = await executeEvolutionMcpSession(client, source, "Require a REVISE Proposal Review through the Engine");
-    assert.equal(produced.status, "PROPOSAL_REVIEW_REQUIRED");
     const reviewed = structured(await client.tool("review_session_proposals", { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
     assert.equal(reviewed.status, "BLOCKED");
     assert.equal(reviewed.proposals[0].review.verdict, "REVISE");
@@ -269,6 +268,77 @@ test("real stdio MCP persists a REVISE Proposal Review as a blocked Session", as
   } finally {
     await client.close();
     await reviewer.close();
+  }
+});
+
+test("real stdio MCP requires a presented, digest-bound authorization before retrying a repairable blocked Proposal Review", async () => {
+  const home = temporary("mcp-review-revise");
+  const source = createCacheSource(temporary("mcp-review-revise-source"));
+  const modelsFile = path.join(home, "models.test.json");
+  fs.mkdirSync(home, { recursive: true });
+  fs.writeFileSync(modelsFile, `${JSON.stringify({ models: [{ id: "contract-reviewer", name: "Contract Reviewer", vendor: "zhipu", apiKey: "test-only", url: "http://127.0.0.1:1/v4" }] }, null, 2)}\n`, "utf8");
+  const client = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
+  try {
+    await client.initialize();
+    structured(await client.tool("prepare_workspace", { initialize: true }));
+    const produced = await executeEvolutionMcpSession(client, source, "Require a REVISE Proposal Review through the Engine");
+    assert.equal(produced.status, "PROPOSAL_REVIEW_REQUIRED");
+    let reviewed = structured(await client.tool("review_session_proposals", { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
+    assert.equal(reviewed.status, "BLOCKED");
+    assert.equal(reviewed.proposals[0].review.verdict, "NEED_MORE_EVIDENCE");
+    assert.match(fs.readFileSync(path.join(home, "agent-sessions", reviewed.sessionId, "journal.jsonl"), "utf8"), /"event":"PROPOSAL_REVIEW_BLOCKED"/);
+
+    const acknowledgeCurrentFrame = async (session, confirmedBy = "blocked-retry-test") => {
+      const frame = session.interaction.currentFrame;
+      return structured(await client.rawTool("acknowledge_interaction_frame", {
+        sessionId: session.sessionId,
+        expectedSessionDigest: session.sessionDigest,
+        expectedFrameDigest: frame.frameDigest,
+        presentedFields: frame.requiredFields,
+        visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`,
+        confirmedBy,
+        confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`
+      }));
+    };
+
+    const prematureRetry = await client.rawTool("prepare_session_lifecycle_interaction", {
+      sessionId: reviewed.sessionId,
+      expectedSessionDigest: reviewed.sessionDigest,
+      action: "BLOCKED_RETRY"
+    });
+    assert.equal(prematureRetry.isError, true);
+    assert.equal(prematureRetry.structuredContent.code, "INTERACTION_PRESENTATION_REQUIRED");
+
+    reviewed = await acknowledgeCurrentFrame(reviewed);
+    let retry = structured(await client.rawTool("prepare_session_lifecycle_interaction", {
+      sessionId: reviewed.sessionId,
+      expectedSessionDigest: reviewed.sessionDigest,
+      action: "BLOCKED_RETRY"
+    }));
+    assert.equal(retry.status, "BLOCKED", JSON.stringify(retry));
+    assert.equal(retry.interaction.currentFrame.stage, "BLOCKED_RETRY_PRESENTATION");
+    const retryModel = retry.interaction.currentFrame.renderModel;
+    retry = await acknowledgeCurrentFrame(retry);
+
+    const confirmation = `AUTHORIZE_BLOCKED_OPERATION_RETRY:${retry.sessionId}:${retryModel.failedResultDigest}:${retryModel.workspaceDigest}`;
+    const authorized = structured(await client.rawTool("authorize_blocked_operation_retry", {
+      sessionId: retry.sessionId,
+      expectedSessionDigest: retry.sessionDigest,
+      expectedFailedResultDigest: retryModel.failedResultDigest,
+      expectedWorkspaceDigest: retryModel.workspaceDigest,
+      confirmedBy: "blocked-retry-test",
+      confirmation
+    }));
+    assert.equal(authorized.status, "PROPOSAL_REVIEW_REQUIRED");
+    assert.deepEqual(authorized.blockers, []);
+    assert.equal(authorized.nextAction, "run-engine-proposal-review");
+    assert.match(fs.readFileSync(path.join(home, "agent-sessions", reviewed.sessionId, "journal.jsonl"), "utf8"), /"event":"BLOCKED_OPERATION_RETRY_AUTHORIZED"/);
+
+    const retried = structured(await client.tool("review_session_proposals", { sessionId: authorized.sessionId, expectedSessionDigest: authorized.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
+    assert.equal(retried.status, "BLOCKED");
+    assert.equal(retried.proposals[0].review.verdict, "NEED_MORE_EVIDENCE");
+  } finally {
+    await client.close();
   }
 });
 
@@ -492,21 +562,27 @@ test("planned Engine operation receipts replay an immutable result without dupli
 test("Agent Operation Session binds plan digests and resumes across adapters", () => {
   const home = temporary("session");
   initializeWorkspace(home);
-  const created = createAgentSession({ home, intent: "Evolve a reusable distributed cache Harness", adapterId: "codex" });
+  const created = createAgentSession({ home, intent: "Evolve a reusable distributed cache Harness", adapterId: "codex", hostInteraction: governedHostInteraction() });
   assert.equal(validateAgentSession(created).status, "VALIDATED");
   const source = createCacheSource(home);
   const planned = createSessionPlan({ home, sessionId: created.sessionId, expectedSessionDigest: created.sessionDigest, goal: created.intent.text, sources: { sourceProjects: [source], advisor: "off" } });
   assert.equal(planned.status, "PLAN_REVIEW_REQUIRED");
   assert.equal(validateOperationPlan(planned.plan).status, "VALIDATED");
-  assert.throws(() => confirmSessionPlan({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedPlanDigest: planned.planDigest, confirmedBy: "operator", confirmation: "continue" }), /Plan confirmation must equal/);
-  const confirmed = confirmSessionPlan({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedPlanDigest: planned.planDigest, confirmedBy: "operator", confirmation: `CONFIRM_OPERATION_PLAN:${planned.planDigest}` });
+  assert.throws(() => confirmSessionPlan({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedPlanDigest: planned.planDigest, confirmedBy: "operator", confirmation: "continue" }), /Complete visible PLAN_PRESENTATION presentation is required/);
+  const frame = planned.interaction.currentFrame;
+  const presented = acknowledgeInteractionFramePresentation({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedFrameDigest: frame.frameDigest, presentedFields: frame.requiredFields, visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`, confirmedBy: "test-governed-host", confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}` });
+  assert.throws(() => confirmSessionPlan({ home, sessionId: presented.sessionId, expectedSessionDigest: presented.sessionDigest, expectedPlanDigest: presented.planDigest, confirmedBy: "operator", confirmation: "continue" }), /Plan confirmation must equal/);
+  const confirmed = confirmSessionPlan({ home, sessionId: presented.sessionId, expectedSessionDigest: presented.sessionDigest, expectedPlanDigest: presented.planDigest, confirmedBy: "operator", confirmation: `CONFIRM_OPERATION_PLAN:${presented.planDigest}` });
   assert.throws(() => resumeAgentSession({ home, sessionId: confirmed.sessionId, expectedSessionDigest: planned.sessionDigest, adapterId: "stale-agent" }), /Session changed since the caller last read it/);
   const resumed = resumeAgentSession({ home, sessionId: confirmed.sessionId, expectedSessionDigest: confirmed.sessionDigest, adapterId: "generic-mcp-agent" });
   assert.deepEqual(resumed.adapter.history, ["codex", "generic-mcp-agent"]);
   assert.deepEqual(resumed.compatibility, operationCompatibility());
   assert.equal(inspectAgentSession(home, resumed.sessionId).sessionDigest, resumed.sessionDigest);
-  const cancellable = createAgentSession({ home, intent: "Cancel this reviewed test Session without executing a Plan", adapterId: "codex" });
-  const cancelled = cancelAgentSession({ home, sessionId: cancellable.sessionId, expectedSessionDigest: cancellable.sessionDigest, confirmedBy: "operator", confirmation: `CANCEL_SESSION:${cancellable.sessionId}:${cancellable.sessionDigest}` });
+  const cancellable = createAgentSession({ home, intent: "Cancel this reviewed test Session without executing a Plan", adapterId: "codex", hostInteraction: governedHostInteraction() });
+  const cancelPrepared = prepareSessionLifecycleInteraction({ home, sessionId: cancellable.sessionId, expectedSessionDigest: cancellable.sessionDigest, action: "CANCEL" });
+  const cancelFrame = cancelPrepared.interaction.currentFrame;
+  const cancelPresented = acknowledgeInteractionFramePresentation({ home, sessionId: cancelPrepared.sessionId, expectedSessionDigest: cancelPrepared.sessionDigest, expectedFrameDigest: cancelFrame.frameDigest, presentedFields: cancelFrame.requiredFields, visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(cancelFrame.canonicalMarkdown).digest("hex")}`, confirmedBy: "test-governed-host", confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${cancelFrame.frameId}:${cancelFrame.frameDigest}` });
+  const cancelled = cancelAgentSession({ home, sessionId: cancelPresented.sessionId, expectedSessionDigest: cancelPresented.sessionDigest, confirmedBy: "operator", confirmation: `CANCEL_SESSION:${cancelPresented.sessionId}:${cancelPresented.sessionDigest}` });
   assert.equal(cancelled.status, "CANCELLED");
 });
 
@@ -617,6 +693,33 @@ test("recovery preserves incompatible persisted Sessions byte-for-byte", () => {
   assert.deepEqual(fs.readFileSync(file), before);
 });
 
+test("every Session mutation rejects persisted Digital Expert Core drift without changing state", () => {
+  const home = temporary("persisted-session-core-drift");
+  initializeWorkspace(home);
+  const created = createAgentSession({ home, intent: "Reject same-version Digital Expert Core drift", adapterId: "codex" });
+  const file = path.join(home, "agent-sessions", created.sessionId, "session.json");
+  const stale = JSON.parse(fs.readFileSync(file, "utf8"));
+  stale.compatibility.coreDigest = `sha256:${"0".repeat(64)}`;
+  delete stale.sessionDigest;
+  stale.sessionDigest = `sha256:${crypto.createHash("sha256").update(JSON.stringify(sortValue(stale))).digest("hex")}`;
+  fs.writeFileSync(file, `${JSON.stringify(stale, null, 2)}\n`);
+  const before = fs.readFileSync(file, "utf8");
+
+  assert.throws(
+    () => createSessionPlan({
+      home,
+      sessionId: stale.sessionId,
+      expectedSessionDigest: stale.sessionDigest,
+      scenario: "evolve",
+      goal: "This mutation must fail closed",
+      sources: { note: "static evidence" }
+    }),
+    (error) => error.code === "SESSION_COMPATIBILITY_BINDING_MISMATCH"
+      && error.nextAction === "reload-current-digital-expert-adapter-and-reinitialize"
+  );
+  assert.equal(fs.readFileSync(file, "utf8"), before);
+});
+
 test("independent Generic Agent Host matches the Codex Adapter plan and stop semantics", async () => {
   const home = temporary("generic-host");
   const sourceHome = temporary("generic-source");
@@ -629,6 +732,9 @@ test("independent Generic Agent Host matches the Codex Adapter plan and stop sem
   assert.equal(report.networkListening, false);
   assert.equal(report.digitalExpertSchema, "evopilot-harness-digital-expert/v1");
   assert.equal(report.workflow.renderedDecision.status, "PROPOSAL_REVIEW_REQUIRED");
+  assert.equal(report.workflow.renderedDecision.frameStage, "PLAN_PRESENTATION");
+  assert.match(report.workflow.renderedDecision.canonicalMarkdownDigest, /^sha256:[a-f0-9]{64}$/);
+  assert.match(report.workflow.renderedDecision.presentationReceiptDigest, /^sha256:[a-f0-9]{64}$/);
   const codex = await runAdapterPlanTrace(temporary("codex-host"), source, "codex");
   assert.deepEqual(semanticWorkflow(report.workflow), semanticWorkflow(codex));
   assert.equal(treeDigest(source), sourceBefore);
@@ -680,9 +786,19 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
     assert.equal(staleResume.isError, true);
     assert.equal(structured(staleResume).code, "SESSION_DIGEST_MISMATCH");
 
-    const invalidConfirmation = await client.tool("confirm_operation_plan", {
+    const planFrame = planned.interaction.currentFrame;
+    const planPresented = structured(await client.tool("acknowledge_interaction_frame", {
       sessionId: planned.sessionId,
       expectedSessionDigest: planned.sessionDigest,
+      expectedFrameDigest: planFrame.frameDigest,
+      presentedFields: planFrame.requiredFields,
+      visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(planFrame.canonicalMarkdown).digest("hex")}`,
+      confirmedBy: "acceptance-governed-host",
+      confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${planFrame.frameId}:${planFrame.frameDigest}`
+    }));
+    const invalidConfirmation = await client.rawTool("confirm_operation_plan", {
+      sessionId: planPresented.sessionId,
+      expectedSessionDigest: planPresented.sessionDigest,
       expectedPlanDigest: planned.planDigest,
       confirmedBy: "acceptance-operator",
       confirmation: "continue"
@@ -691,8 +807,8 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
     assert.equal(structured(invalidConfirmation).code, "EXPLICIT_PLAN_CONFIRMATION_REQUIRED");
 
     const confirmed = structured(await client.tool("confirm_operation_plan", {
-      sessionId: planned.sessionId,
-      expectedSessionDigest: planned.sessionDigest,
+      sessionId: planPresented.sessionId,
+      expectedSessionDigest: planPresented.sessionDigest,
       expectedPlanDigest: planned.planDigest,
       confirmedBy: "acceptance-operator",
       confirmation: `CONFIRM_OPERATION_PLAN:${planned.planDigest}`
@@ -709,17 +825,27 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
       assert.equal(diagnostic.exitCode, 0);
     }
     const reviewed = structured(await client.tool("review_session_proposals", { sessionId: crossAgent.sessionId, expectedSessionDigest: crossAgent.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
-    assert.equal(reviewed.status, "HUMAN_APPROVAL_REQUIRED", JSON.stringify(reviewed.blockers));
+    assert.equal(reviewed.status, "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", JSON.stringify(reviewed.blockers));
     const proposal = reviewed.proposals[0];
     assert.equal(proposal.review.verdict, "READY_FOR_HUMAN_APPROVAL");
     const reviewInspection = structured(await client.tool("run_engine_diagnostic", { operation: "proposal.review.inspect", input: { proposalId: proposal.proposalId } }));
     assert.equal(reviewInspection.operation, "proposal.review.inspect");
     assert.equal(reviewInspection.exitCode, 0);
 
-    const noImplicitApproval = await client.tool("approve_session_proposal", {
+    const reviewFrame = reviewed.interaction.currentFrame;
+    const reviewPresented = structured(await client.tool("acknowledge_interaction_frame", {
       sessionId: reviewed.sessionId,
-      proposalId: proposal.proposalId,
       expectedSessionDigest: reviewed.sessionDigest,
+      expectedFrameDigest: reviewFrame.frameDigest,
+      presentedFields: reviewFrame.requiredFields,
+      visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(reviewFrame.canonicalMarkdown).digest("hex")}`,
+      confirmedBy: "acceptance-governed-host",
+      confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${reviewFrame.frameId}:${reviewFrame.frameDigest}`
+    }));
+    const noImplicitApproval = await client.rawTool("approve_session_proposal", {
+      sessionId: reviewPresented.sessionId,
+      proposalId: proposal.proposalId,
+      expectedSessionDigest: reviewPresented.sessionDigest,
       expectedProposalDigest: proposal.proposalDigest,
       expectedReviewDigest: proposal.review.reportDigest,
       confirmedBy: "acceptance-operator",
@@ -728,16 +854,16 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
     });
     assert.equal(noImplicitApproval.isError, true);
     const approved = structured(await client.tool("approve_session_proposal", {
-      sessionId: reviewed.sessionId,
+      sessionId: reviewPresented.sessionId,
       proposalId: proposal.proposalId,
-      expectedSessionDigest: reviewed.sessionDigest,
+      expectedSessionDigest: reviewPresented.sessionDigest,
       expectedProposalDigest: proposal.proposalDigest,
       expectedReviewDigest: proposal.review.reportDigest,
       confirmedBy: "acceptance-operator",
       confirmation: `APPROVE_PROPOSAL:${proposal.proposalId}:${proposal.proposalDigest}:${proposal.review.reportDigest}`,
       evaluationReviewed: true
     }));
-    assert.equal(approved.status, "PUBLICATION_DECISION_REQUIRED");
+    assert.equal(approved.status, "PUBLICATION_PRESENTATION_REQUIRED");
     assert.equal(approved.proposals[0].publicationAuthorization, undefined);
 
     const approvedReference = approved.proposals[0];
@@ -829,7 +955,7 @@ test("maintenance publication requires a separate digest-bound operation authori
     assert.equal(stopped.status, "OPERATION_AUTHORIZATION_REQUIRED");
     assert.equal(fs.existsSync(destination), false);
     const pending = stopped.pendingOperationAuthorization;
-    const implicit = await client.tool("authorize_plan_publication_operation", {
+    const implicit = await client.rawTool("authorize_plan_publication_operation", {
       sessionId: stopped.sessionId,
       expectedSessionDigest: stopped.sessionDigest,
       expectedPlanDigest: stopped.planDigest,
@@ -875,7 +1001,7 @@ test("multiple Proposals remain publishable until every authorized Proposal is p
     session = structured(await client.tool("execute_operation_plan", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, expectedPlanDigest: session.planDigest }));
     assert.ok(session.proposals.length >= 2, JSON.stringify(session.proposals));
     session = structured(await client.tool("review_session_proposals", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
-    assert.equal(session.status, "HUMAN_APPROVAL_REQUIRED", JSON.stringify(session));
+    assert.equal(session.status, "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", JSON.stringify(session));
     for (const proposal of session.proposals) {
       session = structured(await client.tool("approve_session_proposal", {
         sessionId: session.sessionId,
@@ -888,7 +1014,7 @@ test("multiple Proposals remain publishable until every authorized Proposal is p
         evaluationReviewed: true
       }));
     }
-    assert.equal(session.status, "PUBLICATION_DECISION_REQUIRED");
+    assert.equal(session.status, "PUBLICATION_PRESENTATION_REQUIRED");
     for (const proposal of session.proposals) {
       session = structured(await client.tool("authorize_proposal_publication", {
         sessionId: session.sessionId,
@@ -951,13 +1077,14 @@ test("forced process stop is recovered as an interrupted digest-bound session", 
     const reconciliation = await second.tool("resolve_interrupted_operation", { sessionId: recovered.sessionId, expectedSessionDigest: recovered.sessionDigest, expectedAttemptDigest: recovered.inFlightOperation.attemptDigest, confirmedBy: "recovery-operator", confirmation: "continue" });
     assert.equal(reconciliation.isError, true);
     const reconciliationCode = structured(reconciliation).code;
+    const recoveryPresented = structured(await second.tool("inspect_operation_session", { sessionId: recovered.sessionId }));
     if (reconciliationCode === "EXPLICIT_UNCHANGED_RETRY_REQUIRED") {
       const resolved = structured(await second.tool("resolve_interrupted_operation", {
-        sessionId: recovered.sessionId,
-        expectedSessionDigest: recovered.sessionDigest,
-        expectedAttemptDigest: recovered.inFlightOperation.attemptDigest,
+        sessionId: recoveryPresented.sessionId,
+        expectedSessionDigest: recoveryPresented.sessionDigest,
+        expectedAttemptDigest: recoveryPresented.inFlightOperation.attemptDigest,
         confirmedBy: "recovery-operator",
-        confirmation: `CONFIRM_RETRY_UNCHANGED_OPERATION:${recovered.sessionId}:${recovered.inFlightOperation.attemptDigest}:${recovered.inFlightOperation.workspaceDigestBefore}`
+        confirmation: `CONFIRM_RETRY_UNCHANGED_OPERATION:${recoveryPresented.sessionId}:${recoveryPresented.inFlightOperation.attemptDigest}:${recoveryPresented.inFlightOperation.workspaceDigestBefore}`
       }));
       const completed = structured(await second.tool("execute_operation_plan", { sessionId: resolved.sessionId, expectedSessionDigest: resolved.sessionDigest, expectedPlanDigest: resolved.planDigest }));
       assert.equal(completed.status, "PROPOSAL_REVIEW_REQUIRED");
@@ -967,11 +1094,11 @@ test("forced process stop is recovered as an interrupted digest-bound session", 
       const receiptFile = path.join(home, "agent-operation-receipts", `${recovered.inFlightOperation.idempotencyKey}.json`);
       const receipt = JSON.parse(fs.readFileSync(receiptFile, "utf8"));
       const resolved = structured(await second.tool("resolve_interrupted_operation", {
-        sessionId: recovered.sessionId,
-        expectedSessionDigest: recovered.sessionDigest,
-        expectedAttemptDigest: recovered.inFlightOperation.attemptDigest,
+        sessionId: recoveryPresented.sessionId,
+        expectedSessionDigest: recoveryPresented.sessionDigest,
+        expectedAttemptDigest: recoveryPresented.inFlightOperation.attemptDigest,
         confirmedBy: "recovery-operator",
-        confirmation: `ACCEPT_OPERATION_RECEIPT:${recovered.sessionId}:${recovered.inFlightOperation.attemptDigest}:${receipt.receiptDigest}`
+        confirmation: `ACCEPT_OPERATION_RECEIPT:${recoveryPresented.sessionId}:${recoveryPresented.inFlightOperation.attemptDigest}:${receipt.receiptDigest}`
       }));
       const completed = structured(await second.tool("execute_operation_plan", { sessionId: resolved.sessionId, expectedSessionDigest: resolved.sessionDigest, expectedPlanDigest: resolved.planDigest }));
       assert.equal(completed.status, "PROPOSAL_REVIEW_REQUIRED");
@@ -980,7 +1107,7 @@ test("forced process stop is recovered as an interrupted digest-bound session", 
       assert.equal(reconciliationCode, "INTERRUPTED_OPERATION_OUTCOME_UNCERTAIN");
       const runsAfter = fs.existsSync(runRoot) ? fs.readdirSync(runRoot).sort() : [];
       assert.deepEqual(runsAfter, runsBefore);
-      const cancelled = structured(await second.tool("cancel_operation_session", { sessionId: recovered.sessionId, expectedSessionDigest: recovered.sessionDigest, confirmedBy: "recovery-operator", confirmation: `CANCEL_SESSION:${recovered.sessionId}:${recovered.sessionDigest}` }));
+      const cancelled = structured(await second.tool("cancel_operation_session", { sessionId: recoveryPresented.sessionId, expectedSessionDigest: recoveryPresented.sessionDigest, confirmedBy: "recovery-operator", confirmation: `CANCEL_SESSION:${recoveryPresented.sessionId}:${recoveryPresented.sessionDigest}` }));
       assert.equal(cancelled.status, "CANCELLED");
     }
   } finally {
@@ -1063,7 +1190,16 @@ async function runAdapterPlanTrace(home, source, adapterId) {
 }
 
 function semanticWorkflow(workflow) {
-  return { statuses: workflow.statuses, plan: workflow.plan, engineCalls: workflow.engineCalls, renderedDecision: workflow.renderedDecision };
+  return {
+    statuses: workflow.statuses,
+    plan: workflow.plan,
+    engineCalls: workflow.engineCalls,
+    renderedDecision: {
+      status: workflow.renderedDecision.status,
+      nextAction: workflow.renderedDecision.nextAction,
+      proposalCount: workflow.renderedDecision.proposalCount
+    }
+  };
 }
 
 function treeDigest(directory) {

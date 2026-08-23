@@ -1,67 +1,67 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.2.4",
-  "coreDigest": "sha256:5ad7806c5942196f47fe7f5a40e84062634f00851965a0430c7886bc0a4cab01",
+  "expertVersion": "4.3.0",
+  "coreDigest": "sha256:4fb4032d1409c9dda858c95f9701b50b3845318d3d3217b30eb1d12969225a5e",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:a02c9b25b79581267bb9d34e153792a17fb64d1c2c89289699551daecce8d8d5",
-      "bytes": 16486
+      "sha256": "sha256:c74707bd379ff789b1b15e828963fcd471901d7c252f4a972709bb01e31c6521",
+      "bytes": 20776
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:28e13cee4051f78b7e89f22660bb39230debf3205e61ba6e9890699db6d3dbc9",
-      "bytes": 16707
+      "sha256": "sha256:9f27157ad0daf57cabb17e0f4b3e712d29d50a0a9d09705a4a03918ee9292654",
+      "bytes": 20997
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:2510078bf13b9b484ff17a664e8cdda5b2702c116f9cda7eaf6efee81063111a",
-      "bytes": 16488
+      "sha256": "sha256:6b26efd890ac1ee2e33b9f2c8e507fbe6343d70992693bb3555378cd60bae306",
+      "bytes": 20778
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:67e8dae2c345b05528f695773bd5c956c6d793f729271adfe0cebe98ca2e74ea",
-      "bytes": 16485
+      "sha256": "sha256:9d46e68e43df68741e837851672b6ae755649703e3aa01e5c9eaa827221229c9",
+      "bytes": 20775
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:daf96c2f5f3ffb60b4f6c03e618d61b1b302f28a298123ee0bbb6b4af820e3b9",
-      "bytes": 17352
+      "sha256": "sha256:73a294d588c7842365a20f776fd6f47ecdbe78007a81aa0b4caa9dfa48395e76",
+      "bytes": 21642
     },
     {
       "path": "conformance/generic-host.mjs",
-      "sha256": "sha256:ffebad7f0781c7cb7ab3b995859b470cf315255d60599cb946f72a66e4ebb88b",
-      "bytes": 7270
+      "sha256": "sha256:0addda81b7776eb5216d27d439015556aa3babe8bcffcd911c0ea2fa00133522",
+      "bytes": 8505
     },
     {
       "path": "conformance/host-profiles.yaml",
-      "sha256": "sha256:917001e773a417949088646a6fb6062947c006082a303c43c9dfe390d809ade6",
-      "bytes": 1058
+      "sha256": "sha256:d8a477730e9c9c46f96c0a4c76efe1c7b1bea1806f4b957a04925fabd9ee84fe",
+      "bytes": 1326
     },
     {
       "path": "conformance/scenario-matrix.yaml",
-      "sha256": "sha256:85959d56773f1c2724c77358c69492f6507dbdfc3d41ca8bd28f3a4e2c76ce3d",
-      "bytes": 14007
+      "sha256": "sha256:48e17bee979cdafe34465ef4203e4a6854291cdaae72a885c0e6e5ce99eb1210",
+      "bytes": 14292
     },
     {
       "path": "core/conversation.yaml",
-      "sha256": "sha256:d6c8a833d4898eb46738bcaa27bd57fb6baf5f4753a17f565ccca69423e897d4",
-      "bytes": 1688
+      "sha256": "sha256:61c34dccb3cffadf69f7c64c95c49736a30e77f1cb2dbfef7da9fe58dd228a49",
+      "bytes": 2062
     },
     {
       "path": "core/instructions.md",
-      "sha256": "sha256:008ea4612ee0d40812ac7ddb596af821cc2a723f7119ade8214b825bd6c83229",
-      "bytes": 9030
+      "sha256": "sha256:e640a327506079d483541abdc32d89d87c9747ae3592545e6222a29c3ef03ee5",
+      "bytes": 11610
     },
     {
       "path": "core/policies.yaml",
-      "sha256": "sha256:bd01dcbb94e557d74375d220b513d722875a072288f422bc02138d32f67d25d3",
-      "bytes": 1327
+      "sha256": "sha256:77cdb31015ab71bf0fbd118666cb3a03655321b5e2f75b1954f132981cf1e30b",
+      "bytes": 1673
     },
     {
       "path": "core/renderers.yaml",
-      "sha256": "sha256:0ef6e3321626ae8e43b24c3c0ca9c4dd42fb8a02385835de0e92415e31293e0b",
-      "bytes": 1217
+      "sha256": "sha256:74630297d9e09d3a3bd30611ad0664a26a88b5e179ed938a6303c32f97f6535e",
+      "bytes": 2069
     },
     {
       "path": "core/workflows.yaml",
@@ -70,23 +70,33 @@
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:713ced172a7c8e03a1b2fd37effd4c258d5c3c4be5dcbe0d7315e4bfb4fe4d50",
-      "bytes": 2030
+      "sha256": "sha256:7344bc88c29660e72096a1542b05b00c1baffaafa095bf3973ed8951bbe0ed0f",
+      "bytes": 2178
     },
     {
       "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
-      "sha256": "sha256:dc2c084fce2576326f3b9f00dc8e095cf5260adafc0459a97b364a2593d7b294",
-      "bytes": 17507
+      "sha256": "sha256:f86d0915774720db92a7f6724e069c86fe461b20557885087bff4898d5c52593",
+      "bytes": 21797
     },
     {
       "path": "schemas/adapter-envelope-v1.schema.json",
-      "sha256": "sha256:e50c5fed276b1a52c98d568f70d9c02f3f6821080ae4894b6b77f90a8d8c06a6",
+      "sha256": "sha256:9861de9a1f115da4df5bf002a9f11d4ed4081c9a0804869fd70f27af2a61256b",
       "bytes": 1065
     },
     {
       "path": "schemas/agent-operation-session-v1.schema.json",
       "sha256": "sha256:eccc4af7cc8a2e5424f20d006f53757fe0b77b3647231d5b673c48b8cad039e7",
       "bytes": 4696
+    },
+    {
+      "path": "schemas/agent-operation-session-v2.schema.json",
+      "sha256": "sha256:f5f06f7919cd3e484047d7af065be7e2db9af600d33757d539329dc109858bdf",
+      "bytes": 5313
+    },
+    {
+      "path": "schemas/interaction-frame-v1.schema.json",
+      "sha256": "sha256:63d30eb36996506337bd2a03b6f8a59438b87c75f95afbd18e891ce2c59cce9a",
+      "bytes": 2636
     },
     {
       "path": "schemas/operation-plan-v1.schema.json",

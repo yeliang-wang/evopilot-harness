@@ -4,19 +4,24 @@ profiles:
     adapter: adapters/codex/SKILL.md
     requiredCapabilities: [conversation, local-instructions, stdio-mcp, structured-tool-results]
     validation: real-codex-session-plus-protocol-conformance
+    interactionLevel: GOVERNED_HUMAN_GATE_COMPATIBLE
   - id: workbuddy
     adapter: adapters/workbuddy/WORKBUDDY.md
     requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
     validation: actual-workbuddy-host-plus-installed-package-protocol-conformance
+    interactionLevel: requires-exact-version-real-host-certification
   - id: claude-code
     adapter: adapters/claude-code/CLAUDE.md
     requiredCapabilities: [conversation, project-instructions, stdio-mcp, structured-tool-results]
     validation: independent-adapter-conformance
+    interactionLevel: OBSERVABLE_INTERACTION_COMPATIBLE
   - id: mcp
     adapter: adapters/mcp/MCP.md
     requiredCapabilities: [stdio-mcp, structured-tool-results]
     validation: protocol-conformance
+    interactionLevel: TRANSPORT_ONLY
   - id: generic
     adapter: adapters/generic/AGENT.md
     requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
     validation: independent-adapter-conformance
+    interactionLevel: GOVERNED_HUMAN_GATE_COMPATIBLE

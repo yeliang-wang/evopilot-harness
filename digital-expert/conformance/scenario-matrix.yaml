@@ -100,6 +100,7 @@ lifecycleBranches:
   - completeness-review
   - evidence-report-digest-drift
   - process-interruption
+  - blocked-proposal-review-retry
   - digest-drift
   - cancellation
   - close
@@ -434,6 +435,10 @@ coverage:
       testFile: tests/v4.test.mjs
       testName: forced process stop is recovered as an interrupted digest-bound session
       marker: INTERRUPTED
+    blocked-proposal-review-retry:
+      testFile: tests/v4.test.mjs
+      testName: real stdio MCP requires a presented, digest-bound authorization before retrying a repairable blocked Proposal Review
+      marker: BLOCKED_OPERATION_RETRY_AUTHORIZED
     digest-drift:
       <<: *session_lifecycle
       marker: stale-agent

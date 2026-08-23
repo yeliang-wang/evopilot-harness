@@ -50,7 +50,7 @@ expected.set(
   `---\nname: evopilot-harness-digital-expert\ndescription: Operate evopilot-harness through its complete generated WorkBuddy Adapter and local stdio MCP.\n---\n\n${workbuddyAdapter}`
 );
 
-const copiedSchemas = ["agent-operation-session-v1.schema.json", "operation-plan-v1.schema.json"];
+const copiedSchemas = ["agent-operation-session-v1.schema.json", "agent-operation-session-v2.schema.json", "interaction-frame-v1.schema.json", "operation-plan-v1.schema.json"];
 for (const file of copiedSchemas) expected.set(path.join(expertRoot, "schemas", file), fs.readFileSync(path.join(root, "schemas", file), "utf8"));
 
 const lockEntries = [...expected.entries()]

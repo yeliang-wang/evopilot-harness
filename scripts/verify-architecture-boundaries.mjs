@@ -82,7 +82,7 @@ mustContain("package.json", '"verify:architecture"', "package scripts must expos
 mustContain("package.json", "npm run verify:architecture", "npm run check must execute architecture verification");
 mustContain("package.json", '"digital-expert:check"', "package scripts must expose deterministic Digital Expert validation");
 const packageVersion = JSON.parse(read("package.json")).version;
-if (!/^4\.2\.\d+$/.test(packageVersion)) failures.push("Professional Asset Learning candidate must remain in the approved 4.2.x line");
+if (!/^4\.(?:2|3)\.\d+$/.test(packageVersion)) failures.push("Professional Asset Learning must remain available in the approved v4.2+ product line");
 mustContain("src/index.mjs", 'argv[0] === "mcp" && argv[1] === "serve"', "CLI must expose the local MCP process entry");
 mustContain("src/v4/constants.mjs", "assertExternalWorkspace", "Agent state must remain outside the Release");
 mustContain("src/v4/session/store.mjs", "CONFIRM_OPERATION_PLAN", "Plan confirmation must be explicit and digest-bound");

@@ -11,8 +11,10 @@ import { StdioMcpServer } from "../mcp/stdio-server.mjs";
 import { TOOL_DEFINITIONS } from "../protocol/tools.mjs";
 import {
   acknowledgeSessionEvidenceReview,
+  acknowledgeInteractionFramePresentation,
   approveSessionProposal,
   authorizePlanPublicationOperation,
+  authorizeBlockedOperationRetry,
   authorizeSessionPublication,
   cancelAgentSession,
   cleanupAgentSession,
@@ -24,6 +26,7 @@ import {
   inspectAgentSession,
   listAgentSessions,
   publishSessionProposal,
+  prepareSessionLifecycleInteraction,
   recoverInterruptedSessions,
   resolveInterruptedOperation,
   resumeAgentSession,
@@ -69,6 +72,14 @@ export function operationServerCapabilities(home, version = packageVersion()) {
     engineProtocolRange: ENGINE_PROTOCOL_RANGE,
     mcp: { transport: "stdio", defaultProtocolVersion: DEFAULT_MCP_PROTOCOL_VERSION, supportedProtocolVersions: MCP_PROTOCOL_VERSIONS, networkListening: false },
     digitalExpert: { schema: DIGITAL_EXPERT_SCHEMA, root: path.join(PACKAGE_ROOT, "digital-expert"), ordinaryHumanEntry: true },
+    interaction: {
+      schema: "evopilot-harness-interaction-frame/v1",
+      protocolVersion: AGENT_PROTOCOL_VERSION,
+      hostLevels: ["TRANSPORT_ONLY", "CONVERSATIONAL_COMPATIBLE", "OBSERVABLE_INTERACTION_COMPATIBLE", "GOVERNED_HUMAN_GATE_COMPATIBLE"],
+      governedGateCapabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"],
+      unsupportedHostPolicy: "fail-closed-before-governed-human-gate",
+      collapsedContentSubstituteAllowed: false
+    },
     workspace: workspaceStatus(home),
     operations: engineCapabilities(),
     authority: { engineAuthoritative: true, digitalExpertMayApprove: false, adapterMayApprove: false, automaticPublication: false, sourceExecutionAllowed: false },
@@ -95,7 +106,9 @@ async function callTool(home, name, input, version) {
     else if (name === "execute_operation_plan") result = await executeSessionPlan({ home, ...input });
     else if (name === "authorize_plan_publication_operation") result = authorizePlanPublicationOperation({ home, ...input });
     else if (name === "resolve_interrupted_operation") result = await resolveInterruptedOperation({ home, ...input });
+    else if (name === "authorize_blocked_operation_retry") result = authorizeBlockedOperationRetry({ home, ...input });
     else if (name === "acknowledge_evidence_report_review") result = acknowledgeSessionEvidenceReview({ home, ...input });
+    else if (name === "acknowledge_interaction_frame") result = acknowledgeInteractionFramePresentation({ home, ...input });
     else if (name === "review_session_proposals") result = await reviewSessionProposals({ home, ...input });
     else if (name === "approve_session_proposal") result = await approveSessionProposal({ home, ...input });
     else if (name === "authorize_proposal_publication") result = authorizeSessionPublication({ home, ...input });
@@ -103,6 +116,7 @@ async function callTool(home, name, input, version) {
     else if (name === "inspect_operation_session") result = inspectAgentSession(home, input.sessionId);
     else if (name === "list_operation_sessions") result = { schema: "evopilot-harness-agent-session-list/v1", status: "READY", sessions: listAgentSessions(home) };
     else if (name === "resume_operation_session") result = resumeAgentSession({ home, ...input });
+    else if (name === "prepare_session_lifecycle_interaction") result = prepareSessionLifecycleInteraction({ home, ...input });
     else if (name === "cancel_operation_session") result = cancelAgentSession({ home, ...input });
     else if (name === "close_operation_session") result = closeAgentSession({ home, ...input });
     else if (name === "cleanup_operation_session") result = cleanupAgentSession({ home, ...input });

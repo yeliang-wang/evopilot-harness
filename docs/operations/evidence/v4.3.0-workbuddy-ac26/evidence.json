@@ -1,0 +1,81 @@
+{
+  "schema": "evopilot-harness-redacted-workbuddy-acceptance-evidence/v1",
+  "target": "evopilot-harness-v4.3.0-deterministic-agent-interaction-compliance",
+  "targetRevision": 3,
+  "acceptanceCriterion": "AC26",
+  "capturedAt": "2026-08-23T06:37:55.741Z",
+  "candidate": {
+    "productVersion": "4.3.0",
+    "packageSha256": "db0dc136809270ec9a5663b0e74f395e547930fd79053299ef9e4a46503b8876",
+    "installation": "WorkBuddy isolated npm workspace",
+    "sourceCheckoutResolution": false,
+    "coreDigest": "sha256:4fb4032d1409c9dda858c95f9701b50b3845318d3d3217b30eb1d12969225a5e",
+    "protocol": "evopilot-harness-agent-operations/v2",
+    "engineApiVersion": "harness.evopilot.io/v3"
+  },
+  "host": {
+    "id": "workbuddy",
+    "level": "GOVERNED_HUMAN_GATE_COMPATIBLE"
+  },
+  "source": {
+    "type": "attachment",
+    "name": "代码生成提示词整理.docx",
+    "workBuddyCopyDigest": "sha256:267896406936f41a58aa5befc76b540ea735f34ce47b6a045ae2177338edf678",
+    "readOnly": true
+  },
+  "model": {
+    "ownership": "user-owned-configuration",
+    "profile": "glm-5.1",
+    "provider": "zhipu",
+    "readiness": "CONFIGURED_AND_VERIFIED",
+    "credentialIncluded": false
+  },
+  "session": {
+    "sessionId": "session-mt5et3sv-a6cb257d41",
+    "status": "HUMAN_APPROVAL_REQUIRED",
+    "sequence": 10,
+    "sessionDigest": "sha256:1f1cca6fef28764641a0729bdda45c2dc0a32b420b1ec185b13b5cdee6802150",
+    "nextAction": "request-explicit-proposal-approval"
+  },
+  "plan": {
+    "planDigest": "sha256:96ea93da0f339c44fce99717350f1dd752ae64914aa91ef5061e4553b854c3e2",
+    "frameId": "frame-mt5et3t2-6c600f9828",
+    "frameDigest": "sha256:a774545b081df30b8899001440b9caf27ed365e245299f46da680c0178128753",
+    "presentationReceiptDigest": "sha256:f2a32432f284dc48bf4625e56497f98134b2af1c5fb75e3ae5dcd741d5388cae",
+    "prematureConfirmationRejectedWith": "INTERACTION_PRESENTATION_REQUIRED"
+  },
+  "evidenceOperation": {
+    "status": "REVIEW_REQUIRED",
+    "resultDigest": "sha256:642c8224489a1aba432bf601ea9e56e2e085d078d2f306660744cf5b2bba7627"
+  },
+  "proposalReview": {
+    "proposalId": "run-2026-08-23t06-25-20-308z-bd24e5a4",
+    "proposalDigest": "sha256:b686780d787a384880be6c8526a0b7f7a164a7442697502accaeec2bf9cf2e41",
+    "reviewDigest": "sha256:08c6b84628acbb6b2a833b05430e5d356692ec445cb4a82baef002e3d7e855ec",
+    "verdict": "READY_FOR_HUMAN_APPROVAL",
+    "frameId": "frame-mt5fes5v-636b97c102",
+    "frameDigest": "sha256:58a13c9ac84ba2355f8f04fa74d97458c21ae74f16036aaabfc58fca7705354b",
+    "canonicalMarkdownDigest": "sha256:2dc1150e8a0fc65a9d47976ae6df347fbf905653801ec5c2b558ca3db0129a93",
+    "visibleTranscriptDigest": "sha256:2dc1150e8a0fc65a9d47976ae6df347fbf905653801ec5c2b558ca3db0129a93",
+    "presentationReceiptDigest": "sha256:67f3e09b1964f4bafae14f5b10d9d3b2b42939144e9b7aa0d50b467e2b946930"
+  },
+  "authorityBoundary": {
+    "proposalApproved": false,
+    "publicationAuthorized": false,
+    "proposalPublished": false,
+    "sessionClosed": false,
+    "sessionCleanedUp": false
+  },
+  "screenshots": [
+    { "file": "01-plan-complete.png", "sha256": "01e0e7a4c8fe44b7f9d183e40392a2e127491f625aabab20652234182965b4ba" },
+    { "file": "02-plan-gate-rejection.png", "sha256": "355bc400f533e8c252d59342b8b8691d132a40ede990fae26cea75bbab12b1c8" },
+    { "file": "03-review-complete.png", "sha256": "6a65f52b74ce7ecacc94403ebaaa8a387cf6b431f6ae1944eb11e13ab4290edb" },
+    { "file": "04-review-acknowledgement.png", "sha256": "1d9e0d5c2e0bffbbe483209109ff0e4cc9abbc6a18be4ea1d9f9cc921d8e80ac" }
+  ],
+  "redaction": {
+    "credentials": "excluded",
+    "modelsFile": "excluded",
+    "rawSession": "excluded",
+    "sourceDocumentContent": "excluded"
+  }
+}

@@ -42,6 +42,7 @@ Supported MCP methods:
 | `execute_operation_plan` | Run only confirmed Engine operations | Planned Engine authority |
 | `authorize_plan_publication_operation` | Authorize one Catalog/Ontology/Policy publication in a confirmed Plan | Separate digest-bound human gate |
 | `resolve_interrupted_operation` | Accept a durable receipt or authorize retry only after an unchanged Workspace digest | Explicit recovery gate |
+| `authorize_blocked_operation_retry` | Return a repairable blocked Proposal Review to review-ready state after complete blocker/retry presentation and unchanged Workspace verification | Separate digest-bound retry gate; no approval or publication authority |
 | `acknowledge_evidence_report_review` | Bind human review of one exact Comparison or Calibration Report | Review acknowledgement only; no lifecycle authority |
 | `review_session_proposals` | Produce Engine Proposal Review reports | Engine verdict authority |
 | `approve_session_proposal` | Bind Proposal, Review, Evaluation, and human approval | Separate human gate |

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/agent-operation-session-v2.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "sessionId", "status", "createdAt", "updatedAt", "workspace", "engine", "adapter", "compatibility", "intent", "plan", "planDigest", "humanDecisions", "operations", "inFlightOperation", "operationAuthorizations", "pendingOperationAuthorization", "proposals", "evidenceReports", "interaction", "sequence", "nextAction", "sessionDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-agent-operation-session/v2" },
+    "sessionId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{5,127}$" },
+    "status": { "enum": ["CREATED", "PLAN_REVIEW_REQUIRED", "READY_TO_EXECUTE", "RUNNING", "INTERRUPTED", "OPERATION_AUTHORIZATION_REQUIRED", "EVIDENCE_REVIEW_REQUIRED", "PROPOSAL_REVIEW_REQUIRED", "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "PUBLICATION_PRESENTATION_REQUIRED", "PUBLICATION_DECISION_REQUIRED", "PUBLICATION_AUTHORIZED", "COMPLETED", "BLOCKED", "CANCELLED", "CLOSED"] },
+    "createdAt": { "type": "string", "minLength": 1 },
+    "updatedAt": { "type": "string", "minLength": 1 },
+    "workspace": { "type": "object", "additionalProperties": false, "required": ["home", "mode"], "properties": { "home": { "type": "string", "minLength": 1 }, "mode": { "const": "external-read-write" } } },
+    "compatibility": { "type": "object", "additionalProperties": false, "required": ["productVersion", "expertVersion", "coreDigest", "agentProtocolVersion", "engineApiVersion"], "properties": { "productVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }, "expertVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }, "coreDigest": { "$ref": "#/$defs/digest" }, "agentProtocolVersion": { "const": "evopilot-harness-agent-operations/v2" }, "engineApiVersion": { "const": "harness.evopilot.io/v3" } } },
+    "engine": { "type": "object", "additionalProperties": false, "required": ["apiVersion", "sourceExecutionAllowed", "authority"], "properties": { "apiVersion": { "const": "harness.evopilot.io/v3" }, "sourceExecutionAllowed": { "const": false }, "authority": { "const": "deterministic-engine" } } },
+    "adapter": { "type": "object", "additionalProperties": false, "required": ["current", "history"], "properties": { "current": { "type": "string", "minLength": 1 }, "history": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } },
+    "intent": { "type": "object", "additionalProperties": false, "required": ["text", "digest"], "properties": { "text": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } },
+    "plan": { "type": ["object", "null"], "additionalProperties": true },
+    "planDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "humanDecisions": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "operations": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "inFlightOperation": { "type": ["object", "null"], "additionalProperties": true },
+    "operationAuthorizations": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "pendingOperationAuthorization": { "type": ["object", "null"], "additionalProperties": true },
+    "proposals": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "evidenceReports": { "type": "array", "items": { "type": "object", "additionalProperties": true, "required": ["type", "reportId", "reportDigest", "reviewed", "nextAction"], "properties": { "type": { "enum": ["COMPARISON", "CALIBRATION", "COMPLETENESS"] }, "reportId": { "type": "string", "minLength": 1 }, "reportDigest": { "$ref": "#/$defs/digest" }, "reviewed": { "type": "boolean" }, "nextAction": { "type": "string", "minLength": 1 } } } },
+    "interaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolVersion", "host", "currentFrame", "presentationReceipts"],
+      "properties": {
+        "protocolVersion": { "const": "evopilot-harness-agent-operations/v2" },
+        "host": { "type": "object", "additionalProperties": false, "required": ["id", "version", "level", "capabilities"], "properties": { "id": { "type": "string", "minLength": 1 }, "version": { "type": "string", "minLength": 1 }, "level": { "enum": ["TRANSPORT_ONLY", "CONVERSATIONAL_COMPATIBLE", "OBSERVABLE_INTERACTION_COMPATIBLE", "GOVERNED_HUMAN_GATE_COMPATIBLE"] }, "capabilities": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } } } },
+        "currentFrame": { "type": ["object", "null"], "additionalProperties": true },
+        "presentationReceipts": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "nextAction": { "type": "string", "minLength": 1 },
+    "blockers": { "type": "array", "items": { "type": "string" } },
+    "closedAt": { "type": "string", "minLength": 1 },
+    "sessionDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

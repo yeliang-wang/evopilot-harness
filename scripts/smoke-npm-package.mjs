@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -350,8 +351,32 @@ function createSmokeMcpClient(options) {
     });
   }
 
-  tool(name, args = {}) {
-    return this.request("tools/call", { name, arguments: args });
+  async tool(name, args = {}) {
+    const input = { ...args };
+    if (name === "start_operation_session") input.hostInteraction = {
+      id: "installed-package-smoke",
+      version: "1.0.0",
+      level: "GOVERNED_HUMAN_GATE_COMPATIBLE",
+      capabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"]
+    };
+    if (input.sessionId && input.expectedSessionDigest && ["confirm_operation_plan", "acknowledge_evidence_report_review"].includes(name)) {
+      const inspected = (await this.request("tools/call", { name: "inspect_operation_session", arguments: { sessionId: input.sessionId } })).structuredContent;
+      const frame = inspected?.interaction?.currentFrame;
+      const alreadyPresented = frame && inspected.interaction.presentationReceipts.some((item) => item.frameDigest === frame.frameDigest);
+      if (frame && !alreadyPresented && inspected.sessionDigest === input.expectedSessionDigest) {
+        const presented = await this.request("tools/call", { name: "acknowledge_interaction_frame", arguments: {
+          sessionId: input.sessionId,
+          expectedSessionDigest: inspected.sessionDigest,
+          expectedFrameDigest: frame.frameDigest,
+          presentedFields: frame.requiredFields,
+          visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`,
+          confirmedBy: "installed-package-smoke-host",
+          confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`
+        } });
+        if (!presented.isError) input.expectedSessionDigest = presented.structuredContent.sessionDigest;
+      }
+    }
+    return this.request("tools/call", { name, arguments: input });
   }
 
   async initialize(packageRoot) {
@@ -367,7 +392,7 @@ function createSmokeMcpClient(options) {
           productVersion: manifest.version,
           expertVersion: lock.expertVersion,
           coreDigest: lock.coreDigest,
-          agentProtocolVersion: "evopilot-harness-agent-operations/v1",
+          agentProtocolVersion: "evopilot-harness-agent-operations/v2",
           engineApiVersion: "harness.evopilot.io/v3"
         }
       }

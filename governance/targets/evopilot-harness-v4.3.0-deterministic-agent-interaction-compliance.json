@@ -1,0 +1,149 @@
+{
+  "schema": "evopilot-evolution-target/v1",
+  "id": "evopilot-harness-v4.3.0-deterministic-agent-interaction-compliance",
+  "revision": 3,
+  "status": "RELEASE_AUTHORIZED",
+  "intent": "Implement deterministic agent interaction compliance, Interaction Frames, an Agent-neutral Interaction Controller, governed human-gate host capability negotiation, real WorkBuddy interaction compliance, and a deterministic multi-source Proposal Review repair contract in evopilot-harness v4.3.0 without changing Proposal Review verdict semantics or Harness business authority.",
+  "objective": "Make every governed Digital Expert interaction field-complete, ordered, observable, and fail-closed across certified third-party Agent hosts, while preserving exact Engine-owned Evidence Source identities through initial and repaired Proposal semantic review and blocking governed decisions when either host interaction or reviewer output is non-compliant.",
+  "evidence": [
+    {
+      "ref": "conversation:workbuddy-skipped-complete-proposal-review-before-approval",
+      "authority": "production-host-regression-evidence-only"
+    },
+    {
+      "ref": "audit:digital-expert-42-v4-tests-pass-but-visible-transcript-unverified",
+      "authority": "repository-audit-evidence-only"
+    },
+    {
+      "ref": "conversation:approved-v4.3.0-target-revision-1-and-roadmap-revision",
+      "authority": "explicit-user-roadmap-and-design-authorization"
+    },
+    {
+      "ref": "docs/architecture/deterministic-agent-interaction-compliance.md",
+      "authority": "revision-2-design-proposal"
+    },
+    {
+      "ref": "workbuddy:run-2026-08-22t14-30-27-090z-e254c8a4-proposal-review-blocked",
+      "authority": "real-host-regression-evidence-only"
+    },
+    {
+      "ref": "diagnosis:semantic-review-repair-request-omits-required-source-context",
+      "authority": "repository-and-runtime-diagnostic-evidence-only"
+    }
+  ],
+  "roadmapBindings": [
+    {
+      "repo": "/Users/wangyejing/project/harness/evopilot-harness",
+      "project": "evopilot-harness",
+      "matchedMilestone": "evopilot-harness-4.3-deterministic-agent-interaction-compliance",
+      "targetVersion": "4.3.0",
+      "classification": "ALIGNED",
+      "roadmapDigest": "sha256:7df79b18155b911c012c36595c0d75f9a874d38c5e439e242f70df1594c04095"
+    }
+  ],
+  "scope": {
+    "include": [
+      "Define a versioned host-neutral Interaction Frame contract for every governed Digital Expert presentation and decision stage",
+      "Add an Agent-neutral deterministic Interaction Controller that validates required fields, rendering order, permitted next operations, and host capability level",
+      "Provide canonical structured and Markdown renderers that preserve every required Engine field and never allow a collapsed link or artifact to replace visible content",
+      "Return complete Proposal Review, Proposal, Evaluation, comparison, reviewer, model, usage, blocker, and digest bindings through the Agent operation presentation surface",
+      "Cover capability and model readiness, Execution Brief, Plan, maintenance operation authorization, comparison, calibration, professional completeness, Proposal Review, Proposal approval, publication, interruption recovery, cancellation, close, cleanup, blockers, and final Catalog validation",
+      "Negotiate host interaction capabilities and permit governed human gates only for a proven GOVERNED_HUMAN_GATE_COMPATIBLE host profile",
+      "Fail closed before an affected human gate when deterministic rendering, tool interception, ordered visible transcript evidence, or interaction binding is unavailable",
+      "Generate WorkBuddy, Codex, Claude Code, MCP, and Generic adapters from one immutable Core without host-private Harness semantics",
+      "Replace marker-only conformance with frame schema, required-field, allowed-operation, ordering, transcript, drift, and negative-path validation",
+      "Run real WorkBuddy Desktop candidate-package acceptance outside the source checkout with visible attachment, capability binding, Plan, complete Proposal Review, approval separation, publication impact, and redacted evidence",
+      "Provide safe v1 Session inspection and explicit idempotent migration without fabricating historical presentation evidence",
+      "Synchronize architecture, protocol, operation, host-profile, quickstart, migration, acceptance, and release documentation",
+      "Bind every multi-source Proposal semantic-review repair request to the complete immutable required source projection instead of source identifiers alone",
+      "Keep sourceId, sourceType, sourceRef, and sourceDigest Engine-owned while the semantic reviewer supplies only membership status, rationale, and evidence citations",
+      "Reject missing, duplicate, unknown, identity-mutated, empty-reference, or cross-source-cited memberships and remain fail-closed after an unsuccessful repair",
+      "Reproduce the observed 13-source WorkBuddy regression and complete a candidate-package Proposal Review rerun without Proposal approval or publication"
+    ],
+    "exclude": [
+      "Changing Proposal Review Engine verdict calculation or semantic review authority",
+      "Changing Proposal, Evaluation, Asset, Catalog, Registry, or publication business semantics",
+      "Modifying WorkBuddy product source code or claiming control over unsupported WorkBuddy internals",
+      "Treating an Agent assertion alone as proof that content was visibly rendered",
+      "Allowing a summary, link, artifact, collapsed change list, or generic host UI affordance to substitute for canonical required content",
+      "Embedding a general-purpose Agent runtime or conversational model",
+      "Borrowing the third-party host conversation model as the Harness Advisor or Proposal reviewer",
+      "Automatic Plan confirmation, evidence acknowledgement, Proposal approval, publication, retry, cancellation, or cleanup",
+      "Changing Proposal Review verdict calculation, reviewer semantic authority, or deterministic safety precedence",
+      "Inventing reviewer membership verdicts or evidence citations while canonicalizing Engine-owned source identity",
+      "Source-project command execution, EvoPilot Goal Loop execution, or project release decisions",
+      "GHCR, container, cloud, remote-service, or deployment capabilities",
+      "Commit, push, tag, GitHub Release, npm publication, or Harness Asset publication"
+    ]
+  },
+  "designDecisions": {
+    "businessAuthority": "unchanged-deterministic-engine",
+    "interactionAuthority": "agent-neutral-controller-with-no-business-verdict-authority",
+    "canonicalPresentation": "schema-validated-interaction-frame-plus-deterministic-renderer",
+    "collapsedContentPolicy": "supplemental-only-never-a-required-content-substitute",
+    "unsupportedHostPolicy": "fail-closed-before-governed-human-gate",
+    "workbuddyPolicy": "certify-only-the-exact-observed-host-profile-and-version-capabilities",
+    "presentationReceiptAuthority": "interaction-evidence-only-never-human-approval",
+    "protocolDecision": "AGENT_OPERATIONS_PROTOCOL_V2",
+    "v1SessionPolicy": "read-diagnose-cancel-close-or-explicit-idempotent-migration-only",
+    "reviewSourceIdentityAuthority": "engine-owned-immutable-evidence-projection",
+    "reviewSemanticAuthority": "model-status-rationale-and-evidence-citations-only",
+    "reviewRepairPolicy": "one-complete-source-bound-repair-then-fail-closed"
+  },
+  "acceptance": [
+    { "id": "AC01", "criterion": "Roadmap declares the v4.3.0 deterministic Agent interaction milestone and the current intent Gate is ALIGNED.", "requiredEvidence": "Roadmap documents, machine Roadmap digest, and deterministic Gate result", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC02", "criterion": "Every governed presentation and decision stage has a versioned Interaction Frame schema and declared canonical renderer.", "requiredEvidence": "Schema validation and frame inventory tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC03", "criterion": "Every frame binds its Session, Adapter/Core compatibility, immutable subject, supporting object digests, required fields, permitted next actions, and frame digest.", "requiredEvidence": "Positive and tamper-negative contract tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC04", "criterion": "Missing, null, invented, or extra authority-bearing required fields prevent canonical frame construction.", "requiredEvidence": "Required-field and schema-negative tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC05", "criterion": "The canonical Renderer preserves Engine values, blockers, reasons, evidence references, model and usage data, authority, next action, and exact human decision without semantic rewriting.", "requiredEvidence": "Golden renderer fixtures and field-level diff tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC06", "criterion": "A link, artifact, collapsed section, summary, or view-changes control is supplemental and cannot satisfy required visible canonical content.", "requiredEvidence": "Host transcript negative tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC07", "criterion": "Plan confirmation cannot be requested or recorded until the complete current Plan frame is rendered in order.", "requiredEvidence": "Session and interaction-order tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC08", "criterion": "Comparison, calibration, and professional-completeness acknowledgements cannot advance until their complete current report frame is rendered.", "requiredEvidence": "Report frame and acknowledgement-order tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC09", "criterion": "Proposal Review presentation contains every required Review, Proposal, Evaluation, comparison, reviewer, model, usage, blocker, and digest binding.", "requiredEvidence": "Complete Review frame fixture and schema validation", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC10", "criterion": "Proposal approval cannot be requested or recorded before successful canonical Review presentation for the same current immutable bindings.", "requiredEvidence": "Pre-presentation approval rejection and positive sequence tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC11", "criterion": "Review presentation evidence is never equivalent to Proposal approval, and Proposal approval is never equivalent to publication authorization.", "requiredEvidence": "Independent decision and token-boundary tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC12", "criterion": "Publication impact and destination are canonically rendered before the separate publication question and authorization.", "requiredEvidence": "Publication frame and ordering tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC13", "criterion": "Maintenance publication, interruption recovery, retry, cancellation, close, and cleanup render exact affected objects and consequences before their independent decisions.", "requiredEvidence": "Lifecycle branch frame tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC14", "criterion": "Stale Session, frame, Plan, report, Proposal, Review, Evaluation, comparison, operation, receipt, Workspace, or publication bindings fail closed without silent refresh or fallback.", "requiredEvidence": "Digest-drift and interruption matrix", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC15", "criterion": "Host capability negotiation distinguishes transport, conversation, observable interaction, and governed human-gate compatibility.", "requiredEvidence": "Capability schema and negotiation matrix", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC16", "criterion": "A host lacking deterministic rendering, operation interception, ordered visible evidence, or frame binding stops before the first affected governed gate.", "requiredEvidence": "Unsupported-host fail-closed tests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC17", "criterion": "All generated adapters retain one Core digest and host profiles add transport mechanics only without redefining Harness semantics.", "requiredEvidence": "Adapter generation, lock, and semantic-diff checks", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC18", "criterion": "Generic and MCP conformance validates complete frame content, required fields, allowed operations, and order instead of status markers alone.", "requiredEvidence": "Independent host conformance transcripts", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC19", "criterion": "The complete declared workflow, Evidence Source, terminal-decision, Engine-operation, lifecycle-branch, and Human-Gate matrix is covered by executable positive and negative interaction tests.", "requiredEvidence": "Versioned scenario matrix closure report", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC20", "criterion": "A real WorkBuddy Desktop candidate-package run visibly follows expert selection, attachment, capability binding, Execution Brief, complete Plan, Plan decision, complete Proposal Review, Review completion, Proposal decision, publication impact, and separate publication decision in order.", "requiredEvidence": "Redacted real WorkBuddy Desktop transcript, screenshots, structured MCP evidence, and Session digests", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC21", "criterion": "Any missing field, collapsed substitute, premature question, reordered message, unobservable delivery, or forbidden tool call in WorkBuddy is FAIL or BLOCKED and can never be reported as 100% passed.", "requiredEvidence": "Real-host and synthetic negative acceptance cases", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC22", "criterion": "Release, Evidence Sources, source projects, human-maintained model configuration, unrelated host state, and credentials remain unchanged or redacted according to their existing boundaries.", "requiredEvidence": "Before/after digests, secret scans, source-command sentinels, Workspace confinement, and redacted evidence audit", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC23", "criterion": "A regression fixture with at least 13 Evidence Sources deterministically reproduces a first semantic-review response that omits multiple required project memberships and proves that a source-id-only repair request is insufficient.", "requiredEvidence": "Multi-source regression fixture, captured validation result, and repair-request projection assertions", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC24", "criterion": "Every semantic-review repair request contains the complete immutable required source projection, and the final canonical membership preserves exact Engine-owned sourceId, sourceType, sourceRef, and sourceDigest values while retaining model-authored status, rationale, and evidenceIds.", "requiredEvidence": "Positive repair-path tests and exact field-level identity assertions", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC25", "criterion": "Missing, duplicate, unknown, identity-mutated, empty-reference, invalid-evidence, and cross-source-cited memberships are rejected; a failed repair remains BLOCKED and cannot advance to Proposal approval or publication.", "requiredEvidence": "Negative contract matrix and Session gate assertions", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  },
+    { "id": "AC26", "criterion": "A real WorkBuddy Desktop run from an isolated v4.3.0 candidate package uses the same document and user-owned glm-5.1 configuration to complete Proposal Review and visibly render the complete canonical Review frame without Proposal approval or publication.", "requiredEvidence": "Redacted WorkBuddy transcript, screenshots, structured MCP receipts, Session digests, and candidate-package provenance", "status": "PASS", "evidenceRefs": ["docs/operations/v4.3.0-acceptance.md", "tests/v4.3-interaction-compliance.test.mjs", "tests/v4.test.mjs"]  }
+  ],
+  "approvals": {
+    "target": {
+      "decision": "APPROVED",
+      "by": "user",
+      "evidenceRef": "conversation:approved-evopilot-harness-v4.3.0-target-revision-3-proposal-review-multi-source-closure-and-26-acceptance",
+      "authorizationDigest": "sha256:0b5db1b4349177286057648aa7a7ce6e23326ea9516cbbcf2b1c5e07743bc8b2"
+    },
+    "release": {
+      "decision": "AUTHORIZED",
+      "by": "user",
+      "evidenceRef": "conversation:authorized-v4.3.0-acceptance-closure-commit-push-tag-github-release-npm-publish-public-registry-verification-and-workbuddy-upgrade",
+      "authorizationDigest": "sha256:d6dfdcf5c880274e0a0800fa7c5eed9c2cceb280fa2e0b2ed43c3c6406dbbcf0"
+    }
+  },
+  "release": {
+    "actions": [
+      "commit",
+      "push",
+      "tag",
+      "github-release",
+      "npm-publish",
+      "public-npm-verification",
+      "workbuddy-upgrade"
+    ],
+    "versions": {
+      "evopilot-harness": "4.3.0"
+    }
+  }
+}

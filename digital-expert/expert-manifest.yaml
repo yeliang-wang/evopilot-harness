@@ -1,7 +1,7 @@
 schema: evopilot-harness-digital-expert/v1
 artifact:
   id: evopilot-harness-digital-expert
-  version: 4.2.4
+  version: 4.3.0
   lifecycle: stable
   description: Portable question-driven expert for Agent-native evopilot-harness operations.
 compatibility:
@@ -9,7 +9,7 @@ compatibility:
     min: harness.evopilot.io/v3
     max: harness.evopilot.io/v3
   productVersion: ">=4.0.0 <5.0.0"
-  agentProtocol: evopilot-harness-agent-operations/v1
+  agentProtocol: evopilot-harness-agent-operations/v2
   mcpProtocols:
     - "2025-11-25"
     - "2025-06-18"
@@ -22,6 +22,8 @@ requiredHostCapabilities:
     - local file import or instruction loading
     - local stdio MCP client or structured local process tool calling
     - explicit tool-result inspection
+    - deterministic Interaction Frame rendering for governed human gates
+    - governed-operation interception until visible presentation completes
 authority:
   owns:
     - one-question-at-a-time conversation guidance

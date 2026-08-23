@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
+import crypto from "node:crypto";
 
 export class TestMcpClient {
   constructor({ command, args, cwd, env = process.env }) {
@@ -51,6 +52,39 @@ export class TestMcpClient {
   }
 
   async tool(name, args = {}) {
+    const input = { ...args };
+    if (name === "start_operation_session" && input.hostInteraction === undefined) input.hostInteraction = governedHostInteraction();
+    const lifecycleAction = { resolve_interrupted_operation: "RECOVERY", authorize_blocked_operation_retry: "BLOCKED_RETRY", cancel_operation_session: "CANCEL", close_operation_session: "CLOSE", cleanup_operation_session: "CLEANUP" }[name];
+    if (lifecycleAction && input.sessionId && input.expectedSessionDigest) {
+      const prepared = await this.request("tools/call", { name: "prepare_session_lifecycle_interaction", arguments: { sessionId: input.sessionId, expectedSessionDigest: input.expectedSessionDigest, action: lifecycleAction } });
+      if (!prepared.isError) input.expectedSessionDigest = prepared.structuredContent.sessionDigest;
+    }
+    if (input.sessionId && input.expectedSessionDigest && ["confirm_operation_plan", "authorize_plan_publication_operation", "resolve_interrupted_operation", "authorize_blocked_operation_retry", "acknowledge_evidence_report_review", "approve_session_proposal", "authorize_proposal_publication", "cancel_operation_session", "close_operation_session", "cleanup_operation_session"].includes(name)) {
+      const inspectedResult = await this.request("tools/call", { name: "inspect_operation_session", arguments: { sessionId: input.sessionId } });
+      const inspected = inspectedResult.structuredContent;
+      const frame = inspected?.interaction?.currentFrame;
+      const alreadyPresented = frame && inspected.interaction.presentationReceipts.some((item) => item.frameDigest === frame.frameDigest);
+      if (frame && !alreadyPresented && inspected.sessionDigest === input.expectedSessionDigest) {
+        const confirmation = `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`;
+        const presented = await this.request("tools/call", { name: "acknowledge_interaction_frame", arguments: {
+          sessionId: input.sessionId,
+          expectedSessionDigest: inspected.sessionDigest,
+          expectedFrameDigest: frame.frameDigest,
+          presentedFields: frame.requiredFields,
+          visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`,
+          confirmedBy: "test-governed-host",
+          confirmation
+        } });
+        if (!presented.isError) input.expectedSessionDigest = presented.structuredContent.sessionDigest;
+      }
+    }
+    if (name === "cancel_operation_session" && input.sessionId && input.expectedSessionDigest) input.confirmation = `CANCEL_SESSION:${input.sessionId}:${input.expectedSessionDigest}`;
+    if (name === "close_operation_session" && input.sessionId && input.expectedSessionDigest) input.confirmation = `CLOSE_SESSION:${input.sessionId}:${input.expectedSessionDigest}`;
+    if (name === "cleanup_operation_session" && input.sessionId && input.expectedSessionDigest) input.confirmation = `DELETE_SESSION_STATE:${input.sessionId}:${input.expectedSessionDigest}`;
+    return this.request("tools/call", { name, arguments: input });
+  }
+
+  async rawTool(name, args = {}) {
     return this.request("tools/call", { name, arguments: args });
   }
 
@@ -91,7 +125,16 @@ function defaultCompatibility(spawnargs) {
     productVersion: packageJson.version,
     expertVersion: lock.expertVersion,
     coreDigest: lock.coreDigest,
-    agentProtocolVersion: "evopilot-harness-agent-operations/v1",
+    agentProtocolVersion: "evopilot-harness-agent-operations/v2",
     engineApiVersion: "harness.evopilot.io/v3"
+  };
+}
+
+export function governedHostInteraction(id = "test-governed-host", version = "1.0.0") {
+  return {
+    id,
+    version,
+    level: "GOVERNED_HUMAN_GATE_COMPATIBLE",
+    capabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"]
   };
 }

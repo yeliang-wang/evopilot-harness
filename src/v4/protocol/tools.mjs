@@ -48,8 +48,19 @@ export const TOOL_DEFINITIONS = [
   }),
   tool("start_operation_session", "Start a persistent Agent Operation Session from a human intent.", {
     intent: { type: "string", minLength: 1 },
-    adapterId: { type: "string", minLength: 2 }
-  }, ["intent", "adapterId"]),
+    adapterId: { type: "string", minLength: 2 },
+    hostInteraction: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "version", "level", "capabilities"],
+      properties: {
+        id: { type: "string", minLength: 1 },
+        version: { type: "string", minLength: 1 },
+        level: { const: "GOVERNED_HUMAN_GATE_COMPATIBLE" },
+        capabilities: { type: "array", minItems: 4, uniqueItems: true, items: { type: "string", minLength: 1 } }
+      }
+    }
+  }, ["intent", "adapterId", "hostInteraction"]),
   tool("plan_operation_session", "Create a digest-bound evolve, feedback, comparison, calibration, professional-learning, or maintenance plan. Present it to the human before confirmation.", {
     sessionId,
     expectedSessionDigest: digest,
@@ -98,6 +109,14 @@ export const TOOL_DEFINITIONS = [
     confirmedBy: { type: "string", minLength: 1 },
     confirmation: { type: "string", minLength: 1 }
   }, ["sessionId", "expectedSessionDigest", "expectedAttemptDigest", "confirmedBy", "confirmation"]),
+  tool("authorize_blocked_operation_retry", "Authorize retry of an explicitly repairable blocked Engine operation only after the exact blocker and retry frames were presented and the external Workspace remains unchanged.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    expectedFailedResultDigest: digest,
+    expectedWorkspaceDigest: digest,
+    confirmedBy: { type: "string", minLength: 1 },
+    confirmation: { type: "string", minLength: 1 }
+  }, ["sessionId", "expectedSessionDigest", "expectedFailedResultDigest", "expectedWorkspaceDigest", "confirmedBy", "confirmation"]),
   tool("acknowledge_evidence_report_review", "Record that the human reviewed the exact deterministic comparison, calibration, or professional completeness report. This is not Proposal approval, policy activation, rollback, or publication authorization.", {
     sessionId,
     expectedSessionDigest: digest,
@@ -107,6 +126,15 @@ export const TOOL_DEFINITIONS = [
     confirmedBy: { type: "string", minLength: 1 },
     confirmation: { type: "string", minLength: 1 }
   }, ["sessionId", "expectedSessionDigest", "reportType", "reportId", "expectedReportDigest", "confirmedBy", "confirmation"]),
+  tool("acknowledge_interaction_frame", "Record complete visible canonical presentation of the current immutable Interaction Frame. This presentation evidence is never Plan confirmation, evidence acknowledgement, Proposal approval, publication authorization, retry authorization, cancellation, close, or cleanup.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    expectedFrameDigest: digest,
+    presentedFields: { type: "array", minItems: 1, uniqueItems: true, items: { type: "string", minLength: 1 } },
+    visibleTranscriptDigest: digest,
+    confirmedBy: { type: "string", minLength: 1 },
+    confirmation: { type: "string", minLength: 1 }
+  }, ["sessionId", "expectedSessionDigest", "expectedFrameDigest", "presentedFields", "visibleTranscriptDigest", "confirmedBy", "confirmation"]),
   tool("review_session_proposals", "Run the authoritative Engine Proposal Review for every Proposal in the session.", {
     sessionId,
     expectedSessionDigest: digest,
@@ -146,6 +174,11 @@ export const TOOL_DEFINITIONS = [
     expectedSessionDigest: digest,
     adapterId: { type: "string", minLength: 2 }
   }, ["sessionId", "expectedSessionDigest", "adapterId"]),
+  tool("prepare_session_lifecycle_interaction", "Construct the complete immutable recovery, cancellation, close, or cleanup frame before asking for the independent human decision.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    action: { enum: ["RECOVERY", "BLOCKED_RETRY", "CANCEL", "CLOSE", "CLEANUP"] }
+  }, ["sessionId", "expectedSessionDigest", "action"]),
   tool("cancel_operation_session", "Explicitly cancel a non-terminal session without deleting its audit state or Harness assets.", {
     sessionId,
     expectedSessionDigest: digest,

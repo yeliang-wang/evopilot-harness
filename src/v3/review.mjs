@@ -184,14 +184,18 @@ async function semanticAttempt({ model, requestBody, timeoutMs, graph, contract,
   }
   let envelope;
   let assessment;
+  let identityFailures = [];
   try {
     envelope = JSON.parse(raw);
-    assessment = normalizeSemanticAssessment(parseJsonContent(envelope?.choices?.[0]?.message?.content));
+    const parsedAssessment = parseJsonContent(envelope?.choices?.[0]?.message?.content);
+    const canonical = normalizeSemanticAssessment(parsedAssessment, sources);
+    assessment = canonical.assessment;
+    identityFailures = canonical.identityFailures;
   } catch (error) {
     const record = base("FAILED", { failureType: "INVALID_RESPONSE_JSON", reason: `GLM review response was not valid JSON: ${error instanceof Error ? error.message : String(error)}`, responseDigest, usage: normalizeUsage(envelope?.usage), retryable: false });
     return { ...record, raw, record };
   }
-  const validation = validateSemanticAssessment(assessment, graph, contract, sources);
+  const validation = validateSemanticAssessment(assessment, graph, contract, sources, identityFailures);
   if (validation.status !== "VALIDATED") {
     const record = base("REJECTED", { failureType: "CONTRACT_REJECTED", reason: "GLM review response violated the evidence-bound Proposal Review Contract.", responseDigest, validation, usage: normalizeUsage(envelope.usage), retryable: false });
     return { ...record, raw, assessment, record };
@@ -200,7 +204,7 @@ async function semanticAttempt({ model, requestBody, timeoutMs, graph, contract,
   return { ...record, raw, assessment, record };
 }
 
-function validateSemanticAssessment(value, graph, contract, sources) {
+function validateSemanticAssessment(value, graph, contract, sources, identityFailures = []) {
   const missing = (contract.requiredFields ?? []).filter((field) => value?.[field] == null);
   const allowedVerdict = (contract.allowedVerdicts ?? REVIEW_VERDICTS).includes(value?.verdict);
   const knownEvidenceIds = new Set(graph.nodes.map((node) => node.evidenceId));
@@ -212,6 +216,7 @@ function validateSemanticAssessment(value, graph, contract, sources) {
   const returnedSourceIds = memberships.map((item) => item?.sourceId).filter(Boolean);
   const unknownSourceIds = returnedSourceIds.filter((id) => !sourceIds.includes(id));
   const missingSourceIds = sourceIds.filter((id) => !returnedSourceIds.includes(id));
+  const duplicateSourceIds = returnedSourceIds.filter((id, index) => returnedSourceIds.indexOf(id) !== index);
   const findings = Array.isArray(value?.findings) ? value.findings : [];
   const citationRules = contract.citationRules ?? {
     requiredPaths: ["projectMembership", "boundaryAssessment", "advisorAssessment"],
@@ -234,7 +239,7 @@ function validateSemanticAssessment(value, graph, contract, sources) {
     { id: "required-fields", status: missing.length ? "FAIL" : "PASS", evidence: missing },
     { id: "allowed-verdict", status: allowedVerdict ? "PASS" : "FAIL", evidence: [String(value?.verdict)] },
     { id: "evidence-citations", status: citedIds.length > 0 && unknownEvidenceIds.length === 0 ? "PASS" : "FAIL", evidence: unknownEvidenceIds.length ? unknownEvidenceIds : citedIds },
-    { id: "source-membership-closure", status: unknownSourceIds.length === 0 && missingSourceIds.length === 0 ? "PASS" : "FAIL", evidence: unique([...unknownSourceIds, ...missingSourceIds]) },
+    { id: "source-membership-closure", status: unknownSourceIds.length === 0 && missingSourceIds.length === 0 && duplicateSourceIds.length === 0 && identityFailures.length === 0 ? "PASS" : "FAIL", evidence: unique([...unknownSourceIds, ...missingSourceIds, ...duplicateSourceIds, ...identityFailures]) },
     { id: "required-source-citations", status: requiredCitationFailures.length === 0 && groupCitationValid ? "PASS" : "FAIL", evidence: unique([...requiredCitationFailures, ...membershipCitationFailures, ...(groupCitationValid ? [] : ["groupCoherence"])]) },
     { id: "findings", status: findings.length > 0 && findings.every((item) => item?.dimension && item?.conclusion && Array.isArray(item?.evidenceIds)) ? "PASS" : "FAIL", evidence: findings.map((item) => item?.id ?? "missing-id") }
   ];
@@ -343,7 +348,7 @@ function deterministicAssessment(home, proposal, graph, reasoning) {
     gate("controlled-comparison", !comparisonAssessment.blocking, comparisonAssessment.status !== "NOT_PROVIDED", [comparisonAssessment.status, comparisonAssessment.recommendation ?? "NOT_PROVIDED", ...(comparisonAssessment.reasons ?? [])])
   ];
   const overlap = overlapContext(proposal, records);
-  const projectMembership = sourceContext(graph).map((source) => ({ sourceId: source.sourceId, sourceType: source.sourceType, sourceRef: source.sourceRef, status: "UNCERTAIN", rationale: "Awaiting independent semantic membership review.", evidenceIds: source.evidenceIds }));
+  const projectMembership = sourceContext(graph).map((source) => ({ sourceId: source.sourceId, sourceType: source.sourceType, sourceRef: source.sourceRef, sourceDigest: source.sourceDigest, status: "UNCERTAIN", rationale: "Awaiting independent semantic membership review.", evidenceIds: source.evidenceIds }));
   const findings = gates.filter((item) => item.status === "FAIL").map((item) => ({ id: `gate-${item.id}`, severity: item.blocking ? "blocking" : "warning", dimension: "deterministic-gate", conclusion: `${item.id} failed.`, reasons: item.evidence.map(String), evidenceIds: [], suggestedActions: [`Resolve ${item.id} and run proposal review again.`] }));
   return {
     gates,
@@ -440,7 +445,7 @@ function semanticOutputShape() {
     findings: [{ id: "string", severity: "info|warning|blocking", dimension: "string", conclusion: "string", reasons: ["string"], evidenceIds: [], suggestedActions: ["string"] }],
     reasons: ["string"],
     groupCoherence: { status: "COHERENT|INCOHERENT|UNCERTAIN|NOT_APPLICABLE", rationale: "string", evidenceIds: ["evidence-0001"] },
-    projectMembership: [{ sourceId: "source-001", sourceType: "string", sourceRef: "exact supplied sourceRef", status: "IN_SCOPE|OUT_OF_SCOPE|UNCERTAIN", rationale: "string", evidenceIds: ["evidence-0001"] }],
+    projectMembership: [{ sourceId: "source-001", status: "IN_SCOPE|OUT_OF_SCOPE|UNCERTAIN", rationale: "string", evidenceIds: ["evidence-0001"] }],
     boundaryAssessment: { status: "PASS|FAIL|UNCERTAIN", rationale: "string", evidenceIds: ["evidence-0001"] },
     existingAssetOverlap: { status: "NONE|RELATED|EVOLUTION_CANDIDATE|DUPLICATE|CONFLICT", rationale: "string", candidates: [], evidenceIds: [] },
     definitionQuality: { status: "PASS|FAIL|UNCERTAIN", score: 0.0, rationale: "string", checks: [{ id: "string", status: "PASS|FAIL|UNCERTAIN", detail: "optional string" }], evidenceIds: [] },
@@ -450,9 +455,22 @@ function semanticOutputShape() {
   };
 }
 
-function normalizeSemanticAssessment(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+function normalizeSemanticAssessment(value, sources) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { assessment: value, identityFailures: [] };
   const normalized = structuredClone(value);
+  const sourceById = new Map(sources.map((source) => [source.sourceId, source]));
+  const identityFailures = [];
+  if (Array.isArray(normalized.projectMembership)) {
+    normalized.projectMembership = normalized.projectMembership.map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return item;
+      const source = sourceById.get(item.sourceId);
+      if (!source) return item;
+      for (const field of ["sourceType", "sourceRef", "sourceDigest"]) {
+        if (item[field] != null && item[field] !== source[field]) identityFailures.push(`${item.sourceId}:${field}`);
+      }
+      return { ...item, sourceType: source.sourceType, sourceRef: source.sourceRef, sourceDigest: source.sourceDigest };
+    });
+  }
   if (Array.isArray(normalized.definitionQuality?.checks)) {
     normalized.definitionQuality.checks = normalized.definitionQuality.checks.map((item, index) => {
       if (item && typeof item === "object" && !Array.isArray(item)) return item;
@@ -460,7 +478,7 @@ function normalizeSemanticAssessment(value) {
       return { id: safeId(detail) || `reported-check-${index + 1}`, status: "REPORTED", detail };
     });
   }
-  return normalized;
+  return { assessment: normalized, identityFailures: unique(identityFailures) };
 }
 
 function reviewRepairRequest(model, policy, contract, graph, sources, previous) {
@@ -468,10 +486,23 @@ function reviewRepairRequest(model, policy, contract, graph, sources, previous) 
     task: "Repair the previous Proposal Review output so it exactly satisfies the existing Review Contract.",
     outputContract: { ...contract, outputShape: semanticOutputShape() },
     allowedEvidenceIds: graph.nodes.map((node) => node.evidenceId),
-    requiredSourceIds: sources.map((source) => source.sourceId),
+    requiredSources: sources.map((source) => ({
+      sourceId: source.sourceId,
+      sourceType: source.sourceType,
+      sourceRef: source.sourceRef,
+      sourceDigest: source.sourceDigest,
+      allowedEvidenceIds: source.evidenceIds
+    })),
     failedValidation: previous.validation ?? { failureType: previous.failureType },
     previousOutput: previous.assessment ?? String(previous.raw ?? "").slice(0, 12000),
-    rules: ["Return one JSON object only.", "Repair structure and citations only.", "Do not approve, publish, execute, or mutate configuration."]
+    rules: [
+      "Return one JSON object only.",
+      "Return exactly one projectMembership entry for every requiredSources sourceId and no other sourceId.",
+      "For projectMembership return only sourceId, status, rationale, and evidenceIds; source identity is bound by the Engine.",
+      "Every membership evidenceIds value must come from that required source's allowedEvidenceIds.",
+      "Repair structure and citations only.",
+      "Do not approve, publish, execute, or mutate configuration."
+    ]
   });
 }
 
