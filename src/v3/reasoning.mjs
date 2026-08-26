@@ -316,13 +316,47 @@ function decide(eligibility, candidates, policy, graph, ontology) {
 }
 
 function detectRole(graph, ontology) {
-  const conceptSet = new Set(unique(graph.nodes.flatMap((node) => node.concepts ?? [])));
-  const role = ontology.spec.roles.map((item) => ({
+  const corpus = graph.nodes.map((node) => String(node.excerpt ?? "").toLowerCase()).join("\n");
+  const conceptCounts = new Map(ontology.spec.concepts.map((concept) => [
+    concept.id,
+    (concept.terms ?? []).reduce((sum, term) => sum + termOccurrences(corpus, String(term).toLowerCase()), 0)
+  ]));
+  const conceptSet = new Set([...conceptCounts].filter(([, count]) => count > 0).map(([concept]) => concept));
+  const roles = ontology.spec.roles.map((item) => ({
     ...item,
     matched: item.concepts.filter((concept) => concept !== "executable-engineering" && conceptSet.has(concept)).length,
-    conflicts: (item.negativeConcepts ?? []).filter((concept) => conceptSet.has(concept)).length
-  })).sort((a, b) => (b.matched - b.conflicts) - (a.matched - a.conflicts) || b.matched - a.matched || a.id.localeCompare(b.id))[0];
-  return role && role.matched > role.conflicts ? role : undefined;
+    matchedWeight: item.concepts.filter((concept) => concept !== "executable-engineering").reduce((sum, concept) => sum + (conceptCounts.get(concept) ?? 0), 0),
+    conflicts: (item.negativeConcepts ?? []).filter((concept) => conceptSet.has(concept)).length,
+    conflictWeight: (item.negativeConcepts ?? []).reduce((sum, concept) => sum + (conceptCounts.get(concept) ?? 0), 0)
+  })).sort((a, b) => (b.matchedWeight - b.conflictWeight) - (a.matchedWeight - a.conflictWeight)
+    || (b.matched - b.conflicts) - (a.matched - a.conflicts)
+    || a.id.localeCompare(b.id));
+  const [role, second] = roles;
+  const roleWeight = role ? role.matchedWeight - role.conflictWeight : 0;
+  const secondWeight = second ? second.matchedWeight - second.conflictWeight : 0;
+  if (roleWeight <= 0) return undefined;
+  // Comparable evidence density across two independent domains is a composition
+  // signal. Preserve the established deterministic role ordering so candidate
+  // scoring can surface both strong boundaries instead of collapsing to the
+  // slightly denser domain.
+  if (secondWeight > 0 && second?.domain !== role.domain && secondWeight / roleWeight >= 0.5) {
+    return roles.filter((item) => item.matched > item.conflicts)
+      .sort((a, b) => (b.matched - b.conflicts) - (a.matched - a.conflicts)
+        || b.matched - a.matched
+        || a.id.localeCompare(b.id))[0];
+  }
+  return role;
+}
+
+function termOccurrences(text, term) {
+  if (!term) return 0;
+  let count = 0;
+  let offset = 0;
+  while ((offset = text.indexOf(term, offset)) !== -1) {
+    count += 1;
+    offset += term.length;
+  }
+  return count;
 }
 
 function proposedProfileIntent(role, domainConcepts, graph) {

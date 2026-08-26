@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/host-conformance-profile-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "hostId", "hostVersion", "level", "capabilities", "requiredCapabilities", "missingCapabilities", "exactRendering", "completeTurnReceipt", "fixedLocale", "governedOperationInterception", "workspaceRecovery", "status", "hostConformanceDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-host-conformance-profile/v1" },
+    "hostId": { "type": "string" },
+    "hostVersion": { "type": "string" },
+    "level": { "type": "string" },
+    "capabilities": { "type": "array", "uniqueItems": true },
+    "requiredCapabilities": { "type": "array", "minItems": 10, "uniqueItems": true },
+    "missingCapabilities": { "type": "array", "uniqueItems": true },
+    "exactRendering": { "type": "boolean" },
+    "completeTurnReceipt": { "type": "boolean" },
+    "fixedLocale": { "type": "boolean" },
+    "governedOperationInterception": { "type": "boolean" },
+    "workspaceRecovery": { "type": "boolean" },
+    "status": { "enum": ["CONFORMANT", "NONCONFORMANT"] },
+    "hostConformanceDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

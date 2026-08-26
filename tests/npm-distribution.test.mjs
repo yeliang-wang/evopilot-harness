@@ -153,6 +153,8 @@ test("WorkBuddy acceptance grants only the MCP tools required by the selected sc
   assert.match(script, /WorkBuddy must complete exactly one inspect_capabilities call/);
   assert.match(script, /option\("package-spec"\)/);
   assert.match(script, /process\.argv\.includes\("--exercise-llm-initialization"\)/);
-  assert.match(script, /distributionMode: packageSpec \? "public-registry" : "local-package-candidate"/);
+  assert.match(script, /distributionMode: packageDistributionMode\(packageSpec\)/);
+  assert.match(script, /value\.endsWith\("\.tgz"\).*"local-package-candidate"/s);
+  assert.match(script, /host: \{ id: "workbuddy", version: hostVersion, cliVersion/);
   assert.doesNotMatch(script, /permission-mode["', ]+bypassPermissions|\s-y(?:\s|["'])/);
 });

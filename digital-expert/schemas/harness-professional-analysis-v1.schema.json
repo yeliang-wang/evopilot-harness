@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/harness-professional-analysis-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "subject", "outcome", "capabilities", "extractionAlgorithm", "catalogComparison", "architectureAssessmentDigest", "confidence", "counterEvidence", "evaluationCoverage", "knownLimits", "authority", "professionalAnalysisDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-professional-analysis/v1" },
+    "subject": { "type": "object" },
+    "outcome": { "$ref": "#/$defs/outcome" },
+    "capabilities": { "type": "array", "items": { "type": "object", "required": ["capabilityId", "sourceEvidence", "extractionMethod", "rationale", "confidence", "counterEvidence", "alternatives", "catalogRelationship", "evaluationCoverage", "knownLimits"] } },
+    "extractionAlgorithm": { "type": "array", "minItems": 8, "uniqueItems": true, "items": { "type": "string" } },
+    "catalogComparison": { "type": "object", "required": ["recommendation", "existingRelationship", "alternatives", "rejectedAlternatives"] },
+    "architectureAssessmentDigest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "counterEvidence": { "type": "array" },
+    "evaluationCoverage": { "type": "array" },
+    "knownLimits": { "type": "array" },
+    "authority": { "type": "object", "required": ["engineDerived", "advisorAdvisoryOnly", "hostAuthored", "sourceExecution"], "properties": { "engineDerived": { "const": true }, "advisorAdvisoryOnly": { "const": true }, "hostAuthored": { "const": false }, "sourceExecution": { "const": false } } },
+    "professionalAnalysisDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "outcome": { "enum": ["REUSE_EXISTING", "EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NOT_HARNESS_ELIGIBLE", "NEED_MORE_EVIDENCE", "NO_CHANGE", "REJECT"] }
+  }
+}

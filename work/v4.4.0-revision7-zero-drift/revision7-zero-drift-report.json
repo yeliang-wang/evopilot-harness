@@ -1,0 +1,204 @@
+{
+  "schema": "evopilot-harness-revision7-real-zero-drift-acceptance/v1",
+  "candidate": {
+    "package": "@evopilot/harness@4.4.0",
+    "tarballSha256": "sha256:605dd9a809d87586ef2b7dbff46b8b814a430d6a0147e64b153079152381923f",
+    "runtimeIntegrityDigest": "sha256:6dd1047af5dc487dbe179c6285451a6446578152087c4c6a2b0b4ae3f3625355"
+  },
+  "sessionId": "session-mt6me1z3-207fc77e63",
+  "sessionDigest": "sha256:242b44b57b7d2c975718df6c3fe03e57d1ea926af02a2d6039268dcaa7061bbd",
+  "manifestDigest": "sha256:5f40d4a09bdfe08627f7857c78394f0c8d515a5d045b5210af9bf53127dc521a",
+  "presentationDigest": "sha256:7a0d0934b61a12d5eb132433e98ac1c15b6cbece14170661210e2b69130fcccd",
+  "timeProvenance": {
+    "mode": "CONTROLLED_ACCEPTANCE_CLOCK",
+    "systemClockChanged": false,
+    "physicalWorkBuddyReplayDay": "2026-08-24",
+    "logicalRecoveryDays": [
+      "2026-08-24",
+      "2026-08-25"
+    ],
+    "reason": "Cross-day recovery is verified with the deterministic acceptance clock; no host or system clock is changed."
+  },
+  "workBuddyTranscriptFiles": [
+    "pass1-rendered.md",
+    "pass2-rendered.md",
+    "pass3-rendered.md"
+  ],
+  "independentHostTranscriptFile": "independent-host-rendered.md",
+  "report": {
+    "schema": "evopilot-harness-complete-lifecycle-zero-drift-report/v1",
+    "baselineManifestDigest": "sha256:5f40d4a09bdfe08627f7857c78394f0c8d515a5d045b5210af9bf53127dc521a",
+    "orderedStages": [
+      "PLAN_PRESENTATION",
+      "PROPOSAL_REVIEW_PRESENTATION",
+      "PUBLICATION_PRESENTATION",
+      "CATALOG_VALIDATION_PRESENTATION",
+      "CLOSE_PRESENTATION"
+    ],
+    "workBuddyReplayCount": 3,
+    "independentHostReplayCount": 1,
+    "restartOrdinals": [
+      0,
+      1,
+      2
+    ],
+    "modelIds": [
+      "Auto/glm-5.2-a",
+      "GLM-5.3"
+    ],
+    "calendarDays": [
+      "2026-08-24",
+      "2026-08-25"
+    ],
+    "replays": [
+      {
+        "hostId": "workbuddy",
+        "hostVersion": "5.3.14",
+        "modelId": "Auto/glm-5.2-a",
+        "restartOrdinal": 0,
+        "observedAt": "2026-08-24T09:40:00Z",
+        "manifestDigest": "sha256:5f40d4a09bdfe08627f7857c78394f0c8d515a5d045b5210af9bf53127dc521a",
+        "stageResults": [
+          {
+            "stage": "PLAN_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:c85da4f6efa5addf0602baabba0602216672b4b22f4b619998fd0f87d04f779a",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PROPOSAL_REVIEW_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:557fd676c0ac5fbc1dff3723b22bb3086dcb0539a9238ad9d19dab59d8e9b5fd",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PUBLICATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:339f15a09ba4095bcff5902925afa0695f9b641df1d018d87fd656f5657c10e3",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CATALOG_VALIDATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:fdbc56b35aeb32745b59a51760527221db2fa5fe3d930bbcae57fb9383ef9227",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CLOSE_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:dde5701669cd72f639c497f9241a1f1c8f1205dade94574c6b17373ab84e24d6",
+            "zeroDrift": true
+          }
+        ],
+        "zeroDrift": true
+      },
+      {
+        "hostId": "workbuddy",
+        "hostVersion": "5.3.14",
+        "modelId": "GLM-5.3",
+        "restartOrdinal": 1,
+        "observedAt": "2026-08-24T09:47:00Z",
+        "manifestDigest": "sha256:5f40d4a09bdfe08627f7857c78394f0c8d515a5d045b5210af9bf53127dc521a",
+        "stageResults": [
+          {
+            "stage": "PLAN_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:c85da4f6efa5addf0602baabba0602216672b4b22f4b619998fd0f87d04f779a",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PROPOSAL_REVIEW_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:557fd676c0ac5fbc1dff3723b22bb3086dcb0539a9238ad9d19dab59d8e9b5fd",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PUBLICATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:339f15a09ba4095bcff5902925afa0695f9b641df1d018d87fd656f5657c10e3",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CATALOG_VALIDATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:fdbc56b35aeb32745b59a51760527221db2fa5fe3d930bbcae57fb9383ef9227",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CLOSE_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:dde5701669cd72f639c497f9241a1f1c8f1205dade94574c6b17373ab84e24d6",
+            "zeroDrift": true
+          }
+        ],
+        "zeroDrift": true
+      },
+      {
+        "hostId": "workbuddy",
+        "hostVersion": "5.3.14",
+        "modelId": "Auto/glm-5.2-a",
+        "restartOrdinal": 2,
+        "observedAt": "2026-08-25T09:52:00Z",
+        "manifestDigest": "sha256:5f40d4a09bdfe08627f7857c78394f0c8d515a5d045b5210af9bf53127dc521a",
+        "stageResults": [
+          {
+            "stage": "PLAN_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:c85da4f6efa5addf0602baabba0602216672b4b22f4b619998fd0f87d04f779a",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PROPOSAL_REVIEW_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:557fd676c0ac5fbc1dff3723b22bb3086dcb0539a9238ad9d19dab59d8e9b5fd",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PUBLICATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:339f15a09ba4095bcff5902925afa0695f9b641df1d018d87fd656f5657c10e3",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CATALOG_VALIDATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:fdbc56b35aeb32745b59a51760527221db2fa5fe3d930bbcae57fb9383ef9227",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CLOSE_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:dde5701669cd72f639c497f9241a1f1c8f1205dade94574c6b17373ab84e24d6",
+            "zeroDrift": true
+          }
+        ],
+        "zeroDrift": true
+      },
+      {
+        "hostId": "generic-independent-host",
+        "hostVersion": "1.0.0",
+        "modelId": "deterministic-stdio-mcp",
+        "restartOrdinal": 0,
+        "observedAt": "2026-08-25T10:00:00Z",
+        "manifestDigest": "sha256:5f40d4a09bdfe08627f7857c78394f0c8d515a5d045b5210af9bf53127dc521a",
+        "stageResults": [
+          {
+            "stage": "PLAN_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:c85da4f6efa5addf0602baabba0602216672b4b22f4b619998fd0f87d04f779a",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PROPOSAL_REVIEW_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:557fd676c0ac5fbc1dff3723b22bb3086dcb0539a9238ad9d19dab59d8e9b5fd",
+            "zeroDrift": true
+          },
+          {
+            "stage": "PUBLICATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:339f15a09ba4095bcff5902925afa0695f9b641df1d018d87fd656f5657c10e3",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CATALOG_VALIDATION_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:fdbc56b35aeb32745b59a51760527221db2fa5fe3d930bbcae57fb9383ef9227",
+            "zeroDrift": true
+          },
+          {
+            "stage": "CLOSE_PRESENTATION",
+            "canonicalMarkdownDigest": "sha256:dde5701669cd72f639c497f9241a1f1c8f1205dade94574c6b17373ab84e24d6",
+            "zeroDrift": true
+          }
+        ],
+        "zeroDrift": true
+      }
+    ],
+    "governedMutationReplayCount": 0,
+    "zeroDrift": true,
+    "reportDigest": "sha256:2da32d4c5d2ce6cfb7bc072d66e0d1cde0f27467e367172ea90fbe17d14d5ecc"
+  },
+  "evidenceDigest": "sha256:61dc73d8e53c058e4bc3e722f0fd39e323cf43928cd6fd445ec21aa82f609a2b"
+}

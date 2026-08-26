@@ -2,27 +2,28 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import test from "node:test";
 import { createInteractionFrame, createPresentationReceipt, FRAME_FIELDS, HOST_INTERACTION_LEVELS, requirePresentedFrame } from "../src/v4/interaction/controller.mjs";
+import { REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../src/v4/interaction/professional-reasoning.mjs";
 
 const sha = (value) => `sha256:${crypto.createHash("sha256").update(String(value)).digest("hex")}`;
 const governedHost = {
   id: "conformance-host",
   version: "1.0.0",
   level: "GOVERNED_HUMAN_GATE_COMPATIBLE",
-  capabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"]
+  capabilities: [...REQUIRED_GOVERNED_HOST_CAPABILITIES]
 };
 const session = {
   sessionId: "session-interaction-conformance",
   sessionDigest: sha("session"),
   compatibility: {
-    productVersion: "4.3.0",
-    expertVersion: "4.3.0",
+    productVersion: "4.4.0",
+    expertVersion: "4.4.0",
     coreDigest: sha("core"),
-    agentProtocolVersion: "evopilot-harness-agent-operations/v2",
+    agentProtocolVersion: "evopilot-harness-agent-operations/v3",
     engineApiVersion: "harness.evopilot.io/v3"
   }
 };
 
-test("Protocol v2 inventories and schema-validates every canonical interaction frame", () => {
+test("Protocol v3 inventories every canonical interaction frame and projects an Engine-owned Business View", () => {
   assert.deepEqual(HOST_INTERACTION_LEVELS, ["TRANSPORT_ONLY", "CONVERSATIONAL_COMPATIBLE", "OBSERVABLE_INTERACTION_COMPATIBLE", "GOVERNED_HUMAN_GATE_COMPATIBLE"]);
   for (const [stage, requiredFields] of Object.entries(FRAME_FIELDS)) {
     const renderModel = Object.fromEntries(requiredFields.map((field) => [field, field === "destructive" ? true : `${stage}:${field}`]));
@@ -32,20 +33,18 @@ test("Protocol v2 inventories and schema-validates every canonical interaction f
       subject: { type: "CONFORMANCE_SUBJECT", id: stage.toLowerCase(), digest: sha(stage), bindings: { fixture: "v4.3" } },
       renderModel,
       decision: { kind: `${stage}_DECISION`, question: `Review ${stage}?` },
-      allowedNextOperations: ["acknowledge_interaction_frame"],
+      allowedNextOperations: ["record_business_view_delivery"],
       now: "2026-08-22T00:00:00.000Z"
     });
     assert.deepEqual(frame.requiredFields, requiredFields);
     assert.equal(frame.subject.bindings.fixture, "v4.3");
     assert.match(frame.frameDigest, /^sha256:[a-f0-9]{64}$/);
     assert.ok(frame.forbiddenOperations.includes("approve_session_proposal"));
-    let prior = -1;
-    for (const field of requiredFields) {
-      const position = frame.canonicalMarkdown.indexOf(`## ${field}\n`);
-      assert.ok(position > prior, `${stage}:${field} must be visibly rendered in declared order`);
-      prior = position;
-    }
-    assert.ok(frame.canonicalMarkdown.indexOf("## Human decision") > prior, `${stage} decision must follow complete content`);
+    assert.equal(frame.canonicalMarkdown, frame.businessView.canonicalMarkdown);
+    assert.deepEqual(frame.auditEnvelope.authoritativeRenderModel, frame.renderModel);
+    assert.match(frame.businessView.businessViewDigest, /^sha256:[a-f0-9]{64}$/);
+    assert.match(frame.auditEnvelope.auditEnvelopeDigest, /^sha256:[a-f0-9]{64}$/);
+    assert.equal(frame.authority.hostMayRewriteBusinessView, false);
   }
 });
 
@@ -65,7 +64,7 @@ test("Canonical frames reject missing authority-bearing fields and non-canonical
     subject: { type: "OPERATION_PLAN", id: "plan", digest: sha("plan"), bindings: { planDigest: sha("plan") } },
     renderModel: Object.fromEntries(fields.map((field) => [field, field])),
     decision: { kind: "PLAN_CONFIRMATION", question: "Approve this exact Plan?" },
-    allowedNextOperations: ["acknowledge_interaction_frame"]
+    allowedNextOperations: ["record_business_view_delivery"]
   });
   assert.throws(() => createPresentationReceipt({ frame, host: governedHost, presentedFields: ["schema"], visibleTranscriptDigest: sha(frame.canonicalMarkdown) }), (error) => error.code === "INTERACTION_PRESENTATION_INCOMPLETE");
   assert.throws(() => createPresentationReceipt({ frame, host: governedHost, presentedFields: [...fields, "collapsed-summary"], visibleTranscriptDigest: sha(frame.canonicalMarkdown) }), (error) => error.code === "INTERACTION_PRESENTATION_INCOMPLETE");
@@ -75,7 +74,7 @@ test("Canonical frames reject missing authority-bearing fields and non-canonical
   }
 });
 
-test("Presentation receipts remain distinct from governed decisions and stale frames fail closed", () => {
+test("legacy presentation receipts remain non-authorizing during the v2 compatibility window", () => {
   const fields = FRAME_FIELDS.PROPOSAL_REVIEW_PRESENTATION;
   const frame = createInteractionFrame({
     session,
@@ -83,7 +82,7 @@ test("Presentation receipts remain distinct from governed decisions and stale fr
     subject: { type: "PROPOSAL_REVIEW", id: "proposal-1", digest: sha("review"), bindings: { proposalDigest: sha("proposal"), reviewDigest: sha("review") } },
     renderModel: Object.fromEntries(fields.map((field) => [field, field])),
     decision: { kind: "PROPOSAL_REVIEW_COMPLETION", question: "Have you reviewed the complete immutable objects?" },
-    allowedNextOperations: ["acknowledge_interaction_frame"]
+    allowedNextOperations: ["record_business_view_delivery"]
   });
   const receipt = createPresentationReceipt({ frame, host: governedHost, presentedFields: fields, visibleTranscriptDigest: sha(frame.canonicalMarkdown) });
   assert.equal(receipt.schema, "evopilot-harness-interaction-presentation-receipt/v1");

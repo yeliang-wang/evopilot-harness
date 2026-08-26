@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/compliance-audit-envelope-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "envelopeId", "stage", "sessionId", "sessionDigest", "subject", "authoritativeRenderModel", "requiredFields", "decisionDefinition", "sourceReasoningMapDigest", "professionalAnalysisDigest", "architectureAssessmentDigest", "sourceOutcomeExplanationDigest", "evolutionContextDigest", "hostBoundaryContractDigest", "businessViewDigest", "allowedNextOperations", "forbiddenOperations", "compatibility", "authority", "redaction", "auditEnvelopeDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-compliance-audit-envelope/v1" },
+    "envelopeId": { "type": "string", "minLength": 8 },
+    "stage": { "type": "string", "minLength": 1 },
+    "sessionId": { "type": "string", "minLength": 6 },
+    "sessionDigest": { "$ref": "#/$defs/digest" },
+    "subject": { "type": "object" },
+    "authoritativeRenderModel": { "type": "object" },
+    "requiredFields": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "decisionDefinition": { "type": ["object", "null"] },
+    "sourceReasoningMapDigest": { "$ref": "#/$defs/digest" },
+    "professionalAnalysisDigest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "architectureAssessmentDigest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "sourceOutcomeExplanationDigest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "evolutionContextDigest": { "$ref": "#/$defs/digest" },
+    "hostBoundaryContractDigest": { "$ref": "#/$defs/digest" },
+    "businessViewDigest": { "$ref": "#/$defs/digest" },
+    "allowedNextOperations": { "type": "array" },
+    "forbiddenOperations": { "type": "array" },
+    "compatibility": { "type": "object" },
+    "authority": { "type": "object", "properties": { "engineAuthoritative": { "const": true }, "hostMayMutate": { "const": false }, "auditEnvelopeIsApproval": { "const": false } } },
+    "redaction": { "enum": ["SECRET_FREE", "REDACTED"] },
+    "auditEnvelopeDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

@@ -36,9 +36,13 @@ digital-expert/
 | Operation Server | MCP, capabilities, Session coordination, Engine adapter | General Agent loop, shell, business verdict |
 | Engine | Evidence, reasoning, Review, validation, approval binding, publication, Catalog | Human conversation |
 
+Protocol v3 fixes the boundary: the Engine authors professional Source-to-Harness analysis, architecture assessment, finite outcome, business-facing decision content, fixed-locale canonical presentation, and its complete audit envelope. WorkBuddy or another Host may transport attachments, render those exact objects, provide pixel layout, invoke MCP, and carry an explicit choice. It may not summarize, translate, supplement, omit, reorder, or reinterpret Source-to-Harness reasoning, invent decision options, or recover authority from chat memory. Host layout can differ; authoritative business bytes and digests cannot.
+
+The presentation sandbox is enforced by schemas, a versioned Engine renderer, Evolution Context binding, Host capability negotiation, and a digest-bound presentation receipt. It is not a prompt-only convention. The Operation Server records that non-authoritative receipt in the same canonical-presentation response path before returning the view, so normal operation needs no follow-up user prompt or extra assistant turn. The explicit receipt tool is an idempotent compatibility/recovery fallback and can never grant authority. Real-Host conformance compares Engine-owned Harness Frames, not the complete third-party application page: Host chrome, loading, model-status, and transport-status surfaces are excluded, while any Host rewrite, obstruction, replacement, confirmation, or advancement of governed content fails closed.
+
 ## Question-Driven Behavior
 
-The Expert asks exactly one shortest missing question and does not repeat information already supplied. A complete request moves directly to an Execution Brief and Plan. It renders Engine output without inventing missing evidence or changing verdict language. For comparison it renders bindings, comparability, strata, metrics, uncertainty, conflicts, safety blockers, limitations, recommendation, authority, and next action. For calibration it renders reviewed case and policy bindings, ranking, abstention/error rates, regressions, conflicts, uncertainty, recommendation, and active-policy non-mutation. Humans decide on the immutable object currently displayed in natural language; the Expert constructs digest-bound Engine tokens internally and never asks a human to copy protocol credentials.
+The Expert asks exactly one shortest missing question and does not repeat information already supplied. A complete request moves directly to an Execution Brief and Plan. Its primary output is the exact Engine-owned Business Decision View: what the Source proves, how each item maps to a Harness capability, why the outcome is reuse/evolve/compose/create/reject/need-more-evidence, what changes, risks, alternatives, and the one decision now required. Complete technical fields remain available in the bound Audit Envelope. Humans decide on the immutable object currently displayed in natural language; the Expert constructs digest-bound Engine tokens internally and never asks a human to copy protocol credentials.
 
 ## Import
 
@@ -48,7 +52,7 @@ The Expert asks exactly one shortest missing question and does not repeat inform
 - Generic or custom Agent: load `digital-expert/adapters/generic/AGENT.md` and implement stdio MCP with structured tool results.
 - MCP-only client: use `digital-expert/adapters/mcp/MCP.md`; it provides transport guidance but not a conversational UI.
 
-Adapter packaging does not prove the host supports local instructions, subprocesses, or stdio MCP. Unsupported hosts must return a capability blocker. The v4.1 release line validates the Codex protocol path, the included independent Generic Agent Host, cross-Adapter Plan/Engine-call/stop-point semantics, the real MCP process, comparison and calibration Sessions, and clean-tarball installed MCP operation. The previously recorded WorkBuddy evidence remains bounded to its exact local CLI path and version; a new source version, public npm availability, Claude Code packaging, or an Adapter file alone does not prove every host version.
+Adapter packaging does not prove the host supports local instructions, subprocesses, stdio MCP, exact canonical rendering, fixed locale, complete-turn receipts, operation interception, recovery, or required timeout/OperationJob behavior. Unsupported hosts must return a capability blocker before lifecycle entry. v4.4 acceptance requires candidate-package conformance, an independent Host, and the real WorkBuddy Host; packaging or an Adapter file alone does not prove a Host version.
 
 ## Legacy Skill
 

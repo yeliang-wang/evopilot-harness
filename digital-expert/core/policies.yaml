@@ -17,10 +17,26 @@ compatibility:
   mismatchBeforeMutation: block
 hostInteraction:
   governedHumanGateLevel: GOVERNED_HUMAN_GATE_COMPATIBLE
-  requiredCapabilities: [deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding]
+  requiredCapabilities: [deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding, business-view-digest-binding, exact-canonical-markdown-rendering, complete-turn-digest-receipt, fixed-locale-rendering, host-prose-suppression, workspace-state-recovery]
   unsupportedHost: fail-closed-before-governed-gate
   hostAssertionAloneIsEvidence: false
   collapsedContentSubstitute: deny
+  businessViewRewrite: deny
+  auditEnvelopeOmission: deny
+  automaticDeliveryReceiptGrantsAuthority: false
+  harnessReasoning: engine-only
+  businessTemplateSelection: engine-only
+  governedProseTranslationOrRewrite: deny
+  completeAssistantTurnMustEqualCanonicalMarkdown: true
+  fixedEvolutionContextLocale: true
+longRunningOperations:
+  hostMustDeclareSynchronousWindow: true
+  insufficientOrUnknownWindow: engine-owned-operation-job
+  workbuddyProposalReview: engine-owned-operation-job
+  repeatedStart: return-same-job
+  disconnectRecovery: inspect-same-job
+  automaticReexecutionAfterDisconnect: deny
+  synchronousAsynchronousSemanticDrift: deny
 sourceExecution:
   build: deny
   test: deny

@@ -5,8 +5,10 @@ import Ajv2020 from "ajv/dist/2020.js";
 import { PACKAGE_ROOT } from "../../v3/constants.mjs";
 import { digest, persistedJson, safeId } from "../../v3/utils.mjs";
 import { INTERACTION_FRAME_SCHEMA, INTERACTION_PRESENTATION_RECEIPT_SCHEMA } from "../constants.mjs";
+import { CANONICAL_PRESENTATION_DELIVERY_RECEIPT_SCHEMA, compositeDecisionBinding, createBusinessInteractionProjection, verifyBusinessViewDelivery } from "./business-projection.mjs";
+import { createHostConformanceProfile } from "./professional-reasoning.mjs";
 
-const schema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/interaction-frame-v1.schema.json"), "utf8"));
+const schema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/interaction-frame-v2.schema.json"), "utf8"));
 const validate = new Ajv2020({ allErrors: true, strict: true }).compile(schema);
 
 export const HOST_INTERACTION_LEVELS = [
@@ -36,6 +38,7 @@ export const FRAME_FIELDS = {
   EVIDENCE_REPORT_PRESENTATION: ["type", "reportId", "reportDigest", "report", "authority", "nextAction"],
   PROPOSAL_REVIEW_PRESENTATION: ["proposal", "proposalDigest", "review", "reviewDigest", "evaluation", "comparisonAssessment", "authority", "nextAction"],
   PROPOSAL_APPROVAL_DECISION: ["proposalId", "proposalDigest", "reviewDigest", "evaluationReviewed", "question"],
+  PROPOSAL_APPROVAL_DECISION: ["proposalId", "proposalDigest", "reviewDigest", "evaluationReviewed", "question"],
   PUBLICATION_PRESENTATION: ["proposalId", "approvedProposalDigest", "assets", "catalog", "impact", "nonPublicationOutcome", "authority"],
   RECOVERY_PRESENTATION: ["sessionId", "attempt", "receipt", "workspaceDigest", "risk", "nextAction"],
   BLOCKED_RETRY_PRESENTATION: ["sessionId", "blockedOperation", "failedResultDigest", "workspaceDigest", "risk", "nextAction"],
@@ -46,7 +49,7 @@ export const FRAME_FIELDS = {
   CATALOG_VALIDATION_PRESENTATION: ["proposalId", "publication", "catalogStatus", "catalogDigest", "nextAction"]
 };
 
-export function createInteractionFrame({ session, stage, subject, renderModel, decision = null, allowedNextOperations = [], now = new Date().toISOString() }) {
+export function createInteractionFrame({ session, stage, subject, renderModel, decision = null, allowedNextOperations = [], now = new Date().toISOString(), frameId = null }) {
   const requiredFields = FRAME_FIELDS[stage];
   if (!requiredFields) throw interactionError("UNKNOWN_INTERACTION_STAGE", `Unknown interaction stage ${stage}.`);
   const model = persistedJson(renderModel ?? {});
@@ -54,7 +57,7 @@ export function createInteractionFrame({ session, stage, subject, renderModel, d
   if (missing.length) throw interactionError("INTERACTION_REQUIRED_FIELDS_MISSING", `Interaction frame ${stage} is missing: ${missing.join(", ")}.`, { missingFields: missing });
   const frame = {
     schema: INTERACTION_FRAME_SCHEMA,
-    frameId: safeId(`frame-${Date.now().toString(36)}-${crypto.randomBytes(5).toString("hex")}`),
+    frameId: frameId ? safeId(String(frameId)) : safeId(`frame-${Date.now().toString(36)}-${crypto.randomBytes(5).toString("hex")}`),
     stage,
     createdAt: now,
     sessionId: session.sessionId,
@@ -66,9 +69,14 @@ export function createInteractionFrame({ session, stage, subject, renderModel, d
     decision: decision ? persistedJson(decision) : null,
     allowedNextOperations: [...new Set(allowedNextOperations)],
     forbiddenOperations: GOVERNED_OPERATIONS.filter((operation) => !allowedNextOperations.includes(operation)),
-    authority: { engineAuthoritative: true, presentationIsApproval: false, automaticPublication: false },
+    authority: { engineAuthoritative: true, presentationIsApproval: false, automaticPublication: false, hostMayRewriteBusinessView: false },
     redaction: "SECRET_FREE"
   };
+  const projection = createBusinessInteractionProjection({ session, stage, subject: frame.subject, renderModel: model, decision: frame.decision, requiredFields, allowedNextOperations: frame.allowedNextOperations, forbiddenOperations: frame.forbiddenOperations });
+  frame.businessView = projection.businessView;
+  frame.auditEnvelope = projection.auditEnvelope;
+  frame.decisionDefinition = projection.decisionDefinition;
+  frame.sourceReasoningMap = projection.sourceReasoningMap;
   frame.canonicalMarkdown = renderInteractionFrame(frame);
   frame.frameDigest = digest(frame);
   if (!validate(frame)) throw interactionError("INTERACTION_FRAME_INVALID", "Interaction frame failed schema validation.", { errors: validate.errors });
@@ -76,17 +84,46 @@ export function createInteractionFrame({ session, stage, subject, renderModel, d
 }
 
 export function renderInteractionFrame(frame) {
+  if (frame.businessView) return frame.businessView.canonicalMarkdown;
   const lines = [`# ${label(frame.stage)}`, "", `- Frame: \`${frame.frameId}\``, `- Subject: \`${frame.subject.type}:${frame.subject.id}\``, `- Digest: \`${frame.subject.digest}\``, ""];
-  for (const field of frame.requiredFields) {
-    lines.push(`## ${field}`, "", renderValue(frame.renderModel[field]), "");
-  }
+  for (const field of frame.requiredFields) lines.push(`## ${field}`, "", renderValue(frame.renderModel[field]), "");
   if (frame.decision) lines.push("## Human decision", "", frame.decision.question, "");
   lines.push("Presentation is not approval. Engine values and digests are authoritative.");
   return lines.join("\n");
 }
 
+export function createBusinessViewDeliveryReceipt({ session, frame, host, deliveredBusinessViewDigest, renderedBusinessViewDigest, now = new Date().toISOString() }) {
+  const conformanceProfile = requireConformantGovernedHost(host);
+  const verified = verifyBusinessViewDelivery({ businessView: frame.businessView, deliveredBusinessViewDigest, renderedBusinessViewDigest });
+  const receipt = {
+    schema: CANONICAL_PRESENTATION_DELIVERY_RECEIPT_SCHEMA,
+    sessionId: session.sessionId,
+    sessionDigest: session.sessionDigest,
+    frameId: frame.frameId,
+    frameDigest: frame.frameDigest,
+    stage: frame.stage,
+    host: persistedJson(host),
+    businessViewDigest: verified.businessViewDigest,
+    canonicalMarkdownDigest: verified.expectedRendered,
+    renderedBusinessViewDigest: verified.expectedRendered,
+    templateVersion: frame.businessView.template.schema,
+    templateDigest: frame.businessView.template.templateDigest,
+    locale: frame.businessView.template.locale,
+    hostConformanceDigest: conformanceProfile.hostConformanceDigest,
+    auditEnvelopeDigest: frame.auditEnvelope.auditEnvelopeDigest,
+    wholeTurnDelivered: true,
+    hostAuthoredGovernedProseCount: 0,
+    automatic: true,
+    authority: { deliveryEvidenceOnly: true, humanApproval: false, publicationAuthorization: false },
+    presentedAt: now
+  };
+  receipt.receiptDigest = digest(receipt);
+  receipt.compositeDecisionBinding = compositeDecisionBinding({ session, frame, receipt });
+  return receipt;
+}
+
 export function createPresentationReceipt({ frame, host, presentedFields, visibleTranscriptDigest, now = new Date().toISOString() }) {
-  if (host?.level !== "GOVERNED_HUMAN_GATE_COMPATIBLE") throw interactionError("HOST_INTERACTION_COMPLIANCE_UNAVAILABLE", "The current host is not certified for governed human gates.", { host });
+  requireConformantGovernedHost(host);
   const actual = [...new Set(presentedFields ?? [])];
   const missing = frame.requiredFields.filter((field) => !actual.includes(field));
   const extra = actual.filter((field) => !frame.requiredFields.includes(field));
@@ -107,6 +144,14 @@ export function createPresentationReceipt({ frame, host, presentedFields, visibl
   };
   receipt.receiptDigest = digest(receipt);
   return receipt;
+}
+
+function requireConformantGovernedHost(host) {
+  const conformanceProfile = createHostConformanceProfile(host);
+  if (host?.level !== "GOVERNED_HUMAN_GATE_COMPATIBLE" || conformanceProfile.status !== "CONFORMANT") {
+    throw interactionError("HOST_INTERACTION_COMPLIANCE_UNAVAILABLE", "The current host cannot guarantee exact Engine-owned presentation, whole-turn receipt binding, fixed locale, and durable recovery for governed human gates.", { host, missingCapabilities: conformanceProfile.missingCapabilities });
+  }
+  return conformanceProfile;
 }
 
 export function requirePresentedFrame(session, stage) {

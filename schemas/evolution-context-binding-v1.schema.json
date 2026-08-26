@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/evolution-context-binding-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "contextId", "sourceSnapshotDigest", "catalogBinding", "ontologyBinding", "matchPolicyBinding", "advisorPolicyBinding", "advisorProfile", "operationIntentDigest", "locale", "presentationTemplateVersion", "authority", "evolutionContextDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-evolution-context-binding/v1" },
+    "contextId": { "type": "string", "minLength": 8 },
+    "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
+    "catalogBinding": { "$ref": "#/$defs/binding" },
+    "ontologyBinding": { "$ref": "#/$defs/binding" },
+    "matchPolicyBinding": { "$ref": "#/$defs/binding" },
+    "advisorPolicyBinding": { "$ref": "#/$defs/binding" },
+    "advisorProfile": { "type": "object", "required": ["mode", "profileId", "userOwnedConfigurationRequired", "hostModelExcluded", "credentialsIncluded"] },
+    "operationIntentDigest": { "$ref": "#/$defs/digest" },
+    "locale": { "enum": ["zh-CN", "en"] },
+    "presentationTemplateVersion": { "const": "evopilot-harness-business-presentation/v2" },
+    "authority": { "type": "object", "required": ["engineOwned", "hostMayMutate", "advisorMayMutate", "chatMemoryAuthoritative"], "properties": { "engineOwned": { "const": true }, "hostMayMutate": { "const": false }, "advisorMayMutate": { "const": false }, "chatMemoryAuthoritative": { "const": false } } },
+    "evolutionContextDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "binding": { "type": "object", "required": ["files", "digest", "empty"], "properties": { "files": { "type": "array" }, "digest": { "$ref": "#/$defs/digest" }, "empty": { "type": "boolean" } } }
+  }
+}

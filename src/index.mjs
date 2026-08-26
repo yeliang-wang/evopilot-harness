@@ -2524,6 +2524,10 @@ function detectFrameworks(dependencies, imports, symbols, text) {
 function inferArchitectureSignals(context) {
   const text = normalizeForMatch([context.text, context.goal, ...context.dependencies, ...context.imports, ...context.symbols, ...context.selectedFiles].join("\n"));
   const signals = [];
+  if (/(代码生成|code generation|生成代码|提示词|prompt)/.test(text)
+    && /(java|ddd|facade|manager|domain service|domainservice|mybatis|plantuml|持久层|门面层|业务逻辑)/.test(text)) {
+    signals.push("java-code-generation", "language-service", "architecture-constrained-generation");
+  }
   if (/spring data redis|jedis|redis template|redisserializer|jedisconnectionfactory/.test(text)) signals.push("redis-client-library", "cache-client-library", "connection-factory", "serializer");
   if (/proxycheck|proxy check|redisops/.test(text)) signals.push("cache-proxy-monitor", "runtime-health-check", "service-discovery");
   if (/replica|failover|slot migration|hash slot|eviction|storage engine|protocol engine|cluster membership|key value store|kv store/.test(text)) signals.push("distributed-cache-product");
@@ -2543,6 +2547,10 @@ function inferSourceRoles(context) {
   const text = normalizeForMatch([context.text, context.goal, ...context.dependencies, ...context.imports, ...context.symbols, ...context.architectureSignals, ...context.allFiles].join("\n"));
   const roles = [];
   const add = (id, confidence, evidence) => roles.push({ id, confidence: Number(confidence.toFixed(2)), evidence: uniqueStrings(evidence).slice(0, 8) });
+  if (/(代码生成|code generation|生成代码|提示词|prompt)/.test(text)
+    && /(java|ddd|facade|manager|domain service|domainservice|mybatis|plantuml|持久层|门面层|业务逻辑)/.test(text)) {
+    add("java-code-generation", 0.99, ["java-code-generation-rules", "ddd-layering", "architecture-constrained-generation"]);
+  }
   if (/spring data redis|jedis|redis template|jedisconnectionfactory|redisserializer/.test(text)) {
     add("redis-client-library", 0.92, ["spring-data-redis-or-jedis", "redis-template-wrapper", "client-library-boundary"]);
   }
@@ -2669,6 +2677,13 @@ function recommendHarnessForRole(role, context) {
       parentHarnessIds: [],
       evidence: ["java-maven-source"]
     },
+    "java-code-generation": {
+      id: "java-ddd-code-generation-harness",
+      domain: "language-service",
+      confidence: 0.99,
+      parentHarnessIds: ["java-ddd-service", "java-ddd-service-harness"],
+      evidence: ["java-code-generation-rules", "ddd-layering", "architecture-constrained-generation"]
+    },
     "node-saas-control-plane": {
       id: "node-saas-control-plane-harness",
       domain: "node-saas-control-plane",
@@ -2690,6 +2705,9 @@ function inferNegativeSignals(context) {
   const text = normalizeForMatch([context.text, ...context.dependencies, ...context.imports, ...context.symbols, ...context.architectureSignals].join("\n"));
   const roleIds = context.roles.map((role) => role.id);
   const signals = [];
+  if (roleIds.includes("java-code-generation")) {
+    signals.push("code-generation-guidance-not-api-gateway-product", "prompt-specification-not-runtime-product");
+  }
   if (roleIds.includes("redis-client-library") && !roleIds.includes("distributed-cache-product")) {
     signals.push("no-cache-product-kernel", "client-library-not-cache-engine", "no-replication-or-failover-controller");
   }

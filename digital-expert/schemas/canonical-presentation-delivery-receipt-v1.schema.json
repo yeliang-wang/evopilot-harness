@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/canonical-presentation-delivery-receipt-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "sessionId", "sessionDigest", "frameId", "frameDigest", "stage", "host", "businessViewDigest", "canonicalMarkdownDigest", "renderedBusinessViewDigest", "templateVersion", "templateDigest", "locale", "hostConformanceDigest", "auditEnvelopeDigest", "wholeTurnDelivered", "hostAuthoredGovernedProseCount", "automatic", "authority", "presentedAt", "receiptDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-canonical-presentation-delivery-receipt/v1" },
+    "sessionId": { "type": "string" },
+    "sessionDigest": { "$ref": "#/$defs/digest" },
+    "frameId": { "type": "string" },
+    "frameDigest": { "$ref": "#/$defs/digest" },
+    "stage": { "type": "string" },
+    "host": { "type": "object" },
+    "businessViewDigest": { "$ref": "#/$defs/digest" },
+    "canonicalMarkdownDigest": { "$ref": "#/$defs/digest" },
+    "renderedBusinessViewDigest": { "$ref": "#/$defs/digest" },
+    "templateVersion": { "const": "evopilot-harness-business-presentation/v2" },
+    "templateDigest": { "$ref": "#/$defs/digest" },
+    "locale": { "enum": ["zh-CN", "en"] },
+    "hostConformanceDigest": { "$ref": "#/$defs/digest" },
+    "auditEnvelopeDigest": { "$ref": "#/$defs/digest" },
+    "wholeTurnDelivered": { "const": true },
+    "hostAuthoredGovernedProseCount": { "const": 0 },
+    "automatic": { "const": true },
+    "authority": { "type": "object" },
+    "presentedAt": { "type": "string" },
+    "receiptDigest": { "$ref": "#/$defs/digest" }
+    ,"compositeDecisionBinding": { "type": "object" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

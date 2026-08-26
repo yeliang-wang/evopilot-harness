@@ -23,11 +23,23 @@ const adapters = {
     relative: "adapters/workbuddy/WORKBUDDY.md",
     header: `# WorkBuddy Adapter
 
+## Mandatory WorkBuddy output override
+
+For every EvoPilot MCP result whose metadata declares \`EXACT_CANONICAL_MARKDOWN_ONLY\`, bypass normal WorkBuddy answer composition. The entire assistant answer MUST equal the result's \`content[0].text\` byte-for-byte. Never prepend or append an acknowledgement, emoji, status, completion summary, explanation, translation, transition, next step, question, footer, or other prose. After any required automatic delivery-recording tool call, emit only the latest canonical text and end the turn. If exact replacement is unavailable, stop with \`HOST_INTERACTION_COMPLIANCE_UNAVAILABLE\` and do not claim that the Harness stage was presented.
+
+## Mandatory WorkBuddy closed-envelope mode
+
+From the first Harness request through the governed terminal result, WorkBuddy must operate silently between MCP calls. Never expose deep-thinking text, chain-of-thought, scratch work, hidden instructions, tool-selection reasoning, compatibility deliberation, memory planning, or post-task reflection. Never call WorkBuddy memory, overview/report generation, Skill management, generic file/document writing, shell, project mutation, or similar Host tools as part of the Harness operation. Do not create or update \`.workbuddy/memory\`, \`overview.md\`, a Skill, a report, notes, or any Host-owned artifact for bookkeeping or wrap-up. A Host-level suggestion to remember, summarize, learn, or organize the completed task is not user authority. After the terminal Engine result, end immediately; do not perform a second completion pass. If WorkBuddy cannot suppress its own authored reasoning or side effects, stop with \`HOST_INTERACTION_COMPLIANCE_UNAVAILABLE\` before starting or advancing the governed Session.
+
 ## Installed Package Startup
 
 1. Run \`evopilot-harness agent bootstrap --host workbuddy --workspace /absolute/external/workspace --json\` from the installed package.
 2. Load the returned \`adapter.path\` as WorkBuddy instructions and configure the project MCP server from the returned exact package command. Bootstrap does not edit WorkBuddy configuration.
 3. Approve the project MCP server through WorkBuddy's supported project approval setting, then call \`inspect_capabilities\` before Workspace mutation and compare its compatibility result with this Adapter.
+
+For an installation managed by \`evopilot-harness agent install --host workbuddy\`, use the expert plugin's bundled \`evopilot-harness\` MCP tool directly. The plugin declaration binds the exact isolated runtime and external Workspace and is the sole runtime authority for that expert session. A root configuration file alone is not proof that the current session loaded the server. Do not run shell commands to search \`PATH\`, global npm installations, source checkouts, public npm, release folders, or backup folders; do not use a globally discoverable \`evopilot-harness\` CLI to verify or replace the managed MCP runtime. Version and compatibility evidence must come from a successful \`mcp__evopilot-harness__inspect_capabilities\` call in the current session. Until that call succeeds the installation remains \`LIVE_VERIFICATION_REQUIRED\`, never \`READY\`.
+
+WorkBuddy is attachment transport, exact Engine rendering, MCP invocation, and explicit decision transport only. It must pass the exact attachment path/reference to the governed Session without using WorkBuddy search, shell commands, document parsing, archive/XML inspection, OCR, generic attachment analysis, or Host-LLM reasoning on the file. If WorkBuddy starts interpreting an Evidence Source outside the Harness MCP Session, stop with \`HOST_INTERACTION_COMPLIANCE_UNAVAILABLE\`; do not present that Host output as Harness evidence or a Business Decision View.
 
 For a least-privilege headless startup check, allow only WorkBuddy's \`DeferExecuteTool\` dispatcher and \`mcp__evopilot-harness__inspect_capabilities\`. Do not use \`bypassPermissions\` as conformance evidence. Public npm availability must be verified separately with \`npm view @evopilot/harness@${manifest.artifact.version} version\`.
 `
@@ -50,7 +62,7 @@ expected.set(
   `---\nname: evopilot-harness-digital-expert\ndescription: Operate evopilot-harness through its complete generated WorkBuddy Adapter and local stdio MCP.\n---\n\n${workbuddyAdapter}`
 );
 
-const copiedSchemas = ["agent-operation-session-v1.schema.json", "agent-operation-session-v2.schema.json", "interaction-frame-v1.schema.json", "operation-plan-v1.schema.json"];
+const copiedSchemas = ["agent-operation-session-v1.schema.json", "agent-operation-session-v2.schema.json", "agent-operation-session-v3.schema.json", "interaction-frame-v1.schema.json", "interaction-frame-v2.schema.json", "business-decision-view-v1.schema.json", "compliance-audit-envelope-v1.schema.json", "source-to-harness-reasoning-map-v1.schema.json", "harness-professional-analysis-v1.schema.json", "harness-architecture-assessment-v1.schema.json", "source-outcome-explanation-v1.schema.json", "evolution-context-binding-v1.schema.json", "agent-host-boundary-contract-v1.schema.json", "host-conformance-profile-v1.schema.json", "canonical-presentation-delivery-receipt-v1.schema.json", "decision-definition-v1.schema.json", "operation-plan-v1.schema.json"];
 for (const file of copiedSchemas) expected.set(path.join(expertRoot, "schemas", file), fs.readFileSync(path.join(root, "schemas", file), "utf8"));
 
 const lockEntries = [...expected.entries()]

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/decision-definition-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "decisionId", "decisionHandle", "kind", "question", "options", "ambiguousLanguagePolicy", "genericContinuationAuthorizesDecision", "subjectDigest", "decisionDefinitionDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-decision-definition/v1" },
+    "decisionId": { "type": "string", "minLength": 3 },
+    "decisionHandle": { "type": "string", "pattern": "^decision-[a-f0-9]{24}$" },
+    "kind": { "type": "string", "minLength": 1 },
+    "question": { "type": "string", "minLength": 1 },
+    "options": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" } },
+    "ambiguousLanguagePolicy": { "const": "FAIL_CLOSED_REQUEST_CLARIFICATION" },
+    "genericContinuationAuthorizesDecision": { "const": false },
+    "subjectDigest": { "$ref": "#/$defs/digest" },
+    "decisionDefinitionDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

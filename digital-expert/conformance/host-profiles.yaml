@@ -2,12 +2,12 @@ schema: evopilot-harness-digital-expert-host-profiles/v1
 profiles:
   - id: codex
     adapter: adapters/codex/SKILL.md
-    requiredCapabilities: [conversation, local-instructions, stdio-mcp, structured-tool-results]
+    requiredCapabilities: [conversation, local-instructions, stdio-mcp, structured-tool-results, deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding, business-view-digest-binding, exact-canonical-markdown-rendering, complete-turn-digest-receipt, fixed-locale-rendering, host-prose-suppression, workspace-state-recovery]
     validation: real-codex-session-plus-protocol-conformance
     interactionLevel: GOVERNED_HUMAN_GATE_COMPATIBLE
   - id: workbuddy
     adapter: adapters/workbuddy/WORKBUDDY.md
-    requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
+    requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp, deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding, business-view-digest-binding, exact-canonical-markdown-rendering, complete-turn-digest-receipt, fixed-locale-rendering, host-prose-suppression, workspace-state-recovery]
     validation: actual-workbuddy-host-plus-installed-package-protocol-conformance
     interactionLevel: requires-exact-version-real-host-certification
   - id: claude-code
@@ -22,6 +22,6 @@ profiles:
     interactionLevel: TRANSPORT_ONLY
   - id: generic
     adapter: adapters/generic/AGENT.md
-    requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp]
+    requiredCapabilities: [conversation, local-instructions, local-process-or-stdio-mcp, deterministic-rendering, governed-operation-interception, ordered-visible-transcript-evidence, interaction-frame-binding, business-view-digest-binding, exact-canonical-markdown-rendering, complete-turn-digest-receipt, fixed-locale-rendering, host-prose-suppression, workspace-state-recovery]
     validation: independent-adapter-conformance
     interactionLevel: GOVERNED_HUMAN_GATE_COMPATIBLE

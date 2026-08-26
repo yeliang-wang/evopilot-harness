@@ -13,7 +13,7 @@ import { discoverAssets } from "../src/v3/catalog.mjs";
 import { feedbackPackageDigest, feedbackPayloadDigest } from "../src/v3/feedback.mjs";
 import { engineCapabilities, engineOperationDefinition, invokeEngineOperation } from "../src/v4/engine-adapter.mjs";
 import { assertExternalWorkspace, operationCompatibility } from "../src/v4/constants.mjs";
-import { acknowledgeInteractionFramePresentation, cancelAgentSession, createAgentSession, createSessionPlan, confirmSessionPlan, inspectAgentSession, prepareSessionLifecycleInteraction, recoverInterruptedSessions, resumeAgentSession, validateAgentSession, validateOperationPlan } from "../src/v4/session/store.mjs";
+import { acknowledgeInteractionFramePresentation, cancelAgentSession, createAgentSession, createSessionPlan, confirmSessionPlan, inspectAgentSession, migrateOperationSessionCoreCompatibility, prepareSessionLifecycleInteraction, recordBusinessViewDelivery, recoverInterruptedSessions, resumeAgentSession, validateAgentSession, validateOperationPlan } from "../src/v4/session/store.mjs";
 import { governedHostInteraction, TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -271,6 +271,102 @@ test("real stdio MCP persists a REVISE Proposal Review as a blocked Session", as
   }
 });
 
+test("Engine-owned OperationJob returns quickly, deduplicates repeated starts, and persists the authoritative Review", async () => {
+  const home = temporary("operation-job-review");
+  const source = createCacheSource(temporary("operation-job-review-source"));
+  const reviewer = await startReviewServer({ delayMs: 250 });
+  const modelsFile = path.join(home, "models.test.json");
+  fs.mkdirSync(home, { recursive: true });
+  fs.writeFileSync(modelsFile, `${JSON.stringify({ models: [{ id: "contract-reviewer", name: "Contract Reviewer", vendor: "zhipu", apiKey: "test-only", url: reviewer.url }] }, null, 2)}\n`, "utf8");
+  const client = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
+  try {
+    await client.initialize();
+    structured(await client.tool("prepare_workspace", { initialize: true }));
+    const workbuddy = { ...governedHostInteraction("workbuddy", "5.2.6"), supportsOperationJobs: true, maxSynchronousMcpRequestMs: 30000 };
+    const produced = await executeEvolutionMcpSession(client, source, "Review this Proposal through one durable OperationJob", workbuddy);
+    const request = { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, operation: "proposal.review", input: { modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 } };
+    const forbiddenSync = await client.rawTool("review_session_proposals", { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 });
+    assert.equal(forbiddenSync.isError, true);
+    assert.equal(forbiddenSync.structuredContent.code, "ASYNC_OPERATION_JOB_REQUIRED");
+    const startedAt = Date.now();
+    const first = structured(await client.tool("start_operation_job", request));
+    assert.ok(Date.now() - startedAt < 200, "start_operation_job must not wait for semantic Review completion");
+    assert.equal(first.status, "RUNNING");
+    const repeated = structured(await client.tool("start_operation_job", request));
+    assert.equal(repeated.jobId, first.jobId);
+    assert.equal(repeated.identityDigest, first.identityDigest);
+    const conflict = await client.rawTool("start_operation_job", { ...request, input: { ...request.input, reviewTimeoutMs: 6000 } });
+    assert.equal(conflict.isError, true);
+    assert.equal(conflict.structuredContent.code, "OPERATION_JOB_CONFLICT");
+    const forged = await client.rawTool("inspect_operation_job", { jobId: first.jobId, expectedJobDigest: `sha256:${"f".repeat(64)}` });
+    assert.equal(forged.isError, true);
+    assert.equal(forged.structuredContent.code, "OPERATION_JOB_DIGEST_MISMATCH");
+    let job = repeated;
+    await waitUntil(async () => {
+      job = structured(await client.tool("inspect_operation_job", { jobId: first.jobId }));
+      return job.status !== "RUNNING";
+    }, 7000);
+    assert.equal(job.status, "SUCCEEDED");
+    assert.equal(job.result.status, "PROPOSAL_REVIEW_PRESENTATION_REQUIRED");
+    assert.equal(job.result.proposal.reviewVerdict, "READY_FOR_HUMAN_APPROVAL");
+    assert.match(job.result.presentation.canonicalMarkdown, /Proposal|Harness/i);
+    assert.equal(job.result.presentation.auditEnvelope, undefined);
+    assert.equal(job.result.auditResource, `evopilot-harness://sessions/${produced.sessionId}`);
+    assert.equal(reviewer.requests(), 1);
+    const authoritativeSession = structured(await client.tool("inspect_operation_session", { sessionId: produced.sessionId }));
+    assert.equal(authoritativeSession.sessionDigest, job.automaticPresentationDelivery.sessionDigest);
+    assert.equal(authoritativeSession.status, "HUMAN_APPROVAL_REQUIRED");
+    assert.equal(job.automaticPresentationDelivery.status, "RECORDED");
+    assert.equal(job.automaticPresentationDelivery.authority.humanApproval, false);
+    assert.equal(authoritativeSession.proposals[0].approval, undefined);
+    assert.equal(authoritativeSession.proposals[0].publication, undefined);
+    const sameCompleted = structured(await client.tool("start_operation_job", request));
+    assert.equal(sameCompleted.jobId, first.jobId);
+    assert.equal(sameCompleted.resultDigest, job.resultDigest);
+    assert.equal(reviewer.requests(), 1);
+  } finally {
+    await client.close();
+    await reviewer.close();
+  }
+});
+
+test("MCP process loss preserves the detached OperationJob and reconnects without re-execution", async () => {
+  const home = temporary("operation-job-interruption");
+  const source = createCacheSource(temporary("operation-job-interruption-source"));
+  const reviewer = await startReviewServer({ delayMs: 1500 });
+  const modelsFile = path.join(home, "models.test.json");
+  fs.mkdirSync(home, { recursive: true });
+  fs.writeFileSync(modelsFile, `${JSON.stringify({ models: [{ id: "contract-reviewer", name: "Contract Reviewer", vendor: "zhipu", apiKey: "test-only", url: reviewer.url }] }, null, 2)}\n`, "utf8");
+  const first = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
+  await first.initialize();
+  structured(await first.tool("prepare_workspace", { initialize: true }));
+  const produced = await executeEvolutionMcpSession(first, source, "Interrupt but never duplicate this Proposal Review");
+  const request = { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, operation: "proposal.review", input: { modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 } };
+  const started = structured(await first.tool("start_operation_job", request));
+  assert.equal(started.status, "RUNNING");
+  first.kill("SIGKILL");
+  await first.waitForExit();
+
+  const second = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
+  try {
+    await second.initialize();
+    let recovered;
+    await waitUntil(async () => {
+      recovered = structured(await second.tool("inspect_operation_job", { jobId: started.jobId }));
+      return recovered.status !== "RUNNING";
+    }, 7000);
+    assert.equal(recovered.status, "SUCCEEDED");
+    const replay = structured(await second.tool("start_operation_job", request));
+    assert.equal(replay.jobId, started.jobId);
+    assert.equal(replay.status, "SUCCEEDED");
+    assert.equal(replay.resultDigest, recovered.resultDigest);
+    assert.equal(reviewer.requests(), 1);
+  } finally {
+    await second.close();
+    await reviewer.close();
+  }
+});
+
 test("real stdio MCP requires a presented, digest-bound authorization before retrying a repairable blocked Proposal Review", async () => {
   const home = temporary("mcp-review-revise");
   const source = createCacheSource(temporary("mcp-review-revise-source"));
@@ -288,28 +384,7 @@ test("real stdio MCP requires a presented, digest-bound authorization before ret
     assert.equal(reviewed.proposals[0].review.verdict, "NEED_MORE_EVIDENCE");
     assert.match(fs.readFileSync(path.join(home, "agent-sessions", reviewed.sessionId, "journal.jsonl"), "utf8"), /"event":"PROPOSAL_REVIEW_BLOCKED"/);
 
-    const acknowledgeCurrentFrame = async (session, confirmedBy = "blocked-retry-test") => {
-      const frame = session.interaction.currentFrame;
-      return structured(await client.rawTool("acknowledge_interaction_frame", {
-        sessionId: session.sessionId,
-        expectedSessionDigest: session.sessionDigest,
-        expectedFrameDigest: frame.frameDigest,
-        presentedFields: frame.requiredFields,
-        visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`,
-        confirmedBy,
-        confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`
-      }));
-    };
-
-    const prematureRetry = await client.rawTool("prepare_session_lifecycle_interaction", {
-      sessionId: reviewed.sessionId,
-      expectedSessionDigest: reviewed.sessionDigest,
-      action: "BLOCKED_RETRY"
-    });
-    assert.equal(prematureRetry.isError, true);
-    assert.equal(prematureRetry.structuredContent.code, "INTERACTION_PRESENTATION_REQUIRED");
-
-    reviewed = await acknowledgeCurrentFrame(reviewed);
+    assert.ok(reviewed.interaction.presentationReceipts.some((item) => item.frameDigest === reviewed.interaction.currentFrame.frameDigest && item.automatic === true));
     let retry = structured(await client.rawTool("prepare_session_lifecycle_interaction", {
       sessionId: reviewed.sessionId,
       expectedSessionDigest: reviewed.sessionDigest,
@@ -318,7 +393,7 @@ test("real stdio MCP requires a presented, digest-bound authorization before ret
     assert.equal(retry.status, "BLOCKED", JSON.stringify(retry));
     assert.equal(retry.interaction.currentFrame.stage, "BLOCKED_RETRY_PRESENTATION");
     const retryModel = retry.interaction.currentFrame.renderModel;
-    retry = await acknowledgeCurrentFrame(retry);
+    assert.ok(retry.interaction.presentationReceipts.some((item) => item.frameDigest === retry.interaction.currentFrame.frameDigest && item.automatic === true));
 
     const confirmation = `AUTHORIZE_BLOCKED_OPERATION_RETRY:${retry.sessionId}:${retryModel.failedResultDigest}:${retryModel.workspaceDigest}`;
     const authorized = structured(await client.rawTool("authorize_blocked_operation_retry", {
@@ -568,9 +643,11 @@ test("Agent Operation Session binds plan digests and resumes across adapters", (
   const planned = createSessionPlan({ home, sessionId: created.sessionId, expectedSessionDigest: created.sessionDigest, goal: created.intent.text, sources: { sourceProjects: [source], advisor: "off" } });
   assert.equal(planned.status, "PLAN_REVIEW_REQUIRED");
   assert.equal(validateOperationPlan(planned.plan).status, "VALIDATED");
+  assert.equal(planned.interaction.frameArchive.length, 1);
+  assert.equal(planned.interaction.frameArchive[0].frameDigest, planned.interaction.currentFrame.frameDigest);
   assert.throws(() => confirmSessionPlan({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedPlanDigest: planned.planDigest, confirmedBy: "operator", confirmation: "continue" }), /Complete visible PLAN_PRESENTATION presentation is required/);
   const frame = planned.interaction.currentFrame;
-  const presented = acknowledgeInteractionFramePresentation({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedFrameDigest: frame.frameDigest, presentedFields: frame.requiredFields, visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`, confirmedBy: "test-governed-host", confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}` });
+  const presented = recordBusinessViewDelivery({ home, sessionId: planned.sessionId, expectedSessionDigest: planned.sessionDigest, expectedFrameDigest: frame.frameDigest, deliveredBusinessViewDigest: frame.businessView.businessViewDigest, renderedBusinessViewDigest: `sha256:${crypto.createHash("sha256").update(frame.businessView.canonicalMarkdown).digest("hex")}` });
   assert.throws(() => confirmSessionPlan({ home, sessionId: presented.sessionId, expectedSessionDigest: presented.sessionDigest, expectedPlanDigest: presented.planDigest, confirmedBy: "operator", confirmation: "continue" }), /Plan confirmation must equal/);
   const confirmed = confirmSessionPlan({ home, sessionId: presented.sessionId, expectedSessionDigest: presented.sessionDigest, expectedPlanDigest: presented.planDigest, confirmedBy: "operator", confirmation: `CONFIRM_OPERATION_PLAN:${presented.planDigest}` });
   assert.throws(() => resumeAgentSession({ home, sessionId: confirmed.sessionId, expectedSessionDigest: planned.sessionDigest, adapterId: "stale-agent" }), /Session changed since the caller last read it/);
@@ -581,7 +658,7 @@ test("Agent Operation Session binds plan digests and resumes across adapters", (
   const cancellable = createAgentSession({ home, intent: "Cancel this reviewed test Session without executing a Plan", adapterId: "codex", hostInteraction: governedHostInteraction() });
   const cancelPrepared = prepareSessionLifecycleInteraction({ home, sessionId: cancellable.sessionId, expectedSessionDigest: cancellable.sessionDigest, action: "CANCEL" });
   const cancelFrame = cancelPrepared.interaction.currentFrame;
-  const cancelPresented = acknowledgeInteractionFramePresentation({ home, sessionId: cancelPrepared.sessionId, expectedSessionDigest: cancelPrepared.sessionDigest, expectedFrameDigest: cancelFrame.frameDigest, presentedFields: cancelFrame.requiredFields, visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(cancelFrame.canonicalMarkdown).digest("hex")}`, confirmedBy: "test-governed-host", confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${cancelFrame.frameId}:${cancelFrame.frameDigest}` });
+  const cancelPresented = recordBusinessViewDelivery({ home, sessionId: cancelPrepared.sessionId, expectedSessionDigest: cancelPrepared.sessionDigest, expectedFrameDigest: cancelFrame.frameDigest, deliveredBusinessViewDigest: cancelFrame.businessView.businessViewDigest, renderedBusinessViewDigest: `sha256:${crypto.createHash("sha256").update(cancelFrame.businessView.canonicalMarkdown).digest("hex")}` });
   const cancelled = cancelAgentSession({ home, sessionId: cancelPresented.sessionId, expectedSessionDigest: cancelPresented.sessionDigest, confirmedBy: "operator", confirmation: `CANCEL_SESSION:${cancelPresented.sessionId}:${cancelPresented.sessionDigest}` });
   assert.equal(cancelled.status, "CANCELLED");
 });
@@ -720,6 +797,40 @@ test("every Session mutation rejects persisted Digital Expert Core drift without
   assert.equal(fs.readFileSync(file, "utf8"), before);
 });
 
+test("stopped Protocol v3 Sessions explicitly migrate across a same-boundary Core replacement without authority drift", () => {
+  const home = temporary("session-core-compatible-migration");
+  initializeWorkspace(home);
+  const created = createAgentSession({ home, intent: "Resume after compatible candidate Core replacement", adapterId: "workbuddy" });
+  const file = path.join(home, "agent-sessions", created.sessionId, "session.json");
+  const stale = JSON.parse(fs.readFileSync(file, "utf8"));
+  const priorCoreDigest = `sha256:${"1".repeat(64)}`;
+  stale.compatibility.coreDigest = priorCoreDigest;
+  delete stale.sessionDigest;
+  stale.sessionDigest = `sha256:${crypto.createHash("sha256").update(JSON.stringify(sortValue(stale))).digest("hex")}`;
+  fs.writeFileSync(file, `${JSON.stringify(stale, null, 2)}\n`);
+
+  assert.throws(() => migrateOperationSessionCoreCompatibility({
+    home,
+    sessionId: stale.sessionId,
+    expectedSessionDigest: stale.sessionDigest,
+    expectedPriorCoreDigest: `sha256:${"2".repeat(64)}`,
+    adapterId: "workbuddy"
+  }), (error) => error.code === "SESSION_PRIOR_CORE_DIGEST_MISMATCH");
+
+  const migrated = migrateOperationSessionCoreCompatibility({
+    home,
+    sessionId: stale.sessionId,
+    expectedSessionDigest: stale.sessionDigest,
+    expectedPriorCoreDigest: priorCoreDigest,
+    adapterId: "workbuddy"
+  });
+  assert.deepEqual(migrated.compatibility, operationCompatibility());
+  assert.equal(migrated.status, created.status);
+  assert.deepEqual(migrated.humanDecisions, created.humanDecisions);
+  assert.equal(migrated.migrationHistory.at(-1).authorityChanged, false);
+  assert.equal(migrated.migrationHistory.at(-1).businessStateChanged, false);
+});
+
 test("independent Generic Agent Host matches the Codex Adapter plan and stop semantics", async () => {
   const home = temporary("generic-host");
   const sourceHome = temporary("generic-source");
@@ -733,8 +844,9 @@ test("independent Generic Agent Host matches the Codex Adapter plan and stop sem
   assert.equal(report.digitalExpertSchema, "evopilot-harness-digital-expert/v1");
   assert.equal(report.workflow.renderedDecision.status, "PROPOSAL_REVIEW_REQUIRED");
   assert.equal(report.workflow.renderedDecision.frameStage, "PLAN_PRESENTATION");
-  assert.match(report.workflow.renderedDecision.canonicalMarkdownDigest, /^sha256:[a-f0-9]{64}$/);
-  assert.match(report.workflow.renderedDecision.presentationReceiptDigest, /^sha256:[a-f0-9]{64}$/);
+  assert.match(report.workflow.renderedDecision.businessViewDigest, /^sha256:[a-f0-9]{64}$/);
+  assert.match(report.workflow.renderedDecision.renderedBusinessViewDigest, /^sha256:[a-f0-9]{64}$/);
+  assert.match(report.workflow.renderedDecision.deliveryReceiptDigest, /^sha256:[a-f0-9]{64}$/);
   const codex = await runAdapterPlanTrace(temporary("codex-host"), source, "codex");
   assert.deepEqual(semanticWorkflow(report.workflow), semanticWorkflow(codex));
   assert.equal(treeDigest(source), sourceBefore);
@@ -787,14 +899,12 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
     assert.equal(structured(staleResume).code, "SESSION_DIGEST_MISMATCH");
 
     const planFrame = planned.interaction.currentFrame;
-    const planPresented = structured(await client.tool("acknowledge_interaction_frame", {
+    const planPresented = structured(await client.tool("record_business_view_delivery", {
       sessionId: planned.sessionId,
       expectedSessionDigest: planned.sessionDigest,
       expectedFrameDigest: planFrame.frameDigest,
-      presentedFields: planFrame.requiredFields,
-      visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(planFrame.canonicalMarkdown).digest("hex")}`,
-      confirmedBy: "acceptance-governed-host",
-      confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${planFrame.frameId}:${planFrame.frameDigest}`
+      deliveredBusinessViewDigest: planFrame.businessView.businessViewDigest,
+      renderedBusinessViewDigest: `sha256:${crypto.createHash("sha256").update(planFrame.businessView.canonicalMarkdown).digest("hex")}`
     }));
     const invalidConfirmation = await client.rawTool("confirm_operation_plan", {
       sessionId: planPresented.sessionId,
@@ -825,7 +935,8 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
       assert.equal(diagnostic.exitCode, 0);
     }
     const reviewed = structured(await client.tool("review_session_proposals", { sessionId: crossAgent.sessionId, expectedSessionDigest: crossAgent.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
-    assert.equal(reviewed.status, "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", JSON.stringify(reviewed.blockers));
+    assert.equal(reviewed.status, "HUMAN_APPROVAL_REQUIRED", JSON.stringify(reviewed.blockers));
+    assert.deepEqual(reviewed.interaction.frameArchive.map((frame) => frame.stage), ["PLAN_PRESENTATION", "PROPOSAL_REVIEW_PRESENTATION"]);
     const proposal = reviewed.proposals[0];
     assert.equal(proposal.review.verdict, "READY_FOR_HUMAN_APPROVAL");
     const reviewInspection = structured(await client.tool("run_engine_diagnostic", { operation: "proposal.review.inspect", input: { proposalId: proposal.proposalId } }));
@@ -833,14 +944,12 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
     assert.equal(reviewInspection.exitCode, 0);
 
     const reviewFrame = reviewed.interaction.currentFrame;
-    const reviewPresented = structured(await client.tool("acknowledge_interaction_frame", {
+    const reviewPresented = structured(await client.tool("record_business_view_delivery", {
       sessionId: reviewed.sessionId,
       expectedSessionDigest: reviewed.sessionDigest,
       expectedFrameDigest: reviewFrame.frameDigest,
-      presentedFields: reviewFrame.requiredFields,
-      visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(reviewFrame.canonicalMarkdown).digest("hex")}`,
-      confirmedBy: "acceptance-governed-host",
-      confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${reviewFrame.frameId}:${reviewFrame.frameDigest}`
+      deliveredBusinessViewDigest: reviewFrame.businessView.businessViewDigest,
+      renderedBusinessViewDigest: `sha256:${crypto.createHash("sha256").update(reviewFrame.businessView.canonicalMarkdown).digest("hex")}`
     }));
     const noImplicitApproval = await client.rawTool("approve_session_proposal", {
       sessionId: reviewPresented.sessionId,
@@ -863,7 +972,7 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
       confirmation: `APPROVE_PROPOSAL:${proposal.proposalId}:${proposal.proposalDigest}:${proposal.review.reportDigest}`,
       evaluationReviewed: true
     }));
-    assert.equal(approved.status, "PUBLICATION_PRESENTATION_REQUIRED");
+    assert.equal(approved.status, "PUBLICATION_DECISION_REQUIRED");
     assert.equal(approved.proposals[0].publicationAuthorization, undefined);
 
     const approvedReference = approved.proposals[0];
@@ -1001,7 +1110,7 @@ test("multiple Proposals remain publishable until every authorized Proposal is p
     session = structured(await client.tool("execute_operation_plan", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, expectedPlanDigest: session.planDigest }));
     assert.ok(session.proposals.length >= 2, JSON.stringify(session.proposals));
     session = structured(await client.tool("review_session_proposals", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
-    assert.equal(session.status, "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", JSON.stringify(session));
+    assert.equal(session.status, "HUMAN_APPROVAL_REQUIRED", JSON.stringify(session));
     for (const proposal of session.proposals) {
       session = structured(await client.tool("approve_session_proposal", {
         sessionId: session.sessionId,
@@ -1014,7 +1123,7 @@ test("multiple Proposals remain publishable until every authorized Proposal is p
         evaluationReviewed: true
       }));
     }
-    assert.equal(session.status, "PUBLICATION_PRESENTATION_REQUIRED");
+    assert.equal(session.status, "PUBLICATION_DECISION_REQUIRED");
     for (const proposal of session.proposals) {
       session = structured(await client.tool("authorize_proposal_publication", {
         sessionId: session.sessionId,
@@ -1242,12 +1351,15 @@ function walk(directory) {
   }).sort();
 }
 
-async function startReviewServer({ verdict = "READY_FOR_HUMAN_APPROVAL" } = {}) {
+async function startReviewServer({ verdict = "READY_FOR_HUMAN_APPROVAL", delayMs = 0 } = {}) {
+  let requestCount = 0;
   const server = http.createServer(async (request, response) => {
+    requestCount += 1;
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
     const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
     const prompt = JSON.parse(body.messages.at(-1).content);
+    if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
     const evidenceIds = prompt.evidenceGraph.map((item) => item.evidenceId);
     const firstEvidence = evidenceIds[0];
     const reviewPrompt = prompt.task?.startsWith("Independently review") || prompt.task?.startsWith("Repair the previous Proposal Review");
@@ -1284,11 +1396,11 @@ async function startReviewServer({ verdict = "READY_FOR_HUMAN_APPROVAL" } = {}) 
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
-  return { url: `http://127.0.0.1:${address.port}/v4`, close: () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())) };
+  return { url: `http://127.0.0.1:${address.port}/v4`, requests: () => requestCount, close: () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())) };
 }
 
-async function executeEvolutionMcpSession(client, source, intent) {
-  let session = structured(await client.tool("start_operation_session", { intent, adapterId: "codex-conformance" }));
+async function executeEvolutionMcpSession(client, source, intent, hostInteraction) {
+  let session = structured(await client.tool("start_operation_session", { intent, adapterId: hostInteraction?.id ?? "codex-conformance", ...(hostInteraction ? { hostInteraction } : {}) }));
   session = structured(await client.tool("plan_operation_session", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, scenario: "evolve", goal: intent, sources: { sourceProjects: [source], advisor: "off" } }));
   session = structured(await client.tool("confirm_operation_plan", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, expectedPlanDigest: session.planDigest, confirmedBy: "conformance-operator", confirmation: `CONFIRM_OPERATION_PLAN:${session.planDigest}` }));
   return structured(await client.tool("execute_operation_plan", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, expectedPlanDigest: session.planDigest }));
@@ -1313,7 +1425,7 @@ async function waitUntil(predicate, timeoutMs) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
     try {
-      if (predicate()) return;
+      if (await predicate()) return;
     } catch { /* state file may be between initial creation and update */ }
     await new Promise((resolve) => setTimeout(resolve, 2));
   }

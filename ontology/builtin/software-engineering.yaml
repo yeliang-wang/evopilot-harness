@@ -2,7 +2,7 @@ apiVersion: harness.evopilot.io/v1
 kind: OntologyPack
 metadata:
   id: software-engineering
-  version: 1.0.0
+  version: 1.1.0
   lifecycle: published
   description: Product-neutral concepts used only to determine Harness asset eligibility and candidate relationships.
 spec:
@@ -46,7 +46,7 @@ spec:
       terms: [rbac, admin console, workflow approval, reporting, audit trail, crm, enterprise management]
       parents: [business-application]
     - id: language-service
-      terms: [spring boot, java service, golang service, node service, python service, rest controller]
+      terms: [spring boot, java service, golang service, node service, python service, rest controller, code generation, 代码生成, 领域驱动设计, ddd, domain service, facade, manager, mybatis, plantuml, 持久层, 门面层, 业务逻辑]
       parents: [application-runtime]
     - id: executable-engineering
       terms: [build, test, validate, deploy, diagnose, benchmark, migrate, verify, rollback, release]

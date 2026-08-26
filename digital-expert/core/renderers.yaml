@@ -1,9 +1,17 @@
 schema: evopilot-harness-digital-expert-renderers/v1
 interactionFrame:
-  schema: evopilot-harness-interaction-frame/v1
-  canonicalMarkdownRequired: true
-  visibleRequiredFieldsExact: true
-  collapsedContentIsSupplementalOnly: true
+  schema: evopilot-harness-interaction-frame/v2
+  primaryView: businessView.canonicalMarkdown
+  businessViewExact: true
+  businessViewDigestBindingRequired: true
+  auditEnvelopeAvailable: true
+  auditEnvelopeMayCollapse: true
+  hostRewriteOrSummary: deny
+  hostPrefixOrSuffix: deny
+  hostTranslation: deny
+  fixedTemplateVersion: evopilot-harness-business-presentation/v2
+  fixedLocaleFromEvolutionContext: true
+  canonicalDeliveryReceipt: evopilot-harness-canonical-presentation-delivery-receipt/v1
   presentationIsApproval: false
 requiredFields:
   common: [schema, status, nextAction]
@@ -25,6 +33,12 @@ rules:
   - include-human-decision-required
   - include-model-and-token-usage-when-present
   - redact-secrets-and-raw-sensitive-evidence
-  - render-canonical-markdown-completely-before-decision
+  - render-engine-owned-business-view-exactly-before-decision
+  - retain-complete-audit-envelope
+  - explain-source-to-harness-reasoning-from-engine-map
   - reject-collapsed-link-or-artifact-as-required-content-substitute
-  - acknowledge-presentation-before-governed-decision
+  - record-automatic-business-view-delivery-before-governed-decision
+  - render-professional-analysis-and-source-outcome-from-engine-objects-only
+  - render-engine-owned-frames-with-deterministic-structure-semantics-locale-and-options
+  - exclude-isolated-host-surface-status-from-governed-frame-comparison
+  - fail-closed-when-host-cannot-suppress-authored-governed-prose

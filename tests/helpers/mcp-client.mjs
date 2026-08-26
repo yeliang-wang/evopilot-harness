@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../../src/v4/interaction/professional-reasoning.mjs";
 import readline from "node:readline";
 import crypto from "node:crypto";
 
@@ -54,6 +55,20 @@ export class TestMcpClient {
   async tool(name, args = {}) {
     const input = { ...args };
     if (name === "start_operation_session" && input.hostInteraction === undefined) input.hostInteraction = governedHostInteraction();
+    if (name === "approve_session_proposal" && input.sessionId && input.expectedSessionDigest) {
+      const inspectedResult = await this.request("tools/call", { name: "inspect_operation_session", arguments: { sessionId: input.sessionId } });
+      const inspected = inspectedResult.structuredContent;
+      const frame = inspected?.interaction?.currentFrame;
+      if (frame?.stage === "PROPOSAL_REVIEW_PRESENTATION") {
+        const transitioned = await this.request("tools/call", { name: "submit_business_decision", arguments: {
+          sessionId: input.sessionId,
+          decisionHandle: frame.decisionDefinition.decisionHandle,
+          choice: "CONTINUE_TO_PROPOSAL_DECISION",
+          decidedBy: input.confirmedBy
+        } });
+        if (!transitioned.isError) input.expectedSessionDigest = transitioned.structuredContent.sessionDigest;
+      }
+    }
     const lifecycleAction = { resolve_interrupted_operation: "RECOVERY", authorize_blocked_operation_retry: "BLOCKED_RETRY", cancel_operation_session: "CANCEL", close_operation_session: "CLOSE", cleanup_operation_session: "CLEANUP" }[name];
     if (lifecycleAction && input.sessionId && input.expectedSessionDigest) {
       const prepared = await this.request("tools/call", { name: "prepare_session_lifecycle_interaction", arguments: { sessionId: input.sessionId, expectedSessionDigest: input.expectedSessionDigest, action: lifecycleAction } });
@@ -65,15 +80,13 @@ export class TestMcpClient {
       const frame = inspected?.interaction?.currentFrame;
       const alreadyPresented = frame && inspected.interaction.presentationReceipts.some((item) => item.frameDigest === frame.frameDigest);
       if (frame && !alreadyPresented && inspected.sessionDigest === input.expectedSessionDigest) {
-        const confirmation = `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`;
-        const presented = await this.request("tools/call", { name: "acknowledge_interaction_frame", arguments: {
+        const businessViewDigest = frame.businessView.businessViewDigest;
+        const presented = await this.request("tools/call", { name: "record_business_view_delivery", arguments: {
           sessionId: input.sessionId,
           expectedSessionDigest: inspected.sessionDigest,
           expectedFrameDigest: frame.frameDigest,
-          presentedFields: frame.requiredFields,
-          visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`,
-          confirmedBy: "test-governed-host",
-          confirmation
+          deliveredBusinessViewDigest: businessViewDigest,
+          renderedBusinessViewDigest: `sha256:${crypto.createHash("sha256").update(frame.businessView.canonicalMarkdown).digest("hex")}`
         } });
         if (!presented.isError) input.expectedSessionDigest = presented.structuredContent.sessionDigest;
       }
@@ -125,7 +138,7 @@ function defaultCompatibility(spawnargs) {
     productVersion: packageJson.version,
     expertVersion: lock.expertVersion,
     coreDigest: lock.coreDigest,
-    agentProtocolVersion: "evopilot-harness-agent-operations/v2",
+    agentProtocolVersion: "evopilot-harness-agent-operations/v3",
     engineApiVersion: "harness.evopilot.io/v3"
   };
 }
@@ -135,6 +148,6 @@ export function governedHostInteraction(id = "test-governed-host", version = "1.
     id,
     version,
     level: "GOVERNED_HUMAN_GATE_COMPATIBLE",
-    capabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"]
+    capabilities: [...REQUIRED_GOVERNED_HOST_CAPABILITIES]
   };
 }

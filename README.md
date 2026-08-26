@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases)
-[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.1.2)
+[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.3.0)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -10,7 +10,7 @@
 
 `evopilot-harness` ingests project and operational evidence, determines whether it belongs in a Harness, proposes a new or evolved asset, enforces human review, and publishes immutable assets and executable Bundles through user-owned Catalogs. In v4, a human talks to a portable Digital Expert loaded by Codex or another compatible Agent; the Agent operates the deterministic Engine through a local stdio MCP process. It runs independently from EvoPilot and Dashboard.
 
-Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.1.2), also available as [`@evopilot/harness@4.1.2`](https://www.npmjs.com/package/@evopilot/harness/v/4.1.2). GitHub Release, npm, and optional GHCR remain independently verified distribution layers.
+Current published release: [`v4.3.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.3.0), also available as [`@evopilot/harness@4.3.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.3.0). The v4.4.0 candidate is under approved Target implementation and is not published.
 
 ![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 
@@ -44,11 +44,11 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.2.2 version
+npm view @evopilot/harness@4.3.0 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.2.2
+npm install --save-exact @evopilot/harness@4.3.0
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host workbuddy \
   --workspace "$HOME/.evopilot-harness" \

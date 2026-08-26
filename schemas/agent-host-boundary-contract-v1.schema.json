@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/agent-host-boundary-contract-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "hostAllowed", "hostForbidden", "mcpOwns", "engineOwns", "adapterPolicy", "unsupportedHostPolicy", "boundaryContractDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-agent-host-boundary-contract/v1" },
+    "version": { "const": 1 },
+    "hostAllowed": { "type": "array", "uniqueItems": true },
+    "hostForbidden": { "type": "array", "uniqueItems": true },
+    "mcpOwns": { "type": "array", "uniqueItems": true },
+    "engineOwns": { "type": "array", "uniqueItems": true },
+    "adapterPolicy": { "const": "GENERATED_FROM_ONE_AGENT_NEUTRAL_CORE_TRANSPORT_MAPPING_ONLY" },
+    "unsupportedHostPolicy": { "const": "FAIL_CLOSED_BEFORE_GOVERNED_LIFECYCLE" },
+    "boundaryContractDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

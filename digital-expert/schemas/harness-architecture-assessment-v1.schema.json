@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/harness-architecture-assessment-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "outcome", "assets", "moduleBoundaries", "dependencies", "qualityAttributes", "compatibilityImpact", "blastRadius", "migration", "rollback", "authority", "architectureAssessmentDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-architecture-assessment/v1" },
+    "outcome": { "type": "string" },
+    "assets": { "type": "array" },
+    "moduleBoundaries": { "type": "array" },
+    "dependencies": { "type": "array" },
+    "qualityAttributes": { "type": "array" },
+    "compatibilityImpact": {},
+    "blastRadius": {},
+    "migration": {},
+    "rollback": {},
+    "authority": { "type": "object", "required": ["engineDerived", "hostAuthored"], "properties": { "engineDerived": { "const": true }, "hostAuthored": { "const": false } } },
+    "architectureAssessmentDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

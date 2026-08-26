@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/agent-operation-session-v3.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "sessionId", "status", "createdAt", "updatedAt", "workspace", "engine", "adapter", "compatibility", "intent", "reevaluation", "evolutionContext", "plan", "planDigest", "humanDecisions", "operations", "inFlightOperation", "operationAuthorizations", "pendingOperationAuthorization", "proposals", "evidenceReports", "interaction", "sequence", "nextAction", "sessionDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-agent-operation-session/v3" },
+    "sessionId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{5,127}$" },
+    "status": { "enum": ["CREATED", "PLAN_REVIEW_REQUIRED", "READY_TO_EXECUTE", "RUNNING", "INTERRUPTED", "OPERATION_AUTHORIZATION_REQUIRED", "EVIDENCE_REVIEW_REQUIRED", "PROPOSAL_REVIEW_REQUIRED", "PROPOSAL_REVIEW_PRESENTATION_REQUIRED", "HUMAN_APPROVAL_REQUIRED", "PUBLICATION_PRESENTATION_REQUIRED", "PUBLICATION_DECISION_REQUIRED", "PUBLICATION_AUTHORIZED", "COMPLETED", "BLOCKED", "CANCELLED", "CLOSED"] },
+    "createdAt": { "type": "string", "minLength": 1 },
+    "updatedAt": { "type": "string", "minLength": 1 },
+    "workspace": { "type": "object", "required": ["home", "mode"], "properties": { "home": { "type": "string", "minLength": 1 }, "mode": { "type": "string", "minLength": 1 } } },
+    "engine": { "type": "object", "required": ["apiVersion", "sourceExecutionAllowed", "authority"], "properties": { "apiVersion": { "type": "string", "minLength": 1 }, "sourceExecutionAllowed": { "type": "boolean" }, "authority": { "type": "string", "minLength": 1 } } },
+    "adapter": { "type": "object", "required": ["current", "history"], "properties": { "current": { "type": "string", "minLength": 1 }, "history": { "type": "array", "items": { "type": "string", "minLength": 1 } } } },
+    "compatibility": { "type": "object", "required": ["productVersion", "expertVersion", "coreDigest", "agentProtocolVersion", "engineApiVersion"], "properties": { "productVersion": { "type": "string" }, "expertVersion": { "type": "string" }, "coreDigest": { "type": "string" }, "agentProtocolVersion": { "const": "evopilot-harness-agent-operations/v3" }, "engineApiVersion": { "type": "string" } } },
+    "intent": { "type": "object", "required": ["text", "digest"], "properties": { "text": { "type": "string" }, "digest": { "type": "string" } } },
+    "reevaluation": {
+      "type": ["object", "null"],
+      "required": ["schema", "priorSessionId", "priorSessionDigest", "priorEvolutionContextDigest", "priorSessionPreserved", "requestedAt"],
+      "properties": {
+        "schema": { "const": "evopilot-harness-evolution-context-reevaluation-lineage/v1" },
+        "priorSessionId": { "type": "string", "minLength": 6 },
+        "priorSessionDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "priorEvolutionContextDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+        "priorSessionPreserved": { "const": true },
+        "requestedAt": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evolutionContext": { "type": ["object", "null"] },
+    "plan": { "type": ["object", "null"] },
+    "planDigest": { "type": ["string", "null"] },
+    "humanDecisions": { "type": "array" },
+    "operations": { "type": "array" },
+    "inFlightOperation": { "type": ["object", "null"] },
+    "operationAuthorizations": { "type": "array" },
+    "pendingOperationAuthorization": { "type": ["object", "null"] },
+    "proposals": { "type": "array" },
+    "evidenceReports": { "type": "array" },
+    "interaction": { "type": "object", "required": ["protocolVersion", "host", "currentFrame", "frameArchive", "presentationReceipts"], "properties": { "protocolVersion": { "const": "evopilot-harness-agent-operations/v3" }, "host": { "type": "object", "required": ["id", "version", "level", "capabilities"], "properties": { "id": { "type": "string" }, "version": { "type": "string" }, "level": { "type": "string" }, "capabilities": { "type": "array" }, "locale": { "type": ["string", "null"], "enum": ["zh-CN", "en", null] }, "conformanceProfile": { "type": "object" }, "supportsOperationJobs": { "type": "boolean" }, "maxSynchronousMcpRequestMs": { "type": ["integer", "null"], "minimum": 1 } } }, "currentFrame": { "type": ["object", "null"] }, "frameArchive": { "type": "array", "items": { "type": "object" } }, "presentationReceipts": { "type": "array" } } },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "nextAction": { "type": "string", "minLength": 1 },
+    "blockers": { "type": "array" },
+    "migrationHistory": { "type": "array", "items": { "type": "object" } },
+    "closedAt": { "type": "string" },
+    "sessionDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

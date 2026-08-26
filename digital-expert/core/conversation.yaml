@@ -9,20 +9,22 @@ stages:
   - intent-collection
   - evidence-source-collection
   - operation-plan-review
-  - operation-plan-visible-presentation-acknowledgement
+  - operation-plan-business-view-delivery
   - plan-confirmation
   - engine-execution
   - comparison-or-calibration-review-presentation
   - proposal-review-presentation
-  - proposal-review-visible-presentation-acknowledgement
+  - proposal-review-business-view-delivery
+  - proposal-review-completion
+  - proposal-approval-decision
   - proposal-approval
   - publication-impact-presentation
-  - publication-impact-visible-presentation-acknowledgement
+  - publication-impact-business-view-delivery
   - publication-authorization
   - publication-and-catalog-validation
   - close-resume-or-cleanup
 internalDecisionTokens:
-  interactionPresentation: ACKNOWLEDGE_INTERACTION_FRAME:<frameId>:<frameDigest>
+  businessViewDelivery: automatic-record_business_view_delivery-no-human-token
   plan: CONFIRM_OPERATION_PLAN:<planDigest>
   planPublication: AUTHORIZE_PLAN_PUBLICATION:<sessionId>:<planDigest>:<operationIndex>:<operationDigest>
   proposalApproval: APPROVE_PROPOSAL:<proposalId>:<proposalDigest>:<reviewDigest>
@@ -35,11 +37,16 @@ internalDecisionTokens:
   cleanup: DELETE_SESSION_STATE:<sessionId>:<sessionDigest>
 humanDecisionInterface:
   mode: plain-language-one-question
+  transportTool: submit_business_decision
+  continuationTool: advance_operation_session
   exposeInternalTokens: false
   requireDisplayedObjectBinding: true
-  agentConstructsDigestToken: true
+  agentConstructsDigestToken: false
+  engineResolvesDigestToken: true
+  requireHiddenDeterministicDecisionHandle: true
   forbidPriorDecisionReuse: true
-  requireCanonicalInteractionFrame: true
+  requireEngineOwnedBusinessDecisionView: true
+  requireCompositeBusinessAuditDecisionBinding: true
   collapsedContentIsSupplementalOnly: true
 neverEquivalentToDecision:
   - continue

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/source-to-harness-reasoning-map-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "sessionId", "stage", "subject", "entries", "sourceCount", "authority", "reasoningMapDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-source-to-harness-reasoning-map/v1" },
+    "sessionId": { "type": "string" },
+    "stage": { "type": "string" },
+    "subject": { "type": "object" },
+    "entries": { "type": "array", "items": { "type": "object", "required": ["sourceId", "sourceType", "sourceRef", "sourceDigest", "evidenceIds", "observedFacts", "harnessOutcome", "harnessCapability", "rationale", "alternatives", "uncertainty", "nonAdoptionReason", "catalogRelationship"], "properties": { "sourceDigest": { "$ref": "#/$defs/digest" }, "harnessOutcome": { "enum": ["REUSE_EXISTING", "EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NOT_HARNESS_ELIGIBLE", "NEED_MORE_EVIDENCE", "NO_CHANGE", "REJECT"] } } } },
+    "sourceCount": { "type": "integer", "minimum": 0 },
+    "authority": { "type": "object", "properties": { "engineNormalized": { "const": true }, "llmAdvisoryOnly": { "const": true }, "hostAuthored": { "const": false } } },
+    "reasoningMapDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

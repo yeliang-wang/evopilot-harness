@@ -148,14 +148,15 @@ try {
     };
   }
 
-  const hostVersion = run(workbuddy, ["--version"], app);
+  const cliVersion = run(workbuddy, ["--version"], app);
+  const hostVersion = resolveWorkBuddyAppVersion();
   const report = {
     schema: "evopilot-harness-workbuddy-installed-package-acceptance/v1",
     status: "PASSED",
-    host: { id: "workbuddy", version: hostVersion, binary: workbuddy },
+    host: { id: "workbuddy", version: hostVersion, cliVersion, binary: workbuddy },
     package: {
       spec: packageSpec ?? `${packageJson.name}@${packageJson.version}`,
-      distributionMode: packageSpec ? "public-registry" : "local-package-candidate",
+      distributionMode: packageDistributionMode(packageSpec),
       root: packageRoot,
       sourceCheckoutUsed: false
     },
@@ -207,6 +208,21 @@ function resolveWorkBuddyBinary() {
     } catch { /* try the next installed host path */ }
   }
   throw new Error("A real WorkBuddy CLI host is required. Set WORKBUDDY_BIN to its executable path.");
+}
+
+function resolveWorkBuddyAppVersion() {
+  try {
+    return run("plutil", ["-extract", "CFBundleShortVersionString", "raw", "/Applications/WorkBuddy.app/Contents/Info.plist"], root);
+  } catch {
+    return "unknown";
+  }
+}
+
+function packageDistributionMode(spec) {
+  if (!spec) return "local-package-candidate";
+  const value = String(spec);
+  if (value.endsWith(".tgz") || value.startsWith("file:") || path.isAbsolute(value)) return "local-package-candidate";
+  return "public-registry";
 }
 
 function run(command, args, cwd) {

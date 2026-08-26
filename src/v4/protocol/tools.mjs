@@ -37,8 +37,8 @@ const planSources = {
 };
 
 export const TOOL_DEFINITIONS = [
-  tool("inspect_capabilities", "Inspect Agent, MCP, Engine, Digital Expert, lifecycle, and safety capabilities.", {}),
-  tool("prepare_workspace", "Initialize or inspect the explicit external Harness Workspace. This never writes the Release or a source project.", {
+  tool("inspect_capabilities", "Silently inspect Agent, MCP, Engine, Digital Expert, lifecycle, and safety capabilities. Do not narrate or tabulate a successful result; continue silently until the first Engine-owned canonical presentation.", {}),
+  tool("prepare_workspace", "Silently initialize or inspect the explicit external Harness Workspace. This never writes the Release or a source project. Do not narrate a successful result; continue silently until the first Engine-owned canonical presentation.", {
     initialize: { type: "boolean", default: true }
   }),
   tool("initialize_model_configuration", "Verify the human-maintained Harness model configuration with a minimal live doctor and persist only a secret-free Workspace readiness receipt. Never include credentials in tool arguments.", {
@@ -46,7 +46,7 @@ export const TOOL_DEFINITIONS = [
     model: { type: "string" },
     timeoutMs: { type: "integer", minimum: 1 }
   }),
-  tool("start_operation_session", "Start a persistent Agent Operation Session from a human intent.", {
+  tool("start_operation_session", "Silently start a persistent Agent Operation Session from a human intent. Do not narrate a successful result; continue to Plan construction.", {
     intent: { type: "string", minLength: 1 },
     adapterId: { type: "string", minLength: 2 },
     hostInteraction: {
@@ -57,11 +57,14 @@ export const TOOL_DEFINITIONS = [
         id: { type: "string", minLength: 1 },
         version: { type: "string", minLength: 1 },
         level: { const: "GOVERNED_HUMAN_GATE_COMPATIBLE" },
-        capabilities: { type: "array", minItems: 4, uniqueItems: true, items: { type: "string", minLength: 1 } }
+        capabilities: { type: "array", minItems: 10, uniqueItems: true, items: { type: "string", minLength: 1 } },
+        locale: { enum: ["zh-CN", "en"] },
+        supportsOperationJobs: { type: "boolean" },
+        maxSynchronousMcpRequestMs: { type: "integer", minimum: 1 }
       }
     }
   }, ["intent", "adapterId", "hostInteraction"]),
-  tool("plan_operation_session", "Create a digest-bound evolve, feedback, comparison, calibration, professional-learning, or maintenance plan. Present it to the human before confirmation.", {
+  tool("plan_operation_session", "Create a digest-bound evolve, feedback, comparison, calibration, professional-learning, or maintenance plan. When the result carries EXACT_CANONICAL_MARKDOWN_ONLY, the entire assistant turn MUST equal content[0].text byte-for-byte. It already contains the decision question and choices; append nothing.", {
     sessionId,
     expectedSessionDigest: digest,
     scenario: { enum: ["evolve", "feedback", "comparison", "calibration", "learning", "maintenance"], default: "evolve" },
@@ -80,7 +83,17 @@ export const TOOL_DEFINITIONS = [
       }
     }
   }, ["sessionId", "expectedSessionDigest", "goal"]),
-  tool("confirm_operation_plan", "Record explicit human confirmation of the exact plan digest. General continuation language is not confirmation.", {
+  tool("reevaluate_operation_session", "Explicitly evaluate the current Source and governed environment in a new append-only Session. The prior Session and Evolution Context remain unchanged; the new Plan still requires independent human review and confirmation.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    adapterId: { type: "string", minLength: 2 },
+    intent: { type: "string", minLength: 1 },
+    scenario: { enum: ["evolve", "feedback", "comparison", "calibration", "learning", "maintenance"] },
+    goal: { type: "string", minLength: 1 },
+    sources: planSources,
+    locale: { enum: ["zh-CN", "en"] }
+  }, ["sessionId", "expectedSessionDigest"]),
+  tool("confirm_operation_plan", "Low-level compatibility/CI tool only. Third-party Agent Hosts MUST NOT call this tool or discover digests; after an Engine-owned business view they MUST use submit_business_decision with the hidden transport binding. Record explicit human confirmation of the exact plan digest. General continuation language is not confirmation.", {
     sessionId,
     expectedSessionDigest: digest,
     expectedPlanDigest: digest,
@@ -135,6 +148,26 @@ export const TOOL_DEFINITIONS = [
     confirmedBy: { type: "string", minLength: 1 },
     confirmation: { type: "string", minLength: 1 }
   }, ["sessionId", "expectedSessionDigest", "expectedFrameDigest", "presentedFields", "visibleTranscriptDigest", "confirmedBy", "confirmation"]),
+  tool("record_business_view_delivery", "Idempotently record exact Host delivery of the current Engine-owned Business Decision View as the sole visible prose in the governed assistant turn. Canonical presentation-producing MCP response paths perform this automatically without a Host prompt; this explicit tool remains a compatibility and recovery fallback. renderedBusinessViewDigest MUST cover the entire visible prose and therefore MUST equal the canonical Business View digest; any Host preface, translation, summary, status, or next-step prose makes delivery non-compliant. This receipt is never a human decision or authorization.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    expectedFrameDigest: digest,
+    deliveredBusinessViewDigest: digest,
+    renderedBusinessViewDigest: digest
+  }, ["sessionId", "expectedSessionDigest", "expectedFrameDigest", "deliveredBusinessViewDigest", "renderedBusinessViewDigest"]),
+  tool("submit_business_decision", "MANDATORY third-party Agent Host decision transport. After the human answers the current Engine-owned Business Decision View, call this tool directly with only its hidden decisionHandle, one declared finite choice, and the human identity. Do NOT call confirm_operation_plan or any digest-bound compatibility tool. The Engine uniquely resolves the current Session and validates all immutable digests and internal confirmation tokens. Generic continuation, stale or ambiguous handles, Host-authored choices, and undeclared options fail closed. Do not narrate success. If the result carries EXACT_CANONICAL_MARKDOWN_ONLY, the entire assistant turn MUST equal content[0].text byte-for-byte and append nothing.", {
+    sessionId,
+    decisionHandle: { type: "string", pattern: "^decision-[a-f0-9]{24}$" },
+    choice: { enum: ["APPROVE", "REQUEST_REVISION", "REJECT", "PRESERVE_FOR_LATER", "AUTHORIZE", "PUBLISH", "DO_NOT_PUBLISH", "ACCEPT_RECEIPT", "RETRY_IF_UNCHANGED", "CANCEL", "CLOSE", "CLEANUP", "ACKNOWLEDGE_REVIEW", "REQUEST_MORE_EVIDENCE", "CONTINUE_TO_PROPOSAL_DECISION", "REVIEW_REMEDIATION"] },
+    decidedBy: { type: "string", minLength: 1 }
+  }, ["decisionHandle", "choice", "decidedBy"]),
+  tool("advance_operation_session", "Advance only the next already-authorized non-human Harness operation from authoritative Session state. Repeat only while responses are non-presentation operation progress or a running OperationJob. The instant any response carries EXACT_CANONICAL_MARKDOWN_ONLY, stop all tool calls, emit content[0].text byte-for-byte as the entire assistant turn, and end the turn even when the Frame is informational and has no human decision. Never advance from Catalog validation to Close in the same assistant turn. It never grants Plan, Proposal, publication, retry, close, or cleanup authority.", {
+    sessionId,
+    modelsFile: { type: "string" },
+    model: { type: "string" },
+    advisorTimeoutMs: { type: "integer", minimum: 1 },
+    reviewTimeoutMs: { type: "integer", minimum: 1 }
+  }, ["sessionId"]),
   tool("review_session_proposals", "Run the authoritative Engine Proposal Review for every Proposal in the session.", {
     sessionId,
     expectedSessionDigest: digest,
@@ -143,6 +176,26 @@ export const TOOL_DEFINITIONS = [
     advisorTimeoutMs: { type: "integer", minimum: 1 },
     reviewTimeoutMs: { type: "integer", minimum: 1 }
   }, ["sessionId", "expectedSessionDigest"]),
+  tool("start_operation_job", "Start or recover the same durable Engine-owned long-running operation. Repeating an identical request returns the same job and never re-executes it.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    operation: { enum: ["proposal.review"] },
+    input: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        modelsFile: { type: "string" },
+        model: { type: "string" },
+        advisorTimeoutMs: { type: "integer", minimum: 1 },
+        reviewTimeoutMs: { type: "integer", minimum: 1 }
+      }
+    }
+  }, ["sessionId", "expectedSessionDigest", "operation"]),
+  tool("inspect_operation_job", "Inspect the durable status or authoritative result of one Engine-owned OperationJob without re-executing it.", {
+    jobId: { type: "string", minLength: 8 },
+    expectedJobDigest: digest
+  }, ["jobId"]),
+  tool("list_operation_jobs", "List durable Engine-owned OperationJobs in the current external Workspace.", {}),
   tool("approve_session_proposal", "Record explicit human approval bound to the current Proposal and Review digests. This does not publish.", {
     sessionId,
     proposalId: { type: "string", minLength: 1 },
@@ -168,12 +221,39 @@ export const TOOL_DEFINITIONS = [
     expectedAuthorizationDigest: digest
   }, ["sessionId", "proposalId", "expectedSessionDigest", "expectedAuthorizationDigest"]),
   tool("inspect_operation_session", "Read and integrity-check a persistent Agent Operation Session.", { sessionId }, ["sessionId"]),
+  tool("inspect_lifecycle_presentation_archive", "Read the complete Engine-owned lifecycle business presentation reconstructed from immutable Session, Proposal, approval, publication, and Catalog bindings. This performs no governed mutation and grants no authority.", { sessionId }, ["sessionId"]),
+  tool("inspect_operation_session_recovery", "Read the compact authoritative recovery state and current canonical Business Decision View without transferring the full Session Audit Envelope.", { sessionId }, ["sessionId"]),
   tool("list_operation_sessions", "List resumable Agent Operation Sessions in the current external Workspace.", {}),
   tool("resume_operation_session", "Resume a digest-validated session from another compatible Agent adapter without trusting conversation memory.", {
     sessionId,
     expectedSessionDigest: digest,
     adapterId: { type: "string", minLength: 2 }
   }, ["sessionId", "expectedSessionDigest", "adapterId"]),
+  tool("migrate_operation_session_to_v3", "Explicitly migrate a readable Protocol v2 Session to Protocol v3 without fabricating historical Business Views or delivery receipts.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    adapterId: { type: "string", minLength: 2 },
+    hostInteraction: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "version", "level", "capabilities"],
+      properties: {
+        id: { type: "string", minLength: 1 },
+        version: { type: "string", minLength: 1 },
+        level: { const: "GOVERNED_HUMAN_GATE_COMPATIBLE" },
+        capabilities: { type: "array", minItems: 10, uniqueItems: true, items: { type: "string", minLength: 1 } },
+        locale: { enum: ["zh-CN", "en"] },
+        supportsOperationJobs: { type: "boolean" },
+        maxSynchronousMcpRequestMs: { type: "integer", minimum: 1 }
+      }
+    }
+  }, ["sessionId", "expectedSessionDigest", "adapterId", "hostInteraction"]),
+  tool("migrate_operation_session_core_compatibility", "Explicitly rebind a stopped Protocol v3 Session to a compatible replacement Core while preserving business state and authority boundaries.", {
+    sessionId,
+    expectedSessionDigest: digest,
+    expectedPriorCoreDigest: digest,
+    adapterId: { type: "string", minLength: 2 }
+  }, ["sessionId", "expectedSessionDigest", "expectedPriorCoreDigest", "adapterId"]),
   tool("prepare_session_lifecycle_interaction", "Construct the complete immutable recovery, cancellation, close, or cleanup frame before asking for the independent human decision.", {
     sessionId,
     expectedSessionDigest: digest,
@@ -208,7 +288,7 @@ function tool(name, description, properties, required = []) {
     name,
     description,
     inputSchema: { type: "object", additionalProperties: false, properties, ...(required.length ? { required } : {}) },
-    annotations: { destructiveHint: ["cleanup_operation_session"].includes(name), readOnlyHint: ["inspect_capabilities", "inspect_operation_session", "list_operation_sessions", "run_engine_diagnostic"].includes(name), idempotentHint: name.startsWith("inspect_") || name.startsWith("list_") }
+    annotations: { destructiveHint: ["cleanup_operation_session"].includes(name), readOnlyHint: ["inspect_capabilities", "inspect_operation_session", "inspect_lifecycle_presentation_archive", "inspect_operation_job", "list_operation_sessions", "list_operation_jobs", "run_engine_diagnostic"].includes(name), idempotentHint: name.startsWith("inspect_") || name.startsWith("list_") || name === "start_operation_job" }
   };
 }
 

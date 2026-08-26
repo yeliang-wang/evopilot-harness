@@ -2,11 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { PACKAGE_ROOT } from "../v3/constants.mjs";
 
-export const AGENT_PROTOCOL_VERSION = "evopilot-harness-agent-operations/v2";
-export const LEGACY_AGENT_PROTOCOL_VERSION = "evopilot-harness-agent-operations/v1";
-export const AGENT_SESSION_SCHEMA = "evopilot-harness-agent-operation-session/v2";
-export const LEGACY_AGENT_SESSION_SCHEMA = "evopilot-harness-agent-operation-session/v1";
-export const INTERACTION_FRAME_SCHEMA = "evopilot-harness-interaction-frame/v1";
+export const AGENT_PROTOCOL_VERSION = "evopilot-harness-agent-operations/v3";
+export const LEGACY_AGENT_PROTOCOL_VERSION = "evopilot-harness-agent-operations/v2";
+export const AGENT_SESSION_SCHEMA = "evopilot-harness-agent-operation-session/v3";
+export const LEGACY_AGENT_SESSION_SCHEMA = "evopilot-harness-agent-operation-session/v2";
+export const INTERACTION_FRAME_SCHEMA = "evopilot-harness-interaction-frame/v2";
 export const INTERACTION_PRESENTATION_RECEIPT_SCHEMA = "evopilot-harness-interaction-presentation-receipt/v1";
 export const OPERATION_PLAN_SCHEMA = "evopilot-harness-operation-plan/v1";
 export const DIGITAL_EXPERT_SCHEMA = "evopilot-harness-digital-expert/v1";

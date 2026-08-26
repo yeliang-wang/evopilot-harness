@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/source-outcome-explanation-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "outcome", "suitableForHarnessEvolution", "reasons", "failedCriteria", "missingEvidence", "counterEvidence", "alternatives", "nextAction", "proposalAllowed", "authority", "outcomeExplanationDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-source-outcome-explanation/v1" },
+    "outcome": { "enum": ["REUSE_EXISTING", "EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NOT_HARNESS_ELIGIBLE", "NEED_MORE_EVIDENCE", "NO_CHANGE", "REJECT"] },
+    "suitableForHarnessEvolution": { "type": "boolean" },
+    "reasons": { "type": "array", "minItems": 1 },
+    "failedCriteria": { "type": "array" },
+    "missingEvidence": { "type": "array" },
+    "counterEvidence": { "type": "array" },
+    "alternatives": { "type": "array" },
+    "nextAction": { "type": "string", "minLength": 1 },
+    "proposalAllowed": { "type": "boolean" },
+    "authority": { "type": "object", "required": ["engineDerived", "advisorAdvisoryOnly", "hostAuthored"], "properties": { "engineDerived": { "const": true }, "advisorAdvisoryOnly": { "const": true }, "hostAuthored": { "const": false } } },
+    "outcomeExplanationDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

@@ -8,7 +8,7 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current published Engine release: [`v4.2.0`](../releases/4.2.0.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, or npm publication. Container publication and deployment are outside this product's release scope. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current published Engine release: [`v4.3.0`](../releases/4.3.0.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, or npm publication. Container publication and deployment are outside this product's release scope. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Current Publication Ledger
 

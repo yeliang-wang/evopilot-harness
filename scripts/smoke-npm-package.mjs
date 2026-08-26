@@ -8,6 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 import { pathToFileURL } from "node:url";
+import { REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../src/v4/interaction/professional-reasoning.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
@@ -357,21 +358,20 @@ function createSmokeMcpClient(options) {
       id: "installed-package-smoke",
       version: "1.0.0",
       level: "GOVERNED_HUMAN_GATE_COMPATIBLE",
-      capabilities: ["deterministic-rendering", "governed-operation-interception", "ordered-visible-transcript-evidence", "interaction-frame-binding"]
+      locale: "en",
+      capabilities: [...REQUIRED_GOVERNED_HOST_CAPABILITIES]
     };
     if (input.sessionId && input.expectedSessionDigest && ["confirm_operation_plan", "acknowledge_evidence_report_review"].includes(name)) {
       const inspected = (await this.request("tools/call", { name: "inspect_operation_session", arguments: { sessionId: input.sessionId } })).structuredContent;
       const frame = inspected?.interaction?.currentFrame;
       const alreadyPresented = frame && inspected.interaction.presentationReceipts.some((item) => item.frameDigest === frame.frameDigest);
       if (frame && !alreadyPresented && inspected.sessionDigest === input.expectedSessionDigest) {
-        const presented = await this.request("tools/call", { name: "acknowledge_interaction_frame", arguments: {
+        const presented = await this.request("tools/call", { name: "record_business_view_delivery", arguments: {
           sessionId: input.sessionId,
           expectedSessionDigest: inspected.sessionDigest,
           expectedFrameDigest: frame.frameDigest,
-          presentedFields: frame.requiredFields,
-          visibleTranscriptDigest: `sha256:${crypto.createHash("sha256").update(frame.canonicalMarkdown).digest("hex")}`,
-          confirmedBy: "installed-package-smoke-host",
-          confirmation: `ACKNOWLEDGE_INTERACTION_FRAME:${frame.frameId}:${frame.frameDigest}`
+          deliveredBusinessViewDigest: frame.businessView.businessViewDigest,
+          renderedBusinessViewDigest: `sha256:${crypto.createHash("sha256").update(frame.businessView.canonicalMarkdown).digest("hex")}`
         } });
         if (!presented.isError) input.expectedSessionDigest = presented.structuredContent.sessionDigest;
       }
@@ -392,7 +392,7 @@ function createSmokeMcpClient(options) {
           productVersion: manifest.version,
           expertVersion: lock.expertVersion,
           coreDigest: lock.coreDigest,
-          agentProtocolVersion: "evopilot-harness-agent-operations/v2",
+          agentProtocolVersion: "evopilot-harness-agent-operations/v3",
           engineApiVersion: "harness.evopilot.io/v3"
         }
       }

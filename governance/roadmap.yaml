@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-22",
+  "updatedAt": "2026-08-25",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -23,8 +23,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.2.0",
-    "currentWorkingVersion": "4.3.0",
+    "publishedBaseline": "4.3.0",
+    "currentWorkingVersion": "4.4.0",
     "versionsEvolveIndependently": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
@@ -172,7 +172,7 @@
     },
     {
       "id": "evopilot-harness-4.3-deterministic-agent-interaction-compliance",
-      "status": "PLANNED",
+      "status": "COMPLETE",
       "targetVersion": "4.3.0",
       "releaseLine": "4.3.x",
       "objective": "Make every governed Digital Expert human gate deterministic, ordered, field-complete, observable, and fail-closed across certified third-party Agent hosts without moving Harness business authority into the host.",
@@ -191,6 +191,68 @@
       ],
       "signals": ["deterministic agent interaction compliance", "interaction frame", "interaction controller", "governed human gate compatible", "third-party agent interaction", "workbuddy interaction compliance", "确定性 agent 交互合规", "交互帧", "交互控制器", "第三方 agent 交互", "workbuddy 交互合规"],
       "exclusions": ["Proposal Review Engine semantic changes", "general-purpose Agent runtime", "automatic approval", "automatic publication", "source-project execution", "EvoPilot Goal Loop", "cloud or remote Agent service"]
+    },
+    {
+      "id": "evopilot-harness-4.4-deterministic-business-centric-interaction",
+      "status": "PLANNED",
+      "targetVersion": "4.4.0",
+      "releaseLine": "4.4.x",
+      "objective": "Keep user-facing Harness business semantics, Source-to-Harness reasoning, governed decision definitions, and lifecycle sequencing deterministic and Engine-owned while third-party Agent hosts remain replaceable conversational and presentation transports.",
+      "outcomes": [
+        "versioned Engine-owned BusinessDecisionView for every governed decision with complete decision-relevant Harness business content",
+        "versioned ComplianceAuditEnvelope preserving complete Engine objects, authority, digests, permitted operations, receipts, and recovery metadata",
+        "SourceToHarnessReasoningMap binding Harness decisions to immutable Source Evidence, alternatives, uncertainty, and Catalog relationships",
+        "Agent Operations Protocol v3 with composite decision binding, finite Engine-declared choices, automatic non-authoritative presentation receipts, and cross-host resume",
+        "real WorkBuddy and independent compatible-host evidence proving identical authoritative business content for identical Harness state",
+        "an explicit Engine Frame and third-party Host Surface boundary: deterministic Harness business Frames are Engine-owned while Host-owned chrome, loading, reasoning, and transport status remain outside the governed comparison surface",
+        "deterministic long-running MCP operation transport with Host capability declarations, bounded synchronous execution, Engine-owned asynchronous OperationJob recovery, and digest-bound idempotency across disconnects"
+      ],
+      "acceptance": [
+        "the same Release, Source, Workspace, Catalog, model profile, policy, and Session state produce the same BusinessDecisionView and decision definition digests across compatible Agent hosts",
+        "Agent-host or Host-LLM omission, rewriting, reordering, summarization, decision invention, stale binding, or chat-memory recovery fails closed before a governed operation",
+        "every Harness create, reuse, compose, evolve, reject, or need-more-evidence conclusion traces to immutable Source Evidence and records uncertainty, alternatives, and non-adoption reasons",
+        "all decision-relevant facts are visible in the business view while complete technical and audit material remains preserved and exportable in the ComplianceAuditEnvelope",
+        "presentation acknowledgement is automatic non-authoritative delivery evidence and cannot approve a Plan or Proposal, authorize publication or retry, or close or clean a Session",
+        "Proposal approval and publication remain separate explicit human decisions bound to the current authoritative object, business view, audit envelope, decision definition, Session, and Host receipt",
+        "v4.3 Protocol v2 Sessions remain readable, diagnosable, cancellable, and safely closable without fabricated v3 business views or presentation receipts",
+        "the real WorkBuddy document case and at least one independent compatible Host complete cross-host acceptance without requiring a Source checkout or allowing Host-specific business semantics",
+        "using the same Source, release candidate, configuration, and explicit decision inputs, at least one fresh Workspace, Session, and WorkBuddy task completes a full zero-to-one production lifecycle and presents in order the four Engine-owned Harness business phases: Operation Plan; professional Source-to-Harness analysis and Proposal Review; Proposal human decision; and publication plus Session lifecycle decisions",
+        "deterministic multi-run and cross-Host conformance tests prove governed Frames retain equivalent structure, business semantics, bound locale, finite decision options, and lifecycle order; real-run Session, Workspace, receipt, timestamp, and digest identities may differ and are compared as typed bindings rather than literal bytes",
+        "third-party Host chrome, loading indicators, model-reasoning status, transport progress, and other Host-owned surface content are excluded from zero-drift comparison, but the Host may not rewrite, obscure, replace, acknowledge, confirm, infer, or advance any governed Harness Frame or decision",
+        "every compatible Host declares its long-running request capabilities and uses either a verified synchronous request window or the Engine-owned OperationJob protocol",
+        "MCP disconnect, timeout, restart, reconnect, and repeated start requests recover by immutable Session, input, Job, and result digests without repeating an uncertain Engine or LLM mutation",
+        "synchronous and asynchronous Proposal Review paths produce the same authoritative Review, BusinessDecisionView, and decision-definition digests"
+      ],
+      "signals": ["deterministic business-centric harness interaction", "business decision view", "compliance audit envelope", "source-to-harness reasoning map", "source to harness reasoning", "agent operations protocol v3", "cross-host business view", "engine-owned business presentation", "engine frame host surface boundary", "fresh workbuddy production lifecycle", "four engine-owned harness business phases", "long-running MCP operation", "MCP request timeout", "OperationJob", "disconnect recovery", "cross-host long task", "确定性业务交互", "业务决策视图", "合规审计封装", "source 到 harness 推导", "跨 agent 业务视图", "engine 内生业务呈现", "engine frame 与 host surface 边界", "全新 workbuddy 生产流程", "四个 harness 业务环节", "长时 MCP 操作", "断连恢复"],
+      "exclusions": ["general-purpose Agent runtime", "embedded conversational model", "Agent-owned Harness reasoning", "automatic approval", "automatic publication", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
+    },
+    {
+      "id": "evopilot-harness-4.5-governed-professional-ontology-evolution",
+      "status": "PLANNED",
+      "targetVersion": "4.5.0",
+      "releaseLine": "4.5.x",
+      "objective": "Extend deterministic Source-to-Harness reasoning from closed-world matching over broad built-in concepts to governed open-world professional Ontology discovery, sufficiency assessment, review, publication, and immutable consumption without allowing Source material, an LLM, or an Agent host to mutate active knowledge.",
+      "outcomes": [
+        "a layered Foundation, Domain, Organization, and Proposal-local Candidate Ontology model with explicit precedence and immutable Evolution Context bindings",
+        "an Ontology Sufficiency Gate that measures coverage, specificity loss, boundary conflict, ambiguity, and unknown-concept density before Catalog matching",
+        "an ONTOLOGY_EXTENSION_REQUIRED outcome that prevents a professionally specific Source from being collapsed into an unjustifiably broad Harness classification",
+        "evidence-bound candidate Concept, Role, parent, conflict, positive-boundary, negative-boundary, and task-class extraction with LLM advice remaining non-authoritative",
+        "a unified AssetDeltaProposal carrying OntologyPack, HarnessProfile, HarnessComponent, and EvaluationPack changes with exact before/after documents, impact, rollback, and regression closure",
+        "complete draft, review, approved, published, deprecated, compatibility, migration, and rollback-binding operations for Organization and Domain OntologyPack versions independently from Engine releases",
+        "deterministic re-reasoning under a newly bound Evolution Context only after an OntologyPack is explicitly approved and separately published"
+      ],
+      "acceptance": [
+        "known professional Sources retain stable existing decisions while unknown or overly broad mappings fail closed instead of selecting the nearest broad domain",
+        "financial CRM, general CRM, manufacturing ERP, insufficient professional evidence, non-Harness material, and multi-domain Source cases produce distinct evidence-backed outcomes and boundaries",
+        "every candidate Ontology element cites immutable Source Evidence, uncertainty, alternatives, parent and conflict relationships, positive and negative examples, and Catalog overlap",
+        "Source material and LLM output may propose but can never approve, publish, activate, overwrite, deprecate, or select an OntologyPack",
+        "Ontology review, approval, and publication remain separate digest-bound human decisions and published id@version documents are immutable",
+        "publishing a Domain or Organization OntologyPack does not require an Engine release and does not alter an active Session or Evolution Context",
+        "positive, negative, adjacent-domain, broad-misclassification, and complete historical regression suites pass before publication",
+        "WorkBuddy and an independent conformant Host render identical Engine-owned Ontology insufficiency, proposal, impact, approval, and publication decisions"
+      ],
+      "signals": ["professional ontology evolution", "open-world source reasoning", "ontology sufficiency", "ontology extension required", "specificity loss", "unknown professional domain", "domain ontology pack", "organization ontology", "专业 ontology 演进", "开放世界 source 推理", "ontology 充分性", "专业领域发现", "宽泛分类", "行业 ontology"],
+      "exclusions": ["automatic online learning", "automatic Ontology activation", "LLM-owned classification", "Source-authored policy mutation", "Agent-host reasoning", "model training", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
     }
   ],
   "boundaryRules": [

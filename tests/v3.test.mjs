@@ -262,6 +262,28 @@ test("Redis client evidence proposes a new Profile instead of evolving a distrib
   assert.ok(profile.spec.acceptance.blockingValidators.includes("domain-boundary-conflict"));
 });
 
+test("Java DDD code-generation evidence deterministically selects language-service instead of api-gateway", () => {
+  const home = initializedHome();
+  const attachment = path.join(home, "代码生成提示词整理.txt");
+  fs.writeFileSync(attachment, [
+    "Java DDD 分层代码生成提示词规范。",
+    "生成 Facade、Manager、Domain Service、DAL 与 MyBatis 持久层代码。",
+    "将 PlantUML 流程图转换为 Java 伪代码，并验证输入输出契约、分层边界和生成结果。",
+    "网关调用只作为业务示例，不是 API Gateway 产品或运行时。"
+  ].join("\n"));
+
+  const result = runJsonFailure(["produce", "--workspace", home, "--attachment", attachment, "--goal", "沉淀可复用的 Java DDD 代码生成 Harness。", "--advisor", "off", "--json"]);
+
+  assert.equal(result.status, "BLOCKED");
+  assert.equal(result.reasoning.eligibility.decision, "ELIGIBLE");
+  assert.equal(result.reasoning.decision, "PROPOSE_NEW_PROFILE");
+  assert.equal(result.reasoning.proposedProfile.domain, "language-service");
+  assert.equal(result.reasoning.proposedProfile.role, "language-service");
+  assert.equal(result.reasoning.proposedProfile.taskClass, "service-engineering");
+  assert.equal(result.proposal.proposedAssets[0].id, "language-service-profile");
+  assert.notEqual(result.reasoning.proposedProfile.domain, "api-gateway");
+});
+
 test("existing Profile evolution adds evidence-backed contract coverage instead of only bumping metadata", () => {
   const home = initializedHome();
   const project = createDistributedCacheProduct(path.join(home, "fixtures/distributed-cache"));
