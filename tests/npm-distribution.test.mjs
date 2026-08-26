@@ -63,7 +63,9 @@ test("npm Trusted Publishing workflow is OIDC-only and version-bound", () => {
   const steps = workflow.jobs.publish.steps;
   const setupNode = steps.find((item) => item.uses === "actions/setup-node@v4");
   const runtimeCheck = steps.find((item) => item.name === "Verify Trusted Publishing runtime");
+  const publishedVersionCheck = steps.find((item) => item.name === "Detect already-published exact version");
   const publish = steps.find((item) => item.name === "Publish with npm Trusted Publishing");
+  const publicInstall = steps.find((item) => item.name === "Verify exact public package install");
 
   assert.equal(workflow.permissions.contents, "read");
   assert.equal(workflow.permissions["id-token"], "write");
@@ -71,12 +73,17 @@ test("npm Trusted Publishing workflow is OIDC-only and version-bound", () => {
   assert.equal(Object.hasOwn(setupNode.with, "registry-url"), false);
   assert.equal(Object.hasOwn(setupNode.with, "always-auth"), false);
   assert.match(runtimeCheck.run, /^set -euo pipefail\nnode scripts\/verify-npm-trusted-publishing-runtime\.mjs\n/);
+  assert.match(publishedVersionCheck.run, /npm view "\$PACKAGE_NAME@\$VERSION" version --json/);
+  assert.match(publishedVersionCheck.run, /PACKAGE_ALREADY_PUBLISHED=true/);
+  assert.equal(publish.if, "env.PACKAGE_ALREADY_PUBLISHED != 'true'");
   assert.equal(publish.run, "npm publish --access public --provenance --tag \"$DIST_TAG\"");
   assert.match(workflowText, /npm install --global npm@11\.5\.1/);
   assert.match(workflowText, /Tag .* does not match package version/);
   assert.match(workflowText, /\*-alpha\.\*\) DIST_TAG=alpha/);
   assert.match(workflowText, /\*\) DIST_TAG=latest/);
   assert.match(workflowText, /npm audit signatures/);
+  assert.match(publicInstall.run, /for attempt in \$\(seq 1 20\)/);
+  assert.match(publicInstall.run, /signatures or provenance did not become available after bounded retries/);
   assert.doesNotMatch(workflowText, /secrets\.(?:NPM|NODE_AUTH)|NODE_AUTH_TOKEN:\s*\$\{\{/i);
   assert.doesNotMatch(workflowText, /registry-url|always-auth/i);
   assert.doesNotMatch(workflowText, /docker\/build-push|ghcr\.io/i);

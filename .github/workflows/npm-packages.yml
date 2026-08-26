@@ -68,7 +68,19 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "DIST_TAG=$DIST_TAG" >> "$GITHUB_ENV"
 
+      - name: Detect already-published exact version
+        run: |
+          set -euo pipefail
+          PUBLISHED_VERSION="$(npm view "$PACKAGE_NAME@$VERSION" version --json 2>/dev/null || true)"
+          if [ "$PUBLISHED_VERSION" = "\"$VERSION\"" ]; then
+            echo "PACKAGE_ALREADY_PUBLISHED=true" >> "$GITHUB_ENV"
+            echo "Resuming verification for existing $PACKAGE_NAME@$VERSION."
+          else
+            echo "PACKAGE_ALREADY_PUBLISHED=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Publish with npm Trusted Publishing
+        if: env.PACKAGE_ALREADY_PUBLISHED != 'true'
         run: npm publish --access public --provenance --tag "$DIST_TAG"
 
       - name: Verify registry metadata and attestation
@@ -98,7 +110,16 @@ jobs:
           cd "$TEMP_DIR"
           npm init -y >/dev/null
           npm install --ignore-scripts --no-audit --no-fund "$PACKAGE_NAME@$VERSION"
-          npm audit signatures
+          for attempt in $(seq 1 20); do
+            if npm audit signatures; then
+              break
+            fi
+            if [ "$attempt" -eq 20 ]; then
+              echo "::error::npm signatures or provenance did not become available after bounded retries"
+              exit 1
+            fi
+            sleep 15
+          done
           npx --no-install evopilot-harness --version --json
           npx --no-install evopilot-harness agent bootstrap --host generic --workspace "$TEMP_DIR/workspace" --json
           npx --yes --package "$PACKAGE_NAME@$VERSION" evopilot-harness --version --json
