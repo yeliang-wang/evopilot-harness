@@ -110,6 +110,16 @@ try {
   const initialized = findWorkBuddyInit(transcript);
   assert.ok(initialized?.mcp_servers?.some((server) => server.name === "evopilot-harness" && server.status === "connected"), "WorkBuddy did not connect the packaged MCP server");
   assert.ok(initialized?.tools?.includes("mcp__evopilot-harness__inspect_capabilities"), "WorkBuddy did not load inspect_capabilities");
+  const classificationTools = [
+    "start_project_classification",
+    "reanalyze_project_classification",
+    "continue_classification_to_harness",
+    "inspect_project_classification",
+    "resume_project_classification",
+    "list_project_classifications",
+    "close_project_classification"
+  ];
+  for (const tool of classificationTools) assert.ok(initialized?.tools?.includes(`mcp__evopilot-harness__${tool}`), `WorkBuddy did not load ${tool}`);
   const capabilityCalls = collectCapabilityResults(transcript);
   assert.equal(capabilityCalls.length, 1, "WorkBuddy must complete exactly one inspect_capabilities call");
   const capabilityCall = capabilityCalls[0];
@@ -166,8 +176,9 @@ try {
       toolUseId: capabilityCall.toolUseId,
       hostRequestId: capabilityCall.hostRequestId,
       engineVersion: capabilityCall.result.productVersion,
-      protocols: capabilityCall.result.mcp.supportedProtocolVersions
-      ,professionalLearningOperations: learningOperations
+      protocols: capabilityCall.result.mcp.supportedProtocolVersions,
+      classificationTools,
+      professionalLearningOperations: learningOperations
     },
     workspace: { path: canonicalWorkspace, mutated: fs.existsSync(canonicalWorkspace) },
     operation: exerciseLlmInitialization ? "inspect_capabilities-prepare_workspace-initialize_model_configuration-llm_readiness" : "inspect_capabilities",

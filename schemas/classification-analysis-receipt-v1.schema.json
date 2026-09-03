@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/classification-analysis-receipt-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "analysisRequestDigest", "analysisAttemptDigest", "resultDigest", "executionMode", "physicalAdvisorInvocationCount", "advisorReceiptDigest", "completedAt", "authority", "receiptDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-classification-analysis-receipt/v1" },
+    "analysisRequestDigest": { "$ref": "#/$defs/digest" },
+    "analysisAttemptDigest": { "$ref": "#/$defs/digest" },
+    "resultDigest": { "$ref": "#/$defs/digest" },
+    "executionMode": { "enum": ["NEW_ANALYSIS", "REPLAY"] },
+    "physicalAdvisorInvocationCount": { "type": "integer", "minimum": 0, "maximum": 1 },
+    "advisorReceiptDigest": { "$ref": "#/$defs/digest" },
+    "completedAt": { "type": "string", "minLength": 1 },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executionEvidenceOnly", "humanDecision", "mayApprove", "mayPublish"],
+      "properties": {
+        "executionEvidenceOnly": { "const": true },
+        "humanDecision": { "const": false },
+        "mayApprove": { "const": false },
+        "mayPublish": { "const": false }
+      }
+    },
+    "receiptDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "evopilot-harness-operation-server-capabilities/v1",
+  "status": "READY",
+  "productVersion": "4.5.0",
+  "compatibility": {
+    "productVersion": "4.5.0",
+    "expertVersion": "4.5.0",
+    "coreDigest": "sha256:747b7f5ecbd34c34208652a9bdf446ac811ecbca04e51d169fef668926ec62bd",
+    "agentProtocolVersion": "evopilot-harness-agent-operations/v3",
+    "engineApiVersion": "harness.evopilot.io/v3"
+  },
+  "agentProtocolVersion": "evopilot-harness-agent-operations/v3",
+  "engineProtocolRange": {
+    "min": "harness.evopilot.io/v3",
+    "max": "harness.evopilot.io/v3"
+  },
+  "mcp": {
+    "transport": "stdio",
+    "supportedProtocolVersions": ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"],
+    "networkListening": false
+  },
+  "digitalExpert": {
+    "schema": "evopilot-harness-digital-expert/v1",
+    "ordinaryHumanEntry": true
+  },
+  "classification": {
+    "schema": "evopilot-harness-taxonomy-analysis-result/v1",
+    "sourceDescriptorSchema": "evopilot-harness-source-descriptor/v1",
+    "advisorPolicy": "REQUIRED_ON_NEW_ANALYSIS_EXACTLY_ONE_CALL",
+    "finalAuthority": "deterministic-engine",
+    "handoffPolicy": "TAXONOMY_MATCHED_PLUS_EXPLICIT_HUMAN_CONTINUE",
+    "provesHarnessEligibility": false
+  },
+  "authority": {
+    "engineAuthoritative": true,
+    "digitalExpertMayApprove": false,
+    "adapterMayApprove": false,
+    "automaticPublication": false,
+    "sourceExecutionAllowed": false
+  }
+}

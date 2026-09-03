@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/classification-session-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "sessionId", "status", "createdAt", "updatedAt", "workspace", "agentOperationSessionId", "agentOperationSessionDigest", "source", "taxonomy", "attempts", "currentResult", "presentation", "currentDecision", "presentationReceipts", "humanDecisions", "nextOperations", "sessionDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-classification-session/v1" },
+    "sessionId": { "type": "string", "pattern": "^classification-[a-z0-9-]{8,96}$" },
+    "status": { "enum": ["TAXONOMY_MATCHED", "TAXONOMY_EXTENSION_SUGGESTED", "TAXONOMY_EVIDENCE_INSUFFICIENT", "TAXONOMY_AMBIGUOUS", "ANALYSIS_BLOCKED_ADVISOR", "HANDED_OFF", "CLOSED", "CANCELLED"] },
+    "createdAt": { "type": "string" },
+    "updatedAt": { "type": "string" },
+    "workspace": { "type": "object" },
+    "agentOperationSessionId": { "type": "string", "minLength": 6 },
+    "agentOperationSessionDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "source": { "type": "object" },
+    "taxonomy": { "type": "object" },
+    "attempts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attemptedAt", "analysisAttemptDigest", "analysisRequestDigest", "executionMode", "status", "resultDigest", "advisorInvocationCount", "physicalAdvisorInvocationCount", "analysisReceipt"],
+        "properties": {
+          "attemptedAt": { "type": "string", "minLength": 1 },
+          "analysisAttemptDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "analysisRequestDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "executionMode": { "enum": ["NEW_ANALYSIS", "REPLAY"] },
+          "status": { "enum": ["TAXONOMY_MATCHED", "TAXONOMY_EXTENSION_SUGGESTED", "TAXONOMY_EVIDENCE_INSUFFICIENT", "TAXONOMY_AMBIGUOUS", "ANALYSIS_BLOCKED_ADVISOR"] },
+          "resultDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "advisorInvocationCount": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "physicalAdvisorInvocationCount": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "analysisReceipt": { "$ref": "https://evopilot.dev/schemas/classification-analysis-receipt-v1.schema.json" }
+        }
+      }
+    },
+    "currentResult": { "type": "object" },
+    "presentation": { "type": "object" },
+    "currentDecision": { "type": ["object", "null"] },
+    "presentationReceipts": { "type": "array" },
+    "humanDecisions": { "type": "array" },
+    "handoff": { "type": ["object", "null"] },
+    "operationSessionId": { "type": ["string", "null"] },
+    "closedAt": { "type": "string" },
+    "nextOperations": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "sessionDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

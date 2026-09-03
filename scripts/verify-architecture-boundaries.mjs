@@ -12,7 +12,7 @@ const anchors = [
   ["src/v3/reasoning.mjs", "collectEvidence", "Source Ingestion"],
   ["src/v3/utils.mjs", "redact", "Snapshot/Redaction"],
   ["src/v3/constants.mjs", "EVIDENCE_GRAPH_SCHEMA", "Evidence Graph"],
-  ["src/v3/reasoning.mjs", "OntologyPack", "OntologyPack"],
+  ["src/v4/classification/taxonomy.mjs", "SEMANTIC_FOUNDATION_SCHEMA", "Semantic Foundation/Taxonomy Resolution"],
   ["src/v3/reasoning.mjs", "MatchPolicyPack", "MatchPolicyPack"],
   ["src/v3/reasoning.mjs", "eligibilityGate", "Eligibility Gate"],
   ["src/v3/reasoning.mjs", "retrieveAndScore", "Candidate Retrieval/Scoring"],
@@ -49,6 +49,28 @@ const agentAnchors = [
   ["src/v4/interaction/professional-reasoning.mjs", "createAgentHostBoundaryContract", "Third-party Agent Host Boundary"]
 ];
 
+const classificationAnchors = [
+  ["docs/architecture/adr/0005-source-first-business-classification.md", "Accepted", "v4.5 source-first classification ADR"],
+  ["schemas/source-descriptor-v1.schema.json", "ORDERED_ATTACHMENT_SET", "Unified SourceDescriptor contract"],
+  ["src/v4/classification/source-descriptor.mjs", "BOUNDED_READ_ONLY_GIT", "Bounded Source Resolver"],
+  ["src/v4/classification/source-descriptor.mjs", "SOURCE_GIT_LFS_UNSUPPORTED", "GitHub static-acquisition blocker boundary"],
+  ["src/v4/source/static-text.mjs", "STATIC_EVIDENCE_EXTRACTORS", "Static document Source extraction allowlist"],
+  ["src/v4/classification/taxonomy.mjs", "taxonomy-c14n/v1", "Taxonomy canonicalization"],
+  ["src/v4/classification/source-concept.mjs", "taxonomyExposed: false", "Taxonomy-blind Source hypothesis"],
+  ["src/v4/classification/classifier.mjs", "open-world-taxonomy-classifier/v1", "Multi-signal classification retrieval"],
+  ["src/v4/classification/classifier.mjs", "taxonomy-decision-aggregate/v1", "Deterministic classification authority"],
+  ["src/v4/classification/advisor.mjs", "invocationCount: 1", "Single-call advisory evidence"],
+  ["src/v4/classification/engine.mjs", "classificationProvesEligibility: false", "Classification authority boundary"],
+  ["src/v4/classification/session-store.mjs", "createAgentSession", "Explicit classification-to-Harness handoff"],
+  ["schemas/classification-analysis-receipt-v1.schema.json", "executionEvidenceOnly", "Classification analysis idempotency receipt"],
+  ["src/v4/session/store.mjs", "PRE_V45_SESSION_UNSUPPORTED", "Fresh v4.5 Session reset boundary"],
+  ["src/v4/protocol/tools.mjs", "start_project_classification", "Classification MCP entry"],
+  ["src/v4/protocol/tools.mjs", "continue_classification_to_harness", "Classification handoff MCP gate"],
+  ["scripts/validate-e2e-source-portfolio.mjs", "sourceMutation: false", "Target-bound read-only Source Portfolio acceptance"],
+  ["scripts/run-live-github-discovery.mjs", "candidateOutputAvailableDuringSelection: false", "Candidate-blind live GitHub discovery"],
+  ["scripts/freeze-github-discovery-oracle.mjs", "candidateOutputsVisible: false", "Candidate-blind expected-result oracle"]
+];
+
 const learningAnchors = [
   ["src/v3/learning.mjs", "ingestLearningDocument", "Curriculum/Research/Contribution Immutable Intake"],
   ["src/v3/learning.mjs", "createEvidenceRunManifest", "Evidence Run Manifest"],
@@ -61,10 +83,12 @@ const learningAnchors = [
 for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of agentAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of learningAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
+for (const [file, needle, moduleName] of classificationAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
 mustContain("AGENTS.md", "28 enforced Engine module boundaries", "root agent instructions must reference the complete Engine module boundary set");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
 mustContain("docs/architecture/adr/0003-controlled-comparative-evidence.md", "Accepted", "controlled comparative evidence ADR must remain accepted");
+mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "superseded for v4.5.0 and later by [ADR 0005]", "module 8 replacement must remain explicit");
 mustContain("governance/roadmap.yaml", '"roadmapFamily": "evopilot-series-agentic-evolution"', "the accepted Harness Roadmap contract must remain installed");
 mustContain("governance/roadmap.yaml", '"harness-must-not-execute-evopilot-loops"', "the Roadmap must preserve the producer/control-plane boundary");
 mustContain("AGENTS.md", "Continue implementation only for `ALIGNED`", "agent instructions must stop Roadmap deviations before implementation");
@@ -117,7 +141,7 @@ mustContain("src/v4/interaction/controller.mjs", "hostAuthoredGovernedProseCount
 mustContain("schemas/canonical-presentation-delivery-receipt-v1.schema.json", '"hostAuthoredGovernedProseCount": { "const": 0 }', "canonical receipt schema must enforce zero Host-authored prose");
 mustContain("src/v4/session/store.mjs", "recordBusinessViewDelivery", "Protocol v3 must bind exact Business View delivery");
 mustContain("src/v4/session/store.mjs", "historicalBusinessViewsFabricated: false", "v2 migration must not fabricate historical Business Views");
-mustContain("src/v4/protocol/tools.mjs", "migrate_operation_session_to_v3", "Protocol must expose explicit v2-to-v3 Session migration");
+mustContain("src/v4/session/store.mjs", "PRE_V45_SESSION_UNSUPPORTED", "v4.5 must reject superseded pre-v4.5 Session representations");
 mustContain("docs/architecture/adr/0004-deterministic-business-centric-interaction.md", "Host-authored summaries", "ADR 0004 must preserve deterministic business semantics across Hosts");
 mustContain(".agents/skills/evopilot-harness-guided-operator/SKILL.md", "Compatibility Alias", "legacy Guided Operator must not retain a second authority");
 mustContain("src/v3/comparison.mjs", "sourceExecution: false", "comparison processing must never execute source projects");
@@ -145,6 +169,18 @@ mustNotMatch("src/v3/migration.mjs", /(?:writeYaml|writeJson|writeFileSync|copyF
 mustNotMatch("src/v4/operation-server/server.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']/, "Operation Server must remain local stdio and may not spawn or listen");
 mustNotMatch("src/v4/mcp/stdio-server.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']/, "MCP transport must remain stdio-only");
 mustNotMatch("src/v4/interaction/professional-reasoning.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "professional reasoning must not access the network or execute Source commands");
+for (const file of ["src/v4/classification/taxonomy.mjs", "src/v4/classification/source-concept.mjs", "src/v4/classification/classifier.mjs", "src/v4/classification/engine.mjs", "src/v4/classification/session-store.mjs"]) {
+  mustNotMatch(file, /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "classification must not access the network or execute Source commands");
+  mustNotMatch(file, /localeCompare|toLocaleLowerCase|toLocaleUpperCase/, "classification ordering and case normalization must remain locale-independent");
+  mustNotContain(file, "publishProposal", "classification must not publish a Proposal");
+  mustNotContain(file, "approveProposal", "classification must not approve a Proposal");
+}
+mustNotMatch("src/v4/classification/source-descriptor.mjs", /from\s+["']node:(?:http|https|net|tls|dgram)["']|\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "Source Resolver may use bounded argument-vector Git only and must not open arbitrary network or shell execution");
+mustContain("src/v4/classification/source-descriptor.mjs", 'GIT_TERMINAL_PROMPT: "0"', "Source Resolver must disable interactive credential prompting");
+mustContain("src/v4/classification/source-descriptor.mjs", 'sourceExecution: false', "Source Resolver must preserve Source non-execution");
+mustNotMatch("src/v4/source/static-text.mjs", /from\s+["']node:(?:http|https|net|tls|dgram)["']|\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "static document extraction must remain offline and argument-vector only");
+const staticExtractors = [...read("src/v4/source/static-text.mjs").matchAll(/extract\("([^"]+)"/g)].map((match) => match[1]);
+for (const tool of staticExtractors) if (!["pdftotext", "unzip"].includes(tool)) failures.push(`unreviewed v4.5 static Source extractor: ${tool}`);
 mustNotMatch("src/v4/session/store.mjs", /(?:writeFileSync|appendFileSync|renameSync|rmSync)\([^\n]*(?:models\.json|source-project)/, "Agent sessions must not mutate model configuration or source projects");
 mustNotMatch("src/v4/operation-server/server.mjs", /(?:writeFileSync|appendFileSync|renameSync|rmSync)\([^\n]*(?:models\.json|source-project)/, "Operation Server must not mutate model configuration or source projects");
 mustNotContain("src/v3/comparison.mjs", "approveProposal", "comparison evidence must not approve Proposals");
@@ -181,7 +217,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length} Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length} Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors, ${classificationAnchors.length} v4.5 classification anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);

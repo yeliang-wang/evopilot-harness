@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/github-discovery-plan-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "authority", "targetVersion", "provider", "freshness", "queries", "searchCapture", "selection", "freeze", "blindedOracle", "execution", "prohibitedEffects"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-live-github-discovery-plan/v1" },
+    "authority": { "const": "acceptance-source-discovery-only" },
+    "targetVersion": { "type": "string" },
+    "provider": { "type": "object" },
+    "freshness": { "type": "object" },
+    "queries": { "type": "array", "minItems": 1, "maxItems": 12 },
+    "searchCapture": { "type": "object" },
+    "selection": { "type": "object" },
+    "freeze": { "type": "object" },
+    "blindedOracle": { "type": "object" },
+    "execution": { "type": "object" },
+    "prohibitedEffects": { "type": "array", "minItems": 1 }
+  }
+}

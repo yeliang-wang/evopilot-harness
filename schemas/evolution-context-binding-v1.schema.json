@@ -8,6 +8,7 @@
     "schema": { "const": "evopilot-harness-evolution-context-binding/v1" },
     "contextId": { "type": "string", "minLength": 8 },
     "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
+    "classificationHandoffBinding": { "type": ["object", "null"] },
     "catalogBinding": { "$ref": "#/$defs/binding" },
     "ontologyBinding": { "$ref": "#/$defs/binding" },
     "matchPolicyBinding": { "$ref": "#/$defs/binding" },

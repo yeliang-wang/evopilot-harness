@@ -11,6 +11,7 @@ import { StdioMcpServer } from "../mcp/stdio-server.mjs";
 import { TOOL_DEFINITIONS } from "../protocol/tools.mjs";
 import { inspectOperationJob, listOperationJobs, recoverInterruptedOperationJobs, startOperationJob } from "../operation-job/store.mjs";
 import { REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../interaction/professional-reasoning.mjs";
+import { closeClassificationSession, continueClassificationToHarness, inspectClassificationSession, listClassificationSessions, reanalyzeClassificationSession, recordClassificationPresentationDelivery, resumeClassificationSession, startClassificationSession } from "../classification/session-store.mjs";
 import {
   acknowledgeSessionEvidenceReview,
   acknowledgeInteractionFramePresentation,
@@ -29,7 +30,6 @@ import {
   inspectLifecyclePresentationArchive,
   listAgentSessions,
   migrateOperationSessionCoreCompatibility,
-  migrateOperationSessionToV3,
   publishSessionProposal,
   prepareSessionLifecycleInteraction,
   recoverInterruptedSessions,
@@ -54,7 +54,6 @@ const AUTOMATIC_PRESENTATION_DELIVERY_TOOLS = new Set([
   "advance_operation_session",
   "publish_session_proposal",
   "resume_operation_session",
-  "migrate_operation_session_to_v3",
   "migrate_operation_session_core_compatibility",
   "prepare_session_lifecycle_interaction"
 ]);
@@ -128,6 +127,18 @@ export function operationServerCapabilities(home, version = packageVersion()) {
       sameContextReplayPolicy: "three-fresh-production-lifecycles-with-normalized-engine-frame-conformance",
       hostReasoningPolicy: "forbidden-fail-closed"
     },
+    classification: {
+      schema: "evopilot-harness-taxonomy-analysis-result/v1",
+      sourceDescriptorSchema: "evopilot-harness-source-descriptor/v1",
+      sourceTypes: ["LOCAL_FILE", "LOCAL_DIRECTORY", "LOCAL_GIT_REPOSITORY", "GITHUB_REPOSITORY", "CONTROLLED_FIXTURE", "ORDERED_ATTACHMENT_SET"],
+      sourceResolver: { policy: "evopilot-harness-source-resolver/v1", githubAcquisition: "BOUNDED_READ_ONLY_GIT", fullCommitRequired: true, postHandoffRefetchAllowed: false, submodulesAllowed: false, gitLfsAllowed: false, embeddedCredentialsAllowed: false, sourceExecutionAllowed: false },
+      ordinaryHumanTerms: ["业务分类方案", "业务领域", "产品或系统类型", "项目分类分析", "分类覆盖情况"],
+      outcomes: ["TAXONOMY_MATCHED", "TAXONOMY_EXTENSION_SUGGESTED", "TAXONOMY_EVIDENCE_INSUFFICIENT", "TAXONOMY_AMBIGUOUS"],
+      advisorPolicy: "REQUIRED_ON_NEW_ANALYSIS_EXACTLY_ONE_CALL",
+      finalAuthority: "deterministic-engine",
+      handoffPolicy: "TAXONOMY_MATCHED_PLUS_EXPLICIT_HUMAN_CONTINUE",
+      provesHarnessEligibility: false
+    },
     longRunningOperations: {
       schema: "evopilot-harness-long-running-operation-capabilities/v1",
       supported: true,
@@ -160,6 +171,13 @@ async function callTool(home, name, input, version) {
       const response = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home, "models-file": input.modelsFile, model: input.model, "timeout-ms": input.timeoutMs } });
       result = response.result;
     }
+    else if (name === "start_project_classification") result = await startClassificationSession({ home, sourceDescriptor: input.sourceDescriptor ?? input.sourcePath, taxonomy: input.taxonomyPath, ...input });
+    else if (name === "reanalyze_project_classification") result = await reanalyzeClassificationSession({ home, sessionId: input.classificationSessionId, sourceDescriptor: input.sourceDescriptor ?? input.sourcePath, taxonomy: input.taxonomyPath, ...input });
+    else if (name === "continue_classification_to_harness") result = continueClassificationToHarness({ home, sessionId: input.classificationSessionId, ...input });
+    else if (name === "inspect_project_classification") result = inspectClassificationSession(home, input.classificationSessionId);
+    else if (name === "resume_project_classification") result = resumeClassificationSession({ home, sessionId: input.classificationSessionId, ...input });
+    else if (name === "list_project_classifications") result = { schema: "evopilot-harness-classification-session-list/v1", status: "READY", sessions: listClassificationSessions(home) };
+    else if (name === "close_project_classification") result = closeClassificationSession({ home, sessionId: input.classificationSessionId, ...input });
     else if (name === "start_operation_session") result = createAgentSession({ home, ...input });
     else if (name === "plan_operation_session") result = createSessionPlan({ home, ...input });
     else if (name === "reevaluate_operation_session") result = reevaluateAgentSession({ home, ...input });
@@ -185,7 +203,6 @@ async function callTool(home, name, input, version) {
     else if (name === "inspect_operation_session_recovery") result = sessionRecoveryView(inspectAgentSession(home, input.sessionId));
     else if (name === "list_operation_sessions") result = { schema: "evopilot-harness-agent-session-list/v1", status: "READY", sessions: listAgentSessions(home) };
     else if (name === "resume_operation_session") result = resumeAgentSession({ home, ...input });
-    else if (name === "migrate_operation_session_to_v3") result = migrateOperationSessionToV3({ home, ...input });
     else if (name === "migrate_operation_session_core_compatibility") result = sessionRecoveryView(migrateOperationSessionCoreCompatibility({ home, ...input }));
     else if (name === "prepare_session_lifecycle_interaction") result = prepareSessionLifecycleInteraction({ home, ...input });
     else if (name === "cancel_operation_session") result = cancelAgentSession({ home, ...input });
@@ -195,11 +212,17 @@ async function callTool(home, name, input, version) {
       if (!isReadOnlyOperation(input.operation)) throw toolError("READ_ONLY_OPERATION_REQUIRED", `${input.operation} is not a direct read-only diagnostic.`, "create-and-confirm-operation-plan");
       result = await invokeEngineOperation({ home, operation: input.operation, input: input.input ?? {}, authority: "direct" });
     } else throw toolError("UNKNOWN_TOOL", `Unknown tool ${name}.`, "call-tools-list");
+    result = automaticallyRecordClassificationPresentation(home, name, result);
     result = automaticallyRecordCanonicalPresentation(home, name, result);
     return toolResult(result, false);
   } catch (error) {
     return toolResult({ schema: "evopilot-harness-agent-operation-error/v1", status: "FAILED", errorType: error.name ?? "Error", code: error.code ?? "OPERATION_FAILED", message: error.message, nextAction: error.nextAction ?? "inspect-operation-failure" }, true);
   }
+}
+
+function automaticallyRecordClassificationPresentation(home, toolName, result) {
+  if (!["start_project_classification", "reanalyze_project_classification", "close_project_classification"].includes(toolName) || !result?.presentation?.presentationDigest) return result;
+  return recordClassificationPresentationDelivery({ home, sessionId: result.sessionId, expectedPresentationDigest: result.presentation.presentationDigest });
 }
 
 async function advanceOperationSession({ home, sessionId, modelsFile, model, advisorTimeoutMs, reviewTimeoutMs }) {

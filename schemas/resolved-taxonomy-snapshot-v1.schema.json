@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/resolved-taxonomy-snapshot-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "canonicalization", "foundation", "taxonomy", "axes", "resourceUsage", "taxonomyDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-resolved-taxonomy-snapshot/v1" },
+    "canonicalization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "json", "unicode", "hash"],
+      "properties": {
+        "algorithm": { "const": "taxonomy-c14n/v1" },
+        "json": { "const": "RFC-8785" },
+        "unicode": { "const": "NFKC" },
+        "hash": { "const": "SHA-256" }
+      }
+    },
+    "foundation": { "type": "object" },
+    "taxonomy": { "type": "object" },
+    "axes": { "type": "object", "required": ["domain", "product"] },
+    "resourceUsage": { "type": "object" },
+    "taxonomyDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

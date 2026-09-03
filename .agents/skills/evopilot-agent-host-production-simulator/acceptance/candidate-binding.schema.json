@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evopilot-candidate-acceptance-binding/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "target",
+    "targetManifest",
+    "candidate",
+    "artifacts",
+    "continuationPolicy",
+    "history",
+    "authority"
+  ],
+  "properties": {
+    "schema": { "const": "evopilot-candidate-acceptance-binding/v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "target": { "type": "object" },
+    "targetManifest": { "type": "object" },
+    "candidate": { "type": "object" },
+    "artifacts": { "type": "array", "minItems": 2 },
+    "continuationPolicy": { "type": "object" },
+    "history": { "type": "object" },
+    "authority": { "type": "object" }
+  }
+}

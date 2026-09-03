@@ -1,7 +1,7 @@
 schema: evopilot-harness-digital-expert/v1
 artifact:
   id: evopilot-harness-digital-expert
-  version: 4.4.0
+  version: 4.5.0
   lifecycle: stable
   description: Portable question-driven expert for Agent-native evopilot-harness operations.
 compatibility:

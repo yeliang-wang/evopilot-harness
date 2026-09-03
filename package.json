@@ -1,6 +1,6 @@
 {
   "name": "@evopilot/harness",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "private": false,
   "description": "Agent-native, user-owned Harness asset factory with a portable Digital Expert, local MCP operations, deterministic reasoning, lifecycle, and Catalog.",
   "license": "Apache-2.0",
@@ -66,6 +66,9 @@
     "digital-expert:generate": "node scripts/generate-digital-expert-adapters.mjs",
     "digital-expert:check": "node scripts/generate-digital-expert-adapters.mjs --check",
     "agent-host-simulator:check": "node scripts/validate-agent-host-simulator-skill.mjs",
+    "acceptance:source-portfolio": "node scripts/validate-e2e-source-portfolio.mjs",
+    "acceptance:github-discovery": "node scripts/run-live-github-discovery.mjs",
+    "acceptance:github-oracle": "node scripts/freeze-github-discovery-oracle.mjs",
     "package:verify": "node scripts/verify-npm-package.mjs",
     "package:smoke": "node scripts/smoke-npm-package.mjs",
     "package:workbuddy": "node scripts/validate-workbuddy-package.mjs",

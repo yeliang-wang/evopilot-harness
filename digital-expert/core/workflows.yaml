@@ -1,5 +1,12 @@
 schema: evopilot-harness-digital-expert-workflows/v1
 workflows:
+  - id: classify-unknown-source-and-optionally-evolve
+    scenario: classification
+    sources: [sourceDescriptor, taxonomyPath]
+    sourceTypes: [LOCAL_FILE, LOCAL_DIRECTORY, LOCAL_GIT_REPOSITORY, GITHUB_REPOSITORY, CONTROLLED_FIXTURE, ORDERED_ATTACHMENT_SET]
+    operation: start_project_classification
+    outcomes: [TAXONOMY_MATCHED, TAXONOMY_EXTENSION_SUGGESTED, TAXONOMY_EVIDENCE_INSUFFICIENT, TAXONOMY_AMBIGUOUS, ANALYSIS_BLOCKED_ADVISOR]
+    handoffRequires: [TAXONOMY_MATCHED, explicit-human-continue, immutable-source-descriptor, immutable-resolved-source-snapshot, immutable-classification-handoff]
   - id: evolve-single-local-project
     scenario: evolve
     sources: [sourceProjects]
@@ -47,6 +54,10 @@ workflows:
     scenario: lifecycle
     sources: [sessionId, sessionDigest, explicitDecision]
 terminalDecisions:
+  - TAXONOMY_MATCHED
+  - TAXONOMY_EXTENSION_SUGGESTED
+  - TAXONOMY_EVIDENCE_INSUFFICIENT
+  - TAXONOMY_AMBIGUOUS
   - NOT_HARNESS_ELIGIBLE
   - NO_CHANGE
   - NEED_MORE_EVIDENCE

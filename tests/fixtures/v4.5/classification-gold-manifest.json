@@ -1,0 +1,641 @@
+{
+  "schema": "evopilot-harness-classification-gold-manifest/v1",
+  "version": "1.0.0",
+  "description": "Bounded v4.5 Target acceptance fixtures only; not a general production-accuracy claim.",
+  "compositionContract": {
+    "minimumCases": 48,
+    "knownMatches": 12,
+    "semanticKnownMatches": 6,
+    "schemeGaps": 8,
+    "evidenceInsufficient": 8,
+    "ambiguous": 8,
+    "misleadingNegatives": 12,
+    "mixedAxisCases": 8
+  },
+  "cases": [
+    {
+      "id": "known-literal-01",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-literal-02",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-literal-03",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-literal-04",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-literal-05",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-literal-06",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-semantic-01",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_SEMANTIC",
+      "taxonomyVariant": "CACHE_SEMANTIC",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-semantic-02",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_SEMANTIC",
+      "taxonomyVariant": "CACHE_SEMANTIC",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-semantic-03",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_SEMANTIC",
+      "taxonomyVariant": "CACHE_SEMANTIC",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-semantic-04",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_SEMANTIC",
+      "taxonomyVariant": "CACHE_SEMANTIC",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-semantic-05",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_SEMANTIC",
+      "taxonomyVariant": "CACHE_SEMANTIC",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "known-semantic-06",
+      "stratum": "KNOWN_MATCH",
+      "sourceVariant": "CACHE_SEMANTIC",
+      "taxonomyVariant": "CACHE_SEMANTIC",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_MATCHED",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "scheme-gap-product-01",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_MATCH_PRODUCT_GAP",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_EXTENSION_SUGGESTED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-product-02",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_MATCH_PRODUCT_GAP",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_EXTENSION_SUGGESTED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-product-03",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_MATCH_PRODUCT_GAP",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_EXTENSION_SUGGESTED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-product-04",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_MATCH_PRODUCT_GAP",
+      "expectedAxes": {
+        "domain": "TAXONOMY_MATCHED",
+        "product": "TAXONOMY_EXTENSION_SUGGESTED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-domain-01",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_GAP_PRODUCT_MATCH",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EXTENSION_SUGGESTED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-domain-02",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_GAP_PRODUCT_MATCH",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EXTENSION_SUGGESTED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-domain-03",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_GAP_PRODUCT_MATCH",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EXTENSION_SUGGESTED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "scheme-gap-domain-04",
+      "stratum": "SCHEME_GAP",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "DOMAIN_GAP_PRODUCT_MATCH",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EXTENSION_SUGGESTED",
+        "product": "TAXONOMY_MATCHED"
+      },
+      "expectedAggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": true
+    },
+    {
+      "id": "insufficient-01",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-02",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-03",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-04",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-05",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-06",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-07",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "insufficient-08",
+      "stratum": "EVIDENCE_INSUFFICIENT",
+      "sourceVariant": "WEAK",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": false,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-01",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-02",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-03",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-04",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-05",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-06",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-07",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "ambiguous-08",
+      "stratum": "AMBIGUOUS",
+      "sourceVariant": "CACHE_LITERAL",
+      "taxonomyVariant": "AMBIGUOUS",
+      "expectedAxes": {
+        "domain": "TAXONOMY_AMBIGUOUS",
+        "product": "TAXONOMY_AMBIGUOUS"
+      },
+      "expectedAggregate": "TAXONOMY_AMBIGUOUS",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-01",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-02",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-03",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-04",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-05",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-06",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-07",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-08",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-09",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-10",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-11",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    },
+    {
+      "id": "misleading-negative-12",
+      "stratum": "MISLEADING_NEGATIVE",
+      "sourceVariant": "MISLEADING_LOW_TRUST",
+      "taxonomyVariant": "CACHE",
+      "expectedAxes": {
+        "domain": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+        "product": "TAXONOMY_EVIDENCE_INSUFFICIENT"
+      },
+      "expectedAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT",
+      "literalSelectedVocabularyPresent": true,
+      "mixedAxis": false
+    }
+  ]
+}

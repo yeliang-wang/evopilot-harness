@@ -15,15 +15,15 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 For a publicly available version:
 
 ```bash
-npm view @evopilot/harness@4.2.4 version
+npm view @evopilot/harness@4.4.0 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.2.4
+npm install --save-exact @evopilot/harness@4.4.0
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
-The Registry command must return `4.2.4`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
+The Registry command must return `4.4.0`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
 On the first `prepare_workspace`, Harness writes only a provider-neutral empty `models.example.json` and points `config.yaml` at the external `models.json`. It never creates or overwrites `models.json`, imports a credential, or borrows the Agent host's conversation model. The operator creates the profile locally and may reference an explicitly named environment variable or use a `0600` file. The Expert calls `initialize_model_configuration`, which performs safe inspection and a minimal live doctor and stores only a secret-free receipt. `CONFIGURED_AND_VERIFIED` is the completed state and is reused by later Sessions.
 
@@ -75,11 +75,12 @@ Example:
 
 ```text
 使用 /Users/me/project/cache-server 作为只读 source project，
+使用 /Users/me/taxonomies/software.yaml 作为我的业务分类方案，
 引导我生成或升级 Harness。先展示计划，自动运行并展示 Proposal Review，
 分别询问我是否批准、是否发布。
 ```
 
-The Expert calls `inspect_capabilities`, prepares the Workspace, starts a persistent Session, and asks only the shortest missing question. Before execution it presents the Plan, source boundaries, Advisor mode, operations, stop points, and exact `planDigest`.
+The Expert calls `inspect_capabilities`, prepares the Workspace, and starts the generic Operation Session with `ANALYZE_TAXONOMY`. The human sees 业务领域、产品或系统类型、分类覆盖情况、reasons, evidence, alternatives, and one finite next action rather than internal Taxonomy/Domain/Product metrics. A classification-scheme gap asks the human to add the proposed category to their own scheme and explicitly re-analyze; insufficient evidence and ambiguity remain distinct. Only a complete match plus an explicit “continue to Harness evolution” choice attaches the handoff to that same Session. Harness Eligibility then runs independently, followed by the retained Plan, Proposal Review, approval, separate publication authorization, Catalog validation, and close gates.
 
 To review externally produced Baseline/Candidate evidence instead of producing a Proposal:
 

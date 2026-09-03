@@ -51,7 +51,7 @@ export function inspectEvolutionContextBinding({ session, plan = session?.plan, 
     locale: locale ?? bound?.locale,
     templateVersion: templateVersion ?? bound?.presentationTemplateVersion ?? "evopilot-harness-business-presentation/v2"
   });
-  const fields = ["sourceSnapshotDigest", "catalogBinding", "ontologyBinding", "matchPolicyBinding", "advisorPolicyBinding", "advisorProfile", "operationIntentDigest", "locale", "presentationTemplateVersion"];
+  const fields = ["sourceSnapshotDigest", "classificationHandoffBinding", "catalogBinding", "ontologyBinding", "matchPolicyBinding", "advisorPolicyBinding", "advisorProfile", "operationIntentDigest", "locale", "presentationTemplateVersion"];
   const changedFields = bound ? fields.filter((field) => digest(bound[field]) !== digest(current[field])) : [];
   const result = {
     schema: "evopilot-harness-evolution-context-inspection/v1",
@@ -73,7 +73,8 @@ function buildEvolutionContextBinding({ session, plan, renderModel, locale, temp
   const advisor = advisorIdentity(normalizedPlan, renderModel);
   const core = {
     schema: EVOLUTION_CONTEXT_BINDING_SCHEMA,
-    sourceSnapshotDigest: digestSourceBinding(sourceBinding),
+    sourceSnapshotDigest: session?.classificationHandoff?.sourceSnapshotDigest ?? digestSourceBinding(sourceBinding),
+    classificationHandoffBinding: session?.classificationHandoff ? { handoffDigest: session.classificationHandoff.handoffDigest, sourceDescriptorDigest: session.classificationHandoff.sourceDescriptorDigest, sourceResolutionDigest: session.classificationHandoff.sourceResolutionDigest, sourceSnapshotDigest: session.classificationHandoff.sourceSnapshotDigest, taxonomyDigest: session.classificationHandoff.taxonomyDigest, classificationContextDigest: session.classificationHandoff.classificationContextDigest, provesEligibility: false } : null,
     catalogBinding: governedWorkspaceBinding(session?.workspace?.home, ["harness-registry.yaml", "catalogs/organization", "catalogs/builtin"]),
     ontologyBinding: governedWorkspaceBinding(session?.workspace?.home, ["ontology"]),
     matchPolicyBinding: governedWorkspaceBinding(session?.workspace?.home, ["policies/matcher"]),

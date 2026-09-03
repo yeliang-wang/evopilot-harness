@@ -2,6 +2,39 @@ import { engineCapabilities } from "../engine-adapter.mjs";
 
 const digest = { type: "string", pattern: "^sha256:[a-f0-9]{64}$" };
 const sessionId = { type: "string", minLength: 6 };
+const sourceDescriptor = {
+  type: "object",
+  additionalProperties: false,
+  required: ["type"],
+  properties: {
+    schema: { const: "evopilot-harness-source-descriptor/v1" },
+    sourceId: { type: "string", minLength: 3, maxLength: 96 },
+    safeLabel: { type: "string", minLength: 1, maxLength: 160 },
+    type: { enum: ["LOCAL_FILE", "LOCAL_DIRECTORY", "LOCAL_GIT_REPOSITORY", "GITHUB_REPOSITORY", "CONTROLLED_FIXTURE", "ORDERED_ATTACHMENT_SET"] },
+    path: { type: "string", minLength: 1 },
+    repository: { type: "string", minLength: 3 },
+    url: { type: "string", minLength: 3 },
+    requestedRef: { type: "string", minLength: 1, maxLength: 256 },
+    ref: { type: "string", minLength: 1, maxLength: 256 },
+    privateRepository: { type: "boolean" },
+    locator: {
+      type: "object", additionalProperties: false,
+      properties: {
+        class: { enum: ["LOCAL_PATH", "GITHUB_REPOSITORY", "ORDERED_MEMBERS"] },
+        path: { type: "string", minLength: 1 },
+        repository: { type: "string", minLength: 3 },
+        transport: { enum: ["HTTPS", "SSH"] }
+      }
+    },
+    members: {
+      type: "array", minItems: 1, maxItems: 128,
+      items: {
+        type: "object", additionalProperties: false, required: ["path"],
+        properties: { sourceId: { type: "string", minLength: 3, maxLength: 96 }, safeLabel: { type: "string", minLength: 1, maxLength: 160 }, path: { type: "string", minLength: 1 } }
+      }
+    }
+  }
+};
 const planSources = {
   type: "object",
   additionalProperties: false,
@@ -46,6 +79,51 @@ export const TOOL_DEFINITIONS = [
     model: { type: "string" },
     timeoutMs: { type: "integer", minimum: 1 }
   }),
+  tool("start_project_classification", "Analyze an unknown static Source against one user-owned business classification scheme. The Engine extracts taxonomy-blind concepts, records deterministic retrieval signals, makes exactly one required Harness Advisor call, and returns an Engine-owned 项目分类分析 result without entering Harness Eligibility.", {
+    sourceDescriptor,
+    sourcePath: { type: "string", minLength: 1 },
+    taxonomyPath: { type: "string", minLength: 1 },
+    intent: { type: "string", minLength: 1 },
+    locale: { enum: ["zh-CN", "en"], default: "zh-CN" },
+    modelsFile: { type: "string" },
+    model: { type: "string" },
+    advisorTimeoutMs: { type: "integer", minimum: 1 },
+    adapterId: { type: "string", minLength: 2 },
+    hostInteraction: {
+      type: "object", additionalProperties: false, required: ["id", "version", "level", "capabilities"],
+      properties: {
+        id: { type: "string", minLength: 1 }, version: { type: "string", minLength: 1 }, level: { const: "GOVERNED_HUMAN_GATE_COMPATIBLE" },
+        capabilities: { type: "array", minItems: 10, uniqueItems: true, items: { type: "string", minLength: 1 } },
+        locale: { enum: ["zh-CN", "en"] }, supportsOperationJobs: { type: "boolean" }, maxSynchronousMcpRequestMs: { type: "integer", minimum: 1 }
+      }
+    }
+  }, ["taxonomyPath", "intent", "adapterId", "hostInteraction"]),
+  tool("reanalyze_project_classification", "Create a new immutable classification attempt after the user supplies revised Source evidence, a revised valid business classification scheme, or an explicitly changed model or prompt binding. The prior attempt remains unchanged.", {
+    classificationSessionId: { type: "string", minLength: 8 },
+    expectedSessionDigest: digest,
+    sourceDescriptor,
+    sourcePath: { type: "string" },
+    taxonomyPath: { type: "string" },
+    intent: { type: "string" },
+    locale: { enum: ["zh-CN", "en"] },
+    modelsFile: { type: "string" },
+    model: { type: "string" },
+    advisorTimeoutMs: { type: "integer", minimum: 1 }
+  }, ["classificationSessionId", "expectedSessionDigest"]),
+  tool("continue_classification_to_harness", "After a complete TAXONOMY_MATCHED result and an explicit human continue choice, bind the exact classification result into the same generic Agent Operation Session and continue with independent Harness Eligibility. This does not prove Harness Eligibility, create a Proposal, approve, or publish.", {
+    classificationSessionId: { type: "string", minLength: 8 },
+    expectedSessionDigest: digest,
+    decisionToken: { type: "string", minLength: 1 },
+    decidedBy: { type: "string", minLength: 1 }
+  }, ["classificationSessionId", "expectedSessionDigest", "decisionToken", "decidedBy"]),
+  tool("inspect_project_classification", "Inspect and integrity-check one persistent Engine-owned Classification Session.", { classificationSessionId: { type: "string", minLength: 8 } }, ["classificationSessionId"]),
+  tool("resume_project_classification", "Resume the generic AgentOperationSession carrying one unfinished classification lifecycle from another compatible Adapter without trusting conversation memory.", {
+    classificationSessionId: { type: "string", minLength: 8 }, expectedSessionDigest: digest, adapterId: { type: "string", minLength: 2 }
+  }, ["classificationSessionId", "expectedSessionDigest", "adapterId"]),
+  tool("list_project_classifications", "List persistent Classification Sessions in the current external Workspace.", {}),
+  tool("close_project_classification", "After an explicit human close or cancel choice, close or cancel a Classification Session without entering Harness Eligibility or mutating Taxonomy or Catalog state. The Engine resolves and records the current Session digest when expectedSessionDigest is omitted because the Host cannot observe MCP structuredContent; when supplied, a stale digest still fails closed.", {
+    classificationSessionId: { type: "string", minLength: 8 }, expectedSessionDigest: digest, decidedBy: { type: "string", minLength: 1 }, decision: { enum: ["CLOSE", "CANCEL"] }
+  }, ["classificationSessionId", "decidedBy", "decision"]),
   tool("start_operation_session", "Silently start a persistent Agent Operation Session from a human intent. Do not narrate a successful result; continue to Plan construction.", {
     intent: { type: "string", minLength: 1 },
     adapterId: { type: "string", minLength: 2 },
@@ -229,25 +307,6 @@ export const TOOL_DEFINITIONS = [
     expectedSessionDigest: digest,
     adapterId: { type: "string", minLength: 2 }
   }, ["sessionId", "expectedSessionDigest", "adapterId"]),
-  tool("migrate_operation_session_to_v3", "Explicitly migrate a readable Protocol v2 Session to Protocol v3 without fabricating historical Business Views or delivery receipts.", {
-    sessionId,
-    expectedSessionDigest: digest,
-    adapterId: { type: "string", minLength: 2 },
-    hostInteraction: {
-      type: "object",
-      additionalProperties: false,
-      required: ["id", "version", "level", "capabilities"],
-      properties: {
-        id: { type: "string", minLength: 1 },
-        version: { type: "string", minLength: 1 },
-        level: { const: "GOVERNED_HUMAN_GATE_COMPATIBLE" },
-        capabilities: { type: "array", minItems: 10, uniqueItems: true, items: { type: "string", minLength: 1 } },
-        locale: { enum: ["zh-CN", "en"] },
-        supportsOperationJobs: { type: "boolean" },
-        maxSynchronousMcpRequestMs: { type: "integer", minimum: 1 }
-      }
-    }
-  }, ["sessionId", "expectedSessionDigest", "adapterId", "hostInteraction"]),
   tool("migrate_operation_session_core_compatibility", "Explicitly rebind a stopped Protocol v3 Session to a compatible replacement Core while preserving business state and authority boundaries.", {
     sessionId,
     expectedSessionDigest: digest,

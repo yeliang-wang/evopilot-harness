@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/classification-evaluation-report-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "goldManifestDigest", "caseCount", "composition", "bindings", "cases", "metrics", "thresholds", "authority", "reportDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-classification-evaluation-report/v1" },
+    "status": { "enum": ["PASS", "FAIL"] },
+    "goldManifestDigest": { "$ref": "#/$defs/digest" },
+    "caseCount": { "type": "integer", "minimum": 48 },
+    "composition": { "type": "object" },
+    "bindings": { "type": "object" },
+    "cases": { "type": "array", "minItems": 48 },
+    "metrics": { "type": "object" },
+    "thresholds": { "type": "object" },
+    "authority": { "type": "object" },
+    "reportDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

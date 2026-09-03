@@ -7,7 +7,7 @@
 Source version, GitHub Release, and npm package are separate evidence layers. Container publication and deployment are outside this distribution scope. Before using a public package, verify the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.3.0 version
+npm view @evopilot/harness@4.4.0 version
 ```
 
 If the command does not return `4.2.0`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.

@@ -1,0 +1,54 @@
+{
+  "schema": "evopilot-agent-host-adapter/v2",
+  "id": "workbuddy-macos-designated-human-v1",
+  "hostId": "workbuddy",
+  "visibleIdentity": {
+    "bundleId": "com.workbuddy.workbuddy",
+    "applicationPath": "/Applications/WorkBuddy.app",
+    "versionEvidence": "visible application metadata and resolved executable"
+  },
+  "profile": "profiles/workbuddy.md",
+  "operationMode": "DESIGNATED_HUMAN",
+  "capabilities": [
+    "HOST_DISCOVERY",
+    "EXPERT_INSTALL_INSPECT_SELECT",
+    "BLANK_TASK",
+    "HUMAN_VISIBLE_UI_OPERATION",
+    "CODEX_COMPLETE_RUNBOOK_SET_HANDOFF",
+    "FINAL_RANGE_COMPLETION_DECLARATION",
+    "VISIBLE_ATTACHMENT_CHOOSER",
+    "NO_WORKBUDDY_EXECUTION_ARTIFACT_COLLECTION"
+  ],
+  "drivers": [],
+  "transport": {
+    "policyVersion": "human-operated-workbuddy/v1",
+    "automatedQualificationRequired": false,
+    "automatedTransportReceiptRequired": false,
+    "codexUiControlAllowed": false,
+    "codexObservationAllowed": false,
+    "humanEvidenceExportRequired": false,
+    "perCaseReportRequired": false,
+    "completionPolicyVersion": "designated-human-range-completion/v1"
+  },
+  "failureBoundary": {
+    "firstAmbiguity": "BLOCK",
+    "automaticRetry": false,
+    "candidateReinstall": false,
+    "hostFailureIsHarnessFailure": false
+  },
+  "protectedState": [
+    "human WorkBuddy operation and decisions",
+    "unrelated Host configuration and conversations",
+    "Harness candidate and Source material"
+  ],
+  "authority": {
+    "mayTransportVisibleUi": false,
+    "mayPrepareRunbook": true,
+    "mayReviewExportedEvidence": false,
+    "mayReceiveFinalRangeDeclaration": true,
+    "mayAuthorHarnessSemantics": false,
+    "mayApprove": false,
+    "mayPublish": false,
+    "mayRelease": false
+  }
+}

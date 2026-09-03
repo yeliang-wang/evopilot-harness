@@ -1,4 +1,4 @@
 interface:
   display_name: "EvoPilot Agent Host Production Simulator"
-  short_description: "Validate released Harness operation in a real Agent host"
-  default_prompt: "Simulate an ordinary human using the released EvoPilot Harness Digital Expert in a real third-party Agent host and produce redacted acceptance evidence."
+  short_description: "Prepare and review real Agent-host Harness acceptance"
+  default_prompt: "Prepare exact real-Host acceptance for the EvoPilot Harness Digital Expert. For WorkBuddy, issue the complete frozen runbook set, never operate or observe the app, request no execution artifacts or per-case reports, and wait for the Target-declared final range-completion declaration."

@@ -6,7 +6,8 @@ import path from "node:path";
 const repoRoot = path.resolve(import.meta.dirname, "..");
 const cli = path.join(repoRoot, "src", "index.mjs");
 const args = parseArgs(process.argv.slice(2));
-const sourceRoot = path.resolve(args["source-root"] ?? "/Users/wangyejing/project/howbuy_project");
+if (!args["source-root"]) throw new Error("--source-root is required; no personal Source path is built into this validator.");
+const sourceRoot = path.resolve(args["source-root"]);
 const harnessSource = path.resolve(args.source ?? path.join(repoRoot, "harnesses"));
 const samples = [
   {
@@ -57,7 +58,7 @@ const results = [];
 for (const sample of samples) {
   const project = path.join(sourceRoot, sample.relativePath);
   if (!fs.existsSync(project)) {
-    results.push({ ...sample, status: "SKIPPED", reason: `missing=${project}` });
+    results.push({ ...sample, status: "SKIPPED", reason: `missing=${sample.relativePath}` });
     continue;
   }
   const run = spawnSync(process.execPath, [
@@ -96,8 +97,8 @@ const failed = results.filter((result) => result.status === "FAILED");
 const payload = {
   schema: "evopilot-harness-howbuy-sample-validation/v1",
   status: failed.length === 0 ? "VALIDATED" : "FAILED",
-  sourceRoot,
-  harnessSource,
+  sourceRoot: path.basename(sourceRoot),
+  harnessSource: path.relative(repoRoot, harnessSource) || ".",
   sampleCount: results.length,
   passedCount: results.filter((result) => result.status === "PASSED").length,
   skippedCount: results.filter((result) => result.status === "SKIPPED").length,

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/github-discovery-oracle-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "selectionManifestDigest", "candidateDigest", "candidateOutputsVisible", "createdAt", "repositories", "branchCoverage", "authority", "oracleDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-github-discovery-oracle/v1" },
+    "status": { "enum": ["REVIEW_REQUIRED", "HUMAN_CONFIRMED"] },
+    "selectionManifestDigest": { "$ref": "#/$defs/digest" },
+    "candidateDigest": { "$ref": "#/$defs/digest" },
+    "candidateOutputsVisible": { "const": false },
+    "createdAt": { "type": "string" },
+    "repositories": { "type": "array", "minItems": 1, "maxItems": 12 },
+    "branchCoverage": { "type": "object" },
+    "authority": { "type": "object" },
+    "oracleDigest": { "$ref": "#/$defs/digest" },
+    "humanConfirmation": { "type": "object" },
+    "confirmedOracleDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

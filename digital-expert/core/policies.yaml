@@ -44,6 +44,7 @@ sourceExecution:
   start: deny
   businessCommands: deny
 humanGates:
+  classificationHandoff: required-after-complete-match
   planConfirmation: required
   comparisonReview: required-before-proposal-approval-when-present
   calibrationReview: required-before-policy-delta
@@ -53,6 +54,27 @@ humanGates:
   maintenancePublicationAuthorization: required-separate-per-operation
   cancellation: required
   destructiveCleanup: required
+classification:
+  inputContract: SourceDescriptor/v1
+  supportedSourceTypes: [LOCAL_FILE, LOCAL_DIRECTORY, LOCAL_GIT_REPOSITORY, GITHUB_REPOSITORY, CONTROLLED_FIXTURE, ORDERED_ATTACHMENT_SET]
+  orderedAttachmentMembership: exact-and-order-sensitive
+  githubAcquisition: bounded-read-only-git-in-external-workspace
+  githubAuthentication: operator-managed-ambient-only
+  embeddedCredentials: deny
+  githubSubmodules: deny
+  githubLfs: deny
+  classificationToHarnessSourceSubstitution: deny
+  classificationToHarnessImplicitRefetch: deny
+  taxonomyVocabulary: user-owned-declarative-non-executable
+  sourceConceptHypothesis: engine-owned-taxonomy-blind
+  advisorOnNewAttempt: exactly-one-required
+  finalDecision: deterministic-engine-only
+  positiveResultMinimum: two-citations-from-two-independent-non-llm-source-families
+  unresolvedResultHandoff: deny
+  matchedResultAutomaticHandoff: deny
+  matchedResultExplicitContinue: required
+  provesHarnessEligibility: false
+  automaticTaxonomyMutation: deny
 fallback:
   directHumanCli: deny
   alternateModel: deny

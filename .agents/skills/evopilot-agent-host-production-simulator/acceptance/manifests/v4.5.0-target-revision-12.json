@@ -1,0 +1,81 @@
+{
+  "schema": "evopilot-real-host-acceptance-manifest/v3",
+  "id": "evopilot-harness-v4.5.0-target-revision-12-real-host",
+  "target": {
+    "id": "evopilot-harness-v4.5.0-declarative-user-taxonomy",
+    "revision": 12,
+    "status": "APPROVED",
+    "repoPath": "governance/targets/evopilot-harness-v4.5.0-declarative-user-taxonomy.json",
+    "fileDigest": "sha256:a08ee18d30f097845594fe518a79fa686fb7e6e575c172aee0f264d0a96755b6",
+    "authorizationDigest": "sha256:6843365f3dd185efa0cebc6b3dfe74a70c8640ea3aa3bf79f60d40206e9e75f1",
+    "roadmapDigest": "sha256:4c56088ede226a012a26012dee37f80fc2b7305bf3b40d6ef9feb117dc9557f5"
+  },
+  "requiredExtensions": {
+    "hostAdapterId": "workbuddy-macos-designated-human-v1",
+    "compatibilityAdapterId": "agent-operations-v3-source-first"
+  },
+  "coverage": {
+    "mode": "ALL_TARGET_ACCEPTANCE_IDS",
+    "acceptanceCount": 203,
+    "sortedAcceptanceIdsDigest": "sha256:ff14dbc8ade7bcb64096c19072ab28fd9954beb9edabf7ea70b47e714ecf602b",
+    "realCaseCount": 18,
+    "realCaseIds": [
+      "RC01", "RC02", "RC03", "RC04", "RC05", "RC06",
+      "RC07", "RC08", "RC09", "RC10", "RC11", "RC12",
+      "RC13", "RC14", "RC15", "RC16", "RC17", "RC18"
+    ]
+  },
+  "hostExecutionPolicy": {
+    "policyVersion": "human-operated-workbuddy/v1",
+    "completionPolicyVersion": "designated-human-range-completion/v1",
+    "workBuddyOperator": "DESIGNATED_HUMAN",
+    "codexRole": "RUNBOOK_ISSUANCE_AND_FINAL_DECLARATION_ONLY",
+    "workBuddyUiControlAllowed": false,
+    "workBuddyObservationAllowed": false,
+    "workBuddyExecutionArtifactsRequired": false,
+    "perCaseReportRequired": false,
+    "automatedWorkBuddyQualificationRequired": false,
+    "automatedWorkBuddyTransportReceiptRequired": false,
+    "independentHostAutomationAllowed": true,
+    "finalDeclaration": "RC01～RC18 已完成",
+    "acceptedRangeSeparators": ["～", "~"],
+    "beforeDeclaration": "PENDING",
+    "afterDeclaration": "PASSED",
+    "workBuddyCaseIds": [
+      "RC01", "RC02", "RC03", "RC04", "RC05", "RC06",
+      "RC07", "RC08", "RC09", "RC10", "RC11", "RC12",
+      "RC13", "RC14", "RC15", "RC17", "RC18"
+    ],
+    "discoveryOnlyCaseIds": ["RC16"],
+    "rc16StartCondition": "RC01_RC15_NON_WORKBUDDY_MACHINE_EVIDENCE_PASS_AND_COMPLETE_ACTIVE_CANDIDATE_WORKBUDDY_RUNBOOK_SET_FROZEN"
+  },
+  "executionOrder": [
+    "OFFLINE_STABLE_CORE_AND_COMPATIBILITY_REGRESSION",
+    "VERIFY_APPROVED_TARGET_AND_ACTIVE_CANDIDATE_ACCEPTANCE_BINDING",
+    "VERIFY_RC01_RC15_NON_WORKBUDDY_MACHINE_EVIDENCE_PASS",
+    "GENERATE_AND_FREEZE_COMPLETE_ACTIVE_CANDIDATE_HUMAN_WORKBUDDY_RUNBOOK_SET",
+    "KEEP_ALL_WORKBUDDY_HUMAN_OPERATION_LEGS_PENDING",
+    "EXECUTE_RC16_LIVE_DISCOVERY_AND_STOP_AT_HUMAN_SELECTION_CONFIRMATION",
+    "DESIGNATED_HUMAN_INSTALLS_AND_COMPLETES_WORKBUDDY_RUNBOOKS_PRIVATELY",
+    "FINAL_RANGE_DECLARATION_TRANSITIONS_WORKBUDDY_LEGS_TO_PASSED",
+    "VERIFY_NON_WORKBUDDY_EVIDENCE_AND_TARGET_GATES"
+  ],
+  "prohibitedEffects": [
+    "No Codex or Skill WorkBuddy UI action, observation or installation",
+    "No Computer Use, Accessibility, coordinate, mouse, keyboard, clipboard, SO06, startup probe or automated WorkBuddy transport receipt",
+    "No WorkBuddy screenshot, transcript, receipt, digest, export or per-case report requirement",
+    "No inferred WorkBuddy pass before the exact final range declaration",
+    "No Candidate rebuild or installation outside the active Candidate binding and its separate exact authority",
+    "No RC16 start before exact machine-evidence pass and complete active-Candidate runbook freeze",
+    "No acceptance Source mutation, substitution or post-result replacement",
+    "No final declaration substitution for independent-Host, deterministic Engine or other non-WorkBuddy evidence",
+    "No automatic human decision, cleanup, publication or release"
+  ],
+  "authority": {
+    "checklistOnly": true,
+    "authorizesHostMutation": false,
+    "authorizesHumanDecision": false,
+    "authorizesPublication": false,
+    "authorizesRelease": false
+  }
+}

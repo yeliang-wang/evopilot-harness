@@ -1,0 +1,120 @@
+{
+  "schema": "evopilot-harness-fixed-wave-acceptance-contract/v1",
+  "authority": "target-derived-acceptance-execution-only",
+  "runnerMayAddOutcomeConstraints": false,
+  "target": {
+    "id": "evopilot-harness-v4.5.0-declarative-user-taxonomy",
+    "revision": 11,
+    "fileDigest": "sha256:83f7187a7f237b6f0d70c771e27c46faf61d973989d5a70519c2b78e8e9e02a3"
+  },
+  "sourcePortfolio": {
+    "fileDigest": "sha256:45c78013d2ae16ddd7cf0ad6c3d7a8581c10360e4ebbb7d181ffddc52f8efc99"
+  },
+  "cases": [
+    {
+      "caseId": "RC01",
+      "targetAcceptanceDigest": "sha256:424249b6bb98139f61c023bed394834c04e2feeb0babd654b5b2385694d2d520",
+      "sourceIds": ["SRC-HOWBUY-LOCAL-DIRECTORY"],
+      "oracle": { "mode": "EXACT", "exactAggregate": "TAXONOMY_MATCHED" },
+      "requiredAssertions": ["both axes matched", "one Advisor call", "two independent non-LLM evidence families", "closed"]
+    },
+    {
+      "caseId": "RC02",
+      "targetAcceptanceDigest": "sha256:acf0f8c016246c8a673ee0337395d861f34f1d25f8261020b422cd2cbc2b9142",
+      "sourceIds": ["SRC-HOWBUY-LOCAL-DIRECTORY"],
+      "oracle": { "mode": "SEQUENCE", "exactSequence": ["TAXONOMY_EXTENSION_SUGGESTED", "TAXONOMY_MATCHED"] },
+      "requiredAssertions": ["initial Domain matched and Product extension", "revised scheme matched", "prior result immutable", "closed"]
+    },
+    {
+      "caseId": "RC03",
+      "targetAcceptanceDigest": "sha256:619ae98c6fc0e230d63f213aaa1ecd5fd9c44a008c4049d368e1f1aa98632547",
+      "sourceIds": ["SRC-INSUFFICIENT-FIXTURE"],
+      "oracle": { "mode": "EXACT", "exactAggregate": "TAXONOMY_EVIDENCE_INSUFFICIENT" },
+      "requiredAssertions": ["both axes insufficient", "no category-add request", "independent Host equivalent", "closed"]
+    },
+    {
+      "caseId": "RC04",
+      "targetAcceptanceDigest": "sha256:b3d5da7fe6c32686802b19ddf1d0e56218603b879d734b1be672ca18134cbc78",
+      "sourceIds": ["SRC-AMBIGUOUS-FIXTURE", "SRC-MISLEADING-FIXTURE"],
+      "oracle": { "mode": "CASE_ORACLE" },
+      "requiredAssertions": ["fold precedence exact", "ambiguous case exact", "misleading case never broad-matches", "closed"]
+    },
+    {
+      "caseId": "RC05",
+      "targetAcceptanceDigest": "sha256:508451bdefd28adbe6a969910e0786bc88fc283ab82d0d675fab0ae29410efe1",
+      "sourceIds": ["SRC-INVALID-TAXONOMY-MATRIX", "SRC-CODE-GENERATION-DOCX", "SRC-DATARIG-LOCAL-REPO", "CONTROLLED-HOST-LLM-HOSTILE-VECTORS"],
+      "oracle": { "mode": "BLOCKER_MATRIX" },
+      "requiredAssertions": ["invalid taxonomy fails before Source reasoning", "hostile vectors fail closed", "no credential access", "no partial classification"]
+    },
+    {
+      "caseId": "RC06",
+      "targetAcceptanceDigest": "sha256:9abd017cf982ab8189fbae284fb2a797f9f2854b06ff85b702fde8ed80bc308b",
+      "sourceIds": ["SRC-HOWBUY-LOCAL-DIRECTORY"],
+      "oracle": { "mode": "INVARIANTS_ONLY" },
+      "requiredAssertions": ["Advisor failures block without result or fallback", "completed context replays with zero calls", "changed model or prompt creates one new attempt", "restart and disconnect preserve at-most-once invocation", "closed"]
+    },
+    {
+      "caseId": "RC07",
+      "targetAcceptanceDigest": "sha256:14ae5558144642528392eaefca479983ad4d6a22cc10640421f37a530eb14500",
+      "sourceIds": ["SRC-HOWBUY-LOCAL-DIRECTORY"],
+      "oracle": { "mode": "SEMANTIC_EQUIVALENCE" },
+      "requiredAssertions": ["ordinary-human terminology", "equivalent Engine semantics", "SourceDescriptor choices visible", "closed"]
+    },
+    {
+      "caseId": "RC08",
+      "targetAcceptanceDigest": "sha256:a76957afbb0dec63556ca92581163bd92c4f72023d21884e1076e92dccf5de63",
+      "sourceIds": ["SRC-GOLD-48-MANIFEST", "SRC-HOWBUY-LOCAL-DIRECTORY", "SRC-TRANSWARP-MIGRATOR-DOCX", "SRC-ARGODB-DOCX", "SRC-CODE-GENERATION-DOCX", "SRC-INSUFFICIENT-FIXTURE", "SRC-AMBIGUOUS-FIXTURE", "SRC-MISLEADING-FIXTURE", "SRC-DOMAINFORGE-LOCAL-REPO", "SRC-VALKEY-GITHUB-PINNED"],
+      "oracle": { "mode": "CASE_ORACLE" },
+      "requiredAssertions": ["all 48 Gold cases exact", "nine-case WorkBuddy subset prepared", "all classification branches covered", "evaluation thresholds pass"]
+    },
+    {
+      "caseId": "RC09",
+      "targetAcceptanceDigest": "sha256:95ca826b19f57b2eebc7f26f4318f4c9d115c35a3366a6ae66826531440a76aa",
+      "sourceIds": ["SRC-CODE-GENERATION-DOCX", "SRC-VALKEY-GITHUB-PINNED"],
+      "oracle": { "mode": "LIFECYCLE_ORACLE" },
+      "requiredAssertions": ["each classification matched", "explicit Harness handoff", "isolated publication validated", "no GitHub refetch", "closed"]
+    },
+    {
+      "caseId": "RC10",
+      "targetAcceptanceDigest": "sha256:6e5269978aa30ef4edcf2cb2b4773edff31c48864cf03083a05f44171eecdd68",
+      "sourceIds": ["SRC-CODE-GENERATION-DOCX"],
+      "oracle": { "mode": "SEMANTIC_EQUIVALENCE" },
+      "requiredAssertions": ["positive RC09 semantics equivalent", "hostile Host matrix fails before state advance", "validated publication", "closed"]
+    },
+    {
+      "caseId": "RC11",
+      "targetAcceptanceDigest": "sha256:320e336359bcffa24bc712674e8f3351d666e89aee954701ffca1c59602bc7e0",
+      "sourceIds": ["SRC-DASHBOARD-LOCAL-REPO", "SRC-ARGODB-DOCX", "SRC-TAGOCLAW-LOCAL-REPO", "SRC-CODE-GENERATION-DOCX", "SRC-NON-HARNESS-DOCX", "SRC-INSUFFICIENT-FIXTURE", "SRC-BUILTIN-DISTRIBUTED-CACHE-PROFILE", "CONTROLLED-REJECT-FIXTURE"],
+      "oracle": { "mode": "LIFECYCLE_ORACLE" },
+      "requiredAssertions": ["classification preconditions and Harness fixtures use declared roles", "all eight Harness outcomes exact", "candidate-blind artifact and oracle remain separate", "correct Proposal and Catalog effects", "closed"]
+    },
+    {
+      "caseId": "RC12",
+      "targetAcceptanceDigest": "sha256:ec0afc4335b9fca959b35c4586cc8fe4c9b2702fe8338e744b0e1335652f6de1",
+      "sourceIds": ["SRC-CODE-GENERATION-DOCX", "SRC-VALKEY-GITHUB-PINNED"],
+      "oracle": { "mode": "LIFECYCLE_ORACLE" },
+      "requiredAssertions": ["at-most-once operation recovery", "new model creates new context", "bound GitHub snapshot never refetched", "validated publication", "closed"]
+    },
+    {
+      "caseId": "RC13",
+      "targetAcceptanceDigest": "sha256:1f3cc04866a511f6fcb0a425f69b2fc6510790e82e82be5050ca133c5538ac96",
+      "sourceIds": ["SRC-CODE-GENERATION-DOCX"],
+      "oracle": { "mode": "LIFECYCLE_ORACLE" },
+      "requiredAssertions": ["clean installed candidate", "two restarts", "provider-neutral profile reused", "secrets and unrelated Host state protected", "closed"]
+    },
+    {
+      "caseId": "RC14",
+      "targetAcceptanceDigest": "sha256:0d6086c77528a9143d46d0a869830aa43567a3b295157f2748fd4432c3dfa121",
+      "sourceIds": ["CUMULATIVE-UNION-RC01-RC13-RC15", "ALL-146-CURRENT-RESTATED-REGRESSION-FIXTURES"],
+      "oracle": { "mode": "CUMULATIVE_REGRESSION" },
+      "requiredAssertions": ["149-item lineage exact", "146 current capabilities rerun", "three compatibility meanings excluded only", "no-regression passed"]
+    },
+    {
+      "caseId": "RC15",
+      "targetAcceptanceDigest": "sha256:4c339d6dcea6b3fbb908e2e29d775e0d0e18d94440f149de666f99afd87e9ba9",
+      "sourceIds": ["SRC-RC15-REVERSE-PROMPT-ORDERED-SET"],
+      "oracle": { "mode": "LIFECYCLE_ORACLE" },
+      "requiredAssertions": ["exact ordered thirteen-member set", "complete frames before each decision", "invalid mutations fail closed", "valid path publishes and closes"]
+    }
+  ]
+}

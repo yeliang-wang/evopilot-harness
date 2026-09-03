@@ -10,7 +10,7 @@
 
 `evopilot-harness` ingests project and operational evidence, determines whether it belongs in a Harness, proposes a new or evolved asset, enforces human review, and publishes immutable assets and executable Bundles through user-owned Catalogs. In v4, a human talks to a portable Digital Expert loaded by Codex or another compatible Agent; the Agent operates the deterministic Engine through a local stdio MCP process. It runs independently from EvoPilot and Dashboard.
 
-Current published release: [`v4.3.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.3.0), also available as [`@evopilot/harness@4.3.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.3.0). The v4.4.0 candidate is under approved Target implementation and is not published.
+Current published release: [`v4.4.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.4.0), also available as [`@evopilot/harness@4.4.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.4.0). The v4.5.0 candidate is under approved Target revision 5 implementation and is not published.
 
 ![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 

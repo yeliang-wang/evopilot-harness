@@ -13,6 +13,10 @@ evidenceSources:
   - calibrationCaseSet
   - learningOperations
 terminalDecisions:
+  - TAXONOMY_MATCHED
+  - TAXONOMY_EXTENSION_SUGGESTED
+  - TAXONOMY_EVIDENCE_INSUFFICIENT
+  - TAXONOMY_AMBIGUOUS
   - NOT_HARNESS_ELIGIBLE
   - NO_CHANGE
   - NEED_MORE_EVIDENCE
@@ -159,6 +163,22 @@ coverage:
       testName: v4.2 Engine exposes the complete governed professional learning operation family
       marker: learning.ingest
   terminalDecisions:
+    TAXONOMY_MATCHED: &classification_decisions
+      testFile: tests/v4.5-classification.test.mjs
+      testName: algorithm plus one Advisor call produces independently corroborated per-axis and aggregate match
+      marker: TAXONOMY_MATCHED
+    TAXONOMY_EXTENSION_SUGGESTED:
+      <<: *classification_decisions
+      testName: deterministic classification distinguishes scheme extension, insufficient evidence, ambiguity, and mixed-axis precedence
+      marker: TAXONOMY_EXTENSION_SUGGESTED
+    TAXONOMY_EVIDENCE_INSUFFICIENT:
+      <<: *classification_decisions
+      testName: deterministic classification distinguishes scheme extension, insufficient evidence, ambiguity, and mixed-axis precedence
+      marker: TAXONOMY_EVIDENCE_INSUFFICIENT
+    TAXONOMY_AMBIGUOUS:
+      <<: *classification_decisions
+      testName: materially tied candidates return ambiguity and cannot hand off
+      marker: TAXONOMY_AMBIGUOUS
     NOT_HARNESS_ELIGIBLE: &reasoning_decisions
       testFile: tests/v4.test.mjs
       testName: real stdio MCP surfaces every Engine terminal decision through persistent Sessions

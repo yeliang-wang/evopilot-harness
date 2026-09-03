@@ -2,6 +2,8 @@
 
 `AgentOperationSession` is the external Workspace system of record for an Agent-native operation. It replaces reliance on one Agent conversation and does not replace canonical Harness assets or Engine lifecycle files.
 
+An unknown Source starts with `SourceDescriptor/v1` and a generic `AgentOperationSession` whose first finite operation is `ANALYZE_TAXONOMY`. An append-only `ClassificationSession/v1` projection retains its immutable attempts: exact descriptor and resolved Source binding, static Source snapshot, user-owned Resolved Taxonomy snapshot, taxonomy-blind Source concept hypothesis, retrieval and Advisor receipts, deterministic axis results, presentation, and current digest. Only `TAXONOMY_MATCHED` plus a separate exact human continue decision attaches `ClassificationHandoff/v1` to that same `AgentOperationSession`. The handoff proves neither Harness Eligibility nor Proposal authority; it preserves the descriptor, ordered membership or Git commit, snapshot and classification context for the independent retained lifecycle. Harness planning reuses that exact resolved Source without implicit GitHub refetch; any drift or substitution requires re-analysis.
+
 The v4.4 candidate uses Agent Operations Protocol v3. Every governed stage contains an exact Engine-owned `BusinessDecisionView`, a complete `ComplianceAuditEnvelope`, a `SourceToHarnessReasoningMap`, and a finite `DecisionDefinition`. Professional stages also bind `HarnessProfessionalAnalysis`, `HarnessArchitectureAssessment`, `SourceOutcomeExplanation`, and `EvolutionContextBinding`. The Host renders the Business View as the primary conversation and may collapse—but not omit—the Audit Envelope. When an MCP result carries the Harness exact-presentation metadata, its primary text is already the canonical Business View and must replace the whole assistant turn byte-for-byte; Host prefixes, suffixes, emoji, summaries, translations, transitions, and next-step prose are forbidden. The Operation Server creates the non-authoritative `CanonicalPresentationDeliveryReceipt` in that same response path, before returning the view; no second user prompt or assistant turn is allowed. The receipt is never a human approval and screen-level conformance remains independently testable at the Host boundary.
 
 ## Presentation Sandbox
@@ -21,6 +23,9 @@ EVOPILOT_HARNESS_HOME/
       .ownership.json
       session.json
       journal.jsonl
+  classification-sessions/
+    <classificationSessionId>/
+      session.json
 ```
 
 `session.json` and Engine operation receipts are written atomically with mode `0600`. New Sessions bind the exact Product version, Expert version, Core digest, Agent protocol, and Engine API accepted during MCP initialization. `sessionDigest` covers all fields except itself. Every mutation requires the last observed digest. `interaction.frameArchive` retains every immutable Protocol v3 Frame when it becomes current; this permits presentation replay without repeating governed mutations. `journal.jsonl` records sequence, event, actor, resulting Session digest, and bounded operation/result references. A stable idempotency key binds each planned operation to its Session, Plan, index, operation, and input digest.
@@ -93,9 +98,9 @@ When no unknown in-flight operation exists, the human may resume the remaining c
 
 An Agent may not convert process restart, “continue”, or a previous chat statement into retry authority.
 
-## Protocol v2 compatibility
+## Fresh v4.5 representation baseline
 
-Protocol v2 Sessions remain integrity-readable and diagnosable. They may be cancelled or safely closed with a new explicit decision bound to the exact current Session digest, without inventing a v3 Business View. `migrate_operation_session_to_v3` is an explicit alternative: it records the prior Session and legacy-interaction digests, clears the v3 current frame and delivery-receipt collection, and records that no historical Business View or receipt was fabricated. The next v3 interaction is generated only from current authoritative Workspace and Session state.
+v4.5 starts only from a fresh v4.5 Workspace and Session representation. Pre-v4.5 Sessions are preserved byte-for-byte but return `PRE_V45_SESSION_UNSUPPORTED`; the Engine neither reads their lifecycle state nor offers a migration tool. This reset applies to data and protocol representation only. The current v4.5 lifecycle still includes every retained v4.4 product capability from Source evidence through safe close.
 
 A `BLOCKED` Proposal Review with `nextAction=repair-reviewer-and-rerun` uses a distinct fail-closed path. The Agent must first complete `BLOCKER_PRESENTATION`, repair the declared reviewer dependency, prepare and completely display `BLOCKED_RETRY_PRESENTATION`, and obtain a new digest-bound decision through `authorize_blocked_operation_retry`. Only then does the Session return to `PROPOSAL_REVIEW_REQUIRED`; `review_session_proposals` remains a separate call. Semantic `REVISE` outcomes are not eligible for this technical retry path.
 

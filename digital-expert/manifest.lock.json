@@ -1,32 +1,32 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.4.0",
-  "coreDigest": "sha256:229d3de2f32f4a78d500a20df0c6109fe744d7e91e639968b7b6ae83fae07184",
+  "expertVersion": "4.5.0",
+  "coreDigest": "sha256:747b7f5ecbd34c34208652a9bdf446ac811ecbca04e51d169fef668926ec62bd",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:fe6f8a8647c73093ca131ee3e5944233c225ffbc4062a844358ee57861f55db3",
-      "bytes": 33033
+      "sha256": "sha256:d634e7c9b2909d74fefc8ee32048001c72cd7221a7aee35ff134cdb99cccc7f6",
+      "bytes": 37973
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:b989235fc7e5b5588c46ae14d2a0f89b855d735cd473d6753ae76dd7591f468e",
-      "bytes": 33254
+      "sha256": "sha256:5962f516747f88b1983a4694b0076d7977ffd3da2d4da00bee35af90cf002d0d",
+      "bytes": 38194
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:03aae34f6095b0bf6288939c416bcdd7d8624ee8bb1f208b6c5a5eacb4808a2c",
-      "bytes": 33035
+      "sha256": "sha256:a7699ca54e1077252a6ab44bd5a6356e3258ad1d2c1b9233658cda3021b882bd",
+      "bytes": 37975
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:23cc745f266354242d6dd621607e44eb14bcc72cf77e06e69abf48d91760410c",
-      "bytes": 33032
+      "sha256": "sha256:e0c711b135f27d6e06d72d9cbecbdeb9be989899d4ce8f5cc2092a678d28d043",
+      "bytes": 37972
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:ca1e6a2fa452206d27db8b1e75b1edf3edbfae5de676f1842fb963cdaadcf06c",
-      "bytes": 37046
+      "sha256": "sha256:f820c381bd5583c857ccea35055f4057564cbdb9ddae401d948c1e1ad247ff67",
+      "bytes": 41986
     },
     {
       "path": "conformance/generic-host.mjs",
@@ -40,8 +40,8 @@
     },
     {
       "path": "conformance/scenario-matrix.yaml",
-      "sha256": "sha256:48e17bee979cdafe34465ef4203e4a6854291cdaae72a885c0e6e5ce99eb1210",
-      "bytes": 14292
+      "sha256": "sha256:b679c82e1abc38667a9fbfacdbebc4277a32a8a26a8d73ea482b677afa106430",
+      "bytes": 15324
     },
     {
       "path": "core/conversation.yaml",
@@ -50,13 +50,13 @@
     },
     {
       "path": "core/instructions.md",
-      "sha256": "sha256:8417207702ae0080326a15caec6d326aaf4ffa011d88d8211b007584def0e50d",
-      "bytes": 21790
+      "sha256": "sha256:0d6ec30605bdd3ea2b82f040a0aae81ee0236f328e8a6e86d9cf735f030dafe9",
+      "bytes": 24951
     },
     {
       "path": "core/policies.yaml",
-      "sha256": "sha256:9a0238b020e3fbb5dab6db9a7471256d26efcd5df380cb87b61abc6e270eb6a6",
-      "bytes": 2494
+      "sha256": "sha256:9e7bd5047d40146087f95ac83ba35b98c00ef9e4dea7c3864a38926172531108",
+      "bytes": 3551
     },
     {
       "path": "core/renderers.yaml",
@@ -65,18 +65,18 @@
     },
     {
       "path": "core/workflows.yaml",
-      "sha256": "sha256:39633b208571ecee9fd4f89b5700bbd939acb0568f4b71ca034ae7e9b713f3f6",
-      "bytes": 2308
+      "sha256": "sha256:1f54d26608d1b07ea7d4bd50743641d9d6aafd21fa9aea7773d9d1c817527ada",
+      "bytes": 3030
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:405b3ae8f87d67fc1e7ea5612deb5f96aca547d9ca972354cf0e39d50216b844",
+      "sha256": "sha256:260ec0a096907b39bddb5564f73c4b045315eb1db5d1144513f34a2645056068",
       "bytes": 2455
     },
     {
       "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
-      "sha256": "sha256:31f10c3f7e95fef5999d245e4b784f8fb971940d77dfc7030d71c7d3d7128cd8",
-      "bytes": 37201
+      "sha256": "sha256:81aae4a6bd8b1abce883146de747d7d27b99c1e189a82c641c999ebcc89013aa",
+      "bytes": 42141
     },
     {
       "path": "schemas/adapter-envelope-v1.schema.json",
@@ -100,8 +100,8 @@
     },
     {
       "path": "schemas/agent-operation-session-v3.schema.json",
-      "sha256": "sha256:4ea4ddf1069e77ede6109d627414c0088403a8d5b57cc2d99122c4673b9fa356",
-      "bytes": 4896
+      "sha256": "sha256:8fd91ab3f6ffec9c279bc5e0d4d262487a26bd764ab3f1b642d97be3f5bd2401",
+      "bytes": 5072
     },
     {
       "path": "schemas/business-decision-view-v1.schema.json",
@@ -112,6 +112,26 @@
       "path": "schemas/canonical-presentation-delivery-receipt-v1.schema.json",
       "sha256": "sha256:b46b58f5ded96841e69a7913b831bce131144081021d990c2dd75c22660cb046",
       "bytes": 1833
+    },
+    {
+      "path": "schemas/classification-analysis-receipt-v1.schema.json",
+      "sha256": "sha256:c0e9ff548e16c17ea77616f7e6bb1629a8716d8df010cbca194cdab47eae9b64",
+      "bytes": 1481
+    },
+    {
+      "path": "schemas/classification-evaluation-report-v1.schema.json",
+      "sha256": "sha256:89f510404dc59aa7726319e8c5280267aa6819d79ab16f1a43c92b997c22db8b",
+      "bytes": 1005
+    },
+    {
+      "path": "schemas/classification-handoff-v1.schema.json",
+      "sha256": "sha256:ac07a415f9df73830f01a06ed9d2c9f057164ea4e935e75c09f4787595dc6150",
+      "bytes": 1784
+    },
+    {
+      "path": "schemas/classification-session-v1.schema.json",
+      "sha256": "sha256:69c203d7fafbf21ef370e14f2b56128e9ef28ac41fcb95ff6681f68e23bd6272",
+      "bytes": 3054
     },
     {
       "path": "schemas/compliance-audit-envelope-v1.schema.json",
@@ -125,8 +145,8 @@
     },
     {
       "path": "schemas/evolution-context-binding-v1.schema.json",
-      "sha256": "sha256:874f48c0346a8ac34c1cebade634fa9ab313f5e9d9e6f241cdfe595bbb48b574",
-      "bytes": 1910
+      "sha256": "sha256:403592c0c3b2981475bff2109b85bddd03f6f0a15b4c2166dd660f0ea728feb1",
+      "bytes": 1978
     },
     {
       "path": "schemas/harness-architecture-assessment-v1.schema.json",
@@ -159,6 +179,21 @@
       "bytes": 3202
     },
     {
+      "path": "schemas/resolved-taxonomy-snapshot-v1.schema.json",
+      "sha256": "sha256:b11141b342118ab20f38b71240fd47665b6054c6326d1058be91fd347addcbca",
+      "bytes": 1089
+    },
+    {
+      "path": "schemas/source-concept-hypothesis-v1.schema.json",
+      "sha256": "sha256:5fc66d3143c681daa7f2477220c1c24235477c55b35d82a6142f6c5c3084c002",
+      "bytes": 1618
+    },
+    {
+      "path": "schemas/source-descriptor-v1.schema.json",
+      "sha256": "sha256:ec5aa3a7a4e40927ed486a6dc18e460fab8169c373f6c7cdc9b876b455af6042",
+      "bytes": 3451
+    },
+    {
       "path": "schemas/source-outcome-explanation-v1.schema.json",
       "sha256": "sha256:42a1b634b8be3756303eb2adae7475857b666f5bfa93ac88b3404f8d6d93c4f5",
       "bytes": 1473
@@ -167,6 +202,16 @@
       "path": "schemas/source-to-harness-reasoning-map-v1.schema.json",
       "sha256": "sha256:b78474e1152ba959f47ea73b86c59aee4bad333c6d8ea2892b763dbdcfe96db9",
       "bytes": 1414
+    },
+    {
+      "path": "schemas/taxonomy-analysis-result-v1.schema.json",
+      "sha256": "sha256:378cdf0b7a9d0148a489679847f7de57000f5eebd8d132255b000d5a112fbd14",
+      "bytes": 2732
+    },
+    {
+      "path": "schemas/taxonomy-v1.schema.json",
+      "sha256": "sha256:78469fddd47dbbbcead133eb8965bf0cade00e41a14dabb7c5517c2995f32008",
+      "bytes": 3421
     }
   ]
 }

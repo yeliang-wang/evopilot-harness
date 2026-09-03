@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/classification-handoff-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "classificationSessionId", "sourceDescriptor", "sourceDescriptorDigest", "sourceResolution", "sourceResolutionDigest", "sourceSnapshotDigest", "taxonomyDigest", "hypothesisDigest", "perAxisResultDigests", "analysisResultDigest", "classificationContextDigest", "decision", "authority", "handoffDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-classification-handoff/v1" },
+    "classificationSessionId": { "type": "string", "minLength": 8 },
+    "sourceDescriptor": { "$ref": "https://evopilot.dev/schemas/source-descriptor-v1.schema.json" },
+    "sourceDescriptorDigest": { "$ref": "#/$defs/digest" },
+    "sourceResolution": { "type": "object" },
+    "sourceResolutionDigest": { "$ref": "#/$defs/digest" },
+    "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
+    "taxonomyDigest": { "$ref": "#/$defs/digest" },
+    "hypothesisDigest": { "$ref": "#/$defs/digest" },
+    "perAxisResultDigests": { "type": "object", "additionalProperties": false, "required": ["domain", "product"], "properties": { "domain": { "$ref": "#/$defs/digest" }, "product": { "$ref": "#/$defs/digest" } } },
+    "analysisResultDigest": { "$ref": "#/$defs/digest" },
+    "classificationContextDigest": { "$ref": "#/$defs/digest" },
+    "decision": { "const": "CONTINUE_TO_HARNESS" },
+    "authority": { "type": "object", "required": ["explicitHumanDecision", "provesEligibility", "createsProposal", "approves", "publishes"] },
+    "handoffDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

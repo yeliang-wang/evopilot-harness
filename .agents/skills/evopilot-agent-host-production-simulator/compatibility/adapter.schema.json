@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evopilot-harness-simulator-compatibility-adapter/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "priority", "protocol", "requiredCapabilities", "lifecycleStages", "authority"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-simulator-compatibility-adapter/v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "priority": { "type": "integer", "minimum": 0 },
+    "protocol": { "type": "object" },
+    "extends": { "type": "string" },
+    "requiredCapabilities": { "type": "array", "minItems": 1 },
+    "lifecycleStages": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "authority": { "type": "object" }
+  }
+}

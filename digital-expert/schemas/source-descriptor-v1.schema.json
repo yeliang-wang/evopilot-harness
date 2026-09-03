@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/source-descriptor-v1.schema.json",
+  "title": "EvoPilot Harness SourceDescriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "sourceId", "type", "locator", "acquisitionPolicy", "redactionPolicy", "sourceExecutionAllowed"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-source-descriptor/v1" },
+    "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,95}$" },
+    "safeLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "type": { "enum": ["LOCAL_FILE", "LOCAL_DIRECTORY", "LOCAL_GIT_REPOSITORY", "GITHUB_REPOSITORY", "CONTROLLED_FIXTURE", "ORDERED_ATTACHMENT_SET"] },
+    "locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class"],
+      "properties": {
+        "class": { "enum": ["LOCAL_PATH", "GITHUB_REPOSITORY", "ORDERED_MEMBERS"] },
+        "path": { "type": "string", "minLength": 1 },
+        "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "transport": { "enum": ["HTTPS", "SSH"] }
+      }
+    },
+    "requestedRef": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "privateRepository": { "type": "boolean" },
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourceId", "path"],
+        "properties": {
+          "sourceId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,95}$" },
+          "safeLabel": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "path": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "acquisitionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mode"],
+      "properties": {
+        "id": { "const": "evopilot-harness-source-resolver/v1" },
+        "mode": { "enum": ["LOCAL_READ_ONLY", "BOUNDED_READ_ONLY_GIT"] },
+        "networkAllowed": { "type": "boolean" },
+        "submodulesAllowed": { "const": false },
+        "gitLfsAllowed": { "const": false }
+      }
+    },
+    "redactionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": { "id": { "const": "evopilot-harness-source-redaction/v1" } }
+    },
+    "sourceExecutionAllowed": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "GITHUB_REPOSITORY" } } },
+      "then": { "properties": { "locator": { "type": "object", "required": ["class", "repository", "transport"], "properties": { "class": { "const": "GITHUB_REPOSITORY" }, "repository": { "type": "string" }, "transport": { "enum": ["HTTPS", "SSH"] } } } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "ORDERED_ATTACHMENT_SET" } } },
+      "then": { "required": ["members"], "properties": { "members": { "type": "array" }, "locator": { "type": "object", "properties": { "class": { "const": "ORDERED_MEMBERS" } } } } }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["LOCAL_FILE", "LOCAL_DIRECTORY", "LOCAL_GIT_REPOSITORY", "CONTROLLED_FIXTURE"] } } },
+      "then": { "properties": { "locator": { "type": "object", "required": ["class", "path"], "properties": { "class": { "const": "LOCAL_PATH" }, "path": { "type": "string" } } } } }
+    }
+  ]
+}

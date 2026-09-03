@@ -12,7 +12,7 @@ import { executeV3Operation } from "../src/v3/cli.mjs";
 import { discoverAssets } from "../src/v3/catalog.mjs";
 import { feedbackPackageDigest, feedbackPayloadDigest } from "../src/v3/feedback.mjs";
 import { engineCapabilities, engineOperationDefinition, invokeEngineOperation } from "../src/v4/engine-adapter.mjs";
-import { assertExternalWorkspace, operationCompatibility } from "../src/v4/constants.mjs";
+import { assertExternalWorkspace, assertWorkspaceTreeConfined, operationCompatibility } from "../src/v4/constants.mjs";
 import { acknowledgeInteractionFramePresentation, cancelAgentSession, createAgentSession, createSessionPlan, confirmSessionPlan, inspectAgentSession, migrateOperationSessionCoreCompatibility, prepareSessionLifecycleInteraction, recordBusinessViewDelivery, recoverInterruptedSessions, resumeAgentSession, validateAgentSession, validateOperationPlan } from "../src/v4/session/store.mjs";
 import { governedHostInteraction, TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
@@ -97,6 +97,19 @@ test("Agent Workspace rejects internal Session and receipt symlinks before writi
     (error) => error.code === "WORKSPACE_WRITE_BOUNDARY_VIOLATION"
   );
   assert.deepEqual(fs.readdirSync(outsideReceipts), []);
+});
+
+test("immutable GitHub Source snapshots may preserve repository symlinks without weakening writable Workspace boundaries", () => {
+  const home = temporary("workspace-source-symlink");
+  initializeWorkspace(home);
+  const snapshot = path.join(home, "source-cache", "github", "snapshots", "a".repeat(64), "b".repeat(40));
+  fs.mkdirSync(snapshot, { recursive: true });
+  fs.symlinkSync("missing-source-owned-file.md", path.join(snapshot, "source-link.md"));
+  assert.equal(assertWorkspaceTreeConfined(home), fs.realpathSync(home));
+
+  const outside = temporary("workspace-source-symlink-outside");
+  fs.symlinkSync(outside, path.join(home, "agent-sessions-link"));
+  assert.throws(() => assertWorkspaceTreeConfined(home), (error) => error.code === "WORKSPACE_WRITE_BOUNDARY_VIOLATION");
 });
 
 test("Session state rejects raw secrets in intent and every scenario goal", () => {

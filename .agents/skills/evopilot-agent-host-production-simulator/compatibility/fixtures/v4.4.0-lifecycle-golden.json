@@ -1,0 +1,36 @@
+{
+  "schema": "evopilot-agent-host-simulator-lifecycle-fixture/v1",
+  "id": "historical-stable-kernel-contract",
+  "evidenceClass": "OFFLINE_HISTORICAL_CONTRACT_FIXTURE",
+  "sourceCommit": "9a12115",
+  "states": [
+    "DISCOVERED",
+    "PREVIEWED",
+    "INSTALLED",
+    "HOST_OPEN",
+    "EXPERT_SELECTED",
+    "CAPABILITY_BOUND",
+    "SOURCE_TRANSPORTED",
+    "SESSION_ACTIVE",
+    "HUMAN_GATE",
+    "SESSION_ACTIVE",
+    "HUMAN_GATE",
+    "TERMINAL"
+  ],
+  "humanGates": [
+    {
+      "stateIndex": 8,
+      "decisionKind": "PLAN_CONFIRMATION",
+      "exactCurrentObjectRequired": true,
+      "navigationLanguageAccepted": false
+    },
+    {
+      "stateIndex": 10,
+      "decisionKind": "PROPOSAL_DECISION",
+      "exactCurrentObjectRequired": true,
+      "navigationLanguageAccepted": false
+    }
+  ],
+  "terminalVerdict": "PASS",
+  "claimsFreshRealHostEvidence": false
+}

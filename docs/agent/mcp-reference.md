@@ -38,6 +38,13 @@ Supported MCP methods:
 |---|---|---|
 | `inspect_capabilities` | Versions, operations, safety, Workspace state | Read-only |
 | `prepare_workspace` | Initialize external Workspace | External Workspace only |
+| `start_project_classification` | Resolve one `SourceDescriptor/v1` and interpret its immutable static snapshot against one user-owned 业务分类方案 | Engine classification only; no Harness Eligibility authority |
+| `reanalyze_project_classification` | Create a new immutable attempt after an explicit Source, scheme, model, or intent change | Append-only classification mutation |
+| `continue_classification_to_harness` | Bind an exact complete match into the same generic Operation Session after an explicit human choice | Handoff only; no eligibility, Proposal, approval, or publication authority |
+| `inspect_project_classification` | Read and integrity-check one Classification Session | Read-only |
+| `resume_project_classification` | Resume the generic AgentOperationSession carrying an unfinished classification lifecycle | Digest-bound Session mutation |
+| `list_project_classifications` | List persistent Classification Sessions | Read-only |
+| `close_project_classification` | Explicitly close or cancel without Taxonomy or Catalog mutation | Explicit human gate |
 | `start_operation_session` | Bind human intent and Adapter | Session mutation |
 | `plan_operation_session` | Build evolve, feedback, comparison, calibration, professional-learning, or maintenance Plan | Review stage |
 | `confirm_operation_plan` | Record exact human Plan confirmation | Digest-bound human gate |
@@ -59,13 +66,14 @@ Supported MCP methods:
 | `inspect_operation_session` | Read and verify one Session | Read-only |
 | `list_operation_sessions` | List resumable Sessions | Read-only |
 | `resume_operation_session` | Transfer a Session to another Adapter | Digest-bound Session mutation |
-| `migrate_operation_session_to_v3` | Explicitly migrate a v2 Session without fabricated historical views or receipts | Compatibility mutation |
 | `cancel_operation_session` | Cancel without deleting assets | Explicit human gate |
 | `close_operation_session` | Close while preserving audit state | Explicit human gate |
 | `cleanup_operation_session` | Delete only owned closed-session metadata | Explicit destructive gate |
 | `run_engine_diagnostic` | Run declared read-only Engine inspection/validation | Mutations rejected |
 
 Every tool schema recursively rejects unknown fields where the contract is closed. Engine operation inputs pass a second field whitelist, secret-material check, and write-boundary check. Proposal approval, publication, and planned comparison/calibration/learning mutations are not exposed through the generic diagnostic tool. `run_engine_diagnostic` may inspect or validate evidence inputs and read reports. `comparison.process`, `comparison.ingest|score|rescore`, `calibration.ingest|run`, and `learning.ingest|snapshot|run-manifest|score|rescore` require a confirmed Plan. `catalog.publish`, `ontology.publish`, and `policy.publish` stop after Plan confirmation and require their own operation authorization before the Engine may write.
+
+Classification always precedes Harness production for an unknown Source evolution request. `start_project_classification` accepts one `SourceDescriptor/v1` for a local file, local directory, local Git repository, GitHub repository, controlled fixture, or exact ordered attachment set. It creates the generic AgentOperationSession carrying `ANALYZE_TAXONOMY`, validates one non-executable user-owned scheme before Source resolution, creates one immutable static snapshot, builds a taxonomy-blind and LLM-free Source concept hypothesis, records exact/BM25/embedding/structured signals, and performs exactly one required non-authoritative Advisor call for a new attempt. GitHub resolution accepts owner/repository, HTTPS or SSH syntax and an optional ref, then records a full commit and uses only bounded read-only Git acquisition in the external Workspace; credentials remain operator-managed and submodules, Git LFS, embedded credentials, Source execution and implicit post-handoff refetch are rejected. The deterministic Engine returns one of `TAXONOMY_MATCHED`, `TAXONOMY_EXTENSION_SUGGESTED`, `TAXONOMY_EVIDENCE_INSUFFICIENT`, or `TAXONOMY_AMBIGUOUS`; Advisor failure returns `ANALYSIS_BLOCKED_ADVISOR` and no fallback result. Only a complete match plus a separate explicit user choice may attach the exact descriptor, resolved Source, snapshot and `ClassificationHandoff/v1`. The same Operation Session automatically carries that Source into Harness Eligibility and the full independent Proposal lifecycle; drift or substitution requires re-analysis.
 
 Every presentation-producing tool records a `CanonicalPresentationDeliveryReceipt` inside the Operation Server canonical-response path before returning the governed view. This is deterministic transport evidence: it binds the exact current Frame, Business View, canonical Markdown, Host conformance profile, and Session digest without another user prompt or assistant turn. It is not a human acknowledgement, does not prove screen pixels by itself, and grants no Plan, Proposal, publication, close, cleanup, or retry authority. Real Host conformance and screenshot acceptance still verify that the returned canonical Markdown became the complete visible assistant turn.
 

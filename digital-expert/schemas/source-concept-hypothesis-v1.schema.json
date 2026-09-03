@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/source-concept-hypothesis-v1.schema.json",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema", "sourceDescriptorDigest", "sourceResolutionDigest", "sourceSnapshot", "sourceSnapshotDigest", "evidenceGraph", "evidenceGraphDigest", "concepts", "structuredSignals", "dependencySignals", "citations", "contradictions", "uncertainty", "missingEvidence", "provenance", "hypothesisDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-source-concept-hypothesis/v1" },
+    "sourceDescriptorDigest": { "$ref": "#/$defs/digest" },
+    "sourceResolutionDigest": { "$ref": "#/$defs/digest" },
+    "sourceSnapshot": { "type": "object" },
+    "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
+    "evidenceGraph": { "type": "object" },
+    "evidenceGraphDigest": { "$ref": "#/$defs/digest" },
+    "concepts": { "type": "array" },
+    "structuredSignals": { "type": "array" },
+    "dependencySignals": { "type": "array" },
+    "citations": { "type": "array" },
+    "contradictions": { "type": "array" },
+    "uncertainty": { "type": "object" },
+    "missingEvidence": { "type": "array" },
+    "provenance": { "type": "object", "required": ["algorithm", "taxonomyExposed", "advisorUsed"], "properties": { "algorithm": { "const": "taxonomy-blind-source-concepts/v1" }, "taxonomyExposed": { "const": false }, "advisorUsed": { "const": false } } },
+    "hypothesisDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

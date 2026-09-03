@@ -1,0 +1,39 @@
+{
+  "schema": "evopilot-harness-operation-server-capabilities/v1",
+  "status": "READY",
+  "productVersion": "4.4.0",
+  "compatibility": {
+    "productVersion": "4.4.0",
+    "expertVersion": "4.4.0",
+    "coreDigest": "sha256:229d3de2f32f4a78d500a20df0c6109fe744d7e91e639968b7b6ae83fae07184",
+    "agentProtocolVersion": "evopilot-harness-agent-operations/v3",
+    "engineApiVersion": "harness.evopilot.io/v3"
+  },
+  "agentProtocolVersion": "evopilot-harness-agent-operations/v3",
+  "engineProtocolRange": {
+    "min": "harness.evopilot.io/v3",
+    "max": "harness.evopilot.io/v3"
+  },
+  "mcp": {
+    "transport": "stdio",
+    "supportedProtocolVersions": ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"],
+    "networkListening": false
+  },
+  "digitalExpert": {
+    "schema": "evopilot-harness-digital-expert/v1",
+    "ordinaryHumanEntry": true
+  },
+  "interaction": {
+    "schema": "evopilot-harness-interaction-frame/v2",
+    "protocolVersion": "evopilot-harness-agent-operations/v3",
+    "hostMayAuthorBusinessSemantics": false,
+    "businessViewMustBeExact": true
+  },
+  "authority": {
+    "engineAuthoritative": true,
+    "digitalExpertMayApprove": false,
+    "adapterMayApprove": false,
+    "automaticPublication": false,
+    "sourceExecutionAllowed": false
+  }
+}

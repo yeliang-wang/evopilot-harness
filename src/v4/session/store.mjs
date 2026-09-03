@@ -17,6 +17,7 @@ import { createBusinessViewDeliveryReceipt, createInteractionFrame, createPresen
 import { compositeDecisionBinding } from "../interaction/business-projection.mjs";
 import { createEvolutionContextBinding, createHostConformanceProfile, REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../interaction/professional-reasoning.mjs";
 import { createLifecycleFrameManifest } from "../interaction/lifecycle-replay.mjs";
+import { buildSourceConceptHypothesis } from "../classification/source-concept.mjs";
 
 const sessionSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/agent-operation-session-v3.schema.json"), "utf8"));
 const legacySessionSchema = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, "schemas/agent-operation-session-v2.schema.json"), "utf8"));
@@ -28,7 +29,7 @@ const validatePlanSchema = ajv.compile(planSchema);
 
 const TERMINAL = new Set(["COMPLETED", "BLOCKED", "CANCELLED", "CLOSED"]);
 
-export function createAgentSession({ home, intent, adapterId, hostInteraction, compatibility = operationCompatibility(), reevaluation = null, now = new Date().toISOString() }) {
+export function createAgentSession({ home, intent, adapterId, hostInteraction, compatibility = operationCompatibility(), reevaluation = null, classificationHandoff = null, now = new Date().toISOString() }) {
   const workspace = assertExternalWorkspace(home);
   requireWorkspace(workspace);
   assertWorkspaceTreeConfined(workspace);
@@ -50,6 +51,8 @@ export function createAgentSession({ home, intent, adapterId, hostInteraction, c
     engine: { apiVersion: "harness.evopilot.io/v3", sourceExecutionAllowed: false, authority: "deterministic-engine" },
     adapter: { current: adapter, history: [adapter] },
     intent: { text, digest: digest(text) },
+    classificationLifecycle: null,
+    classificationHandoff: classificationHandoff ? persistedJson(classificationHandoff) : null,
     reevaluation: reevaluation ? persistedJson(reevaluation) : null,
     evolutionContext: null,
     plan: null,
@@ -66,6 +69,35 @@ export function createAgentSession({ home, intent, adapterId, hostInteraction, c
     nextAction: "create-operation-plan"
   };
   return persist(session, { event: "SESSION_CREATED", actor: adapter, details: { intentDigest: session.intent.digest } });
+}
+
+export function updateAgentSessionClassification({ home, sessionId, expectedSessionDigest, classificationSessionId, status, resultDigest, classificationContextDigest, analysisAttemptDigest, analysisReceiptDigest, handoff = null, decidedBy = null, close = false, now = new Date().toISOString() }) {
+  const session = loadForMutation(home, sessionId, expectedSessionDigest, ["CREATED"]);
+  session.classificationLifecycle = {
+    schema: "evopilot-harness-agent-classification-lifecycle/v1",
+    operation: "ANALYZE_TAXONOMY",
+    classificationSessionId,
+    status,
+    resultDigest: resultDigest ?? null,
+    classificationContextDigest: classificationContextDigest ?? null,
+    analysisAttemptDigest,
+    analysisReceiptDigest,
+    handoffDigest: handoff?.handoffDigest ?? null,
+    authority: { engineOwned: true, provesEligibility: false, mayCreateProposal: false, mayApprove: false, mayPublish: false }
+  };
+  if (handoff) {
+    session.classificationHandoff = persistedJson(handoff);
+    session.nextAction = "create-operation-plan";
+    session.humanDecisions.push(decision("CLASSIFICATION_HANDOFF_AUTHORIZED", decidedBy, handoff.decision, { handoffDigest: handoff.handoffDigest, classificationContextDigest }, now));
+  } else if (close) {
+    session.status = "CLOSED";
+    session.closedAt = now;
+    session.nextAction = "session-closed";
+    session.humanDecisions.push(decision("CLASSIFICATION_SESSION_CLOSED", decidedBy, status, { classificationSessionId, resultDigest }, now));
+  } else {
+    session.nextAction = status === "TAXONOMY_MATCHED" ? "request-explicit-classification-handoff-decision" : status === "ANALYSIS_BLOCKED_ADVISOR" ? "repair-advisor-and-request-new-analysis" : "revise-classification-input-and-request-reanalysis";
+  }
+  return persist(session, { event: handoff ? "CLASSIFICATION_HANDED_OFF" : close ? "CLASSIFICATION_CLOSED" : "CLASSIFICATION_ANALYZED", actor: decidedBy ?? "deterministic-engine", details: { classificationSessionId, status, resultDigest, handoffDigest: handoff?.handoffDigest ?? null } });
 }
 
 export function reevaluateAgentSession({ home, sessionId, expectedSessionDigest, adapterId, intent, scenario, goal, sources, locale, now = new Date().toISOString() }) {
@@ -130,7 +162,8 @@ export function reevaluateAgentSession({ home, sessionId, expectedSessionDigest,
 
 export function createSessionPlan({ home, sessionId, expectedSessionDigest, scenario = "evolve", goal, sources = {}, operations = [], now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["CREATED", "PLAN_REVIEW_REQUIRED"]);
-  const plan = buildPlan({ home: session.workspace.home, scenario, goal: goal ?? session.intent.text, sources, operations, now });
+  const boundSources = bindClassificationSources(session, sources);
+  const plan = buildPlan({ home: session.workspace.home, scenario, goal: goal ?? session.intent.text, sources: boundSources, operations, now });
   validatePlan(plan);
   session.plan = plan;
   session.planDigest = digest(plan);
@@ -152,6 +185,34 @@ export function createSessionPlan({ home, sessionId, expectedSessionDigest, scen
   session.status = "PLAN_REVIEW_REQUIRED";
   session.nextAction = "present-plan-and-request-explicit-confirmation";
   return persist(session, { event: "PLAN_CREATED", actor: session.adapter.current, details: { planDigest: session.planDigest, scenario } });
+}
+
+function bindClassificationSources(session, sources) {
+  const handoff = session.classificationHandoff;
+  if (!handoff) return sources;
+  const resolution = handoff.sourceResolution;
+  if (!resolution || resolution.sourceDescriptorDigest !== handoff.sourceDescriptorDigest || resolution.sourceResolutionDigest !== handoff.sourceResolutionDigest) throw sessionError("CLASSIFICATION_SOURCE_BINDING_INVALID", "Classification handoff does not contain one exact SourceDescriptor resolution.", "restart-classification");
+  const current = buildSourceConceptHypothesis(resolution);
+  if (current.sourceSnapshotDigest !== handoff.sourceSnapshotDigest) throw sessionError("CLASSIFICATION_SOURCE_DRIFT", "The classified Source changed after the explicit classification handoff; re-analysis is required before Harness work.", "restart-classification-with-current-source");
+
+  const value = sources && typeof sources === "object" && !Array.isArray(sources) ? persistedJson(sources) : {};
+  const sourceFields = ["sourceProjects", "sourceRoot", "githubRepositories", "githubRef", "attachments", "productionLogs", "historicalHarnesses", "notes", "researchUrls"];
+  const suppliedSourceFields = Object.fromEntries(sourceFields.filter((field) => value[field] != null && (!Array.isArray(value[field]) || value[field].length)).map((field) => [field, value[field]]));
+  const exact = classificationEngineSources(resolution);
+  if (Object.keys(suppliedSourceFields).length) {
+    const supplied = normalizeEvolutionInput({ ...suppliedSourceFields, advisor: "off" }, "classification-source-binding-check");
+    const normalizedExact = normalizeEvolutionInput({ ...exact, advisor: "off" }, "classification-source-binding-check");
+    const sourceOnly = (input) => Object.fromEntries(sourceFields.filter((field) => input[field] != null && (!Array.isArray(input[field]) || input[field].length)).map((field) => [field, input[field]]));
+    if (digest(sourceOnly(supplied)) !== digest(sourceOnly(normalizedExact))) throw sessionError("CLASSIFICATION_SOURCE_SUBSTITUTION_REJECTED", "Harness planning must use the exact Source that was classified; locator, membership, order, ref, commit, or snapshot substitution requires re-analysis.", "restart-classification-with-requested-source");
+  }
+  for (const field of sourceFields) delete value[field];
+  return { ...value, ...exact };
+}
+
+function classificationEngineSources(resolution) {
+  if (resolution.type === "ORDERED_ATTACHMENT_SET") return { attachments: resolution.files.map((item) => item.path) };
+  if (["LOCAL_FILE", "CONTROLLED_FIXTURE"].includes(resolution.type)) return { attachments: [resolution.path] };
+  return { sourceProjects: [resolution.path] };
 }
 
 export function confirmSessionPlan({ home, sessionId, expectedSessionDigest, expectedPlanDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
@@ -893,14 +954,8 @@ export function inspectAgentSession(home, sessionId) {
   const session = JSON.parse(fs.readFileSync(file, "utf8"));
   const persistedDigest = calculateSessionDigest(session);
   if (session.sessionDigest !== persistedDigest) throw sessionError("SESSION_INTEGRITY_FAILURE", `Agent Operation Session digest mismatch at ${file}.`, "stop-and-inspect-session-integrity");
-  // Revisions 7 and 8 added append-only Frame archives and an immutable
-  // Evolution Context binding. Older integrity-valid v3 Sessions remain
-  // readable without rewriting their audit files. The deterministic in-memory
-  // upgrade is persisted only by a later explicitly authorized mutation.
-  if (session.schema === AGENT_SESSION_SCHEMA && (!Array.isArray(session.interaction?.frameArchive) || session.evolutionContext === undefined || session.reevaluation === undefined)) {
-    ensureV41SessionFields(session);
-    session.sessionDigest = calculateSessionDigest(session);
-  }
+  if (session.schema !== AGENT_SESSION_SCHEMA) throw sessionError("PRE_V45_SESSION_UNSUPPORTED", `Session schema ${session.schema ?? "unknown"} is outside the fresh v4.5.0 representation baseline and will not be read or migrated.`, "start-fresh-v4.5-session");
+  if (session.compatibility?.productVersion !== "4.5.0") throw sessionError("PRE_V45_SESSION_UNSUPPORTED", "The Agent Operation Session predates the fresh v4.5.0 representation baseline and will not be read or migrated.", "start-fresh-v4.5-session");
   validateSession(session, file);
   return session;
 }

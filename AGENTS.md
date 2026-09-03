@@ -44,7 +44,7 @@ Use [llms.txt](llms.txt) for the shortest machine-readable documentation map and
 The 24 core Engine module boundaries are defined in [ADR 0001](docs/architecture/adr/0001-product-and-module-boundaries.md):
 
 1. Engine; 2. Workspace; 3. CLI; 4. Harness Hub; 5. Source Ingestion; 6. Snapshot/Redaction; 7. Evidence Graph.
-8. OntologyPack; 9. MatchPolicyPack; 10. Eligibility Gate; 11. Candidate Retrieval/Scoring; 12. Decision Aggregator; 13. AdvisorPolicyPack; 14. GLM Advisor.
+8. Semantic Foundation/Taxonomy Resolution (replacing OntologyPack for v4.5+); 9. MatchPolicyPack; 10. Eligibility Gate; 11. Candidate Retrieval/Scoring; 12. Decision Aggregator; 13. AdvisorPolicyPack; 14. GLM Advisor.
 15. Proposal Review Engine; 16. HarnessComponent; 17. HarnessProfile; 18. HarnessBundle/Export; 19. EvaluationPack; 20. Proposal Lifecycle; 21. Schema Validator.
 22. Catalog Publisher/Optional Signing; 23. Registry; 24. Migration/Rollback.
 

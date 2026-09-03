@@ -91,6 +91,7 @@ function scanWorkspaceLinks(workspace, directory) {
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const target = path.join(directory, entry.name);
     if (entry.isSymbolicLink()) {
+      if (isImmutableGitHubSnapshotPath(workspace, target)) continue;
       let canonical;
       try {
         canonical = fs.realpathSync(target);
@@ -102,6 +103,11 @@ function scanWorkspaceLinks(workspace, directory) {
       scanWorkspaceLinks(workspace, target);
     }
   }
+}
+
+function isImmutableGitHubSnapshotPath(workspace, target) {
+  const relative = path.relative(workspace, target).split(path.sep).join("/");
+  return /^source-cache\/github\/snapshots\/[a-f0-9]{64}\/[a-f0-9]{40}\//.test(relative);
 }
 
 function workspaceBoundaryError(target) {

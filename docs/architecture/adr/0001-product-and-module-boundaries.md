@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. Module 8 is superseded for v4.5.0 and later by [ADR 0005](0005-source-first-business-classification.md); the remaining boundaries stay accepted.
 
 ## Context
 
@@ -35,7 +35,7 @@ The source domain is intentionally open, so ownership must be stricter than the 
 | 5 | Source Ingestion | Local project/root discovery, dedupe/grouping, GitHub checkout, attachment/log/history/note/research intake, and approved structured feedback reading | Asset publication, source-project execution, or feedback-origin replay |
 | 6 | Snapshot/Redaction | Bounded excerpts, secret/private-data redaction, stable source digests | Raw secret publication or semantic decisions |
 | 7 | Evidence Graph | Stable `evidenceId`, node authority, concepts, graph digest | Final matching or approval authority |
-| 8 | OntologyPack | Versioned concepts, roles, conflicts, task/evidence kinds | Hard-coded matcher thresholds |
+| 8 | Semantic Foundation and Taxonomy Resolution | Minimal Domain/Product axes and relation primitives; validation and immutable resolution of one user-authored non-executable Taxonomy | Built-in business values, classifier policy, Eligibility, approval, publication, or Taxonomy activation |
 | 9 | MatchPolicyPack | Eligibility minimums, BM25 configuration, weights, thresholds, risk/Advisor triggers | Source parsing or approval |
 | 10 | Eligibility Gate | Decide whether evidence supports a repeatable model-external engineering task | General software taxonomy classification |
 | 11 | Candidate Retrieval/Scoring | BM25 and role, boundary, capability, execution, evidence, conflict, novelty factors | Publication or LLM-only decisions |
@@ -58,7 +58,8 @@ The source domain is intentionally open, so ownership must be stricter than the 
 ```text
 Evidence Sources
   -> Source Ingestion -> Snapshot/Redaction -> Evidence Graph
-  -> Ontology + Match Policy -> Eligibility -> Retrieval/Scoring -> Aggregator
+  -> Semantic Foundation + user Taxonomy -> taxonomy-blind classification -> explicit handoff
+  -> Match Policy -> Eligibility -> Retrieval/Scoring -> Aggregator
   -> Advisor Policy + GLM Advisor
   -> Proposal -> Proposal Review Engine -> Component/Profile/Bundle + Evaluation
   -> Human Review/Approval -> Organization Catalog -> Registry discovery
@@ -69,7 +70,7 @@ Dependencies may point from later lifecycle stages to immutable outputs of earli
 
 ## Test-Corpus And Asset Separation
 
-- External projects such as `/Users/wangyejing/project/howbuy_project` are local Evidence Sources used to validate and improve Engine behavior.
+- Operator-selected external projects are local Evidence Sources used to validate and improve Engine behavior; product and public surfaces identify them by safe Source id and snapshot digest rather than a personal absolute path.
 - Their code, names, paths, generated Proposals, and temporary Workspace outputs are not built-in, source-pack, or published Harness assets.
 - Tests may publish fixture assets only inside disposable temporary Workspaces.
 - Only explicit human-reviewed publication writes Organization Catalog assets. Built-in assets come only from reviewed Engine bootstrap source.

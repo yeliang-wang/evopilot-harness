@@ -2,7 +2,7 @@
 
 Use this index to choose the shortest path for your task. Generic architecture and lifecycle pages describe the current v3 product; legacy behavior is routed through explicit v2 compatibility pages.
 
-Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.1.2), published on GitHub and as [`@evopilot/harness@4.1.2`](https://www.npmjs.com/package/@evopilot/harness/v/4.1.2). See [Release Notes](releases/4.1.2.md) for the documentation-system maintenance scope and publication contract.
+Current release: [`v4.5.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.5.0), published on GitHub and as [`@evopilot/harness@4.5.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.5.0). See [Release Notes](releases/4.5.0.md) for source-first business classification and the retained Harness producer lifecycle.
 
 ## Learn The Product
 
@@ -24,6 +24,7 @@ Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [npm Distribution](operations/npm-distribution.md) - exact-version installation, package boundary, Agent bootstrap, WorkBuddy startup, Trusted Publishing, and Registry verification.
 - [npm First-Publication Release Review](operations/npm-first-publication-review.md) - one-time package creation, external npm account configuration, stop rules, and mandatory OIDC handoff.
 - [v4.4.0 Revision 8 Acceptance](operations/v4.4.0-acceptance.md) - Engine-owned professional Source-to-Harness reasoning and presentation sandbox, Evolution Context, inherited regression, real WorkBuddy and cross-Host zero-drift evidence, and release-readiness boundary.
+- [v4.5.0 Acceptance Closure](operations/v4.5.0-acceptance.md) - source-first business classification, cumulative v4.4 lifecycle handoff, five composite machine variants, five designated-human WorkBuddy journeys, and release-build verification.
 - [v4.3.0 Candidate Acceptance](operations/v4.3.0-acceptance.md) - deterministic third-party Agent interaction compliance, multi-source repair, and real WorkBuddy Proposal Review evidence.
 - [v4.1.2 Acceptance](operations/v4.1.2-acceptance.md) - documentation synchronization, drift guards, package, regression, artifact, and release-gate evidence.
 - [v4.2.0 Candidate Acceptance](operations/v4.2.0-acceptance.md) - Target revision 2's 15 criteria, professional-learning contracts, installed-package and real WorkBuddy evidence, compatibility, security, and release boundary.
@@ -44,6 +45,7 @@ Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [Feedback Evidence](guides/feedback-evidence.md) - structured feedback contract, validation, ingestion, four-dimensional effectiveness, and authority limits.
 - [Controlled Comparative Evidence](guides/controlled-comparative-evidence.md) - Baseline/Candidate contracts, exact-context comparison, immutable rescoring, policy calibration, Agent flow, and CLI.
 - [Professional Asset Learning](guides/professional-asset-learning.md) - v4.2 candidate contracts for static research, curriculum, run manifests, completeness vectors, contributions, domain/role evidence, Agent flow, and authority boundaries.
+- [Source-first Business Classification](guides/business-classification.md) - user-owned 业务分类方案, deterministic classification outcomes, missing-category guidance, and explicit Harness handoff.
 
 ## Integrate A Consumer
 
@@ -82,4 +84,4 @@ Current release: [`v4.1.2`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md) and extended for controlled comparative evidence by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.3.0; v4.4.0 remains an unpublished candidate until separately authorized.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), and extended for controlled comparative evidence by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.5.0.

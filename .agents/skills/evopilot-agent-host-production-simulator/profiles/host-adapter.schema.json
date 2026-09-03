@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evopilot-agent-host-adapter/v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "hostId",
+    "visibleIdentity",
+    "profile",
+    "operationMode",
+    "capabilities",
+    "drivers",
+    "transport",
+    "failureBoundary",
+    "protectedState",
+    "authority"
+  ],
+  "properties": {
+    "schema": { "const": "evopilot-agent-host-adapter/v2" },
+    "id": { "type": "string", "minLength": 1 },
+    "hostId": { "type": "string", "minLength": 1 },
+    "visibleIdentity": { "type": "object" },
+    "profile": { "type": "string", "minLength": 1 },
+    "operationMode": { "enum": ["DESIGNATED_HUMAN", "REVIEWED_AUTOMATION"] },
+    "capabilities": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "drivers": { "type": "array", "items": { "type": "string" } },
+    "transport": { "type": "object" },
+    "failureBoundary": { "type": "object" },
+    "protectedState": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "authority": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operationMode": { "const": "DESIGNATED_HUMAN" } } },
+      "then": { "properties": { "drivers": { "maxItems": 0 } } },
+      "else": { "properties": { "drivers": { "minItems": 1 } } }
+    }
+  ]
+}

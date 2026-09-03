@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-25",
+  "updatedAt": "2026-08-30",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -23,14 +23,80 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.3.0",
-    "currentWorkingVersion": "4.4.0",
+    "publishedBaseline": "4.4.0",
+    "currentWorkingVersion": "4.5.0",
     "versionsEvolveIndependently": true,
+    "productCapabilitiesEvolveCumulatively": true,
+    "artifactCompatibilityMayResetWithEvidence": true,
+    "compatibilityResetDoesNotRemoveCapabilities": true,
+    "capabilityRemovalRequiresExplicitRoadmapRevision": true,
+    "currentTargetMustMapPreviousReleasedCapabilities": true,
+    "noRegressionRequired": true,
     "majorRequiredFor": [
       "incompatible Harness Asset schema",
       "incompatible cross-project feedback contract",
       "replacement of an accepted product boundary",
       "replacement of the supported primary human operation model"
+    ]
+  },
+  "realHostAcceptancePolicy": {
+    "policyVersion": "human-operated-workbuddy/v1",
+    "completionPolicyVersion": "designated-human-range-completion/v1",
+    "effectiveFrom": "4.5.0",
+    "workbuddyOperator": "DESIGNATED_HUMAN",
+    "codexRole": "RUNBOOK_ISSUANCE_AND_FINAL_DECLARATION_ONLY",
+    "codexMustNot": [
+      "control WorkBuddy through Computer Use, Accessibility automation, coordinates, global or application-scoped mouse or keyboard events",
+      "attach Sources, send goals, select decisions, restart WorkBuddy, recover WorkBuddy UI state, or submit any WorkBuddy human gate",
+      "require an automated desktop transport probe or transport receipt before a counted WorkBuddy run",
+      "observe, inspect or supervise the designated human while the human performs the WorkBuddy runbooks",
+      "request, collect, retain or review WorkBuddy sessions, transcripts, screenshots, screen recordings, logs, receipts, canonical digests or other WorkBuddy execution artifacts",
+      "require per-case progress reports, intermediate acknowledgements or step-by-step interaction with Codex",
+      "infer WorkBuddy completion before the final designated-human range-completion declaration"
+    ],
+    "humanResponsibilities": [
+      "create the fresh WorkBuddy task and select the exact installed Digital Expert",
+      "attach each exact authorized Source once and verify the visible identity before sending",
+      "send the approved ordinary-language goal and make each current digest-bound human decision only after the complete Engine-owned view is visible",
+      "perform Target-required WorkBuddy restart, disconnect, resume, cancellation, retry, publication, validation, and close actions only with the authority separately required for that action",
+      "complete every human WorkBuddy action in the full frozen RC runbook range independently and send one final range-completion declaration only after that range has been performed"
+    ],
+    "codexResponsibilities": [
+      "freeze and provide the complete applicable WorkBuddy RC runbook set with exact Candidate, Workspace, Source, model-route, classification-scheme, goal, start-state, stage, gate, terminal-state and prohibited-effect bindings before execution",
+      "remain outside the WorkBuddy control, observation and supervision path and wait for the designated human's final range-completion declaration",
+      "mark only the WorkBuddy human-operation legs in the declared range PASSED after receiving the final declaration while keeping every non-WorkBuddy criterion on its existing evidence path"
+    ],
+    "journeyPortfolio": {
+      "schema": "compact-real-case-portfolio/v1",
+      "effectiveFrom": "4.5.0",
+      "v4.5.0TopLevelJourneyCount": 5,
+      "v4.5.0JourneyIds": ["RC01", "RC02", "RC03", "RC04", "RC05"],
+      "futureDefaultMaximum": 5,
+      "futureException": "A later Target may exceed five only when an independent authority boundary, incompatible starting or terminal state, or materially different real-Host interaction cannot be represented safely as a machine variant, and the larger portfolio is explicitly reviewed and approved.",
+      "variantPolicy": "Source classes, classification outcomes, Advisor states, hostile inputs, deterministic replay, Harness outcomes, GitHub diversity and regression combinations that share one human-visible start, authority sequence and terminal lifecycle are independent machine variants with separate assertions, results and evidence references.",
+      "hiddenHumanJourneyPolicy": "Old RCs must not be hidden, renamed or nested as additional human journeys inside the compact portfolio.",
+      "workBuddyPolicy": "WorkBuddy exercises only the five representative top-level journeys; the independent conformant Host and deterministic runner execute the complete required variant matrix.",
+      "failurePolicy": "Every failed variant remains visible and release-blocking and cannot be sampled, averaged away or waived by compact numbering.",
+      "classificationOraclePolicy": "An exact business label is eligible only when fixed independently before Candidate execution from an explicit controlled Taxonomy and a responsibility-focused Source; broad or mixed Sources are judged by classification state, cited evidence, alternatives, explanation, authority and user-revision lifecycle without forcing an invented label."
+    },
+    "completionDeclaration": {
+      "schema": "designated-human-range-completion/v1",
+      "v4.5.0CanonicalText": "RC01～RC05 已完成",
+      "acceptedRangeSeparators": [
+        "～",
+        "~"
+      ],
+      "additionalWorkBuddyArtifactRequired": false,
+      "beforeReceipt": "ALL_WORKBUDDY_HUMAN_LEGS_PENDING",
+      "afterReceipt": "RC01_RC05_WORKBUDDY_HUMAN_LEGS_PASSED"
+    },
+    "releaseBlockingInvariants": [
+      "every Target-required real WorkBuddy journey remains mandatory",
+      "every WorkBuddy human-operation leg remains PENDING until the final designated-human range-completion declaration is received",
+      "the final declaration is necessary and sufficient only for WorkBuddy human-operation legs; every non-WorkBuddy criterion retains its existing machine-verifiable evidence requirement",
+      "Engine-owned semantics, human gates, Source non-execution, approval and publication separation, required human actions, independent-Host evidence and no-regression requirements remain unchanged",
+      "the final declaration grants no publication or release authority",
+      "a Roadmap digest change returns an existing Target to review but does not by itself require an unchanged Candidate package to be rebuilt or reinstalled"
     ]
   },
   "standingWork": [
@@ -53,6 +119,11 @@
       "id": "evopilot-harness-4.2-explicit-user-llm-configuration",
       "description": "Maintain a provider-neutral installed Harness by requiring every operator to explicitly bind and verify user-owned LLM configuration in an external Workspace. Release packages and Agent hosts must not supply, infer, or borrow a default provider, model, endpoint, or credential.",
       "signals": ["explicit user llm configuration", "zero default llm", "no default model", "user-owned model profile", "llm configuration required", "provider-neutral llm", "显式用户 llm 配置", "零缺省 llm", "无默认模型", "用户自定义模型", "必须配置 llm"]
+    },
+    {
+      "id": "evopilot-harness-human-operated-workbuddy-acceptance",
+      "description": "Maintain release-blocking real WorkBuddy acceptance through a designated human operator while Codex and EvoPilot-series Skills prepare the complete compact runbook set, remain outside WorkBuddy control and observation, and wait for the final range declaration without weakening any Target criterion, machine variant, lifecycle gate, Host-conformance requirement or release boundary.",
+      "signals": ["human-operated WorkBuddy acceptance", "manual WorkBuddy acceptance", "WorkBuddy human acceptance", "Codex does not control WorkBuddy", "compact real-case portfolio", "five top-level journeys", "machine variant matrix", "synthetic label oracle", "WorkBuddy 人工验收", "人工操作 WorkBuddy", "Codex 不操作 WorkBuddy", "人工执行真实主机验收", "五条顶层旅程", "机器变体矩阵", "禁止人工分类真值"]
     },
     {
       "id": "evopilot-harness-open-source-productization",
@@ -194,7 +265,7 @@
     },
     {
       "id": "evopilot-harness-4.4-deterministic-business-centric-interaction",
-      "status": "PLANNED",
+      "status": "COMPLETE",
       "targetVersion": "4.4.0",
       "releaseLine": "4.4.x",
       "objective": "Keep user-facing Harness business semantics, Source-to-Harness reasoning, governed decision definitions, and lifecycle sequencing deterministic and Engine-owned while third-party Agent hosts remain replaceable conversational and presentation transports.",
@@ -227,32 +298,144 @@
       "exclusions": ["general-purpose Agent runtime", "embedded conversational model", "Agent-owned Harness reasoning", "automatic approval", "automatic publication", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
     },
     {
-      "id": "evopilot-harness-4.5-governed-professional-ontology-evolution",
+      "id": "evopilot-harness-4.5-declarative-user-taxonomy",
       "status": "PLANNED",
       "targetVersion": "4.5.0",
       "releaseLine": "4.5.x",
-      "objective": "Extend deterministic Source-to-Harness reasoning from closed-world matching over broad built-in concepts to governed open-world professional Ontology discovery, sufficiency assessment, review, publication, and immutable consumption without allowing Source material, an LLM, or an Agent host to mutate active knowledge.",
+      "objective": "Establish an evidence-bound clean v4.5.0 baseline that adds source-first open-world business classification before the complete retained v4.4.0 Harness producer lifecycle. An ordinary user supplies an unknown static Source; the Engine explains the best supported user-declared Domain and Product classifications or distinguishes a missing category, insufficient evidence and ambiguity; after a complete match, only an explicit user choice may continue into retained Harness Eligibility, professional Source-to-Harness reasoning, Catalog comparison, Harness evolution, Proposal Review, approval and separate publication. Pre-v4.5 artifacts and protocols need no compatibility or migration, but every released v4.4.0 product capability remains available from a fresh v4.5.0 Workspace.",
       "outcomes": [
-        "a layered Foundation, Domain, Organization, and Proposal-local Candidate Ontology model with explicit precedence and immutable Evolution Context bindings",
-        "an Ontology Sufficiency Gate that measures coverage, specificity loss, boundary conflict, ambiguity, and unknown-concept density before Catalog matching",
-        "an ONTOLOGY_EXTENSION_REQUIRED outcome that prevents a professionally specific Source from being collapsed into an unjustifiably broad Harness classification",
-        "evidence-bound candidate Concept, Role, parent, conflict, positive-boundary, negative-boundary, and task-class extraction with LLM advice remaining non-authoritative",
-        "a unified AssetDeltaProposal carrying OntologyPack, HarnessProfile, HarnessComponent, and EvaluationPack changes with exact before/after documents, impact, rollback, and regression closure",
-        "complete draft, review, approved, published, deprecated, compatibility, migration, and rollback-binding operations for Organization and Domain OntologyPack versions independently from Engine releases",
-        "deterministic re-reasoning under a newly bound Evolution Context only after an OntologyPack is explicitly approved and separately published"
+        "an evidence-bound RESET_PRE_PRODUCTION baseline that excludes compatibility and migration for pre-v4.5 Workspace, Session, Harness definition, configuration, Ontology, Catalog, Harness Asset schema, MCP protocol, installed runtime state, and direct upgrade paths while retaining every released v4.4.0 product capability and retesting the cumulative fresh-start baseline with NO_REGRESSION",
+        "an accepted replacement boundary for Engine module 8 that owns a minimal Semantic Foundation and Taxonomy Resolution instead of the pre-v4.5 OntologyPack contract, with a replacement ADR, module documentation, and executable architecture guards required before implementation",
+        "a minimal Engine-owned Foundation that defines only semantic axes and relation primitives and contains no built-in business Domain or Product label such as finance, metallurgy, application-system, middleware, CRM, ERP, API gateway, or distributed cache",
+        "a compact non-executable Taxonomy resource with stable apiVersion, kind, metadata, namespace, version, and spec through which users declare arbitrary Domain and Product roots, ids, labels, aliases, definitions, hierarchy depth, parent-child relations, assignability, axis cardinality, positive evidence hints, and exclusion hints while keeping Domain and Product orthogonal and classifier policy Engine-owned",
+        "a canonical single-document resolver that combines the Foundation and one selected user Taxonomy into an immutable Engine-owned ResolvedTaxonomySnapshot bound to schema, namespace, Engine range, required capabilities, canonicalization algorithm, relation closure, resource limits, document version, and content digest",
+        "deterministic validation for stable ids, normalized alias collisions, missing parents, cycles, unsupported schema or Engine versions, unavailable capabilities, resource-limit violations, and digest drift before Source reasoning",
+        "an immutable taxonomy-blind SourceConceptHypothesis derived from the static Source snapshot and Evidence Graph before the selected business labels are exposed, binding supported concepts, structured and dependency signals, citations, contradictions, uncertainty, Advisor provenance, and missing evidence",
+        "a versioned OpenWorldTaxonomyClassifier whose bounded candidate retrieval records exact id, label and alias evidence, boundary-aware lexical and BM25 evidence, embeddings, structured Source signals, and evidence-bound LLM candidate interpretation separately so no individual retriever, similarity score, LLM response, imported material, or Agent Host directly selects a governed result",
+        "an Engine-owned hierarchy-aware deterministic Decision Aggregator bound to versioned assignability, axis cardinality, specificity, calibrated thresholds, top-candidate margin, exclusions, minimum evidence, candidate bounds, and fail-safe Advisor availability policy; recorded inputs replay without repeating an LLM call",
+        "an open-world Taxonomy Sufficiency Gate with exactly TAXONOMY_MATCHED, TAXONOMY_EXTENSION_SUGGESTED, TAXONOMY_EVIDENCE_INSUFFICIENT, and TAXONOMY_AMBIGUOUS outcomes that distinguishes a coherent absent concept, weak Source understanding, and materially supported competing candidates while never substituting a nearest broad Domain or Product and never owning NOT_HARNESS_ELIGIBLE or Harness-eligibility evidence",
+        "an evidence-backed extension suggestion that identifies the unresolved axis, proposed label, definition and parent, alternatives, rejection reasons, uncertainty, immutable Source citations, taxonomy-blind concept evidence, and missing taxonomy evidence without editing, applying, approving, publishing, activating, or silently selecting the user's Taxonomy",
+        "an Evolution Context binding over the exact Foundation, ResolvedTaxonomySnapshot, Source snapshot, SourceConceptHypothesis, retrieval configuration, mapping and aggregation policies, algorithms, thresholds, candidate scores, Advisor model and prompt identity, recorded Advisor output, intent, locale, and presentation template; replacing any bound input never changes an active Session and re-analysis always creates a new context",
+        "an explicit human loop in which the user supplies a revised valid Taxonomy and requests re-analysis while Source, LLM advice, imported material, and Agent Host output remain evidence or transport rather than Taxonomy, Eligibility, approval, publication, or activation authority",
+        "Engine-owned ordinary-human presentation using 业务分类方案, 业务领域, 产品或系统类型, 项目分类分析, and 分类覆盖情况 while retaining internal Taxonomy, Domain, Product, algorithm, score, threshold, digest, and provenance terms in schema and audit surfaces",
+        "the complete retained v4.4.0 fresh-start Harness producer lifecycle: Engine-owned BusinessDecisionView and ComplianceAuditEnvelope, professional Source-to-Harness reasoning, Harness Eligibility, Catalog comparison, REUSE_EXISTING, EVOLVE_EXISTING, COMPOSE_NEW_BUNDLE, PROPOSE_NEW_PROFILE, NOT_HARNESS_ELIGIBLE, NEED_MORE_EVIDENCE, NO_CHANGE and REJECT, HarnessProfile and immutable HarnessBundle production, Proposal Review, explicit approval, separately authorized publication, Catalog validation, recovery and safe close",
+        "an explicit classification-to-Harness handoff in which unresolved, insufficient, ambiguous or Advisor-blocked classification cannot advance, while TAXONOMY_MATCHED only enables the user to stop or explicitly continue with the same immutable Source, ResolvedTaxonomySnapshot and Evolution Context and never proves Harness Eligibility or authorizes Proposal, approval or publication",
+        "cumulative acceptance lineage that separates compatibility-specific exclusions from inherited or restated functional, capability, safety, authority and end-to-end obligations from the preceding released version",
+        "mandatory real end-to-end acceptance for every v4.5.0 and later Target, with v4.5 covering semantic matching without literal labels or aliases, missing-category re-analysis, insufficient evidence, ambiguity, misleading keywords, Advisor unavailability and model or prompt changes, deterministic replay, WorkBuddy, and an independent conformant Host",
+        "a compact-real-case-portfolio/v1 acceptance structure with exactly five v4.5.0 top-level ordinary-human journeys and an independently evidenced machine variant matrix covering every required Source type, classification branch, Advisor state, Harness outcome, Host negative and cumulative regression obligation without hidden human journeys or synthetic business-label truth",
+        "a complete fresh-candidate end-to-end journey from classification through explicit continue, Harness Eligibility, professional Source-to-Harness reasoning, Catalog comparison, Harness evolution, Proposal Review, Proposal human decision, separate publication, Catalog validation and safe close in real WorkBuddy with equivalent Engine-owned semantics in an independent conformant Host",
+        "a stable v4.5 resource envelope, namespace, canonical snapshot, and context-binding base that v4.7 extends with multi-Pack imports, precedence, publication, and Organization ownership without replacing the v4.5 contract"
       ],
       "acceptance": [
-        "known professional Sources retain stable existing decisions while unknown or overly broad mappings fail closed instead of selecting the nearest broad domain",
-        "financial CRM, general CRM, manufacturing ERP, insufficient professional evidence, non-Harness material, and multi-domain Source cases produce distinct evidence-backed outcomes and boundaries",
-        "every candidate Ontology element cites immutable Source Evidence, uncertainty, alternatives, parent and conflict relationships, positive and negative examples, and Catalog overlap",
-        "Source material and LLM output may propose but can never approve, publish, activate, overwrite, deprecate, or select an OntologyPack",
-        "Ontology review, approval, and publication remain separate digest-bound human decisions and published id@version documents are immutable",
-        "publishing a Domain or Organization OntologyPack does not require an Engine release and does not alter an active Session or Evolution Context",
-        "positive, negative, adjacent-domain, broad-misclassification, and complete historical regression suites pass before publication",
-        "WorkBuddy and an independent conformant Host render identical Engine-owned Ontology insufficiency, proposal, impact, approval, and publication decisions"
+        "two users may declare different Domain and Product roots and hierarchy depths without an Engine release, and the Engine treats neither taxonomy as universal authority",
+        "the built-in Foundation, installed npm runtime, release package, and Built-in Catalog contain only semantic axes and relation primitives and no business classification value; professional business examples remain fixtures or external evidence only",
+        "finance Domain, CRM Product, amount-anomaly capability, and diagnostic task remain independent dimensions and are never collapsed into a synthetic financial-CRM category",
+        "semantically identical valid Taxonomy declarations resolve to the same canonical snapshot and digest regardless of non-semantic ordering or supported source serialization, while normalization, alias-collision, relation-closure, and resource-limit rules remain deterministic",
+        "a selected Taxonomy fails closed before Source reasoning when its schema, namespace, Engine range, required capabilities, structure, normalization, resource limits, or digest is invalid",
+        "a Source whose literal text contains no declared id, label, or alias can still match the correct declared Domain or Product through independently recorded semantic and structured evidence, while exact evidence remains a high-confidence signal rather than the only matching path",
+        "taxonomy-blind concept extraction remains independent from the selected labels, and changing only the selected Taxonomy cannot retroactively change the bound SourceConceptHypothesis",
+        "the OpenWorldTaxonomyClassifier records per-signal candidates, scores, citations, contradictions and rejected alternatives, and the deterministic Decision Aggregator alone applies the bound hierarchy, specificity, threshold, margin, exclusion and evidence policy",
+        "a coherent evidence-backed Source concept with no suitable assignable declared node returns TAXONOMY_EXTENSION_SUGGESTED instead of selecting the nearest parent; weak Source understanding returns TAXONOMY_EVIDENCE_INSUFFICIENT; materially supported competing candidates without a safe margin return TAXONOMY_AMBIGUOUS",
+        "a Source may resolve Domain but not Product, Product but not Domain, both, or neither; each unresolved axis and its evidence gap remain explicit",
+        "an extension suggestion cites immutable Source evidence and taxonomy-blind concept evidence and explains why existing labels and alternatives were rejected, but cannot mutate the user document or active context; Advisor outputs remain visibly non-authoritative and cannot directly select the result or activate Taxonomy state",
+        "Taxonomy Sufficiency never emits NOT_HARNESS_ELIGIBLE or changes Harness Eligibility meaning; the independent Eligibility Gate remains the sole owner of reusable-task qualification and insufficient Harness-eligibility evidence",
+        "after the user supplies a revised valid Taxonomy, a new Evolution Context can re-analyze the same Source without changing the prior Session",
+        "TAXONOMY_EVIDENCE_INSUFFICIENT lists concrete missing Domain or Product classification evidence and cannot be confused with insufficient Harness-eligibility or professional capability evidence",
+        "TAXONOMY_AMBIGUOUS lists materially supported candidates, score and margin evidence, contradictions, and the user action needed to resolve the ambiguity and cannot be collapsed into ordinary evidence insufficiency",
+        "LLM output is immutable evidence bound to its exact model, prompt, policy, input and output digest; the Engine may use it as one recorded semantic signal, but Source material, LLM output, imported material, and third-party Hosts cannot define, activate, overwrite, approve, publish, or directly select a taxonomy label",
+        "Advisor unavailability, malformed output, timeout, model change, prompt change, or repeated delivery fails safely, cannot broaden a match, and either reuses an exact recorded result or creates a new explicitly bound context",
+        "classification evaluation binds exact Taxonomy, Source cases, algorithms, policies, Advisor, thresholds and scorer versions and measures semantic known-match coverage, false broad-match rate, missing-category precision, ambiguity handling, evidence-insufficient handling, hierarchy correctness, and confidence-versus-abstention without automatically activating calibration changes",
+        "WorkBuddy and an independent conformant Host present the same Engine-owned validation, semantic match, extension, taxonomy-evidence-insufficient, taxonomy-ambiguous, and re-analysis decisions without Host-authored governed semantics",
+        "ordinary users see 业务分类方案, 业务领域, 产品或系统类型, 项目分类分析, and 分类覆盖情况 as the primary Engine-owned terms without needing to understand Taxonomy, Domain, Product, score, threshold, or digest jargon",
+        "the v4.5.0 Target contains real end-to-end journeys covering semantic matching without literal labels or aliases, missing-category extension and re-analysis, insufficient evidence, ambiguity, misleading Source keywords, Advisor failure and model or prompt change, deterministic replay, WorkBuddy, and an independent conformant Host",
+        "the v4.5.0 Target maps every current, restated historical and no-regression obligation to exactly five top-level RC01-RC05 journeys plus independently evidenced machine variants; no old RC is hidden as an extra human journey, no failing variant is sampled away, and an exact business-label oracle is used only for an independently fixed controlled Taxonomy and responsibility-focused Source",
+        "every Target-bound WorkBuddy journey follows human-operated-workbuddy/v1 and designated-human-range-completion/v1: the designated human independently performs every visible WorkBuddy action and current decision from the complete frozen RC runbook set; Codex neither operates nor observes WorkBuddy and requests no WorkBuddy execution artifact; all five WorkBuddy human-operation legs remain PENDING until the designated human sends the final declaration RC01～RC05 已完成, after which RC01-RC05 WorkBuddy legs are accepted as PASSED. Every non-WorkBuddy criterion and machine variant retains its machine-evidence requirement, and release remains separately unauthorized",
+        "a fresh v4.5.0 installation preserves every released v4.4.0 user outcome without reading or migrating a pre-v4.5 Workspace, Session, Harness definition, configuration, Catalog, Asset schema or protocol",
+        "all v4.4.0 functional and capability acceptance is inherited or restated and retested on the replacement design; only criteria whose meaning is exclusively pre-v4.5 artifact, protocol or direct-upgrade compatibility may be excluded with concrete reset evidence",
+        "after TAXONOMY_MATCHED, only an explicit user decision may continue with the same immutable Source and classification context into the independent Eligibility Gate and complete Harness producer lifecycle; every other classification result blocks that handoff with a finite user action",
+        "the v4.5.0 candidate completes a fresh real WorkBuddy lifecycle from business classification through Harness Eligibility, professional Source-to-Harness reasoning, Catalog comparison, Harness evolution decision, Proposal Review, Proposal approval, separate publication, Catalog validation and safe close, and an independent conformant Host proves equivalent Engine-owned semantics",
+        "the retained NO_CHANGE, REUSE_EXISTING, EVOLVE_EXISTING, COMPOSE_NEW_BUNDLE, PROPOSE_NEW_PROFILE, NEED_MORE_EVIDENCE, NOT_HARNESS_ELIGIBLE and REJECT outcomes remain evidence-backed and available on the fresh v4.5.0 baseline",
+        "classification never auto-creates a Profile, Bundle or Proposal, and Produce, Review, approval and publication remain distinct Engine-owned and human-gated stages",
+        "a replacement ADR defines the module 8 Semantic Foundation and Taxonomy Resolution ownership, dependency direction, prohibited authority, compatibility reset, and replacement conditions, and executable architecture guards enforce it before implementation acceptance",
+        "v4.5.0 is explicitly validated as an evidence-bound clean pre-production compatibility baseline: the Target binds concrete no-production-consumer evidence, places every historical criterion exactly once into inherited or restated capability lineage or compatibility-specific excluded lineage, excludes only pre-v4.5 artifact, protocol and direct-upgrade compatibility, and passes the complete cumulative product-capability, safety, authority, determinism, immutable-publication, credential, Source non-execution and Host-boundary baseline on the replacement design"
       ],
-      "signals": ["professional ontology evolution", "open-world source reasoning", "ontology sufficiency", "ontology extension required", "specificity loss", "unknown professional domain", "domain ontology pack", "organization ontology", "专业 ontology 演进", "开放世界 source 推理", "ontology 充分性", "专业领域发现", "宽泛分类", "行业 ontology"],
-      "exclusions": ["automatic online learning", "automatic Ontology activation", "LLM-owned classification", "Source-authored policy mutation", "Agent-host reasoning", "model training", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
+      "signals": ["source-first business classification", "open world taxonomy classifier", "source concept hypothesis", "taxonomy blind concept extraction", "multi signal candidate retrieval", "semantic classification", "hierarchy aware classification", "classification confidence margin", "taxonomy ambiguous", "declarative user taxonomy", "semantic foundation", "taxonomy resolution", "resolved taxonomy snapshot", "taxonomy sufficiency", "taxonomy evidence insufficient", "user-defined domain", "user-defined product", "taxonomy extension suggested", "unknown domain product", "taxonomy engine compatibility", "taxonomy required capabilities", "taxonomy canonical digest", "false broad match", "algorithm plus LLM classification", "human-operated WorkBuddy", "designated human range completion", "final RC range completion declaration", "no WorkBuddy execution artifacts", "WorkBuddy human-operation legs", "compact real-case portfolio", "five top-level journeys", "machine variant matrix", "synthetic label oracle", "业务分类方案", "项目分类分析", "业务领域", "产品或系统类型", "分类覆盖情况", "素材语义分类", "开放世界分类", "多信号候选召回", "分类歧义", "未知分类", "分类扩展建议", "禁止宽泛匹配", "人工操作 WorkBuddy", "最终 RC 范围完成声明", "不收集 WorkBuddy 执行证据", "五条顶层旅程", "机器变体矩阵", "禁止人工分类真值"],
+      "exclusions": ["pre-v4.5 Workspace, Session, Harness definition, configuration, Ontology, Catalog, Harness Asset schema, MCP protocol, installed runtime state, or direct-upgrade compatibility and migration", "Harness Eligibility semantic changes", "complete Ontology platform", "multi-Pack merge", "Organization Pack governance", "DomainHarnessPack ecosystem", "semantic-web mapping", "incremental graph reasoning", "automatic online learning", "automatic taxonomy mutation or activation", "automatic classifier-policy or threshold activation", "LLM-owned final classification", "Agent-host reasoning", "executable plugins", "built-in business classification values", "model training", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
+    },
+    {
+      "id": "evopilot-harness-4.6-professional-source-to-harness-reasoning",
+      "status": "PLANNED",
+      "targetVersion": "4.6.0",
+      "releaseLine": "4.6.x",
+      "objective": "Improve the depth, specificity and evaluation quality of professional Source-to-Harness reasoning, Harness Eligibility and HarnessProfile or HarnessBundle composition already present in the complete v4.5.0 capability baseline, without turning taxonomy labels, retrieval scores or LLM similarity into Harness authority and without removing any v4.5.0 classification or Harness producer capability.",
+      "outcomes": [
+        "deeper evidence-bound extraction of business objects, capabilities, task classes, roles, constraints, workflows, failure modes, recovery rules, validators, positive cases, and negative cases from the professional reasoning already available in v4.5.0",
+        "improved deterministic professional sufficiency, reusable-boundary, alternative, rejection, risk, expected-effect and missing-evidence reasoning for the existing finite Harness decisions",
+        "improved professional completeness, dependency closure, composition quality, boundary specificity and Evaluation coverage for the HarnessProfiles and immutable HarnessBundles already produced by v4.5.0",
+        "governed context-equivalent comparison against a frozen v4.5.0 baseline with uncertainty, conflict, calibration non-activation and no-regression gates",
+        "complete cumulative preservation of every v4.5.0 classification, Harness evolution, review, approval, publication, Host-conformance, recovery and safe-close capability"
+      ],
+      "acceptance": [
+        "professional CRM, ERP, middleware, diagnosis, reconciliation, recovery, and non-Harness cases produce evidence-backed distinct decisions without relying on label similarity as final authority",
+        "every proposed capability explains its Source basis, reusable contract, boundaries, rejected alternatives, constraints, validators, and known limits",
+        "insufficient professional evidence cannot produce a broad generic Profile or Bundle",
+        "a published Bundle has a complete immutable dependency and Evaluation closure consumable by EvoPilot",
+        "the v4.5 user-defined Taxonomy and Host-authority boundaries remain unchanged",
+        "every v4.5.0 classification and Harness producer end-to-end journey passes unchanged before any v4.6.0 quality-improvement claim is accepted",
+        "context-equivalent comparative evidence demonstrates bounded professional-reasoning or Bundle-quality improvement over the frozen v4.5.0 baseline without hiding uncertainty, conflicts or regressions",
+        "v4.6.0 does not restore any capability removed from v4.5.0 because professional reasoning, Profile and Bundle production, Proposal Review, approval and publication are already required parts of the v4.5.0 baseline"
+      ],
+      "signals": ["professional source to harness reasoning", "professional harness extraction", "capability extraction", "compose harness bundle", "harness evolution algorithm", "professional reasoning depth", "bundle quality", "cumulative v4.5 capability baseline", "improve professional reasoning", "improve bundle quality", "preserve v4.5 capabilities", "专业 source 到 harness 推理", "专业能力提取", "bundle 组合", "专业推理深度", "bundle 质量", "累计 v4.5 能力基线", "增强专业推理", "增强 bundle 质量", "保留 v4.5 能力"],
+      "exclusions": ["multi-Pack ecosystem", "external semantic interoperability", "incremental graph reasoning", "automatic approval", "automatic publication", "model training", "source-project execution"]
+    },
+    {
+      "id": "evopilot-harness-4.7-governed-professional-pack-ecosystem",
+      "status": "PLANNED",
+      "targetVersion": "4.7.0",
+      "releaseLine": "4.7.x",
+      "objective": "Add governed multi-Pack authoring, validation, dependency, conflict, review, publication, rollback, discovery, quality, and Organization ownership after the minimal Taxonomy and professional Harness reasoning contracts are proven.",
+      "outcomes": [
+        "an extension of the stable v4.5 Taxonomy envelope, namespaces, canonical snapshots, and context bindings with versioned Domain, Product, Organization, and DomainHarnessPack resources, imports, precedence, equivalence, replacement, deprecation, and fail-closed merge semantics",
+        "DomainHarnessPack scaffolding, linting, validation, dependency inspection, compatibility declaration, installation, update, rollback, and documentation tooling",
+        "separate editable drafts and immutable resolved publication snapshots with approval, publication, and Evolution Context activation as independent actions",
+        "base-digest, optimistic-concurrency, conflict-set, atomic-publication-set, semantic-version and dependency-propagation, migration, and rollback contracts",
+        "separate community, domain-team, and private Organization Pack roots with explicit provenance, trust, ownership, reviewer, approver, and publisher roles",
+        "versioned professional benchmark and Gold Case packages, Pack quality levels, optional signing, and reproducible certification evidence",
+        "reference financial, CRM, ERP, and other example Packs that demonstrate authoring patterns without claiming universal business authority"
+      ],
+      "acceptance": [
+        "Pack installation remains declarative, non-executable, digest-pinned, conflict-previewed, and independently authorized",
+        "unresolved namespace collisions, cyclic imports, incompatible overrides, partial publication, missing dependencies, or silent shadowing fail closed",
+        "author, reviewer, approver, and publisher duties remain explicit and separable",
+        "private Organization Packs cannot leak into public or community roots",
+        "quality and certification claims bind exact Pack, benchmark, algorithm, policy, and evidence versions"
+      ],
+      "signals": ["professional pack ecosystem", "multi pack governance", "DomainHarnessPack SDK", "pack registry", "pack authoring", "pack dependency conflict", "pack certification", "专业 pack 生态", "多 pack 治理", "领域 pack", "pack 治理"],
+      "exclusions": ["executable marketplace plugins", "automatic Pack trust", "automatic publication", "cloud marketplace service", "built-in universal vertical expertise"]
+    },
+    {
+      "id": "evopilot-harness-4.8-scalable-semantic-interoperability",
+      "status": "PLANNED",
+      "targetVersion": "4.8.0",
+      "releaseLine": "4.8.x",
+      "objective": "Add external semantic interoperability and scale governed Taxonomy, Ontology, Pack, and Harness impact analysis through deterministic incremental computation and federated discovery while preserving full-recompute equivalence and authority boundaries.",
+      "outcomes": [
+        "versioned JSON-LD and PROV-O compatible projections, RDF and OWL mappings, SHACL-compatible validation, multilingual terms, and governed external-vocabulary identity mapping",
+        "content-addressed semantic and graph indexes for large Ontology, Source, Profile, Evaluation, and Bundle sets",
+        "affected-subgraph calculation, selective Source re-reasoning, incremental dependency propagation, and full-recompute equivalence proofs",
+        "bounded concurrency, cache-digest binding, performance budgets, decision telemetry, and large-Catalog impact analysis",
+        "federated read-only Pack discovery across Catalog roots without shared mutation or authority collapse"
+      ],
+      "acceptance": [
+        "external vocabulary import remains inactive evidence, preserves provenance, and cannot activate or override user Packs",
+        "round-trip semantic projections preserve declared identity, relations, provenance, versions, and digests while unsupported semantics fail closed",
+        "incremental and complete recomputation produce equivalent authoritative outcomes for the same bindings",
+        "cache, index, concurrency, and federation failures cannot return stale or mixed-context decisions",
+        "large-corpus performance meets declared budgets without weakening evidence, conflict, approval, or publication gates",
+        "federated discovery remains read-only and every consumed Pack retains its source Catalog, version, digest, and trust context"
+      ],
+      "signals": ["semantic interoperability", "JSON-LD", "RDF", "OWL", "SHACL", "PROV-O", "incremental ontology reasoning", "ontology scale", "affected subgraph", "semantic index", "federated catalog", "语义互操作", "外部 ontology", "增量 ontology 推理", "ontology 规模化", "影响子图", "联邦 catalog"],
+      "exclusions": ["general-purpose knowledge graph platform", "unbounded OWL reasoning", "shared mutable global ontology", "eventual authority", "automatic external vocabulary activation", "automatic cross-organization publication", "cloud control plane"]
     }
   ],
   "boundaryRules": [
@@ -273,9 +456,27 @@
       "classification": "BOUNDARY_CHANGE",
       "reason": "evopilot-harness may use an advisory LLM but is not a model-training platform.",
       "signals": ["train model inside evopilot-harness", "embedded rl trainer", "update model weights in harness", "在 evopilot-harness 训练模型", "harness 更新模型权重"]
+    },
+    {
+      "id": "taxonomy-must-not-own-harness-eligibility",
+      "classification": "BOUNDARY_CHANGE",
+      "reason": "Taxonomy Sufficiency classifies declared Domain and Product axes; the independent Eligibility Gate owns whether Source evidence supports a reusable model-external Harness task.",
+      "signals": ["taxonomy decides harness eligibility", "taxonomy returns not harness eligible", "taxonomy owns reusable task qualification", "taxonomy 决定 harness eligibility", "taxonomy 返回 not harness eligible", "taxonomy 判断可复用任务资格"]
+    },
+    {
+      "id": "engine-must-not-hardcode-business-taxonomy",
+      "classification": "BOUNDARY_CHANGE",
+      "reason": "The v4.5 Engine Foundation owns semantic axes and relation primitives, not built-in business Domain or Product values or keyword-to-business-label authority.",
+      "signals": ["hard-code business taxonomy", "built-in domain values", "built-in product values", "engine business category list", "硬编码业务 taxonomy", "内置 domain 值", "内置 product 值", "engine 业务分类列表"]
+    },
+    {
+      "id": "llm-must-not-own-taxonomy-decision",
+      "classification": "BOUNDARY_CHANGE",
+      "reason": "The v4.5 LLM Advisor may contribute an immutable evidence-bound semantic signal, but only the Engine-owned versioned Decision Aggregator may apply classification policy and emit a Taxonomy Sufficiency result; no LLM response may mutate or activate the user's Taxonomy.",
+      "signals": ["LLM directly selects taxonomy", "LLM classification is final", "LLM mutates taxonomy", "advisor chooses domain product", "LLM 直接决定分类", "LLM 分类结果就是最终结果", "LLM 自动修改业务分类方案", "advisor 选择业务领域产品"]
     }
   ],
-  "deviationSignals": ["replace roadmap", "revise roadmap", "skip milestone", "reorder roadmap milestone", "move roadmap capability", "merge evopilot and evopilot-harness", "change product boundary", "替换 roadmap", "修订 roadmap", "跳过里程碑", "重排 roadmap 里程碑", "移动 roadmap 能力", "合并 evopilot 和 evopilot-harness", "改变产品边界"],
+  "deviationSignals": ["replace roadmap", "revise roadmap", "skip milestone", "reorder roadmap milestone", "move roadmap capability", "remove released capability", "defer released capability", "compatibility reset removes capability", "zero inherited acceptance for retained capability", "merge evopilot and evopilot-harness", "change product boundary", "替换 roadmap", "修订 roadmap", "跳过里程碑", "重排 roadmap 里程碑", "移动 roadmap 能力", "删除已发布能力", "延后已发布能力", "用兼容性重置删除能力", "保留能力但零继承验收", "合并 evopilot 和 evopilot-harness", "改变产品边界"],
   "crossProjectContracts": [
     {
       "id": "published-harness-consumption/v3",

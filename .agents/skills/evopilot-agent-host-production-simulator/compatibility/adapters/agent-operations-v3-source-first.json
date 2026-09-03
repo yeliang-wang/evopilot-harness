@@ -1,0 +1,36 @@
+{
+  "schema": "evopilot-harness-simulator-compatibility-adapter/v1",
+  "id": "agent-operations-v3-source-first",
+  "priority": 200,
+  "extends": "agent-operations-v3-base",
+  "protocol": {
+    "agentProtocolVersion": "evopilot-harness-agent-operations/v3",
+    "engineApiVersion": "harness.evopilot.io/v3",
+    "mcpProtocolVersions": ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"]
+  },
+  "requiredCapabilities": [
+    { "path": "classification.sourceDescriptorSchema", "equals": "evopilot-harness-source-descriptor/v1" },
+    { "path": "classification.advisorPolicy", "equals": "REQUIRED_ON_NEW_ANALYSIS_EXACTLY_ONE_CALL" },
+    { "path": "classification.finalAuthority", "equals": "deterministic-engine" },
+    { "path": "classification.handoffPolicy", "equals": "TAXONOMY_MATCHED_PLUS_EXPLICIT_HUMAN_CONTINUE" },
+    { "path": "authority.sourceExecutionAllowed", "equals": false }
+  ],
+  "lifecycleStages": [
+    "DISCOVERED",
+    "PREVIEWED",
+    "INSTALLED",
+    "HOST_OPEN",
+    "EXPERT_SELECTED",
+    "CAPABILITY_BOUND",
+    "SOURCE_TRANSPORTED",
+    "SESSION_ACTIVE",
+    "HUMAN_GATE",
+    "TERMINAL"
+  ],
+  "authority": {
+    "selectionOnly": true,
+    "mayMutateHarness": false,
+    "mayApprove": false,
+    "mayPublish": false
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "schema": "evopilot-real-host-acceptance-manifest/v3",
+  "id": "evopilot-harness-v4.5.0-target-revision-14-real-host",
+  "target": {
+    "id": "evopilot-harness-v4.5.0-declarative-user-taxonomy",
+    "revision": 14,
+    "status": "APPROVED",
+    "repoPath": "governance/targets/evopilot-harness-v4.5.0-declarative-user-taxonomy.json",
+    "fileDigest": "sha256:050b5d36801a1b601d168892b627588b0477c6a60b027196d2a578e5575fb49a",
+    "authorizationDigest": "sha256:dd0f9c66a587567929399f22376b1def60f2a7e3fbcf79ce7d2efbf1be2de738",
+    "roadmapDigest": "sha256:345ff4d8960608f1c2b9e07b733898137601c9c5489f8d9bd859fd2f1d3408b2"
+  },
+  "requiredExtensions": {
+    "hostAdapterId": "workbuddy-macos-designated-human-v1",
+    "compatibilityAdapterId": "agent-operations-v3-source-first"
+  },
+  "coverage": {
+    "mode": "ALL_TARGET_ACCEPTANCE_IDS",
+    "acceptanceCount": 203,
+    "sortedAcceptanceIdsDigest": "sha256:ff14dbc8ade7bcb64096c19072ab28fd9954beb9edabf7ea70b47e714ecf602b",
+    "realCasePortfolioPolicy": "compact-real-case-portfolio/v1",
+    "realCaseCount": 5,
+    "realCaseIds": [
+      "RC01",
+      "RC02",
+      "RC03",
+      "RC04",
+      "RC05"
+    ],
+    "machineVariantCount": 5,
+    "machineVariantIds": [
+      "MV01",
+      "MV02",
+      "MV03",
+      "MV04",
+      "MV05"
+    ]
+  },
+  "hostExecutionPolicy": {
+    "policyVersion": "human-operated-workbuddy/v1",
+    "completionPolicyVersion": "designated-human-range-completion/v1",
+    "portfolioPolicyVersion": "compact-real-case-portfolio/v1",
+    "workBuddyOperator": "DESIGNATED_HUMAN",
+    "codexRole": "RUNBOOK_ISSUANCE_AND_FINAL_DECLARATION_ONLY",
+    "workBuddyUiControlAllowed": false,
+    "workBuddyObservationAllowed": false,
+    "workBuddyExecutionArtifactsRequired": false,
+    "perCaseReportRequired": false,
+    "automatedWorkBuddyQualificationRequired": false,
+    "automatedWorkBuddyTransportReceiptRequired": false,
+    "independentHostAutomationAllowed": true,
+    "finalDeclaration": "RC01～RC05 已完成",
+    "acceptedRangeSeparators": [
+      "～",
+      "~"
+    ],
+    "beforeDeclaration": "PENDING",
+    "afterDeclaration": "PASSED",
+    "workBuddyCaseIds": [
+      "RC01",
+      "RC02",
+      "RC03",
+      "RC04",
+      "RC05"
+    ],
+    "discoveryOnlyCaseIds": [],
+    "nonWorkBuddyMachineVariantIds": [
+      "MV01",
+      "MV02",
+      "MV03",
+      "MV04",
+      "MV05"
+    ]
+  },
+  "executionOrder": [
+    "VERIFY_APPROVED_TARGET14_AND_EXTERNAL_CANDIDATE_BINDING",
+    "VERIFY_ALL_203_CURRENT_ACCEPTANCE_AND_5_MACHINE_VARIANTS",
+    "FREEZE_EXACTLY_FIVE_RELEASE_BUILD_BOUND_WORKBUDDY_RUNBOOKS",
+    "EXECUTE_AUTHORIZED_NON_WORKBUDDY_MACHINE_MATRIX_UNTIL_FAILURE_OR_HUMAN_GATE",
+    "KEEP_ALL_FIVE_WORKBUDDY_LEGS_PENDING_UNTIL_FINAL_DECLARATION",
+    "VERIFY_NO_REGRESSION_AND_TARGET_GATES"
+  ],
+  "prohibitedEffects": [
+    "No Candidate identity in this Target manifest",
+    "No Codex WorkBuddy operation or observation",
+    "No WorkBuddy execution-artifact request",
+    "No hidden extra human RC or sampled-away assertion failure",
+    "No Source execution, mutation or release-build-authored oracle",
+    "No automatic repair, publication or Release"
+  ],
+  "authority": {
+    "authorizesHostMutation": false,
+    "authorizesHumanDecision": false,
+    "authorizesPublication": false,
+    "authorizesRelease": false
+  }
+}

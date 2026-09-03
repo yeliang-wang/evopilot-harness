@@ -1,0 +1,20 @@
+{
+  "schema": "evopilot-harness-classification-impact-fixture/v1",
+  "id": "candidate-13-rc17-journey-08",
+  "candidateId": "evopilot-harness-v4.5.0-candidate-13",
+  "sourceId": "live-ghq04-automation-codegen-02",
+  "sourceSnapshotDigest": "sha256:398dea5edb00703cf4c7c662e25a7e32e50f0df127908300d9260e536ba1956c",
+  "taxonomyDigest": "sha256:51cdbf0ac929b58ebbce7897147f0bc8b2ea982fd377b4ea3ca567116dd0702c",
+  "expectedAggregate": "TAXONOMY_MATCHED",
+  "expectedDomain": "ai-assisted-software-engineering",
+  "expectedProduct": "agent-instruction-library",
+  "observedCandidate13Aggregate": "TAXONOMY_EXTENSION_SUGGESTED",
+  "observedCandidate13ExtensionLabel": "skill",
+  "observedCandidate13AnalysisResultDigest": "sha256:de461346dd377985e02cd461660ad6668e2e02f445e2cd3832b68b03dc79e53a",
+  "portableRegression": "large Agent-engineering Source with incidental resource-list lexical content, a generic tools/index.ts path, repeated generic artifact terms, and 511/512/513 file-boundary variants",
+  "authority": {
+    "candidateOutputMayRewriteOracle": false,
+    "fixtureMayEnterProductionLogic": false,
+    "acceptanceEvidence": false
+  }
+}

@@ -3,7 +3,7 @@
   "$id": "https://evopilot.dev/schemas/agent-operation-session-v3.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "sessionId", "status", "createdAt", "updatedAt", "workspace", "engine", "adapter", "compatibility", "intent", "reevaluation", "evolutionContext", "plan", "planDigest", "humanDecisions", "operations", "inFlightOperation", "operationAuthorizations", "pendingOperationAuthorization", "proposals", "evidenceReports", "interaction", "sequence", "nextAction", "sessionDigest"],
+  "required": ["schema", "sessionId", "status", "createdAt", "updatedAt", "workspace", "engine", "adapter", "compatibility", "intent", "classificationLifecycle", "classificationHandoff", "reevaluation", "evolutionContext", "plan", "planDigest", "humanDecisions", "operations", "inFlightOperation", "operationAuthorizations", "pendingOperationAuthorization", "proposals", "evidenceReports", "interaction", "sequence", "nextAction", "sessionDigest"],
   "properties": {
     "schema": { "const": "evopilot-harness-agent-operation-session/v3" },
     "sessionId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{5,127}$" },
@@ -15,6 +15,8 @@
     "adapter": { "type": "object", "required": ["current", "history"], "properties": { "current": { "type": "string", "minLength": 1 }, "history": { "type": "array", "items": { "type": "string", "minLength": 1 } } } },
     "compatibility": { "type": "object", "required": ["productVersion", "expertVersion", "coreDigest", "agentProtocolVersion", "engineApiVersion"], "properties": { "productVersion": { "type": "string" }, "expertVersion": { "type": "string" }, "coreDigest": { "type": "string" }, "agentProtocolVersion": { "const": "evopilot-harness-agent-operations/v3" }, "engineApiVersion": { "type": "string" } } },
     "intent": { "type": "object", "required": ["text", "digest"], "properties": { "text": { "type": "string" }, "digest": { "type": "string" } } },
+    "classificationLifecycle": { "type": ["object", "null"] },
+    "classificationHandoff": { "type": ["object", "null"] },
     "reevaluation": {
       "type": ["object", "null"],
       "required": ["schema", "priorSessionId", "priorSessionDigest", "priorEvolutionContextDigest", "priorSessionPreserved", "requestedAt"],
