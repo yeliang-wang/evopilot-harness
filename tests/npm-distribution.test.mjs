@@ -149,6 +149,17 @@ test("GHCR publication remains disabled for tag releases and requires manual aut
   }
 });
 
+test("release artifact workflow restores a clean tag checkout and reuses only a CI-passed check", () => {
+  const workflowText = fs.readFileSync(path.join(root, ".github/workflows/release-artifacts.yml"), "utf8");
+  const buildScript = fs.readFileSync(path.join(root, "scripts/build-release-artifacts.mjs"), "utf8");
+  assert.match(workflowText, /git restore --worktree --staged \./);
+  assert.match(workflowText, /git status --porcelain/);
+  assert.match(workflowText, /EVOPILOT_RELEASE_CHECK_ALREADY_PASSED: "true"/);
+  assert.doesNotMatch(workflowText, /CI: "false"/);
+  assert.match(buildScript, /EVOPILOT_RELEASE_CHECK_ALREADY_PASSED === "true"/);
+  assert.match(buildScript, /process\.env\.CI !== "true"/);
+});
+
 test("WorkBuddy acceptance grants only the MCP tools required by the selected scenario", () => {
   const script = fs.readFileSync(path.join(root, "scripts/validate-workbuddy-package.mjs"), "utf8");
   assert.match(script, /const allowedTools = exerciseLlmInitialization/);

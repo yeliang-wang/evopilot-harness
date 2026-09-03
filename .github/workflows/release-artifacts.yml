@@ -107,11 +107,19 @@ jobs:
           fi
 
       - name: Restore release source checkout
-        run: git restore harness-registry.yaml published
+        run: |
+          set -euo pipefail
+          git restore --worktree --staged .
+          STATUS="$(git status --porcelain)"
+          if [ -n "$STATUS" ]; then
+            echo "::error::Release checkout is not clean after restoring generated validation outputs"
+            git status --short
+            exit 1
+          fi
 
       - name: Build release artifacts
         env:
-          CI: "false"
+          EVOPILOT_RELEASE_CHECK_ALREADY_PASSED: "true"
         run: GITHUB_REF_NAME="$RELEASE_TAG" npm run release:artifact
 
       - name: Verify release artifacts

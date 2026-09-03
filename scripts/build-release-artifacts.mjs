@@ -107,7 +107,13 @@ if (dirty && process.env.CI === "true") {
   throw new Error(`Release artifact build requires a clean checkout:\n${dirty}`);
 }
 
-run("npm", ["run", "check"], { stdio: "inherit" });
+if (process.env.EVOPILOT_RELEASE_CHECK_ALREADY_PASSED === "true") {
+  if (process.env.CI !== "true") {
+    throw new Error("EVOPILOT_RELEASE_CHECK_ALREADY_PASSED is accepted only in CI");
+  }
+} else {
+  run("npm", ["run", "check"], { stdio: "inherit" });
+}
 
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(outDir, { recursive: true });
