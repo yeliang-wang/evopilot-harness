@@ -155,6 +155,7 @@ test("release artifact workflow restores a clean tag checkout and reuses only a 
   assert.match(workflowText, /git restore --worktree --staged \./);
   assert.match(workflowText, /git status --porcelain/);
   assert.match(workflowText, /EVOPILOT_RELEASE_CHECK_ALREADY_PASSED: "true"/);
+  assert.match(workflowText, /PYTHONDONTWRITEBYTECODE: "1"/);
   assert.doesNotMatch(workflowText, /CI: "false"/);
   assert.match(buildScript, /EVOPILOT_RELEASE_CHECK_ALREADY_PASSED === "true"/);
   assert.match(buildScript, /process\.env\.CI !== "true"/);
