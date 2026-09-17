@@ -24,7 +24,7 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.5.0",
+    "publishedBaseline": "4.7.0",
     "currentWorkingVersion": "4.6.0",
     "versionsEvolveIndependently": true,
     "productCapabilitiesEvolveCumulatively": true,

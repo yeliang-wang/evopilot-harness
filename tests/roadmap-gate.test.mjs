@@ -16,7 +16,7 @@ test("Roadmap Gate validates the contract and declared package version", () => {
 
 test("Roadmap Gate binds the cumulative Harness convergence sequence and independent authority", () => {
   const roadmap = JSON.parse(fs.readFileSync(path.join(root, "governance/roadmap.yaml"), "utf8"));
-  assert.equal(roadmap.versionPolicy.publishedBaseline, "4.5.0");
+  assert.equal(roadmap.versionPolicy.publishedBaseline, "4.7.0");
   assert.equal(roadmap.versionPolicy.currentWorkingVersion, "4.6.0");
   assert.deepEqual(roadmap.seriesConvergenceParticipation.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0"]);
   assert.equal(roadmap.seriesConvergenceParticipation.terminalVersion, "4.8.0");
