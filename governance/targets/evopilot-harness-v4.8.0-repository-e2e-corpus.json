@@ -2,7 +2,7 @@
   "schema": "evopilot-evolution-target/v1",
   "id": "evopilot-harness-v4.8.0-repository-e2e-corpus",
   "revision": 1,
-  "status": "APPROVED",
+  "status": "VALIDATED",
   "intent": "Add a dedicated repository-local tests/e2e corpus for evopilot-harness, with reusable executable scenarios and version-bound manifests for v4.6.0, v4.7.0, and v4.8.0 that project authoritative Evolution Target acceptance contracts and reference immutable external evidence without duplicating authority.",
   "objective": "Make the already-governed v4.6.0 through v4.8.0 E2E contracts discoverable, mechanically verifiable, and reproducible from one repository-local entry point while preserving governance/targets as the sole acceptance authority and leaving released product semantics unchanged.",
   "evidence": [
@@ -90,8 +90,8 @@
       "critical": true,
       "criterion": "One repository-local command discovers and validates the dedicated tests/e2e corpus without requiring private external evidence to be copied into the checkout.",
       "requiredEvidence": "passing automated invocation of the repository-local E2E validator and its test suite from the repository root",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     },
     {
       "id": "F02",
@@ -99,8 +99,8 @@
       "critical": true,
       "criterion": "The 4.6.0, 4.7.0, and 4.8.0 manifests bind exact authoritative Target file digests and project every declared RC01-RC05 case without inventing or dropping a case.",
       "requiredEvidence": "validator output proving exact Target digest, version, case-id, and coverage agreement for all three manifests",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/repository-e2e-validation-result.json#sha256:2a6bd03c2423118162a579a1647916df639c098f27c1bb82c32cdf42192795d0"]
     },
     {
       "id": "F03",
@@ -108,8 +108,8 @@
       "critical": false,
       "criterion": "Reusable scenario metadata and runner contracts are shared without duplicating version-specific authoritative acceptance semantics.",
       "requiredEvidence": "structural tests and documentation-link validation showing manifests reference shared schemas or runners and authoritative Target locations",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     },
     {
       "id": "F04",
@@ -117,8 +117,8 @@
       "critical": true,
       "criterion": "Target digest drift, unsupported versions, missing or reordered RC cases, unsafe evidence references, incomplete mappings, and authority duplication fail closed with deterministic diagnostics.",
       "requiredEvidence": "negative automated cases covering each declared fail-closed condition",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     },
     {
       "id": "C01",
@@ -126,8 +126,8 @@
       "critical": true,
       "criterion": "governance/targets remains the sole authority for acceptance meaning and status; tests/e2e is an executable projection and cannot approve, validate, release, or rewrite a Target.",
       "requiredEvidence": "schema, validator, architecture guard, and documentation checks proving one-way read-only projection",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     },
     {
       "id": "C02",
@@ -135,8 +135,8 @@
       "critical": true,
       "criterion": "A contributor can locate version coverage, run validation, and identify the authoritative Target and evidence references from tests/e2e without reconstructing the prior release conversation.",
       "requiredEvidence": "repository-local README, manifest index, command transcript, and documentation-link validation",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     },
     {
       "id": "C03",
@@ -144,8 +144,8 @@
       "critical": false,
       "criterion": "External execution evidence remains referenced by immutable locator and digest, while secrets, private transcripts, mutable state, and large raw artifacts remain outside the repository.",
       "requiredEvidence": "positive and negative validator tests for evidence reference shape and prohibited embedded evidence fields",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     }
   ],
   "acceptanceLineage": [
@@ -162,8 +162,8 @@
       "origin": "evopilot-harness-v4.8.0-scalable-semantic-interoperability@revision-1/released-cumulative-closure",
       "criterion": "The released evopilot-harness 4.8.0 Target, its cumulative acceptance closure, and its authority boundaries remain unchanged while repository-local E2E projections are added.",
       "requiredEvidence": "unchanged authoritative Target digest, passing Roadmap and architecture gates, full existing test suite, and package-content comparison showing no released product surface change",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     }
   ],
   "regressionImpact": [
@@ -183,8 +183,8 @@
       "terminalState": "v4.6.0 manifest validation passes and reports the exact Target digest and five projected case ids",
       "prohibitedEffects": ["Target mutation", "external evidence copying", "publication", "source-project execution"],
       "requiredEvidence": "machine-readable validator result plus node:test coverage for the v4.6.0 projection",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/repository-e2e-validation-result.json#sha256:2a6bd03c2423118162a579a1647916df639c098f27c1bb82c32cdf42192795d0"]
     },
     {
       "id": "RC02",
@@ -195,8 +195,8 @@
       "terminalState": "v4.7.0 manifest validation passes and reports the exact Target digest and five projected case ids",
       "prohibitedEffects": ["Target mutation", "external evidence copying", "publication", "source-project execution"],
       "requiredEvidence": "machine-readable validator result plus node:test coverage for the v4.7.0 projection",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/repository-e2e-validation-result.json#sha256:2a6bd03c2423118162a579a1647916df639c098f27c1bb82c32cdf42192795d0"]
     },
     {
       "id": "RC03",
@@ -207,8 +207,8 @@
       "terminalState": "v4.8.0 manifest validation passes and reports the exact Target digest, five projected case ids, and immutable evidence locators",
       "prohibitedEffects": ["Target mutation", "external evidence copying", "publication", "source-project execution"],
       "requiredEvidence": "machine-readable validator result plus node:test coverage for the v4.8.0 projection",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/repository-e2e-validation-result.json#sha256:2a6bd03c2423118162a579a1647916df639c098f27c1bb82c32cdf42192795d0"]
     },
     {
       "id": "RC04",
@@ -219,8 +219,8 @@
       "terminalState": "every invalid fixture fails closed with its deterministic diagnostic and no repository or external mutation",
       "prohibitedEffects": ["accepting stale bindings", "writing governance status", "reading secrets", "network access", "publication"],
       "requiredEvidence": "negative node:test matrix and machine-readable failure classifications",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     },
     {
       "id": "RC05",
@@ -231,16 +231,16 @@
       "terminalState": "all version projections and negative tests pass, the released Target files remain byte-identical, and npm package contents exclude repository-only E2E governance assets",
       "prohibitedEffects": ["product behavior change", "Target mutation", "external evidence copying", "network dependency", "package publication"],
       "requiredEvidence": "aggregate command transcript, full repository validation, unchanged Target digests, and npm package-content verification",
-      "status": "PENDING",
-      "evidenceRefs": []
+      "status": "PASSED",
+      "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
     }
   ],
   "noRegressionRequired": true,
   "acceptanceClosurePolicy": "ALL_REQUIRED_PASS",
   "failurePolicy": "RETURN_TO_IMPLEMENTATION_AND_REVALIDATE",
   "noRegression": {
-    "status": "PENDING",
-    "evidenceRefs": []
+    "status": "PASSED",
+    "evidenceRefs": ["local://91a703b9ce4a/acceptance-result.json#sha256:383fd4c2f184bacbaf4439279b05ba4a3cbb18b3d6b8c79010659d39808d6452"]
   },
   "approvals": {
     "target": {
