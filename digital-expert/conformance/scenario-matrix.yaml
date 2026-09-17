@@ -12,6 +12,11 @@ evidenceSources:
   - comparisonFile
   - calibrationCaseSet
   - learningOperations
+  - professionalPacks
+  - projectOntologyProposal
+  - baseSnapshot
+  - externalSemanticEvidence
+  - certificationEvidence
 terminalDecisions:
   - TAXONOMY_MATCHED
   - TAXONOMY_EXTENSION_SUGGESTED
@@ -55,6 +60,27 @@ engineOperations:
   - ontology.validate
   - ontology.diff
   - ontology.publish
+  - semantic.foundation.inspect
+  - semantic.candidates.inspect
+  - semantic.grounding.inspect
+  - semantic.compatibility.inspect
+  - pack.scaffold.inspect
+  - pack.inspect
+  - pack.resolve.inspect
+  - pack.lifecycle.create
+  - pack.lifecycle.transition
+  - pack.benchmark.inspect
+  - pack.gold-case.inspect
+  - pack.certification.inspect
+  - semantic.evidence-adapter.inspect
+  - semantic.evidence.import.inspect
+  - project-ontology.proposal.inspect
+  - project-ontology.proposal.transition
+  - project-ontology.snapshot.resolve
+  - project-ontology.projections.inspect
+  - project-ontology.skill.inspect
+  - project-ontology.artifact.publish
+  - project-ontology.artifact.transition
   - policy.inspect
   - policy.validate
   - policy.diff
@@ -162,6 +188,22 @@ coverage:
       testFile: tests/v4.2.test.mjs
       testName: v4.2 Engine exposes the complete governed professional learning operation family
       marker: learning.ingest
+    professionalPacks: &project_ontology_sources
+      testFile: tests/v4.7-project-ontology.test.mjs
+      testName: v4.7 Engine adapter exposes complete governed Pack and Project Ontology operation family
+      marker: professionalPacks
+    projectOntologyProposal:
+      <<: *project_ontology_sources
+      marker: projectOntologyProposal
+    baseSnapshot:
+      <<: *project_ontology_sources
+      marker: baseSnapshot
+    externalSemanticEvidence:
+      <<: *project_ontology_sources
+      marker: externalSemanticEvidence
+    certificationEvidence:
+      <<: *project_ontology_sources
+      marker: certificationEvidence
   terminalDecisions:
     TAXONOMY_MATCHED: &classification_decisions
       testFile: tests/v4.5-classification.test.mjs
@@ -296,6 +338,71 @@ coverage:
     ontology.publish:
       <<: *maintenance_operations
       marker: ontology.publish
+    semantic.foundation.inspect: &semantic_operations
+      testFile: tests/v4.6-semantic-grounding.test.mjs
+      testName: v4.6 semantic diagnostics are exposed through the Engine adapter
+      marker: semantic.foundation.inspect
+    semantic.candidates.inspect:
+      <<: *semantic_operations
+      marker: semantic.candidates.inspect
+    semantic.grounding.inspect:
+      <<: *semantic_operations
+      marker: semantic.grounding.inspect
+    semantic.compatibility.inspect:
+      <<: *semantic_operations
+      marker: semantic.compatibility.inspect
+    pack.scaffold.inspect: &project_ontology_operations
+      testFile: tests/v4.7-project-ontology.test.mjs
+      testName: v4.7 Engine adapter exposes complete governed Pack and Project Ontology operation family
+      marker: pack.scaffold.inspect
+    pack.inspect:
+      <<: *project_ontology_operations
+      marker: pack.inspect
+    pack.resolve.inspect:
+      <<: *project_ontology_operations
+      marker: pack.resolve.inspect
+    pack.lifecycle.create:
+      <<: *project_ontology_operations
+      marker: pack.lifecycle.create
+    pack.lifecycle.transition:
+      <<: *project_ontology_operations
+      marker: pack.lifecycle.transition
+    pack.benchmark.inspect:
+      <<: *project_ontology_operations
+      marker: pack.benchmark.inspect
+    pack.gold-case.inspect:
+      <<: *project_ontology_operations
+      marker: pack.gold-case.inspect
+    pack.certification.inspect:
+      <<: *project_ontology_operations
+      marker: pack.certification.inspect
+    semantic.evidence-adapter.inspect:
+      <<: *project_ontology_operations
+      marker: semantic.evidence-adapter.inspect
+    semantic.evidence.import.inspect:
+      <<: *project_ontology_operations
+      marker: semantic.evidence.import.inspect
+    project-ontology.proposal.inspect:
+      <<: *project_ontology_operations
+      marker: project-ontology.proposal.inspect
+    project-ontology.proposal.transition:
+      <<: *project_ontology_operations
+      marker: project-ontology.proposal.transition
+    project-ontology.snapshot.resolve:
+      <<: *project_ontology_operations
+      marker: project-ontology.snapshot.resolve
+    project-ontology.projections.inspect:
+      <<: *project_ontology_operations
+      marker: project-ontology.projections.inspect
+    project-ontology.skill.inspect:
+      <<: *project_ontology_operations
+      marker: project-ontology.skill.inspect
+    project-ontology.artifact.publish:
+      <<: *project_ontology_operations
+      marker: project-ontology.artifact.publish
+    project-ontology.artifact.transition:
+      <<: *project_ontology_operations
+      marker: project-ontology.artifact.transition
     policy.inspect:
       <<: *maintenance_operations
       marker: policy.inspect

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/pack-lifecycle-record-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "stage", "history", "authority", "recordDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-pack-lifecycle-record/v1"},
+    "stage": {"enum": ["DRAFT", "APPLIED", "IN_REVIEW", "APPROVED", "PUBLISHED", "INSTALLED", "ACTIVE", "SUPERSEDED", "ROLLED_BACK", "DEPRECATED"]},
+    "history": {"type": "array"},
+    "authority": {"type": "object"},
+    "recordDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

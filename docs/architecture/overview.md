@@ -52,7 +52,8 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Runtime | Engine, Workspace, CLI, Harness Hub | Engine code is read-only; mutable state belongs in the Workspace. |
 | Agent Operation | Digital Expert Core, generated Agent Adapters, local Harness Operation Server, AgentOperationSession, External Agent Host | Conversation and transport cannot create Engine verdicts, identity, approval, publication authority, or source execution. |
 | Evidence | Source Ingestion, Snapshot/Redaction, Evidence Graph | `SourceDescriptor/v1` normalizes local, GitHub and ordered-set inputs. GitHub is bounded read-only Git acquisition into the external Workspace; inputs remain evidence only, are never executed, and never gain publication authority. |
-| Classification | Semantic Foundation/Taxonomy Resolution, taxonomy-blind Source hypothesis, multi-signal retrieval, one-call Advisor evidence, deterministic decision aggregate, explicit handoff | User schemes provide vocabulary only. The Engine owns validation and the final result; classification never proves Harness Eligibility. |
+| Classification and grounding | Semantic Foundation/Taxonomy Resolution, taxonomy-blind Source hypothesis, multi-signal retrieval, one-call Advisor evidence, deterministic classification, evidence-bound professional candidates, six-outcome Ontology grounding, explicit handoff | User schemes and concept contexts provide vocabulary only. The Engine owns validation and deterministic results; neither classification nor grounding proves Harness Eligibility. |
+| Semantic assets | Declarative Domain/Product/Organization/Harness Packs, Project Overlay, Proposal, resolved snapshot, projections, Artifact Set, ProjectOntologySkill, lifecycle records | Packs are non-executable. Draft, apply, Review, Approval, Publication, installation, activation, successor, rollback, and deprecation remain separate. EvoPilot consumes immutable published assets read-only. |
 | Reasoning | MatchPolicyPack, Eligibility Gate, Retrieval/Scoring, Decision Aggregator, Asset Delta Analyzer | Thresholds, exact before/after state, and deterministic impact rules are versioned and auditable, not hidden model decisions. |
 | Advisor | AdvisorPolicyPack, GLM Advisor, Proposal Review Engine | Evidence projection, independent Proposal assessment, bounded contract repair, citations, attempts, verdicts, and token metadata are Policy-governed and auditable. |
 | Feedback Evidence | Package validator, immutable-binding resolver, content-addressed store, effectiveness aggregator | Reads approved execution outcomes; never executes projects or mutates assets. |
@@ -62,7 +63,7 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
 | Compatibility | Migration/Rollback | v2 inputs migrate into v3 without redefining the canonical asset. |
 
-ADR 0001 defines 24 core Engine modules. [ADR 0005](adr/0005-source-first-business-classification.md) replaces module 8 OntologyPack with Semantic Foundation/Taxonomy Resolution without changing the module count. [ADR 0003](adr/0003-controlled-comparative-evidence.md) adds four controlled comparative-evidence modules, producing 28 enforced Engine module boundaries. [ADR 0002](adr/0002-agent-native-harness-operations.md) adds five operating boundaries, for 33 accepted product and operating boundaries. [ADR 0004](adr/0004-deterministic-business-centric-interaction.md) refines their interaction contract without adding or moving product ownership.
+ADR 0001 defines 24 core Engine modules. [ADR 0005](adr/0005-source-first-business-classification.md) replaces module 8 OntologyPack with Semantic Foundation/Taxonomy Resolution; [ADR 0006](adr/0006-professional-reasoning-and-ontology-grounding.md) deepens grounding; and [ADR 0007](adr/0007-governed-project-ontology-and-professional-packs.md) adds the declarative Semantic Asset Plane inside the same module without adding an authority plane or changing the module count. [ADR 0003](adr/0003-controlled-comparative-evidence.md) adds four controlled comparative-evidence modules, producing 28 enforced Engine module boundaries. [ADR 0002](adr/0002-agent-native-harness-operations.md) adds five operating boundaries, for 33 accepted product and operating boundaries. [ADR 0004](adr/0004-deterministic-business-centric-interaction.md) refines their interaction contract without adding or moving product ownership.
 
 ## Workspace Boundary
 
@@ -76,6 +77,8 @@ EVOPILOT_HARNESS_HOME/
     builtin/
     organization/
   ontology/
+    packs/
+    project-artifacts/
   policies/
     matcher/
     advisor/
@@ -122,7 +125,7 @@ Matching can expose Profile metadata. Execution must bind a published Bundle so 
 |---|---|
 | Engine | CLI, schemas, algorithms, Hub, or runtime code changes. |
 | Harness Asset | A Component, Profile, or Bundle evolves. |
-| Ontology | Concepts, conflicts, roles, or task relationships change. |
+| Ontology | Pack, resolved project concepts, conflicts, roles, relationships, projection, or Artifact Set identity changes. |
 | Policy | Eligibility, weights, thresholds, risks, Advisor projection, repair, or output-contract changes. |
 | Evaluation | Reviewed cases or acceptance expectations change. |
 | Comparison Policy | Exact-context requirements, sample thresholds, uncertainty, safety gates, or calibration limits change. |

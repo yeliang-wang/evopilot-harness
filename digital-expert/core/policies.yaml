@@ -75,6 +75,38 @@ classification:
   matchedResultExplicitContinue: required
   provesHarnessEligibility: false
   automaticTaxonomyMutation: deny
+semanticGrounding:
+  foundation: engine-owned-minimal-meta-model
+  businessValues: user-evidence-owned
+  outcomes: [RESOLVED, UNRESOLVED_CONCEPT, AMBIGUOUS_CONCEPT, CONFLICTING_CONCEPT, EXTENSION_REQUIRED, EVIDENCE_INSUFFICIENT]
+  reanalysis: append-only-and-explicit
+  llmAuthoritativeConceptIds: deny
+  sourceExecution: deny
+  provesHarnessEligibility: false
+  mayApproveOrPublish: false
+  compatibilityReportMayOverrideEligibility: false
+  harnessBundleRequirements: optional-versioned-immutable-closure
+projectOntology:
+  professionalPacks: declarative-non-executable
+  executableFields: deny
+  importBinding: exact-version-and-digest
+  dependencyCycles: fail-closed
+  namespaceCollisions: fail-closed
+  incompatibleOverrides: fail-closed
+  privateOrganizationPackLeakage: deny
+  importedExternalEvidence: inactive-until-separately-reviewed
+  proposalApproval: required-before-resolution
+  resolvedSnapshot: immutable-exact-closure
+  projections: [YAML, OWL, RDF_TURTLE, JSON_LD, SHACL, SWRL]
+  swrlWithoutBoundedRules: non-applicable
+  generatedSkill: read-only-consumer
+  generatedSkillSoleTruthStore: false
+  lifecycleTransitions: independently-authorized
+  publicationAuthorization: required-separate
+  installationAuthorization: required-separate
+  activationAuthorization: required-separate
+  certificationGrantsTrustOrActivation: false
+  mayCallEvoPilotRuntime: false
 fallback:
   directHumanCli: deny
   alternateModel: deny

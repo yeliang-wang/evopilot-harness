@@ -22,6 +22,8 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 | `catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify` | Publish and verify v3 Catalogs. |
 | `registry v3-validate|v3-sign|v3-verify` | Validate Catalog-root discovery and Registry signatures. |
 | `ontology inspect|validate|diff|publish` | Versioned Ontology Pack lifecycle. |
+| `pack scaffold|inspect|resolve|lifecycle-init|transition|benchmark|gold-case|certify|evidence-adapter|import-evidence` | Declarative Professional Pack authoring diagnostics, exact resolution, governed lifecycle, reviewed evidence, certification, and inactive external semantic imports. |
+| `project-ontology propose|transition|resolve|project|skill|publish|artifact-transition` | Project Ontology Proposal, immutable snapshot, deterministic projections, Skill, separately authorized publication, and post-publication lifecycle. |
 | `policy inspect|validate|diff|publish` | Matcher, Advisor, or Comparison Policy Pack lifecycle. |
 | `llm v3-models` | Read redacted GLM configuration readiness from manual `models.json`; no network call. |
 | `llm v3-doctor` | Make a minimal live GLM request and report redacted connectivity, model, usage, timing, and failure type. |
@@ -692,6 +694,40 @@ node src/index.mjs evolve corpus \
 ```
 
 This is a one-command wrapper around `corpus plan`. It still stops at `REVIEW_REQUIRED` unless `--approve-and-publish`, `--confirmed-by`, and `--confirmation` are supplied.
+
+## Semantic Grounding Diagnostics
+
+The v4.6 read-only semantic diagnostics expose the same Engine contracts used by Agent hosts. They never grant Harness Eligibility, Proposal, approval, or publication authority:
+
+```bash
+evopilot-harness semantic foundation --workspace /absolute/workspace --json
+evopilot-harness semantic candidates --workspace /absolute/workspace --hypothesis hypothesis.json --json
+evopilot-harness semantic ground --workspace /absolute/workspace --candidate-set candidates.json --concepts concepts.yaml --json
+evopilot-harness semantic compatibility --workspace /absolute/workspace --requirements requirements.yaml --grounding-result grounding.json --json
+```
+
+## Governed Project Ontology
+
+v4.7 adds declarative Pack and Project Ontology diagnostics. Pack contents are non-executable; all imports bind exact ids, versions, and digests. Low-level transitions require the current digest and an explicit actor. Ordinary Agent operation uses the Digital Expert and stdio MCP Session gates.
+
+```bash
+evopilot-harness pack scaffold --file domain-pack-draft.yaml --workspace /absolute/workspace --json
+evopilot-harness pack inspect --file product-pack.yaml --available-pack domain-pack.yaml --workspace /absolute/workspace --json
+evopilot-harness pack resolve --pack domain-pack.yaml --pack product-pack.yaml --target-root DOMAIN_TEAM --workspace /absolute/workspace --json
+evopilot-harness pack lifecycle-init --file lifecycle-binding.yaml --pack product-pack.yaml --workspace /absolute/workspace --json
+evopilot-harness pack transition --record lifecycle.json --transition REQUEST_REVIEW --actor author-id --expected-record-digest sha256:... --workspace /absolute/workspace --json
+evopilot-harness pack benchmark --file benchmark.yaml --workspace /absolute/workspace --json
+evopilot-harness pack gold-case --file gold-case.yaml --workspace /absolute/workspace --json
+evopilot-harness pack certify --file certification.yaml --pack product-pack.yaml --workspace /absolute/workspace --json
+evopilot-harness pack evidence-adapter --file evidence-adapter.yaml --workspace /absolute/workspace --json
+evopilot-harness pack import-evidence --file external-evidence.yaml --workspace /absolute/workspace --json
+evopilot-harness project-ontology propose --file project-ontology-input.yaml --workspace /absolute/workspace --json
+evopilot-harness project-ontology resolve --proposal approved-proposal.yaml --expected-proposal-digest sha256:... --foundation-digest sha256:... --workspace /absolute/workspace --json
+evopilot-harness project-ontology project --snapshot resolved-snapshot.yaml --workspace /absolute/workspace --json
+evopilot-harness project-ontology skill --snapshot resolved-snapshot.yaml --workspace /absolute/workspace --json
+```
+
+`project-ontology publish` requires a separate publication document with `decision: AUTHORIZED` and an exact authorization digest. Publication does not install or activate the artifact. Those are independent `artifact-transition` actions.
 
 ## Hub
 

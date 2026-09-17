@@ -47,6 +47,20 @@ const required = [
   "schemas/professional-completeness-rescore-record-v1.schema.json",
   "schemas/contribution-evidence-package-v1.schema.json",
   "schemas/domain-role-proposal-v1.schema.json",
+  "schemas/professional-pack-v1.schema.json",
+  "schemas/professional-pack-inspection-v1.schema.json",
+  "schemas/pack-benchmark-v1.schema.json",
+  "schemas/pack-gold-case-v1.schema.json",
+  "schemas/pack-certification-v1.schema.json",
+  "schemas/external-semantic-evidence-adapter-v1.schema.json",
+  "schemas/project-ontology-proposal-v1.schema.json",
+  "schemas/resolved-project-ontology-snapshot-v1.schema.json",
+  "schemas/project-ontology-artifact-set-v1.schema.json",
+  "schemas/project-ontology-skill-v1.schema.json",
+  "src/v4/semantics/professional-packs.mjs",
+  "src/v4/semantics/project-ontology.mjs",
+  "ontology/examples/example-finance-domain.yaml",
+  "ontology/examples/example-crm-product.yaml",
   "policies/completeness/default.yaml",
   "digital-expert/expert-manifest.yaml",
   "digital-expert/manifest.lock.json",
@@ -73,7 +87,7 @@ for (const file of files) {
   assert.ok(!forbiddenExact.has(file), `${file} must not be packaged`);
 }
 
-assert.ok(files.length <= 260, `npm package contains too many files: ${files.length}`);
+assert.ok(files.length <= 300, `npm package contains too many files: ${files.length}`);
 assert.ok(packed.unpackedSize <= 2_500_000, `npm package is too large when unpacked: ${packed.unpackedSize}`);
 
 const secretPatterns = [

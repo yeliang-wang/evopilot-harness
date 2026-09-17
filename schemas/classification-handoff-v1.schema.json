@@ -13,6 +13,8 @@
     "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
     "taxonomyDigest": { "$ref": "#/$defs/digest" },
     "hypothesisDigest": { "$ref": "#/$defs/digest" },
+    "ontologyFoundationDigest": { "$ref": "#/$defs/digest" },
+    "semanticCandidateSetDigest": { "$ref": "#/$defs/digest" },
     "perAxisResultDigests": { "type": "object", "additionalProperties": false, "required": ["domain", "product"], "properties": { "domain": { "$ref": "#/$defs/digest" }, "product": { "$ref": "#/$defs/digest" } } },
     "analysisResultDigest": { "$ref": "#/$defs/digest" },
     "classificationContextDigest": { "$ref": "#/$defs/digest" },

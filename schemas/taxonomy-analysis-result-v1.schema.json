@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://evopilot.dev/schemas/taxonomy-analysis-result-v1.schema.json",
   "type": "object", "additionalProperties": false,
-  "required": ["schema", "validation", "analysisAttemptDigest", "sourceDescriptor", "sourceDescriptorDigest", "sourceResolution", "sourceResolutionDigest", "sourceSnapshotDigest", "evidenceGraphDigest", "taxonomyDigest", "hypothesisDigest", "foundation", "resolvedTaxonomySnapshot", "sourceSnapshot", "evidenceGraph", "sourceConceptHypothesis", "retrieval", "advisor", "axes", "aggregate", "evolutionContext", "presentation", "authority", "nextOperations", "analysisResultDigest"],
+  "required": ["schema", "validation", "analysisAttemptDigest", "sourceDescriptor", "sourceDescriptorDigest", "sourceResolution", "sourceResolutionDigest", "sourceSnapshotDigest", "evidenceGraphDigest", "taxonomyDigest", "hypothesisDigest", "foundation", "resolvedTaxonomySnapshot", "sourceSnapshot", "evidenceGraph", "sourceConceptHypothesis", "ontologyFoundation", "semanticCandidateSet", "retrieval", "advisor", "axes", "aggregate", "evolutionContext", "presentation", "authority", "nextOperations", "analysisResultDigest"],
   "properties": {
     "schema": { "const": "evopilot-harness-taxonomy-analysis-result/v1" },
     "validation": { "type": "object" },
@@ -20,6 +20,8 @@
     "sourceSnapshot": { "type": "object" },
     "evidenceGraph": { "type": "object" },
     "sourceConceptHypothesis": { "type": "object" },
+    "ontologyFoundation": { "type": "object" },
+    "semanticCandidateSet": { "type": "object" },
     "retrieval": { "type": "object" },
     "advisor": { "type": "object" },
     "axes": { "type": "object", "required": ["domain", "product"] },

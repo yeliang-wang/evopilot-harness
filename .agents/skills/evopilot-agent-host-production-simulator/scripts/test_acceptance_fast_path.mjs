@@ -106,6 +106,24 @@ try {
   const rejected = run("evaluate-replay", "--state", state, "--replay-manifest", replayManifest, "--current-frame", changedFrameFile);
   assert.equal(rejected.status, 4);
   assert.equal(JSON.parse(rejected.stdout).status, "FAIL");
+
+  const repairBinding = write("repair-binding.json", {
+    schema: "evopilot-candidate-acceptance-binding/v1",
+    candidate: { id: "evopilot-v4.0.0-candidate-003" },
+    targetManifest: { id: "target-manifest" }
+  });
+  const repairStages = write("repair-stages.json", [{ id: "PACKAGE_VERIFY", kind: "MACHINE" }]);
+  const repairState = path.join(root, "repair-state.json");
+  assert.equal(run("init", "--state", repairState, "--candidate-binding", repairBinding, "--target-manifest", targetManifest, "--acceptance-plan", plan, "--stage-plan", repairStages).status, 0);
+  const productEvidence = write("product-failure.json", { status: "FAIL", defect: "source archive omitted required governed inputs" });
+  const productFailure = run("record", "--state", repairState, "--stage", "PACKAGE_VERIFY", "--result", "FAILED", "--failure-class", "PRODUCT_DEFECT_REPAIRABLE", "--evidence", productEvidence);
+  assert.equal(productFailure.status, 0, productFailure.stderr);
+  const productStatus = JSON.parse(productFailure.stdout);
+  assert.equal(productStatus.failure.requiresNewCandidate, true);
+  assert.equal(productStatus.failure.campaignRecoveryEligible, true);
+  const forbiddenSameCandidateRetry = run("record", "--state", repairState, "--stage", "PACKAGE_VERIFY", "--result", "PASSED", "--retry", "true", "--evidence", correctedEvidence);
+  assert.equal(forbiddenSameCandidateRetry.status, 3);
+  assert.match(forbiddenSameCandidateRetry.stderr, /new Candidate binding and a new state file/);
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

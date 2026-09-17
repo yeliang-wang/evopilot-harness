@@ -3,12 +3,13 @@
   "$id": "https://evopilot.dev/schemas/harness-professional-analysis-v1.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "subject", "outcome", "capabilities", "extractionAlgorithm", "catalogComparison", "architectureAssessmentDigest", "confidence", "counterEvidence", "evaluationCoverage", "knownLimits", "authority", "professionalAnalysisDigest"],
+  "required": ["schema", "subject", "outcome", "capabilities", "professionalFacets", "extractionAlgorithm", "catalogComparison", "architectureAssessmentDigest", "confidence", "counterEvidence", "evaluationCoverage", "knownLimits", "authority", "professionalAnalysisDigest"],
   "properties": {
     "schema": { "const": "evopilot-harness-professional-analysis/v1" },
     "subject": { "type": "object" },
     "outcome": { "$ref": "#/$defs/outcome" },
     "capabilities": { "type": "array", "items": { "type": "object", "required": ["capabilityId", "sourceEvidence", "extractionMethod", "rationale", "confidence", "counterEvidence", "alternatives", "catalogRelationship", "evaluationCoverage", "knownLimits"] } },
+    "professionalFacets": { "type": "object", "additionalProperties": false, "required": ["businessObjects", "capabilities", "tasks", "roles", "constraints", "workflows", "failureModes", "recoveryStrategies", "validators", "positiveCases", "negativeCases", "alternatives", "risks", "expectedEffects", "missingEvidence"], "properties": { "businessObjects": { "$ref": "#/$defs/strings" }, "capabilities": { "$ref": "#/$defs/strings" }, "tasks": { "$ref": "#/$defs/strings" }, "roles": { "$ref": "#/$defs/strings" }, "constraints": { "$ref": "#/$defs/strings" }, "workflows": { "$ref": "#/$defs/strings" }, "failureModes": { "$ref": "#/$defs/strings" }, "recoveryStrategies": { "$ref": "#/$defs/strings" }, "validators": { "$ref": "#/$defs/strings" }, "positiveCases": { "$ref": "#/$defs/strings" }, "negativeCases": { "$ref": "#/$defs/strings" }, "alternatives": { "$ref": "#/$defs/strings" }, "risks": { "$ref": "#/$defs/strings" }, "expectedEffects": { "$ref": "#/$defs/strings" }, "missingEvidence": { "$ref": "#/$defs/strings" } } },
     "extractionAlgorithm": { "type": "array", "minItems": 8, "uniqueItems": true, "items": { "type": "string" } },
     "catalogComparison": { "type": "object", "required": ["recommendation", "existingRelationship", "alternatives", "rejectedAlternatives"] },
     "architectureAssessmentDigest": { "anyOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
@@ -21,6 +22,7 @@
   },
   "$defs": {
     "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
-    "outcome": { "enum": ["REUSE_EXISTING", "EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NOT_HARNESS_ELIGIBLE", "NEED_MORE_EVIDENCE", "NO_CHANGE", "REJECT"] }
+    "outcome": { "enum": ["REUSE_EXISTING", "EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "PROPOSE_NEW_PROFILE", "NOT_HARNESS_ELIGIBLE", "NEED_MORE_EVIDENCE", "NO_CHANGE", "REJECT"] },
+    "strings": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
   }
 }

@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
@@ -10,6 +12,29 @@ test("Roadmap Gate validates the contract and declared package version", () => {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.body.classification, "ALIGNED");
   assert.equal(result.body.intent, "static-roadmap-contract-validation");
+});
+
+test("Roadmap Gate binds the cumulative Harness convergence sequence and independent authority", () => {
+  const roadmap = JSON.parse(fs.readFileSync(path.join(root, "governance/roadmap.yaml"), "utf8"));
+  assert.equal(roadmap.versionPolicy.publishedBaseline, "4.5.0");
+  assert.equal(roadmap.versionPolicy.currentWorkingVersion, "4.6.0");
+  assert.deepEqual(roadmap.seriesConvergenceParticipation.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0"]);
+  assert.equal(roadmap.seriesConvergenceParticipation.terminalVersion, "4.8.0");
+  assert.equal(roadmap.seriesConvergenceParticipation.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority, false);
+  assert.equal(roadmap.seriesConvergenceParticipation.individualHarnessReleaseAuthorityRemainsIndependent, true);
+});
+
+test("Roadmap Gate fails closed when Harness convergence evidence or authority is weakened", () => {
+  for (const [name, mutate, pattern] of [
+    ["missing version", (roadmap) => { roadmap.seriesConvergenceParticipation.requiredVersionSequence.pop(); }, /4\.6\.0 to terminal 4\.8\.0/],
+    ["missing real E2E", (roadmap) => { roadmap.seriesConvergenceParticipation.everyVersionRequires = []; }, /per-version Harness requirement/],
+    ["merged release authority", (roadmap) => { roadmap.seriesConvergenceParticipation.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority = true; }, /must not grant or merge Harness authority/]
+  ]) {
+    const result = runWithRoadmap(mutate);
+    assert.equal(result.status, 1, `${name}: ${result.stderr}`);
+    assert.equal(result.body.classification, "INVALID");
+    assert.match(result.body.errors.join(" "), pattern);
+  }
 });
 
 test("Roadmap Gate allows approved execution feedback foundation work", () => {
@@ -24,6 +49,13 @@ test("Roadmap Gate allows repository evolution governance without changing Harne
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.body.classification, "ALIGNED");
   assert.ok(result.body.matchedStandingWork.includes("evopilot-harness-evolution-governance"));
+});
+
+test("Roadmap Gate aligns Harness participation in final semantic design convergence", () => {
+  const result = run(["--intent", "Implement final product design convergence with terminal cross-product convergence E2E"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.body.classification, "ALIGNED");
+  assert.deepEqual(result.body.matchedStandingWork, ["evopilot-harness-series-convergence-participation"]);
 });
 
 test("Roadmap Gate allows v3.4 evidence-driven Asset Delta and Evaluation closure", () => {
@@ -59,6 +91,13 @@ test("Roadmap Gate stops unplanned product capability work", () => {
   assert.equal(result.status, 2);
   assert.equal(result.body.classification, "UNPLANNED");
   assert.equal(result.body.approvalRequired, true);
+});
+
+test("Roadmap Gate does not let maintenance wording authorize a product capability", () => {
+  const result = run(["--intent", "Add hosted billing lifecycle and dependency maintenance automation"]);
+  assert.equal(result.status, 2);
+  assert.equal(result.body.classification, "UNPLANNED");
+  assert.ok(result.body.matchedStandingWork.includes("evopilot-harness-maintenance"));
 });
 
 test("Roadmap Gate blocks Goal Loop execution inside evopilot-harness", () => {
@@ -110,4 +149,22 @@ test("Roadmap Gate permits declared releases and rejects undeclared release line
 function run(args) {
   const result = spawnSync(process.execPath, ["scripts/roadmap-gate.mjs", ...args, "--json"], { cwd: root, encoding: "utf8" });
   return { ...result, body: JSON.parse(result.stdout) };
+}
+
+function runWithRoadmap(mutate) {
+  const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-roadmap-"));
+  const contractPath = path.join(tempDirectory, "roadmap.json");
+  const roadmap = JSON.parse(fs.readFileSync(path.join(root, "governance/roadmap.yaml"), "utf8"));
+  mutate(roadmap);
+  fs.writeFileSync(contractPath, `${JSON.stringify(roadmap, null, 2)}\n`);
+  try {
+    const result = spawnSync(process.execPath, ["scripts/roadmap-gate.mjs", "--json"], {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env, EVOPILOT_ROADMAP_CONTRACT: contractPath }
+    });
+    return { ...result, body: JSON.parse(result.stdout) };
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true });
+  }
 }

@@ -59,6 +59,7 @@ export function publishCatalog({ roots, out, catalogId = "organization", generat
       assetPath: `./${ensureRelative(output, destination).split(path.sep).join("/")}`,
       assetDigest: digest(record.asset),
       classification: record.asset.kind === "HarnessProfile" ? record.asset.spec.classification : bundleProfile?.spec.classification,
+      semanticRequirements: record.asset.kind === "HarnessBundle" && record.asset.spec.semanticRequirements ? { schema: record.asset.spec.semanticRequirements.schema, foundationDigest: record.asset.spec.semanticRequirements.foundationDigest, requirementsDigest: record.asset.spec.semanticRequirements.requirementsDigest, requiredConceptCount: record.asset.spec.semanticRequirements.requiredConcepts.length, prohibitedConceptCount: record.asset.spec.semanticRequirements.prohibitedConcepts.length } : undefined,
       exportAdapters: record.asset.kind === "HarnessBundle" ? (record.asset.spec.exports ?? []).map((item) => item.adapter) : undefined
     })));
   }

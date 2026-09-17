@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/project-ontology-skill-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "kind", "apiVersion", "metadata", "spec", "authority", "skillDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-project-ontology-skill/v1"},
+    "kind": {"const": "ProjectOntologySkill"},
+    "apiVersion": {"const": "semantics.evopilot.io/v1"},
+    "metadata": {"type": "object"},
+    "spec": {
+      "type": "object",
+      "required": ["snapshotDigest", "projectionSetDigest", "artifactSetManifestDigest", "conceptIndex", "instructions", "readOnly", "truthSource", "executable"],
+      "properties": {
+        "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "projectionSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "artifactSetManifestDigest": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"},
+        "conceptIndex": {"type": "array"},
+        "instructions": {"type": "array", "items": {"type": "string"}},
+        "readOnly": {"const": true},
+        "truthSource": {"const": "ResolvedProjectOntologySnapshot"},
+        "executable": {"const": false}
+      }
+    },
+    "authority": {"type": "object"},
+    "skillDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

@@ -30,9 +30,11 @@ const bindingByCase = new Map((portfolio.caseBindings ?? []).map((item) => [item
 const oracleBySourceId = new Map((portfolio.acceptanceOracles ?? []).map((item) => [item.sourceId, item]));
 const workBuddyCases = target.realCaseCoverage.filter((item) => item.hosts.some((host) => /WorkBuddy/i.test(host)));
 const sourceBindingOverrides = validateSourceBindings(sourceBindings, sourceBindingsPath, target, portfolioPath, workBuddyCases, sourceById);
-const realCaseIds = target.realCaseCoverage.map((item) => item.id);
-if (realCaseIds.length === 0) throw new Error("Target realCaseCoverage must be non-empty");
-const finalDeclaration = `${realCaseIds[0]}～${realCaseIds.at(-1)} 已完成`;
+const workBuddyCaseIds = workBuddyCases.map((item) => item.id);
+if (workBuddyCaseIds.length === 0) throw new Error("Target must declare at least one WorkBuddy real case");
+const finalDeclaration = workBuddyCaseIds.length === 1
+  ? `${workBuddyCaseIds[0]} WorkBuddy 已完成`
+  : `${workBuddyCaseIds[0]}～${workBuddyCaseIds.at(-1)} 已完成`;
 const exactGoal = "请使用 Harness全生命周期数字专家，基于本任务已绑定的精确 Source 执行该验收场景；只展示 Engine 生成的完整结论，并在每一个需要我决定的步骤停下。";
 
 const runbooks = workBuddyCases.map((item) => {
@@ -81,7 +83,7 @@ const runbooks = workBuddyCases.map((item) => {
       "At each Engine-owned human gate, inspect the complete current view and make only the separately authorized current decision.",
       "Perform only the restart, resume, retry, cancellation, publication or close actions declared by this scenario and separately authorized at that gate.",
       "Continue independently through every applicable frozen RC runbook without reporting per-case progress to Codex.",
-      `Only after the complete ${realCaseIds[0]}-${realCaseIds.at(-1)} range has been performed, send the final declaration ${finalDeclaration}.`
+      `Only after all declared WorkBuddy cases (${workBuddyCaseIds.join(", ")}) have been performed, send the final declaration ${finalDeclaration}.`
     ],
     terminalState: item.terminalState,
     prohibitedEffects: item.prohibitedEffects,
@@ -169,7 +171,7 @@ function fileDigest(file) { return `sha256:${crypto.createHash("sha256").update(
 function resolveCandidateBinding(value, target) {
   if (value?.schema === "evopilot-candidate-acceptance-binding/v1") {
     if (value.target?.id !== target.id || value.target?.revision !== target.revision || value.candidate?.sourceCheckoutUsed !== false) throw new Error("Candidate Acceptance Binding does not match the approved Target");
-    if (!/(?:^|-)candidate-[1-9]\d*$/.test(value.candidate?.id ?? "") || !/^sha256:[a-f0-9]{64}$/.test(value.candidate?.packageDigest ?? "") || !/^sha256:[a-f0-9]{64}$/.test(value.candidate?.manifestDigest ?? "")) throw new Error("Candidate Acceptance Binding identity is invalid");
+    if (!/(?:^|-)candidate-(?=\d*[1-9])\d+$/.test(value.candidate?.id ?? "") || !/^sha256:[a-f0-9]{64}$/.test(value.candidate?.packageDigest ?? "") || !/^sha256:[a-f0-9]{64}$/.test(value.candidate?.manifestDigest ?? "")) throw new Error("Candidate Acceptance Binding identity is invalid");
     return {
       id: value.candidate.id,
       packageDigest: value.candidate.packageDigest,

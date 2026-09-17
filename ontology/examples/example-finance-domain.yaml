@@ -1,0 +1,61 @@
+apiVersion: semantics.evopilot.io/v1
+kind: DomainOntologyPack
+metadata:
+  id: example-finance-domain
+  version: 1.0.0
+  name: Example Finance Domain
+  namespace: example.finance
+  root: COMMUNITY
+  visibility: PUBLIC
+  generation: 1
+  owner: evopilot-harness-example-maintainers
+  provenance:
+    author: evopilot-harness
+    reviewers: []
+    approvers: []
+    publishers: []
+    sourceRefs:
+      - docs://example-only
+  labels:
+    exampleOnly: "true"
+    universalAuthority: "false"
+  kind: DomainOntologyPack
+  digest: sha256:615df7665727ebb28bd4b362a22f6fb6003d0f3a1be6a98f14e01b2740c31465
+spec:
+  imports: []
+  concepts:
+    - conceptId: example.finance:account
+      label: Account
+      metaType: ENTITY
+      definition: An illustrative financial account; not universal business truth.
+      aliases: []
+      relationships: []
+      evidenceRefs:
+        - docs://example-only
+      replaces: null
+      deprecated: false
+    - conceptId: example.finance:reconciliation
+      label: Reconciliation
+      metaType: WORKFLOW
+      definition: An illustrative reconciliation workflow.
+      aliases: []
+      relationships: []
+      evidenceRefs:
+        - docs://example-only
+      replaces: null
+      deprecated: false
+  equivalences: []
+  replacements: []
+  deprecations: []
+  rules: []
+  shapes: []
+  harnessGuidance: []
+  authority:
+    declarativeOnly: true
+    executable: false
+    activationRequiresIndependentDecision: true
+status:
+  phase: DRAFT
+  conditions: []
+  observedGeneration: 1
+  engineOwned: true

@@ -16,7 +16,7 @@ function node(id, overrides = {}) {
   return { id, label: `label ${id}`, assignable: false, ...overrides };
 }
 
-function taxonomy({ namespace = "user.example", name = "classification", domains = [node("domain")], products = [node("product")], engineRange = ">=4.5.0 <4.6.0", requiredCapabilities = capabilities } = {}) {
+function taxonomy({ namespace = "user.example", name = "classification", domains = [node("domain")], products = [node("product")], engineRange = ">=4.5.0 <5.0.0", requiredCapabilities = capabilities } = {}) {
   return {
     apiVersion: "harness.evopilot.io/v1",
     kind: "Taxonomy",

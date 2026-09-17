@@ -34,10 +34,10 @@ try {
   };
   const binding = {
     schema: "evopilot-candidate-acceptance-binding/v1",
-    id: "evopilot-harness-v4.5.0-candidate-27-acceptance-binding-1",
+    id: "evopilot-harness-v4.5.0-candidate-027-acceptance-binding-1",
     target: { id: "test-target", revision: 99 },
     candidate: {
-      id: "evopilot-harness-v4.5.0-candidate-27",
+      id: "evopilot-harness-v4.5.0-candidate-027",
       packageDigest: `sha256:${"b".repeat(64)}`,
       manifestDigest: `sha256:${"c".repeat(64)}`,
       sourceCheckoutUsed: false
@@ -75,11 +75,26 @@ try {
   assert.equal(parsed.manifest.candidate.id, binding.candidate.id);
   assert.equal(parsed.manifest.sourceBindingsDigest, shaFile(path.join(root, "sourceBindings.json")));
   const runbook = JSON.parse(fs.readFileSync(path.join(root, "runbooks", "RC01.json"), "utf8"));
-  assert.equal(runbook.candidate.id, "evopilot-harness-v4.5.0-candidate-27");
-  assert.ok(runbook.workspace.endsWith("RC01-workspace-evopilot-harness-v4.5.0-candidate-27"));
+  assert.equal(runbook.candidate.id, "evopilot-harness-v4.5.0-candidate-027");
+  assert.ok(runbook.workspace.endsWith("RC01-workspace-evopilot-harness-v4.5.0-candidate-027"));
   assert.ok(!JSON.stringify(runbook).includes("candidate-10"));
   const overridden = JSON.parse(fs.readFileSync(path.join(root, "runbooks", "RC02.json"), "utf8"));
   assert.deepEqual(overridden.sources.map((source) => source.id), ["S1"]);
+
+  const singleCaseTarget = structuredClone(target);
+  singleCaseTarget.realCaseCoverage[0].hosts = ["Codex"];
+  fs.writeFileSync(path.join(root, "target.json"), `${JSON.stringify(singleCaseTarget, null, 2)}\n`);
+  const singleResult = spawnSync(process.execPath, [
+    path.join(import.meta.dirname, "generate_workbuddy_runbooks.mjs"),
+    "--target", path.join(root, "target.json"),
+    "--portfolio", path.join(root, "portfolio.json"),
+    "--candidate-binding", path.join(root, "binding.json"),
+    "--workspace-root", path.join(root, "workspaces"),
+    "--model-route", "configured-model",
+    "--check"
+  ], { encoding: "utf8" });
+  assert.equal(singleResult.status, 0, singleResult.stderr || singleResult.stdout);
+  assert.equal(JSON.parse(singleResult.stdout).manifest.finalDeclaration, "RC02 WorkBuddy 已完成");
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

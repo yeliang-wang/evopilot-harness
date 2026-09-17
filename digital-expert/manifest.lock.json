@@ -1,32 +1,32 @@
 {
   "schema": "evopilot-harness-digital-expert-lock/v1",
-  "expertVersion": "4.5.0",
-  "coreDigest": "sha256:747b7f5ecbd34c34208652a9bdf446ac811ecbca04e51d169fef668926ec62bd",
+  "expertVersion": "4.7.0",
+  "coreDigest": "sha256:e1b2b408032d5a4f19759544712261a190debcf4ca128e583be3a822931e50c7",
   "files": [
     {
       "path": "adapters/claude-code/CLAUDE.md",
-      "sha256": "sha256:d634e7c9b2909d74fefc8ee32048001c72cd7221a7aee35ff134cdb99cccc7f6",
-      "bytes": 37973
+      "sha256": "sha256:3d08f96fc2738357a977ff58f5a3f661d10c8dae43a7d6a2838757eabe73a4b0",
+      "bytes": 42224
     },
     {
       "path": "adapters/codex/SKILL.md",
-      "sha256": "sha256:5962f516747f88b1983a4694b0076d7977ffd3da2d4da00bee35af90cf002d0d",
-      "bytes": 38194
+      "sha256": "sha256:086325a43688bb888a5c13679859feaa32a17fd62f95e35c3f8f2e4e47a4a401",
+      "bytes": 42445
     },
     {
       "path": "adapters/generic/AGENT.md",
-      "sha256": "sha256:a7699ca54e1077252a6ab44bd5a6356e3258ad1d2c1b9233658cda3021b882bd",
-      "bytes": 37975
+      "sha256": "sha256:d75745ec2fe36284be47947d830fcf0369dab7502404d3bfbdc5b1033a0a4db1",
+      "bytes": 42226
     },
     {
       "path": "adapters/mcp/MCP.md",
-      "sha256": "sha256:e0c711b135f27d6e06d72d9cbecbdeb9be989899d4ce8f5cc2092a678d28d043",
-      "bytes": 37972
+      "sha256": "sha256:7f79964c966e598a4a369de0a376131b5b8eb27d480b862c16b9ecbda1b476c5",
+      "bytes": 42223
     },
     {
       "path": "adapters/workbuddy/WORKBUDDY.md",
-      "sha256": "sha256:f820c381bd5583c857ccea35055f4057564cbdb9ddae401d948c1e1ad247ff67",
-      "bytes": 41986
+      "sha256": "sha256:aad80e196ce6ff313895ee6346d82ec7e4bb17cb56d8c1b29e7aacb499685ac1",
+      "bytes": 46237
     },
     {
       "path": "conformance/generic-host.mjs",
@@ -40,8 +40,8 @@
     },
     {
       "path": "conformance/scenario-matrix.yaml",
-      "sha256": "sha256:b679c82e1abc38667a9fbfacdbebc4277a32a8a26a8d73ea482b677afa106430",
-      "bytes": 15324
+      "sha256": "sha256:41ca16920683f7d8d1b3e28c8daa016b3801d1c3f92485f7bad2b431067c55dc",
+      "bytes": 19423
     },
     {
       "path": "core/conversation.yaml",
@@ -50,13 +50,13 @@
     },
     {
       "path": "core/instructions.md",
-      "sha256": "sha256:0d6ec30605bdd3ea2b82f040a0aae81ee0236f328e8a6e86d9cf735f030dafe9",
-      "bytes": 24951
+      "sha256": "sha256:c373c481ce89a97613ddba5d17787d6c52d8d42491e486939d33aba2fdb8afb9",
+      "bytes": 26328
     },
     {
       "path": "core/policies.yaml",
-      "sha256": "sha256:9e7bd5047d40146087f95ac83ba35b98c00ef9e4dea7c3864a38926172531108",
-      "bytes": 3551
+      "sha256": "sha256:b4fd671a3f2514e731ec2eb544188758514fd90ccde511c8bba633a22ec6950e",
+      "bytes": 4930
     },
     {
       "path": "core/renderers.yaml",
@@ -65,18 +65,18 @@
     },
     {
       "path": "core/workflows.yaml",
-      "sha256": "sha256:1f54d26608d1b07ea7d4bd50743641d9d6aafd21fa9aea7773d9d1c817527ada",
-      "bytes": 3030
+      "sha256": "sha256:cada0a94245bc09fc14d24603f39b695047b88a27edc3659b30642f455b63297",
+      "bytes": 4525
     },
     {
       "path": "expert-manifest.yaml",
-      "sha256": "sha256:260ec0a096907b39bddb5564f73c4b045315eb1db5d1144513f34a2645056068",
+      "sha256": "sha256:3639fee0b8ffcab6e8dfa0d15115b6b017e16bb1666dc1e506d42b72e0d92a00",
       "bytes": 2455
     },
     {
       "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
-      "sha256": "sha256:81aae4a6bd8b1abce883146de747d7d27b99c1e189a82c641c999ebcc89013aa",
-      "bytes": 42141
+      "sha256": "sha256:bdc428181c1307307aff36fa8789a7a065a5d809579f5699ff7fefd24efb5750",
+      "bytes": 46392
     },
     {
       "path": "schemas/adapter-envelope-v1.schema.json",
@@ -125,8 +125,8 @@
     },
     {
       "path": "schemas/classification-handoff-v1.schema.json",
-      "sha256": "sha256:ac07a415f9df73830f01a06ed9d2c9f057164ea4e935e75c09f4787595dc6150",
-      "bytes": 1784
+      "sha256": "sha256:96970380bb31ff6ca2668c2f7c86c3d2f830d3f6ab30bba0dac45aab19662455",
+      "bytes": 1910
     },
     {
       "path": "schemas/classification-session-v1.schema.json",
@@ -149,14 +149,29 @@
       "bytes": 1978
     },
     {
+      "path": "schemas/external-semantic-evidence-adapter-v1.schema.json",
+      "sha256": "sha256:a6fd6439d92f6e67e7c24e369b1c7fdaf07a3ebceede03339a8c3ffe0f878c99",
+      "bytes": 947
+    },
+    {
+      "path": "schemas/external-semantic-evidence-v1.schema.json",
+      "sha256": "sha256:0c45ae2a9dc7bf7adbff831c7ce532b92a90bccad5827df0460ed95a4ef72d53",
+      "bytes": 1058
+    },
+    {
       "path": "schemas/harness-architecture-assessment-v1.schema.json",
       "sha256": "sha256:52f3a0d63886dacd9b5ab91fac5e96ab9067568745b856c2d3793e121e6e0da4",
       "bytes": 1137
     },
     {
       "path": "schemas/harness-professional-analysis-v1.schema.json",
-      "sha256": "sha256:03633f104b327a9b63dbdf30dcbecacf4951fa140ec1c64bfed178361c2f1e76",
-      "bytes": 2085
+      "sha256": "sha256:8dbbbfcb0b31a34f9df69da51b616d80ffefa163a7c73834cf52b020806a4b0c",
+      "bytes": 3231
+    },
+    {
+      "path": "schemas/harness-semantic-requirements-v1.schema.json",
+      "sha256": "sha256:98c6864f796da774cfaa68f43bacb23fe7720db1531a87817e1f53d655cd9236",
+      "bytes": 2534
     },
     {
       "path": "schemas/host-conformance-profile-v1.schema.json",
@@ -174,14 +189,99 @@
       "bytes": 3032
     },
     {
+      "path": "schemas/ontology-foundation-v1.schema.json",
+      "sha256": "sha256:396c7d80ea930f022adbd164e39c16139e658d6156d1e3dbbaa9e9448f97c018",
+      "bytes": 1902
+    },
+    {
+      "path": "schemas/ontology-grounding-result-v1.schema.json",
+      "sha256": "sha256:43f09e089c83389bdbcab7f0e0b8d85a095432f88f6fd6815da7c54501bc4d7c",
+      "bytes": 3700
+    },
+    {
       "path": "schemas/operation-plan-v1.schema.json",
       "sha256": "sha256:eb9e0b969d66f4c00653ab6a5ea7bcb58b744d368fef83f5159941d6f4837280",
       "bytes": 3202
     },
     {
+      "path": "schemas/pack-benchmark-v1.schema.json",
+      "sha256": "sha256:fd44d16b96e89292cc331342c600539b52beb55c7cc28ca34ace05f9ab0bc666",
+      "bytes": 864
+    },
+    {
+      "path": "schemas/pack-certification-v1.schema.json",
+      "sha256": "sha256:d54a1b2400da88a4f224c97becf3b287839eb931d3fc6b03dd195bf5b5542334",
+      "bytes": 871
+    },
+    {
+      "path": "schemas/pack-gold-case-v1.schema.json",
+      "sha256": "sha256:1eacda6152a29e06b69ff983a2ec49215c172efaee0318b0ad8b19b326287147",
+      "bytes": 961
+    },
+    {
+      "path": "schemas/pack-lifecycle-record-v1.schema.json",
+      "sha256": "sha256:10670bbf6463d62053ef01bdf41df1e12b696177f0dbc38b30cd4c32a9781b1f",
+      "bytes": 625
+    },
+    {
+      "path": "schemas/professional-pack-inspection-v1.schema.json",
+      "sha256": "sha256:89793919163a596b3cba28213b1e1bed483083beeb627d4d995b47b15d11c021",
+      "bytes": 670
+    },
+    {
+      "path": "schemas/professional-pack-v1.schema.json",
+      "sha256": "sha256:3ae204a1890e3a65d3543fc4952b74b2b59b9f40fbff91e56632b155515c92a7",
+      "bytes": 2991
+    },
+    {
+      "path": "schemas/project-ontology-artifact-lifecycle-v1.schema.json",
+      "sha256": "sha256:f7991c6f8dad618e7fa6ab25335136f94ac02ef9a9bf4f0a3fdb5c5501ecb323",
+      "bytes": 710
+    },
+    {
+      "path": "schemas/project-ontology-artifact-set-v1.schema.json",
+      "sha256": "sha256:0454842260731d5b7b79cb8b749b2829cee234db7e8e6d8cd1a353b9e2045bc2",
+      "bytes": 1403
+    },
+    {
+      "path": "schemas/project-ontology-projection-set-v1.schema.json",
+      "sha256": "sha256:8ce9c020373c78bef06512951632ac5aa1c0f2ffccfa386305b2660b85d905b0",
+      "bytes": 1187
+    },
+    {
+      "path": "schemas/project-ontology-proposal-v1.schema.json",
+      "sha256": "sha256:cf4f43b183ca0815c60479100855bb235e0569193ad06ad6b96d4385bae86ebf",
+      "bytes": 1131
+    },
+    {
+      "path": "schemas/project-ontology-skill-v1.schema.json",
+      "sha256": "sha256:0c5834b1f176b0ac6e7496ea49ca49256185d3e08f589adf31e0f41e76dc91b7",
+      "bytes": 1374
+    },
+    {
+      "path": "schemas/resolved-professional-pack-set-v1.schema.json",
+      "sha256": "sha256:9850184c88f336361f1200e989f6d24acf18529b19e8192743d2499c0f72de52",
+      "bytes": 854
+    },
+    {
+      "path": "schemas/resolved-project-ontology-snapshot-v1.schema.json",
+      "sha256": "sha256:6dc13a110230abbe1c7e6a0b18b6e392910aafd80a65c85bd2afb23ecf7e360d",
+      "bytes": 1232
+    },
+    {
       "path": "schemas/resolved-taxonomy-snapshot-v1.schema.json",
       "sha256": "sha256:b11141b342118ab20f38b71240fd47665b6054c6326d1058be91fd347addcbca",
       "bytes": 1089
+    },
+    {
+      "path": "schemas/semantic-candidate-set-v1.schema.json",
+      "sha256": "sha256:c69c1b71ff19db1a112c5a8e7929008ff09935b55f31048bd4754dc6f9d4dbf4",
+      "bytes": 2819
+    },
+    {
+      "path": "schemas/semantic-compatibility-report-v1.schema.json",
+      "sha256": "sha256:5f77a34f013e46539f2fcf3e9b20dbf6ece5353b53adb43b250445298989d166",
+      "bytes": 1766
     },
     {
       "path": "schemas/source-concept-hypothesis-v1.schema.json",
@@ -205,8 +305,8 @@
     },
     {
       "path": "schemas/taxonomy-analysis-result-v1.schema.json",
-      "sha256": "sha256:378cdf0b7a9d0148a489679847f7de57000f5eebd8d132255b000d5a112fbd14",
-      "bytes": 2732
+      "sha256": "sha256:072a87fa37295f96697fcca46ae37b5daec98a60b4f66619777dfcf9eec40f1e",
+      "bytes": 2876
     },
     {
       "path": "schemas/taxonomy-v1.schema.json",

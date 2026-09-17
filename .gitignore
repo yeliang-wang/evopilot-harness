@@ -5,3 +5,13 @@ dist/
 .evopilot-harness/
 models.json
 ui/harness-hub/catalog-snapshot.json
+.tmp/
+outputs/
+work/acceptance-v4.3.0/
+work/candidate-r4-ac32-fix/
+work/v4.4.0-real-regression/
+work/v4.4.0-repair-runtime/
+work/v4.4.0-runtime-binding-runtime/
+work/workbuddy-after-click.png
+work/workbuddy-current.png
+work/workbuddy-demo/

@@ -3,12 +3,13 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-08-30",
+  "updatedAt": "2026-09-17",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
       "Harness reasoning, Proposal, review, approval, and publication",
       "HarnessComponent, HarnessProfile, and immutable HarnessBundle lifecycle",
+      "independently governed Semantic Asset Plane for Ontology Foundation, ontology Packs, Project overlays, resolved snapshots, ArtifactSets, Skills, grounding, projection, validation, and publication",
       "Ontology, Match Policy, Advisor Policy, and Evaluation Packs",
       "Catalog, Registry, CLI, and standalone Harness Hub",
       "portable Digital Expert, Agent adapters, local Harness Operation Server, and Agent Operation Session protocol"
@@ -23,8 +24,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.4.0",
-    "currentWorkingVersion": "4.5.0",
+    "publishedBaseline": "4.5.0",
+    "currentWorkingVersion": "4.6.0",
     "versionsEvolveIndependently": true,
     "productCapabilitiesEvolveCumulatively": true,
     "artifactCompatibilityMayResetWithEvidence": true,
@@ -38,6 +39,9 @@
       "replacement of an accepted product boundary",
       "replacement of the supported primary human operation model"
     ]
+  },
+  "intentPolicy": {
+    "capabilityExpansionSignals": ["add", "build", "create", "implement", "introduce", "replace", "upgrade", "新增", "创建", "实现", "引入", "替换", "升级", "公共化", "产品化"]
   },
   "realHostAcceptancePolicy": {
     "policyVersion": "human-operated-workbuddy/v1",
@@ -99,16 +103,61 @@
       "a Roadmap digest change returns an existing Target to review but does not by itself require an unchanged Candidate package to be rebuilt or reinstalled"
     ]
   },
+  "projectOntologyAcceptancePolicy": {
+    "topLevelJourneyMaximum": 5,
+    "journeyFamilies": [
+      "unknown Source to governed project business semantic map",
+      "unresolved, ambiguous, conflicting, insufficient, and extension-required semantics followed by explicit repair and re-analysis",
+      "one resolved snapshot to applicable deterministic YAML, OWL, RDF Turtle, JSON-LD, bounded SWRL, SHACL, and ProjectOntologySkill outputs",
+      "cumulative classification, Harness Eligibility, Harness evolution, review, approval, separate publication, and supply into a dual-bound EvoPilot Goal Loop",
+      "successor versions, drift, failure, permission denial, restart, rollback, cross-Host consistency, and Ontology, Memory, and Evidence separation"
+    ],
+    "rules": [
+      "all v4.5 capabilities remain cumulative and release-blocking",
+      "WorkBuddy retains the designated-human final-range declaration and complete non-WorkBuddy variants remain machine-evidenced",
+      "Runner, fixture, manifest, network, or projection failures do not create a product Candidate unless packaged product bytes change through a confirmed product repair"
+    ]
+  },
+  "seriesConvergenceParticipation": {
+    "schema": "evopilot-series-semantic-design-convergence-participation/v1",
+    "convergenceContractRef": "evopilot-series-semantic-design-convergence",
+    "owningRepository": "evopilot-harness",
+    "role": "IMMUTABLE_SEMANTIC_AND_HARNESS_ASSET_PRODUCER",
+    "requiredVersionSequence": ["4.6.0", "4.7.0", "4.8.0"],
+    "terminalVersion": "4.8.0",
+    "everyVersionRequires": [
+      "one independently approved Evolution Target bound to the current evopilot-harness Roadmap digest",
+      "all current and inherited acceptance",
+      "real end-to-end coverage for that exact Harness version",
+      "impact closure and NO_REGRESSION",
+      "exact Candidate, package, published asset, dependency, and evidence digests"
+    ],
+    "terminalContribution": [
+      "publish the exact immutable 4.8.0 ontology, index, reasoning-profile, HarnessProfile, HarnessComponent, and HarnessBundle closure",
+      "supply that exact closure read-only to EvoPilot Runtime 6.3.0 for the terminal cross-product convergence E2E",
+      "preserve permission denial, drift, rollback, publication separation, cumulative inherited acceptance, and NO_REGRESSION evidence"
+    ],
+    "terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority": false,
+    "individualHarnessReleaseAuthorityRemainsIndependent": true,
+    "failureRouting": "A Harness-owned failure creates or revises a separately governed evopilot-harness repair or successor Evolution Target; it cannot be waived or repaired by another product."
+  },
   "standingWork": [
     {
       "id": "evopilot-harness-maintenance",
       "description": "Correctness, security, documentation synchronization, dependency maintenance, compatibility, and release repair that does not add an unplanned product capability or change an accepted boundary.",
-      "signals": ["bug", "fix", "security", "documentation", "dependency", "compatibility", "regression", "correctness", "修复", "安全", "文档", "依赖", "兼容", "回归"]
+      "signals": ["bug fix", "security repair", "documentation synchronization", "dependency maintenance", "compatibility repair", "regression repair", "correctness repair", "缺陷修复", "安全修复", "文档同步", "依赖维护", "兼容性修复", "回归修复", "正确性修复"]
     },
     {
       "id": "evopilot-harness-evolution-governance",
       "description": "Repository and Codex workflow governance that binds Engine evolution to reviewed evidence, this Roadmap, an approved Evolution Target, deterministic acceptance, and separately authorized release without changing Harness product behavior, asset authority, or boundaries.",
-      "signals": ["evolution governance", "roadmap governance", "roadmap binding", "evolution target", "conversational orchestrator", "演进治理", "roadmap 绑定", "演进目标", "对话式编排"]
+      "signals": ["evolution governance", "roadmap governance", "roadmap binding", "evolution target", "conversational orchestrator", "演进治理", "roadmap 绑定", "演进目标", "对话式编排"],
+      "allowsCapabilityExpansion": true
+    },
+    {
+      "id": "evopilot-harness-series-convergence-participation",
+      "description": "Provide exact per-version Harness evidence and the immutable 4.8.0 asset closure required by the central final semantic design convergence contract without transferring Harness approval, publication, or release authority.",
+      "signals": ["final product design convergence", "semantic design convergence", "terminal cross-product convergence e2e", "whole-series convergence e2e", "最终产品设计收敛", "最终跨产品 e2e", "整体 e2e"],
+      "allowsCapabilityExpansion": true
     },
     {
       "id": "evopilot-harness-4.0-installed-distribution-maintenance",
@@ -373,7 +422,10 @@
         "improved deterministic professional sufficiency, reusable-boundary, alternative, rejection, risk, expected-effect and missing-evidence reasoning for the existing finite Harness decisions",
         "improved professional completeness, dependency closure, composition quality, boundary specificity and Evaluation coverage for the HarnessProfiles and immutable HarnessBundles already produced by v4.5.0",
         "governed context-equivalent comparison against a frozen v4.5.0 baseline with uncertainty, conflict, calibration non-activation and no-regression gates",
-        "complete cumulative preservation of every v4.5.0 classification, Harness evolution, review, approval, publication, Host-conformance, recovery and safe-close capability"
+        "complete cumulative preservation of every v4.5.0 classification, Harness evolution, review, approval, publication, Host-conformance, recovery and safe-close capability",
+        "minimal Engine-owned OntologyFoundation meta-model for Entity, Attribute, Relationship, Rule, Event, Action, Actor, Role, Permission, State, Workflow, Capability, System, and DataAsset without built-in vertical truth",
+        "evidence-bound semantic candidate extraction and OntologyGroundingResolver/v1 with exact RESOLVED, UNRESOLVED_CONCEPT, AMBIGUOUS_CONCEPT, CONFLICTING_CONCEPT, EXTENSION_REQUIRED, and EVIDENCE_INSUFFICIENT outcomes",
+        "versioned HarnessBundle semanticRequirements kept independent from Harness Eligibility"
       ],
       "acceptance": [
         "professional CRM, ERP, middleware, diagnosis, reconciliation, recovery, and non-Harness cases produce evidence-backed distinct decisions without relying on label similarity as final authority",
@@ -383,9 +435,11 @@
         "the v4.5 user-defined Taxonomy and Host-authority boundaries remain unchanged",
         "every v4.5.0 classification and Harness producer end-to-end journey passes unchanged before any v4.6.0 quality-improvement claim is accepted",
         "context-equivalent comparative evidence demonstrates bounded professional-reasoning or Bundle-quality improvement over the frozen v4.5.0 baseline without hiding uncertainty, conflicts or regressions",
-        "v4.6.0 does not restore any capability removed from v4.5.0 because professional reasoning, Profile and Bundle production, Proposal Review, approval and publication are already required parts of the v4.5.0 baseline"
+        "v4.6.0 does not restore any capability removed from v4.5.0 because professional reasoning, Profile and Bundle production, Proposal Review, approval and publication are already required parts of the v4.5.0 baseline",
+        "an LLM cannot invent or directly select authoritative ontology identifiers",
+        "v4.6.0 does not publish ProjectOntologyArtifactSet or ProjectOntologySkill"
       ],
-      "signals": ["professional source to harness reasoning", "professional harness extraction", "capability extraction", "compose harness bundle", "harness evolution algorithm", "professional reasoning depth", "bundle quality", "cumulative v4.5 capability baseline", "improve professional reasoning", "improve bundle quality", "preserve v4.5 capabilities", "专业 source 到 harness 推理", "专业能力提取", "bundle 组合", "专业推理深度", "bundle 质量", "累计 v4.5 能力基线", "增强专业推理", "增强 bundle 质量", "保留 v4.5 能力"],
+      "signals": ["professional source to harness reasoning", "professional harness extraction", "capability extraction", "compose harness bundle", "harness evolution algorithm", "professional reasoning depth", "bundle quality", "ontology grounding", "OntologyFoundation", "OntologyGroundingResolver", "semantic requirements", "cumulative v4.5 capability baseline", "improve professional reasoning", "improve bundle quality", "preserve v4.5 capabilities", "专业 source 到 harness 推理", "专业能力提取", "bundle 组合", "专业推理深度", "bundle 质量", "本体落地", "累计 v4.5 能力基线", "增强专业推理", "增强 bundle 质量", "保留 v4.5 能力"],
       "exclusions": ["multi-Pack ecosystem", "external semantic interoperability", "incremental graph reasoning", "automatic approval", "automatic publication", "model training", "source-project execution"]
     },
     {
@@ -393,7 +447,7 @@
       "status": "PLANNED",
       "targetVersion": "4.7.0",
       "releaseLine": "4.7.x",
-      "objective": "Add governed multi-Pack authoring, validation, dependency, conflict, review, publication, rollback, discovery, quality, and Organization ownership after the minimal Taxonomy and professional Harness reasoning contracts are proven.",
+      "objective": "Add governed multi-Pack, Project Ontology, and Organization authoring, validation, dependency, conflict, review, publication, rollback, discovery, quality, and ownership after the minimal Taxonomy and professional Harness reasoning contracts are proven.",
       "outcomes": [
         "an extension of the stable v4.5 Taxonomy envelope, namespaces, canonical snapshots, and context bindings with versioned Domain, Product, Organization, and DomainHarnessPack resources, imports, precedence, equivalence, replacement, deprecation, and fail-closed merge semantics",
         "DomainHarnessPack scaffolding, linting, validation, dependency inspection, compatibility declaration, installation, update, rollback, and documentation tooling",
@@ -401,16 +455,22 @@
         "base-digest, optimistic-concurrency, conflict-set, atomic-publication-set, semantic-version and dependency-propagation, migration, and rollback contracts",
         "separate community, domain-team, and private Organization Pack roots with explicit provenance, trust, ownership, reviewer, approver, and publisher roles",
         "versioned professional benchmark and Gold Case packages, Pack quality levels, optional signing, and reproducible certification evidence",
-        "reference financial, CRM, ERP, and other example Packs that demonstrate authoring patterns without claiming universal business authority"
+        "reference financial, CRM, ERP, and other example Packs that demonstrate authoring patterns without claiming universal business authority",
+        "independently versioned DomainOntologyPack, ProductOntologyPack, OrganizationOntologyPack, and ProjectOntologyOverlay resources plus ProjectOntologyProposal/v1 and immutable fully resolved ResolvedProjectOntologySnapshot/v1",
+        "ProjectOntologyArtifactSet/v1 with manifest, canonical snapshot, provenance, project binding, lock, dependency, and digest closure",
+        "deterministic applicable YAML, OWL, RDF Turtle, JSON-LD, bounded SWRL, and SHACL projections with explicit non-applicability instead of fabrication",
+        "deterministic ProjectOntologySkill/v1 compilation as the Agent-facing access and guidance form rather than a sole truth store",
+        "ExternalSemanticEvidenceAdapter/v1 for read-only provenance-preserving import that remains inactive Evidence"
       ],
       "acceptance": [
         "Pack installation remains declarative, non-executable, digest-pinned, conflict-previewed, and independently authorized",
         "unresolved namespace collisions, cyclic imports, incompatible overrides, partial publication, missing dependencies, or silent shadowing fail closed",
         "author, reviewer, approver, and publisher duties remain explicit and separable",
         "private Organization Packs cannot leak into public or community roots",
-        "quality and certification claims bind exact Pack, benchmark, algorithm, policy, and evidence versions"
+        "quality and certification claims bind exact Pack, benchmark, algorithm, policy, and evidence versions",
+        "Draft, apply, Review, Approval, Publication, installation, activation, successor, rollback, and deprecation remain independent stages"
       ],
-      "signals": ["professional pack ecosystem", "multi pack governance", "DomainHarnessPack SDK", "pack registry", "pack authoring", "pack dependency conflict", "pack certification", "专业 pack 生态", "多 pack 治理", "领域 pack", "pack 治理"],
+      "signals": ["professional pack ecosystem", "multi pack governance", "Project Ontology", "ProjectOntologyArtifactSet", "ProjectOntologySkill", "DomainOntologyPack", "ProjectOntologyOverlay", "DomainHarnessPack SDK", "pack registry", "pack authoring", "pack dependency conflict", "pack certification", "项目本体", "项目本体 Skill", "专业 pack 生态", "多 pack 治理", "领域 pack", "pack 治理"],
       "exclusions": ["executable marketplace plugins", "automatic Pack trust", "automatic publication", "cloud marketplace service", "built-in universal vertical expertise"]
     },
     {
@@ -424,7 +484,10 @@
         "content-addressed semantic and graph indexes for large Ontology, Source, Profile, Evaluation, and Bundle sets",
         "affected-subgraph calculation, selective Source re-reasoning, incremental dependency propagation, and full-recompute equivalence proofs",
         "bounded concurrency, cache-digest binding, performance budgets, decision telemetry, and large-Catalog impact analysis",
-        "federated read-only Pack discovery across Catalog roots without shared mutation or authority collapse"
+        "federated read-only Pack discovery across Catalog roots without shared mutation or authority collapse",
+        "OntologyReasoningProfile/v1 with NONE, RDFS, OWL_RL, SWRL_SAFE, and qualified EXTERNAL_REASONER profiles bound to budgets, supported rules, reasoner identity and version, deterministic failure, and proof paths",
+        "content-addressed indexes consumable read-only by EvoPilot for runtime semantic slicing without a live mutable Harness dependency",
+        "semantic round-trip and full-recompute equivalence across canonical snapshots, projections, indexes, incremental affected-subgraph calculation, and cache"
       ],
       "acceptance": [
         "external vocabulary import remains inactive evidence, preserves provenance, and cannot activate or override user Packs",
@@ -434,8 +497,25 @@
         "large-corpus performance meets declared budgets without weakening evidence, conflict, approval, or publication gates",
         "federated discovery remains read-only and every consumed Pack retains its source Catalog, version, digest, and trust context"
       ],
-      "signals": ["semantic interoperability", "JSON-LD", "RDF", "OWL", "SHACL", "PROV-O", "incremental ontology reasoning", "ontology scale", "affected subgraph", "semantic index", "federated catalog", "语义互操作", "外部 ontology", "增量 ontology 推理", "ontology 规模化", "影响子图", "联邦 catalog"],
-      "exclusions": ["general-purpose knowledge graph platform", "unbounded OWL reasoning", "shared mutable global ontology", "eventual authority", "automatic external vocabulary activation", "automatic cross-organization publication", "cloud control plane"]
+      "signals": ["semantic interoperability", "bounded scalable semantic reasoning", "OntologyReasoningProfile", "JSON-LD", "RDF", "OWL", "SHACL", "PROV-O", "incremental ontology reasoning", "ontology scale", "affected subgraph", "semantic index", "federated catalog", "有界语义推理", "语义互操作", "外部 ontology", "增量 ontology 推理", "ontology 规模化", "影响子图", "联邦 catalog"],
+      "exclusions": ["general-purpose knowledge graph platform", "arbitrary executable Pack", "unbounded OWL or SWRL reasoning", "shared mutable global ontology", "eventual authority", "automatic external vocabulary activation", "live cross-organization authority", "automatic cross-organization publication", "cloud control plane"]
+    }
+  ],
+  "resolvedDiscussions": [
+    {
+      "id": "evopilot-owned-execution-lifecycle-harness",
+      "status": "RESOLVED_TO_EVOPILOT_4.0.0",
+      "resolvedAt": "2026-09-05",
+      "preconditionEvidence": "evopilot-harness v4.5.0 was publicly released on 2026-09-03 and the local tag, package version, origin/main commit, and non-draft non-prerelease GitHub Release were verified",
+      "decisions": [
+        "EvoPilot owns open project-execution Lifecycle Harness definitions, resolution, immutable bindings, execution, evidence, and project release decisions",
+        "evopilot-harness continues to own Harness Asset reasoning, authoring, review, approval, evaluation, publication, Catalog, and Registry",
+        "DataRig enterprise-internal delivery and evopilot-harness open-source release become EvoPilot reference lifecycle definitions and conformance cases, not hard-coded Engine branches",
+        "Lifecycle inputs are human-readable declarative schema fields collected through question-driven conversation or the same headless schema, and parameter collection never grants authority",
+        "deterministic reversible stages are automatic by default while human decisions remain only at genuine authority, external-effect, production, release, exception, ambiguity, risk, or uncertain-mutation boundaries",
+        "third-party Agent hosts normally integrate through EvoPilot MCP as transport and presentation while direct API, SDK, and CLI automation remains supported"
+      ],
+      "harnessImpact": "No evopilot-harness product capability or version is added, moved, removed, or reserved; v4.5.0 scope, Target, implementation, acceptance, release bytes, and authority remain unchanged."
     }
   ],
   "boundaryRules": [
@@ -489,6 +569,30 @@
       "status": "CONSUMER_ACTIVE_EXPORTER_PENDING",
       "direction": "evopilot -> evopilot-harness",
       "rule": "evopilot-harness may statically read an approved, redacted, immutable feedback package as Evidence Source; it does not control or replay the originating project."
+    },
+    {
+      "id": "project-ontology-artifact-supply/v1",
+      "status": "PLANNED",
+      "direction": "evopilot-harness -> evopilot",
+      "rule": "evopilot-harness publishes immutable ProjectOntologyArtifactSet and ProjectOntologySkill assets; EvoPilot reads them without mutation authority."
+    },
+    {
+      "id": "semantic-harness-compatibility/v1",
+      "status": "PLANNED",
+      "direction": "evopilot-harness -> evopilot",
+      "rule": "HarnessBundle declares versioned semantic requirements; EvoPilot evaluates compatibility against one exact published ontology snapshot without turning compatibility into Harness Eligibility or asset approval."
+    },
+    {
+      "id": "ontology-grounded-goal-loop/v1",
+      "status": "PLANNED",
+      "direction": "evopilot-harness -> evopilot",
+      "rule": "EvoPilot pins semantic and Harness assets in one SemanticExecutionBinding and supplies only digest-bound semantic slices to qualified Agent Runtimes."
+    },
+    {
+      "id": "semantic-dashboard-projection/v1",
+      "status": "PLANNED",
+      "direction": "evopilot -> evopilot-dashboard",
+      "rule": "Dashboard renders EvoPilot-owned API projections and owns no source asset or runtime state."
     }
   ]
 }

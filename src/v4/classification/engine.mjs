@@ -3,6 +3,7 @@ import { buildSourceConceptHypothesis } from "./source-concept.mjs";
 import { canonicalCompare, resolveTaxonomy } from "./taxonomy.mjs";
 import { aggregateTaxonomyDecision, RETRIEVAL_CONFIG, retrieveTaxonomyCandidates } from "./classifier.mjs";
 import { requestTaxonomyAdvisor } from "./advisor.mjs";
+import { createSemanticCandidateSet, resolveOntologyFoundation } from "../semantics/ontology-grounding.mjs";
 
 const MAX_PRESENTATION_EVIDENCE = 12;
 
@@ -14,8 +15,10 @@ export function prepareSourceTaxonomyAnalysis({ source, taxonomy: taxonomyInput 
 export function prepareResolvedSourceTaxonomyAnalysis({ resolvedSource, resolvedTaxonomy }) {
   const taxonomy = resolvedTaxonomy;
   const hypothesis = buildSourceConceptHypothesis(resolvedSource);
+  const ontologyFoundation = resolveOntologyFoundation();
+  const semanticCandidateSet = createSemanticCandidateSet({ sourceConceptHypothesis: hypothesis });
   const retrieval = retrieveTaxonomyCandidates(hypothesis, taxonomy, RETRIEVAL_CONFIG);
-  return { taxonomy, hypothesis, retrieval, resolvedSource };
+  return { taxonomy, hypothesis, ontologyFoundation, semanticCandidateSet, retrieval, resolvedSource };
 }
 
 export async function analyzeSourceTaxonomy({ source, taxonomy: taxonomyInput, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId = `attempt-${Date.now()}-${Math.random().toString(16).slice(2)}`, intent = "analyze-source-business-classification", locale = "zh-CN", presentationTemplateVersion = "evopilot-harness-taxonomy-presentation/v1" }) {
@@ -24,11 +27,11 @@ export async function analyzeSourceTaxonomy({ source, taxonomy: taxonomyInput, m
 }
 
 export async function analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId, intent = "analyze-source-business-classification", locale = "zh-CN", presentationTemplateVersion = "evopilot-harness-taxonomy-presentation/v1" }) {
-  const { taxonomy, hypothesis, retrieval, resolvedSource } = prepared;
+  const { taxonomy, hypothesis, ontologyFoundation, semanticCandidateSet, retrieval, resolvedSource } = prepared;
   const advisor = await requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, modelsFile, model, timeoutMs: advisorTimeoutMs, provider: advisorProvider, analysisAttemptId });
   if (advisor.status === "ANALYSIS_BLOCKED_ADVISOR") return { status: advisor.status, hypothesis, taxonomy, retrieval, advisor, nextOperations: ["RETRY_NEW_ANALYSIS", "CANCEL", "CLOSE"] };
   const decision = aggregateTaxonomyDecision({ hypothesis, taxonomy, retrieval, advisor, config: RETRIEVAL_CONFIG });
-  const evolutionContext = classificationEvolutionContext({ hypothesis, taxonomy, retrieval, advisor, decision, intent, locale, presentationTemplateVersion });
+  const evolutionContext = classificationEvolutionContext({ hypothesis, taxonomy, ontologyFoundation, semanticCandidateSet, retrieval, advisor, decision, intent, locale, presentationTemplateVersion });
   const core = {
     schema: "evopilot-harness-taxonomy-analysis-result/v1",
     validation: { status: "VALID", schema: taxonomy.taxonomy.apiVersion, canonicalization: taxonomy.canonicalization, taxonomyDigest: taxonomy.taxonomyDigest },
@@ -46,6 +49,8 @@ export async function analyzePreparedSourceTaxonomy({ prepared, modelsFile, mode
     sourceSnapshot: hypothesis.sourceSnapshot,
     evidenceGraph: hypothesis.evidenceGraph,
     sourceConceptHypothesis: hypothesis,
+    ontologyFoundation,
+    semanticCandidateSet,
     retrieval,
     advisor,
     axes: decision.axes,
@@ -73,6 +78,8 @@ export function createClassificationHandoff({ classificationSessionId, result, d
     sourceSnapshotDigest: result.sourceSnapshotDigest,
     taxonomyDigest: result.taxonomyDigest,
     hypothesisDigest: result.hypothesisDigest,
+    ontologyFoundationDigest: result.ontologyFoundation.foundationDigest,
+    semanticCandidateSetDigest: result.semanticCandidateSet.candidateSetDigest,
     perAxisResultDigests: result.evolutionContext.perAxisResultDigests,
     analysisResultDigest: result.analysisResultDigest,
     classificationContextDigest: result.evolutionContext.classificationContextDigest,
@@ -84,10 +91,12 @@ export function createClassificationHandoff({ classificationSessionId, result, d
   return core;
 }
 
-function classificationEvolutionContext({ hypothesis, taxonomy, retrieval, advisor, decision, intent, locale, presentationTemplateVersion }) {
+function classificationEvolutionContext({ hypothesis, taxonomy, ontologyFoundation, semanticCandidateSet, retrieval, advisor, decision, intent, locale, presentationTemplateVersion }) {
   const core = {
     schema: "evopilot-harness-classification-evolution-context/v1",
     foundationSchema: taxonomy.foundation.schema,
+    ontologyFoundationDigest: ontologyFoundation.foundationDigest,
+    semanticCandidateSetDigest: semanticCandidateSet.candidateSetDigest,
     taxonomyDigest: taxonomy.taxonomyDigest,
     sourceDescriptorDigest: hypothesis.sourceDescriptorDigest,
     sourceResolutionDigest: hypothesis.sourceResolutionDigest,

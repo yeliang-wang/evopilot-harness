@@ -409,7 +409,8 @@ function composedBundle(records, graph, reasoning) {
       executionPlan: unique(componentRefs.map((ref) => `resolve-${ref.id}`)),
       constraints: ["Resolve all referenced immutable components before execution.", "Human review is required for cross-profile composition."],
       evidence: ["source-snapshot", "composition-review", "validation-result"],
-      validators: ["component-digest-verification", "composition-review"]
+      validators: ["component-digest-verification", "composition-review"],
+      ...(reasoning.semanticRequirements ? { semanticRequirements: structuredClone(reasoning.semanticRequirements) } : {})
     },
     provenance: { sourceDigests: [graph.graphDigest], ontologyVersion: `${reasoning.ontology.id}@${reasoning.ontology.version}`, policyVersion: `${reasoning.policy.id}@${reasoning.policy.version}` }
   };

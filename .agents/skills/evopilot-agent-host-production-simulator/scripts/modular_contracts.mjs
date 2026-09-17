@@ -239,14 +239,19 @@ export function validateTargetManifest(manifest, targetFile = null, target = nul
     if (policy?.[key] !== false) errors.push(`WorkBuddy execution policy ${key} must be false`);
   }
   const realCaseIds = Array.isArray(manifest?.coverage?.realCaseIds) ? manifest.coverage.realCaseIds : [];
-  const expectedDeclaration = realCaseIds.length ? `${realCaseIds[0]}～${realCaseIds.at(-1)} 已完成` : null;
+  const workBuddyCaseIds = Array.isArray(policy?.workBuddyCaseIds) ? policy.workBuddyCaseIds : [];
+  const expectedDeclaration = workBuddyCaseIds.length === 1
+    ? `${workBuddyCaseIds[0]} WorkBuddy 已完成`
+    : workBuddyCaseIds.length > 1
+      ? `${workBuddyCaseIds[0]}～${workBuddyCaseIds.at(-1)} 已完成`
+      : null;
   if (policy?.finalDeclaration !== expectedDeclaration) errors.push("WorkBuddy final range declaration mismatch");
   if (canonical(policy?.acceptedRangeSeparators ?? []) !== canonical(["～", "~"])) errors.push("WorkBuddy accepted range separators mismatch");
   if (policy?.beforeDeclaration !== "PENDING" || policy?.afterDeclaration !== "PASSED") errors.push("WorkBuddy declaration transition mismatch");
   if (policy?.independentHostAutomationAllowed !== true) errors.push("independent Host automation must remain allowed");
   if (!Array.isArray(policy?.workBuddyCaseIds) || !policy.workBuddyCaseIds.every((id) => manifest?.coverage?.realCaseIds?.includes(id))) errors.push("WorkBuddy case binding mismatch");
   const compactPortfolio = manifest?.coverage?.realCasePortfolioPolicy === "compact-real-case-portfolio/v1";
-  const expectedDiscoveryOnlyCases = compactPortfolio ? [] : ["RC16"];
+  const expectedDiscoveryOnlyCases = manifest?.coverage?.discoveryOnlyCaseIds ?? policy?.discoveryOnlyCaseIds ?? [];
   if (canonical(policy?.discoveryOnlyCaseIds ?? []) !== canonical(expectedDiscoveryOnlyCases)) errors.push("discovery-only case binding mismatch");
   if (compactPortfolio) {
     if (canonical(realCaseIds) !== canonical(["RC01", "RC02", "RC03", "RC04", "RC05"])) errors.push("compact real-case portfolio must be exactly RC01-RC05");
@@ -286,7 +291,7 @@ export function validateCandidateAcceptanceBinding(binding, targetManifest, targ
   }
   if (binding?.target?.id !== targetManifest?.target?.id || binding?.target?.revision !== targetManifest?.target?.revision) errors.push("Candidate binding Target mismatch");
   if (binding?.targetManifest?.id !== targetManifest?.id || !targetManifestFile || binding?.targetManifest?.fileDigest !== fileDigest(targetManifestFile)) errors.push("Candidate binding Target manifest mismatch");
-  if (binding?.candidate?.label !== "PRE_RELEASE_CANDIDATE" || !/(?:^|-)candidate-[1-9]\d*$/.test(binding?.candidate?.id ?? "")) errors.push("Candidate identity is invalid");
+  if (binding?.candidate?.label !== "PRE_RELEASE_CANDIDATE" || !/(?:^|-)candidate-(?=\d*[1-9])\d+$/.test(binding?.candidate?.id ?? "")) errors.push("Candidate identity is invalid");
   if (!/^sha256:[a-f0-9]{64}$/.test(binding?.candidate?.packageDigest ?? "") || !/^sha256:[a-f0-9]{64}$/.test(binding?.candidate?.manifestDigest ?? "")) errors.push("Candidate digest binding is incomplete");
   if (binding?.candidate?.sourceCheckoutUsed !== false) errors.push("Candidate runtime must not use a source checkout");
   if (!Array.isArray(binding?.artifacts) || binding.artifacts.length < 2) errors.push("Candidate binding must contain exact runbook and acceptance-plan artifacts");
@@ -347,9 +352,23 @@ export function loadDefaultContracts() {
   const targetManifests = fs.readdirSync(path.resolve(SKILL_ROOT, "acceptance/manifests"))
     .filter((name) => name.endsWith(".json"))
     .map((name) => readJson(`acceptance/manifests/${name}`))
-    .sort((left, right) => left.target.revision - right.target.revision);
+    .sort(compareTargetManifests);
   const targetManifest = targetManifests.at(-1);
   return { core, hostAdapter, adapters, targetManifests, targetManifest };
+}
+
+function compareTargetManifests(left, right) {
+  const leftVersion = targetVersion(left);
+  const rightVersion = targetVersion(right);
+  for (let index = 0; index < 3; index += 1) {
+    if (leftVersion[index] !== rightVersion[index]) return leftVersion[index] - rightVersion[index];
+  }
+  return left.target.revision - right.target.revision || left.id.localeCompare(right.id);
+}
+
+function targetVersion(manifest) {
+  const match = String(manifest?.target?.id ?? "").match(/-v(\d+)\.(\d+)\.(\d+)(?:-|$)/);
+  return match ? match.slice(1).map(Number) : [0, 0, 0];
 }
 
 export function validateDefaultContracts() {

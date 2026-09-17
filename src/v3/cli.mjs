@@ -19,8 +19,12 @@ import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, resolveWorkspaceModelsFile, workspaceStatus } from "./workspace.mjs";
 import { inspectModelReadiness, recordModelVerification } from "./model-readiness.mjs";
+import { createSemanticCandidateSet, resolveOntologyFoundation, resolveOntologyGrounding } from "../v4/semantics/ontology-grounding.mjs";
+import { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from "../v4/semantics/semantic-compatibility.mjs";
+import { createExternalSemanticEvidenceAdapter, createPackBenchmarkPackage, createPackCertificationRecord, createPackGoldCasePackage, createPackLifecycleRecord, createProfessionalPack, importExternalSemanticEvidence, inspectProfessionalPack, resolveProfessionalPackSet, transitionPackLifecycle } from "../v4/semantics/professional-packs.mjs";
+import { compileProjectOntologySkill, createArtifactLifecycleRecord, createProjectOntologyProposal, createProjectionSet, publishProjectOntologyArtifactSet, resolveProjectOntologySnapshot, transitionProjectOntologyProposal } from "../v4/semantics/project-ontology.mjs";
 
-const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
+const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "semantic", "pack", "project-ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
 
 export async function handleV3Command(argv) {
   const args = parseCli(argv);
@@ -92,6 +96,70 @@ async function dispatch(args, group, action, id) {
     return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
   requireWorkspace(home);
+  if (group === "semantic" && action === "foundation") return output(args, resolveOntologyFoundation());
+  if (group === "semantic" && action === "candidates") {
+    const hypothesis = readYaml(requiredOption(args, "hypothesis"));
+    return output(args, createSemanticCandidateSet({ sourceConceptHypothesis: hypothesis }));
+  }
+  if (group === "semantic" && action === "ground") {
+    const candidateSet = readYaml(requiredOption(args, "candidate-set"));
+    const conceptDocument = readYaml(requiredOption(args, "concepts"));
+    const result = resolveOntologyGrounding({ foundation: resolveOntologyFoundation(), candidateSet, concepts: Array.isArray(conceptDocument) ? conceptDocument : conceptDocument.concepts ?? [], expected: parseJsonOption(args, "expected", {}), priorResults: listOption(args, "prior-result").map((file) => readYaml(file)) });
+    return output(args, result);
+  }
+  if (group === "semantic" && action === "compatibility") {
+    const requirements = createHarnessSemanticRequirements(readYaml(requiredOption(args, "requirements")));
+    const groundingResult = readYaml(requiredOption(args, "grounding-result"));
+    return output(args, evaluateSemanticCompatibility({ requirements, groundingResult }));
+  }
+  if (group === "pack" && action === "scaffold") return output(args, createProfessionalPack(readYaml(requiredFileOption(args))));
+  if (group === "pack" && action === "inspect") return output(args, inspectProfessionalPack(readYaml(requiredFileOption(args)), {availablePacks: listOption(args, "available-pack").map((file) => readYaml(file))}));
+  if (group === "pack" && action === "resolve") {
+    const packs = listOption(args, "pack").map((file) => readYaml(file));
+    const baseSnapshot = option(args, "base") ? readYaml(requiredOption(args, "base")) : null;
+    return output(args, resolveProfessionalPackSet({ packs, precedence: listOption(args, "precedence"), targetRoot: option(args, "target-root", "PRIVATE_ORGANIZATION"), expectedBaseDigest: option(args, "expected-base-digest"), baseSnapshot }));
+  }
+  if (group === "pack" && action === "transition") {
+    const record = option(args, "record") ? readYaml(requiredOption(args, "record")) : null;
+    return output(args, transitionPackLifecycle({record, action: requiredOption(args, "transition"), actor: requiredOption(args, "actor"), actorRole: option(args, "actor-role"), expectedRecordDigest: option(args, "expected-record-digest"), reason: option(args, "reason", ""), successor: option(args, "successor") ? readYaml(requiredOption(args, "successor")) : null, rollbackTarget: option(args, "rollback-target") ? readYaml(requiredOption(args, "rollback-target")) : null, migrationPlan: option(args, "migration-plan") ? readYaml(requiredOption(args, "migration-plan")) : null, now: option(args, "now", new Date().toISOString())}));
+  }
+  if (group === "pack" && action === "lifecycle-init") {
+    const input = readYaml(requiredFileOption(args));
+    return output(args, createPackLifecycleRecord({...input, pack: readYaml(requiredOption(args, "pack"))}));
+  }
+  if (group === "pack" && action === "benchmark") return output(args, createPackBenchmarkPackage(readYaml(requiredFileOption(args))));
+  if (group === "pack" && action === "gold-case") return output(args, createPackGoldCasePackage(readYaml(requiredFileOption(args))));
+  if (group === "pack" && action === "evidence-adapter") return output(args, createExternalSemanticEvidenceAdapter(readYaml(requiredFileOption(args))));
+  if (group === "pack" && action === "certify") {
+    const input = readYaml(requiredFileOption(args));
+    return output(args, createPackCertificationRecord({...input, pack: readYaml(requiredOption(args, "pack"))}));
+  }
+  if (group === "pack" && action === "import-evidence") {
+    const input = readYaml(requiredFileOption(args));
+    return output(args, importExternalSemanticEvidence({...input, adapter: input.adapterFile ? readYaml(path.resolve(input.adapterFile)) : input.adapter ?? null}));
+  }
+  if (group === "project-ontology" && action === "propose") {
+    const input = readYaml(requiredFileOption(args));
+    return output(args, createProjectOntologyProposal({...input, packs: (input.packFiles ?? []).map((file) => readYaml(path.resolve(file)))}));
+  }
+  if (group === "project-ontology" && action === "transition") {
+    const proposal = readYaml(requiredOption(args, "proposal"));
+    return output(args, transitionProjectOntologyProposal({proposal, action: requiredOption(args, "transition"), actor: requiredOption(args, "actor"), expectedProposalDigest: requiredOption(args, "expected-proposal-digest"), reason: option(args, "reason", ""), now: option(args, "now", new Date().toISOString())}));
+  }
+  if (group === "project-ontology" && action === "resolve") {
+    const proposal = readYaml(requiredOption(args, "proposal"));
+    return output(args, resolveProjectOntologySnapshot({proposal, expectedProposalDigest: requiredOption(args, "expected-proposal-digest"), foundationDigest: requiredOption(args, "foundation-digest"), priorSnapshot: option(args, "prior-snapshot") ? readYaml(requiredOption(args, "prior-snapshot")) : null, now: option(args, "now")}));
+  }
+  if (group === "project-ontology" && action === "project") return output(args, createProjectionSet(readYaml(requiredOption(args, "snapshot"))));
+  if (group === "project-ontology" && action === "skill") return output(args, compileProjectOntologySkill({snapshot: readYaml(requiredOption(args, "snapshot")), artifactSetManifestDigest: option(args, "artifact-set-manifest-digest")}));
+  if (group === "project-ontology" && action === "publish") {
+    const snapshot = readYaml(requiredOption(args, "snapshot"));
+    const publication = readYaml(requiredOption(args, "publication"));
+    return output(args, publishProjectOntologyArtifactSet({snapshot, publication, dependencyLock: option(args, "dependency-lock") ? readYaml(requiredOption(args, "dependency-lock")) : null}));
+  }
+  if (group === "project-ontology" && action === "artifact-transition") {
+    return output(args, createArtifactLifecycleRecord({artifactSet: readYaml(requiredOption(args, "artifact-set")), record: option(args, "record") ? readYaml(requiredOption(args, "record")) : null, action: requiredOption(args, "transition"), actor: requiredOption(args, "actor"), actorRole: option(args, "actor-role"), expectedRecordDigest: option(args, "expected-record-digest"), reason: option(args, "reason", ""), successor: option(args, "successor") ? readYaml(requiredOption(args, "successor")) : null, rollbackTarget: option(args, "rollback-target") ? readYaml(requiredOption(args, "rollback-target")) : null, migrationPlan: option(args, "migration-plan") ? readYaml(requiredOption(args, "migration-plan")) : null, now: option(args, "now", new Date().toISOString())}));
+  }
   if (group === "learning" && action === "validate") {
     const result = validateLearningFile(requiredOption(args, "type"), id ?? requiredFileOption(args));
     return output(args, result, result.status === "VALIDATED" ? 0 : 2);
@@ -301,7 +369,13 @@ async function dispatch(args, group, action, id) {
   throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, learning inspect|validate|ingest|snapshot|run-manifest|score|rescore|artifact, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor|v3-readiness|v3-initialize, or eval v3-run.");
 }
 
-function listOption(args, name) { return String(option(args, name, "")).split(",").map((item) => item.trim()).filter(Boolean); }
+function listOption(args, name) {
+  const value = args.options[name];
+  return (Array.isArray(value) ? value : value == null || value === false || value === true ? [] : [value])
+    .flatMap((item) => String(item).split(","))
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 function parseJsonOption(args, name, fallback = null) { const value = option(args, name); if (value === undefined) return fallback; try { return JSON.parse(String(value)); } catch { throw usage(`--${name} must contain valid JSON.`); } }
 
 async function produce(args, home) {

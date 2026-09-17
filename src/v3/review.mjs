@@ -396,6 +396,7 @@ function definitionChecksFor(asset) {
     add("resolved-components", (asset.spec?.resolvedComponents?.length ?? 0) >= 1 && asset.spec.resolvedComponents.every((item) => item.digest));
     add("execution-plan", (asset.spec?.executionPlan?.length ?? 0) >= 1);
     add("validators", (asset.spec?.validators?.length ?? 0) >= 1);
+    if (asset.spec?.semanticRequirements) add("semantic-requirements-closure", /^sha256:[a-f0-9]{64}$/.test(asset.spec.semanticRequirements.requirementsDigest ?? "") && asset.spec.semanticRequirements.authority?.provesEligibility === false && asset.spec.semanticRequirements.authority?.mayApprove === false && asset.spec.semanticRequirements.authority?.mayPublish === false);
   }
   return checks;
 }

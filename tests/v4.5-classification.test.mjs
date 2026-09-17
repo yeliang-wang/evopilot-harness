@@ -33,7 +33,7 @@ function taxonomy(overrides = {}) {
     kind: "Taxonomy",
     metadata: { namespace: "example", name: "software-products", version: "1.0.0" },
     spec: {
-      engineRange: ">=4.5.0 <4.6.0",
+      engineRange: ">=4.5.0 <5.0.0",
       requiredCapabilities: ["taxonomy-c14n/v1", "source-concept-hypothesis/v1", "open-world-taxonomy-classifier/v1", "taxonomy-decision-aggregate/v1"],
       axisPolicies: { domainCardinality: "SINGLE", productCardinality: "SINGLE" },
       domains: [
@@ -75,7 +75,7 @@ function learningResourceTaxonomy() {
     kind: "Taxonomy",
     metadata: { namespace: "acceptance", name: "developer-knowledge", version: "1.0.0" },
     spec: {
-      engineRange: ">=4.5.0 <4.6.0",
+      engineRange: ">=4.5.0 <5.0.0",
       requiredCapabilities: ["taxonomy-c14n/v1", "source-concept-hypothesis/v1", "open-world-taxonomy-classifier/v1", "taxonomy-decision-aggregate/v1"],
       axisPolicies: { domainCardinality: "SINGLE", productCardinality: "SINGLE" },
       domains: [
@@ -114,7 +114,7 @@ function aiEngineeringTaxonomy() {
     kind: "Taxonomy",
     metadata: { namespace: "acceptance", name: "agent-engineering", version: "1.0.0" },
     spec: {
-      engineRange: ">=4.5.0 <4.6.0",
+      engineRange: ">=4.5.0 <5.0.0",
       requiredCapabilities: ["taxonomy-c14n/v1", "source-concept-hypothesis/v1", "open-world-taxonomy-classifier/v1", "taxonomy-decision-aggregate/v1"],
       axisPolicies: { domainCardinality: "SINGLE", productCardinality: "SINGLE" },
       domains: [
@@ -177,8 +177,8 @@ test("Taxonomy/v1 canonical resolution is ordering-independent and business-valu
   assert.equal(a.taxonomyDigest, b.taxonomyDigest);
   assert.deepEqual(a.foundation.businessValues, []);
   assert.equal(a.canonicalization.algorithm, "taxonomy-c14n/v1");
-  assert.equal(a.taxonomy.canonicalDocumentDigest, "sha256:15c881febd5254bd9b8834f9add3cd0fff1eb02b0c445875a78a102beeb4f69b");
-  assert.equal(a.taxonomyDigest, "sha256:4398b3d3946e4fe00243313d3aa8a8a5a98e45a8d9eab0364081fc2bb15b37c4");
+  assert.equal(a.taxonomy.canonicalDocumentDigest, "sha256:625bd74e0d746ee0e0297b1258ab89967a1fd406251430519db2501c6c2605ff");
+  assert.equal(a.taxonomyDigest, "sha256:7801c940a4a782f9dc03a2c99511bdb32f7c4e60f2fb9f015db25e01d49413cc");
 });
 
 test("Taxonomy/v1 JSON and YAML serializations resolve to one canonical golden snapshot", () => {
@@ -190,7 +190,7 @@ test("Taxonomy/v1 JSON and YAML serializations resolve to one canonical golden s
   const fromJson = resolveTaxonomy(jsonFile);
   const fromYaml = resolveTaxonomy(yamlFile);
   assert.deepEqual(fromJson, fromYaml);
-  assert.equal(fromJson.taxonomyDigest, "sha256:4398b3d3946e4fe00243313d3aa8a8a5a98e45a8d9eab0364081fc2bb15b37c4");
+  assert.equal(fromJson.taxonomyDigest, "sha256:7801c940a4a782f9dc03a2c99511bdb32f7c4e60f2fb9f015db25e01d49413cc");
 });
 
 test("Taxonomy validation rejects normalization collision, unsupported range/capability, digest drift, and invalid hierarchy before Source access", async () => {
@@ -198,7 +198,7 @@ test("Taxonomy validation rejects normalization collision, unsupported range/cap
   collision.spec.products.push({ id: "other-cache", label: " Redis ", definition: "Other cache.", assignable: true });
   assert.throws(() => resolveTaxonomy(collision), (error) => error.code === "TAXONOMY_ALIAS_COLLISION");
   const unsupportedRange = taxonomy();
-  unsupportedRange.spec.engineRange = ">=4.6.0 <5.0.0";
+  unsupportedRange.spec.engineRange = ">=5.0.0 <6.0.0";
   assert.throws(() => resolveTaxonomy(unsupportedRange), (error) => error.code === "TAXONOMY_ENGINE_RANGE_UNSUPPORTED");
   const unsupportedCapability = taxonomy();
   unsupportedCapability.spec.requiredCapabilities = ["taxonomy-c14n/v1"];

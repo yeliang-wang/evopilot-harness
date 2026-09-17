@@ -1,6 +1,6 @@
 {
   "name": "evopilot-harness-digital-expert",
-  "version": "4.2.1",
+  "version": "4.7.0",
   "description": "Question-driven EvoPilot Harness lifecycle expert backed by the deterministic local stdio MCP Engine.",
   "author": { "name": "EvoPilot" },
   "agents": ["./agents/evopilot-harness-digital-expert.md"],

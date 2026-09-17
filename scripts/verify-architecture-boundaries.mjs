@@ -71,6 +71,31 @@ const classificationAnchors = [
   ["scripts/freeze-github-discovery-oracle.mjs", "candidateOutputsVisible: false", "Candidate-blind expected-result oracle"]
 ];
 
+const groundingAnchors = [
+  ["docs/architecture/adr/0006-professional-reasoning-and-ontology-grounding.md", "Accepted for implementation", "v4.6 professional grounding ADR"],
+  ["src/v4/semantics/ontology-grounding.mjs", "ONTOLOGY_FOUNDATION_SCHEMA", "Ontology Foundation contract"],
+  ["src/v4/semantics/ontology-grounding.mjs", "GROUNDING_OUTCOMES", "exact grounding outcome set"],
+  ["src/v4/semantics/ontology-grounding.mjs", "llmMayAssignAuthoritativeConceptId: false", "LLM grounding non-authority"],
+  ["src/v4/semantics/semantic-compatibility.mjs", "harnessEligibilityIndependent: true", "semantic compatibility and Eligibility separation"],
+  ["schemas/harness-asset-v3.schema.json", "semanticRequirements", "optional HarnessBundle semantic requirements"],
+  ["src/v3/schema.mjs", "FUTURE_ONTOLOGY_ASSET_KINDS", "v4.8 asset boundary rejection"],
+  ["src/v3/catalog.mjs", "requiredConceptCount", "Catalog semantic metadata projection"],
+  ["src/v3/hub.mjs", "semanticRequirements", "Harness Hub semantic projection"],
+  ["src/v4/engine-adapter.mjs", "semantic.grounding.inspect", "MCP semantic diagnostic projection"]
+];
+
+const projectOntologyAnchors = [
+  ["docs/architecture/adr/0007-governed-project-ontology-and-professional-packs.md", "Accepted for implementation", "v4.7 Project Ontology ADR"],
+  ["src/v4/semantics/professional-packs.mjs", "PROFESSIONAL_PACK_KINDS", "declarative Professional Pack contract"],
+  ["src/v4/semantics/professional-packs.mjs", "EXECUTABLE_PACK_REJECTED", "executable Pack rejection"],
+  ["src/v4/semantics/professional-packs.mjs", "PRIVATE_PACK_ROOT_LEAK", "private Pack root isolation"],
+  ["src/v4/semantics/project-ontology.mjs", "PROJECT_ONTOLOGY_ARTIFACT_SET_SCHEMA", "Project Ontology Artifact Set contract"],
+  ["src/v4/semantics/project-ontology.mjs", "PROJECT_ONTOLOGY_PUBLICATION_AUTHORIZATION_REQUIRED", "separate Project Ontology publication authorization"],
+  ["src/v4/semantics/project-ontology.mjs", "soleTruthStore: false", "ProjectOntologySkill non-authority"],
+  ["schemas/professional-pack-v1.schema.json", "activationRequiresIndependentDecision", "Pack activation separation"],
+  ["src/v4/engine-adapter.mjs", "project-ontology.artifact.publish", "Project Ontology Engine operation boundary"]
+];
+
 const learningAnchors = [
   ["src/v3/learning.mjs", "ingestLearningDocument", "Curriculum/Research/Contribution Immutable Intake"],
   ["src/v3/learning.mjs", "createEvidenceRunManifest", "Evidence Run Manifest"],
@@ -84,6 +109,8 @@ for (const [file, needle, moduleName] of anchors) mustContain(file, needle, `${m
 for (const [file, needle, moduleName] of agentAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of learningAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of classificationAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
+for (const [file, needle, moduleName] of groundingAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
+for (const [file, needle, moduleName] of projectOntologyAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
 mustContain("AGENTS.md", "28 enforced Engine module boundaries", "root agent instructions must reference the complete Engine module boundary set");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
@@ -175,6 +202,16 @@ for (const file of ["src/v4/classification/taxonomy.mjs", "src/v4/classification
   mustNotContain(file, "publishProposal", "classification must not publish a Proposal");
   mustNotContain(file, "approveProposal", "classification must not approve a Proposal");
 }
+for (const file of ["src/v4/semantics/ontology-grounding.mjs", "src/v4/semantics/semantic-compatibility.mjs"]) {
+  mustNotMatch(file, /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "semantic grounding must remain deterministic and offline");
+  mustNotContain(file, "publishProposal", "semantic grounding must not publish a Proposal");
+  mustNotContain(file, "approveProposal", "semantic grounding must not approve a Proposal");
+}
+for (const file of ["src/v4/semantics/professional-packs.mjs", "src/v4/semantics/project-ontology.mjs"]) {
+  mustNotMatch(file, /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "Project Ontology and Professional Pack resolution must remain deterministic and offline");
+  mustNotContain(file, "approveProposal", "Project Ontology must not approve Harness Proposals");
+  mustNotContain(file, "publishProposal", "Project Ontology must not publish Harness Proposals");
+}
 mustNotMatch("src/v4/classification/source-descriptor.mjs", /from\s+["']node:(?:http|https|net|tls|dgram)["']|\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "Source Resolver may use bounded argument-vector Git only and must not open arbitrary network or shell execution");
 mustContain("src/v4/classification/source-descriptor.mjs", 'GIT_TERMINAL_PROMPT: "0"', "Source Resolver must disable interactive credential prompting");
 mustContain("src/v4/classification/source-descriptor.mjs", 'sourceExecution: false', "Source Resolver must preserve Source non-execution");
@@ -217,7 +254,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length} Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors, ${classificationAnchors.length} v4.5 classification anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length} Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors, ${classificationAnchors.length} v4.5 classification anchors, ${groundingAnchors.length} v4.6 grounding anchors, ${projectOntologyAnchors.length} v4.7 Project Ontology anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);

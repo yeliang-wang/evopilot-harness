@@ -94,6 +94,7 @@ test("WorkBuddy installer is preview-bound, idempotent, repairable, and ownershi
   assert.equal(installedStatus.verification.runtimeCoreDigestMatch, true);
   assert.equal(installedStatus.verification.runtimeIntegrityDigestMatch, true);
   const installedPlugin = JSON.parse(fs.readFileSync(path.join(hostHome, "plugins", "marketplaces", "my-experts", "plugins", "evopilot-harness-digital-expert", ".codebuddy-plugin", "plugin.json"), "utf8"));
+  assert.equal(installedPlugin.version, manifest.version);
   assert.equal(installedPlugin.mcpServers["evopilot-harness"].command, path.join(runtimeRoot, "node_modules", ".bin", "evopilot-harness"));
   assert.equal(installedPlugin.mcpServers["evopilot-harness"].args.includes(workspace), true);
   assert.equal(installedPlugin.mcpServers["evopilot-harness"].args.includes(root), false);

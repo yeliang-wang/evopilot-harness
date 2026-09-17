@@ -196,6 +196,7 @@
         "constraints": { "$ref": "#/$defs/nonEmptyStrings" },
         "evidence": { "$ref": "#/$defs/nonEmptyStrings" },
         "validators": { "$ref": "#/$defs/nonEmptyStrings" },
+        "semanticRequirements": { "$ref": "#/$defs/semanticRequirements" },
         "exports": {
           "type": "array",
           "items": {
@@ -209,6 +210,26 @@
           }
         }
       }
+    },
+    "semanticRequirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "foundationDigest", "requiredConcepts", "prohibitedConcepts", "relationRequirements", "evidenceRequirements", "authority", "requirementsDigest"],
+      "properties": {
+        "schema": { "const": "evopilot-harness-semantic-requirements/v1" },
+        "foundationDigest": { "$ref": "#/$defs/digest" },
+        "requiredConcepts": { "$ref": "#/$defs/semanticConceptRequirements" },
+        "prohibitedConcepts": { "$ref": "#/$defs/semanticConceptRequirements" },
+        "relationRequirements": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["subjectConceptId", "relationType", "objectConceptId"], "properties": { "subjectConceptId": { "type": "string", "minLength": 1 }, "relationType": { "enum": ["IS_A", "PART_OF", "REQUIRES", "PERFORMS", "CONSTRAINS", "TRIGGERS", "RECOVERS_WITH", "VALIDATED_BY", "ALTERNATIVE_TO", "MITIGATES", "PRODUCES"] }, "objectConceptId": { "type": "string", "minLength": 1 } } } },
+        "evidenceRequirements": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "authority": { "type": "object", "additionalProperties": false, "required": ["descriptiveConstraintOnly", "executable", "provesEligibility", "mayApprove", "mayPublish"], "properties": { "descriptiveConstraintOnly": { "const": true }, "executable": { "const": false }, "provesEligibility": { "const": false }, "mayApprove": { "const": false }, "mayPublish": { "const": false } } },
+        "requirementsDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "semanticConceptRequirements": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "object", "additionalProperties": false, "required": ["conceptId", "metaType", "rationale", "evidenceRefs"], "properties": { "conceptId": { "type": "string", "minLength": 1 }, "metaType": { "enum": ["ENTITY", "ATTRIBUTE", "RELATIONSHIP", "RULE", "EVENT", "ACTION", "ACTOR", "ROLE", "PERMISSION", "STATE", "WORKFLOW", "CAPABILITY", "SYSTEM", "DATA_ASSET"] }, "rationale": { "type": "string" }, "evidenceRefs": { "type": "array", "uniqueItems": true, "items": { "type": "string" } } } }
     }
   }
 }

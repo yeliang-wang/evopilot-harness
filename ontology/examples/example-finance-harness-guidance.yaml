@@ -1,0 +1,45 @@
+apiVersion: semantics.evopilot.io/v1
+kind: DomainHarnessPack
+metadata:
+  id: example-finance-harness-guidance
+  version: 1.0.0
+  name: Example Finance Harness Guidance
+  namespace: example.finance.harness
+  root: COMMUNITY
+  visibility: PUBLIC
+  generation: 1
+  owner: evopilot-harness-example-maintainers
+  provenance:
+    author: evopilot-harness
+    reviewers: []
+    approvers: []
+    publishers: []
+    sourceRefs:
+      - docs://example-only
+  labels:
+    exampleOnly: "true"
+    universalAuthority: "false"
+  kind: DomainHarnessPack
+  digest: sha256:c127d98e383fd119f73a5e422393d97fde1f25a0b79194bf50f283547f2a08e2
+spec:
+  imports: []
+  concepts: []
+  equivalences: []
+  replacements: []
+  deprecations: []
+  rules: []
+  shapes: []
+  harnessGuidance:
+    - topic: reconciliation
+      guidance: Require explicit imbalance evidence, reviewer-visible alternatives, and rollback validation.
+      evidenceRefs:
+        - docs://example-only
+  authority:
+    declarativeOnly: true
+    executable: false
+    activationRequiresIndependentDecision: true
+status:
+  phase: DRAFT
+  conditions: []
+  observedGeneration: 1
+  engineOwned: true

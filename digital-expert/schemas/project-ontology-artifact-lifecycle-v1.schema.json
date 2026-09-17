@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/project-ontology-artifact-lifecycle-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "artifactSetDigest", "stage", "history", "authority", "recordDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-project-ontology-artifact-lifecycle/v1"},
+    "artifactSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "stage": {"enum": ["PUBLISHED", "INSTALLED", "ACTIVE", "SUPERSEDED", "ROLLED_BACK", "DEPRECATED"]},
+    "history": {"type": "array"},
+    "authority": {"type": "object"},
+    "recordDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

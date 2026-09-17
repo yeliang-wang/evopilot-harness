@@ -4704,6 +4704,8 @@ Usage:
   evopilot-harness catalog v3-publish|v3-validate|v3-diff|v3-sign|v3-verify [--workspace <dir>] [--json]
   evopilot-harness registry v3-validate|v3-sign|v3-verify [--workspace <dir>] [--json]
   evopilot-harness ontology inspect|validate|diff|publish [--workspace <dir>] [--json]
+  evopilot-harness pack scaffold|inspect|resolve|lifecycle-init|transition|benchmark|gold-case|certify|evidence-adapter|import-evidence [--workspace <dir>] [--json]
+  evopilot-harness project-ontology propose|transition|resolve|project|skill|publish|artifact-transition [--workspace <dir>] [--json]
   evopilot-harness policy inspect|validate|diff|publish [--type matcher|advisor] [--workspace <dir>] [--json]
   evopilot-harness migrate v2-to-v3|rollback [migration-id] [--workspace <dir>] [--json]
   evopilot-harness llm v3-models|v3-doctor|v3-readiness|v3-initialize [--models-file models.json] [--model <id>] [--workspace <dir>] [--json]

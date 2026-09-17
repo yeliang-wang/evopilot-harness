@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/project-ontology-projection-set-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "snapshotDigest", "projections", "projectionSetDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-project-ontology-projection-set/v1"},
+    "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "projections": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["format", "status", "snapshotDigest", "mediaType", "content", "contentDigest"],
+        "properties": {
+          "format": {"enum": ["YAML", "OWL", "RDF_TURTLE", "JSON_LD", "SWRL", "SHACL"]},
+          "status": {"enum": ["APPLICABLE", "NON_APPLICABLE"]},
+          "snapshotDigest": {"type": "string"},
+          "mediaType": {"type": "string"},
+          "reason": {"type": "string"},
+          "content": {"type": ["string", "null"]},
+          "contentDigest": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "projectionSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-candidate-set-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "sourceSnapshotDigest", "evidenceGraphDigest", "candidates", "extraction", "authority", "candidateSetDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-semantic-candidate-set/v1" },
+    "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
+    "evidenceGraphDigest": { "$ref": "#/$defs/digest" },
+    "candidates": { "type": "array", "maxItems": 512, "items": { "$ref": "#/$defs/candidate" } },
+    "extraction": { "type": "object", "additionalProperties": false, "required": ["algorithm", "deterministicSignals", "llmAdviceSeparated", "sourceExecution", "bounded"], "properties": { "algorithm": { "type": "string" }, "deterministicSignals": { "const": true }, "llmAdviceSeparated": { "const": true }, "sourceExecution": { "const": false }, "bounded": { "const": true } } },
+    "authority": { "type": "object", "required": ["engineOwnsCandidateSet", "llmMayAdvise", "llmMayAssignAuthoritativeConceptId", "sourceMayMutate"], "properties": { "engineOwnsCandidateSet": { "const": true }, "llmMayAdvise": { "const": true }, "llmMayAssignAuthoritativeConceptId": { "const": false }, "sourceMayMutate": { "const": false } } },
+    "candidateSetDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "candidate": { "type": "object", "additionalProperties": false, "required": ["candidateId", "label", "normalizedLabel", "metaType", "evidenceIds", "evidenceFamilies", "deterministicSignals", "authoritativeConceptIds", "conflictConceptIds", "proposedExtension", "llmAdvice", "uncertainty"], "properties": { "candidateId": { "type": "string", "minLength": 1 }, "label": { "type": "string", "minLength": 1 }, "normalizedLabel": { "type": "string", "minLength": 1 }, "metaType": { "$ref": "#/$defs/metaType" }, "evidenceIds": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "type": "string" } }, "evidenceFamilies": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "type": "string" } }, "deterministicSignals": { "type": "array" }, "authoritativeConceptIds": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }, "conflictConceptIds": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }, "proposedExtension": { "type": ["object", "null"] }, "llmAdvice": { "type": ["object", "null"] }, "uncertainty": { "enum": ["LOW", "BOUNDED", "HIGH"] } } },
+    "metaType": { "enum": ["ENTITY", "ATTRIBUTE", "RELATIONSHIP", "RULE", "EVENT", "ACTION", "ACTOR", "ROLE", "PERMISSION", "STATE", "WORKFLOW", "CAPABILITY", "SYSTEM", "DATA_ASSET"] }
+  }
+}

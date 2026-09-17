@@ -74,7 +74,7 @@ function buildEvolutionContextBinding({ session, plan, renderModel, locale, temp
   const core = {
     schema: EVOLUTION_CONTEXT_BINDING_SCHEMA,
     sourceSnapshotDigest: session?.classificationHandoff?.sourceSnapshotDigest ?? digestSourceBinding(sourceBinding),
-    classificationHandoffBinding: session?.classificationHandoff ? { handoffDigest: session.classificationHandoff.handoffDigest, sourceDescriptorDigest: session.classificationHandoff.sourceDescriptorDigest, sourceResolutionDigest: session.classificationHandoff.sourceResolutionDigest, sourceSnapshotDigest: session.classificationHandoff.sourceSnapshotDigest, taxonomyDigest: session.classificationHandoff.taxonomyDigest, classificationContextDigest: session.classificationHandoff.classificationContextDigest, provesEligibility: false } : null,
+    classificationHandoffBinding: session?.classificationHandoff ? { handoffDigest: session.classificationHandoff.handoffDigest, sourceDescriptorDigest: session.classificationHandoff.sourceDescriptorDigest, sourceResolutionDigest: session.classificationHandoff.sourceResolutionDigest, sourceSnapshotDigest: session.classificationHandoff.sourceSnapshotDigest, taxonomyDigest: session.classificationHandoff.taxonomyDigest, ontologyFoundationDigest: session.classificationHandoff.ontologyFoundationDigest ?? null, semanticCandidateSetDigest: session.classificationHandoff.semanticCandidateSetDigest ?? null, classificationContextDigest: session.classificationHandoff.classificationContextDigest, provesEligibility: false } : null,
     catalogBinding: governedWorkspaceBinding(session?.workspace?.home, ["harness-registry.yaml", "catalogs/organization", "catalogs/builtin"]),
     ontologyBinding: governedWorkspaceBinding(session?.workspace?.home, ["ontology"]),
     matchPolicyBinding: governedWorkspaceBinding(session?.workspace?.home, ["policies/matcher"]),
@@ -205,6 +205,7 @@ export function createHarnessProfessionalAnalysis({ subject = {}, authoritative 
     subject: persistedJson(subject),
     outcome: sourceOutcomeExplanation.outcome,
     capabilities,
+    professionalFacets: extractProfessionalFacets({ authoritative, reasoningMap, sourceOutcomeExplanation }),
     extractionAlgorithm: ["STATIC_SOURCE_INGESTION", "SNAPSHOT_AND_REDACTION", "EVIDENCE_GRAPH", "ELIGIBILITY_GATE", "ONTOLOGY_MAPPING", "CATALOG_CANDIDATE_SCORING", "DECISION_AGGREGATION", "PROPOSAL_AND_EVALUATION_DESIGN"],
     catalogComparison: {
       recommendation: sourceOutcomeExplanation.outcome,
@@ -221,6 +222,31 @@ export function createHarnessProfessionalAnalysis({ subject = {}, authoritative 
   };
   core.professionalAnalysisDigest = digest(core);
   return core;
+}
+
+function extractProfessionalFacets({ authoritative = {}, reasoningMap = {}, sourceOutcomeExplanation }) {
+  const entries = array(reasoningMap.entries);
+  const collect = (...fields) => unique(fields.flatMap((field) => [
+    ...array(authoritative[field]),
+    ...entries.flatMap((entry) => array(entry[field]))
+  ]).map((item) => typeof item === "string" ? item : item?.id ?? item?.name ?? item?.description).filter(Boolean));
+  return {
+    businessObjects: collect("businessObjects", "entities"),
+    capabilities: unique(entries.map((entry) => entry.harnessCapability).filter(Boolean)),
+    tasks: collect("tasks", "taskClasses"),
+    roles: collect("roles", "actors"),
+    constraints: collect("constraints", "policies"),
+    workflows: collect("workflows", "processes"),
+    failureModes: collect("failureModes", "failures"),
+    recoveryStrategies: collect("recoveryStrategies", "recovery"),
+    validators: collect("validators", "validation"),
+    positiveCases: collect("positiveCases"),
+    negativeCases: collect("negativeCases"),
+    alternatives: sourceOutcomeExplanation.alternatives,
+    risks: collect("risks"),
+    expectedEffects: collect("expectedEffects", "outcomes"),
+    missingEvidence: sourceOutcomeExplanation.missingEvidence
+  };
 }
 
 export function createAgentHostBoundaryContract() {

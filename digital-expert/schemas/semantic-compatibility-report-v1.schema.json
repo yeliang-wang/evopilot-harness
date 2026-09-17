@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-compatibility-report-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "requirementsDigest", "groundingResultDigest", "matchedRequiredConceptIds", "missingRequiredConceptIds", "presentProhibitedConceptIds", "unresolvedCandidateIds", "eligibilityObservation", "authority", "compatibilityReportDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-semantic-compatibility-report/v1" },
+    "status": { "enum": ["COMPATIBLE", "INCOMPATIBLE", "INDETERMINATE"] },
+    "requirementsDigest": { "$ref": "#/$defs/digest" }, "groundingResultDigest": { "$ref": "#/$defs/digest" },
+    "matchedRequiredConceptIds": { "$ref": "#/$defs/ids" }, "missingRequiredConceptIds": { "$ref": "#/$defs/ids" }, "presentProhibitedConceptIds": { "$ref": "#/$defs/ids" }, "unresolvedCandidateIds": { "$ref": "#/$defs/ids" },
+    "eligibilityObservation": { "type": ["object", "null"] },
+    "authority": { "type": "object", "additionalProperties": false, "required": ["semanticCompatibilityOnly", "harnessEligibilityIndependent", "mayOverrideEligibility", "mayCreateProposal", "mayApprove", "mayPublish"], "properties": { "semanticCompatibilityOnly": { "const": true }, "harnessEligibilityIndependent": { "const": true }, "mayOverrideEligibility": { "const": false }, "mayCreateProposal": { "const": false }, "mayApprove": { "const": false }, "mayPublish": { "const": false } } },
+    "compatibilityReportDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "ids": { "type": "array", "uniqueItems": true, "items": { "type": "string" } } }
+}

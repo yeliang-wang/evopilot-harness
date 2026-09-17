@@ -1,0 +1,61 @@
+apiVersion: semantics.evopilot.io/v1
+kind: ProductOntologyPack
+metadata:
+  id: example-crm-product
+  version: 1.0.0
+  name: Example CRM Product
+  namespace: example.crm
+  root: COMMUNITY
+  visibility: PUBLIC
+  generation: 1
+  owner: evopilot-harness-example-maintainers
+  provenance:
+    author: evopilot-harness
+    reviewers: []
+    approvers: []
+    publishers: []
+    sourceRefs:
+      - docs://example-only
+  labels:
+    exampleOnly: "true"
+    universalAuthority: "false"
+  kind: ProductOntologyPack
+  digest: sha256:76b5c1edc8f4da963be675b843ff448051e36cd1a2cbe9a7bb9274f2450a43f9
+spec:
+  imports: []
+  concepts:
+    - conceptId: example.crm:contact
+      label: Contact
+      metaType: ENTITY
+      definition: An illustrative CRM contact record.
+      aliases: []
+      relationships: []
+      evidenceRefs:
+        - docs://example-only
+      replaces: null
+      deprecated: false
+    - conceptId: example.crm:pipeline
+      label: Pipeline
+      metaType: WORKFLOW
+      definition: An illustrative CRM opportunity pipeline.
+      aliases: []
+      relationships: []
+      evidenceRefs:
+        - docs://example-only
+      replaces: null
+      deprecated: false
+  equivalences: []
+  replacements: []
+  deprecations: []
+  rules: []
+  shapes: []
+  harnessGuidance: []
+  authority:
+    declarativeOnly: true
+    executable: false
+    activationRequiresIndependentDecision: true
+status:
+  phase: DRAFT
+  conditions: []
+  observedGeneration: 1
+  engineOwned: true

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/resolved-project-ontology-snapshot-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "project", "foundationDigest", "proposalDigest", "baseDigest", "packSetDigest", "packs", "dependencyGraph", "concepts", "authority", "snapshotDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-resolved-project-ontology-snapshot/v1"},
+    "project": {"type": "object"},
+    "foundationDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "proposalDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "baseDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "packSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "packs": {"type": "array", "minItems": 1},
+    "dependencyGraph": {"type": "array"},
+    "concepts": {"type": "array"},
+    "overlay": {"type": ["object", "null"]},
+    "predecessorSnapshotDigest": {"type": ["string", "null"], "pattern": "^sha256:[a-f0-9]{64}$"},
+    "resolvedAt": {"type": ["string", "null"]},
+    "authority": {"type": "object"},
+    "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

@@ -3,7 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const contractPath = path.join(root, "governance/roadmap.yaml");
+const contractPath = process.env.EVOPILOT_ROADMAP_CONTRACT
+  ? path.resolve(process.env.EVOPILOT_ROADMAP_CONTRACT)
+  : path.join(root, "governance/roadmap.yaml");
 const args = process.argv.slice(2);
 const json = args.includes("--json");
 const intent = option("--intent");
@@ -55,6 +57,7 @@ function validateRoadmap(value) {
   required(Array.isArray(value?.ownership?.mustNotOwn) && value.ownership.mustNotOwn.length > 0, "ownership.mustNotOwn is required");
   required(semver(value?.versionPolicy?.publishedBaseline), "publishedBaseline must be SemVer");
   required(semver(value?.versionPolicy?.currentWorkingVersion), "currentWorkingVersion must be SemVer");
+  required(value?.versionPolicy?.publishedBaseline === "4.5.0" && value?.versionPolicy?.currentWorkingVersion === "4.6.0", "Harness Roadmap must preserve public 4.5.0 and bind current 4.6.0");
   required(Array.isArray(value?.milestones) && value.milestones.length > 0, "milestones are required");
   const ids = new Set();
   for (const milestone of value?.milestones ?? []) {
@@ -66,11 +69,27 @@ function validateRoadmap(value) {
     required(Array.isArray(milestone.signals) && milestone.signals.length > 0, `signals are required: ${milestone.id}`);
     required(Array.isArray(milestone.acceptance) && milestone.acceptance.length > 0, `acceptance is required: ${milestone.id}`);
   }
+  for (const [id, version] of [["evopilot-harness-4.6-professional-source-to-harness-reasoning", "4.6.0"], ["evopilot-harness-4.7-governed-professional-pack-ecosystem", "4.7.0"], ["evopilot-harness-4.8-scalable-semantic-interoperability", "4.8.0"]]) {
+    const milestone = value?.milestones?.find((item) => item.id === id);
+    required(milestone?.targetVersion === version && milestone?.status === "PLANNED", `${id} must remain the PLANNED ${version} milestone`);
+  }
+  const convergence = value?.seriesConvergenceParticipation;
+  required(convergence?.schema === "evopilot-series-semantic-design-convergence-participation/v1", "series convergence participation schema is invalid");
+  required(convergence?.convergenceContractRef === "evopilot-series-semantic-design-convergence", "series convergence participation must reference the central convergence contract");
+  required(convergence?.owningRepository === "evopilot-harness" && convergence?.role === "IMMUTABLE_SEMANTIC_AND_HARNESS_ASSET_PRODUCER", "series convergence must preserve the Harness producer role");
+  required(arrayEquals(convergence?.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0"]) && convergence?.terminalVersion === "4.8.0", "series convergence must preserve the Harness 4.6.0 to terminal 4.8.0 sequence");
+  for (const requirement of ["one independently approved Evolution Target bound to the current evopilot-harness Roadmap digest", "all current and inherited acceptance", "real end-to-end coverage for that exact Harness version", "impact closure and NO_REGRESSION", "exact Candidate, package, published asset, dependency, and evidence digests"]) {
+    required(convergence?.everyVersionRequires?.includes(requirement), `series convergence is missing per-version Harness requirement: ${requirement}`);
+  }
+  required(Array.isArray(convergence?.terminalContribution) && convergence.terminalContribution.length === 3, "series convergence must preserve the exact Harness terminal contribution");
+  required(convergence?.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority === false && convergence?.individualHarnessReleaseAuthorityRemainsIndependent === true, "terminal convergence E2E must not grant or merge Harness authority");
   const packageVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
   const knownVersions = new Set([value?.versionPolicy?.publishedBaseline, value?.versionPolicy?.currentWorkingVersion, ...(value?.milestones ?? []).map((item) => item.targetVersion)]);
   const declaredReleaseVersion = (value?.milestones ?? []).some((item) => inReleaseLine(packageVersion, item.releaseLine));
   required(knownVersions.has(packageVersion) || declaredReleaseVersion, `package version ${packageVersion} is not declared by the Roadmap`);
   required(fs.existsSync(path.join(root, "docs/roadmap/ROADMAP.md")), "docs/roadmap/ROADMAP.md is missing");
+  const roadmapDocument = fs.readFileSync(path.join(root, "docs/roadmap/ROADMAP.md"), "utf8");
+  required(roadmapDocument.includes("## EvoPilot-Series Final Semantic Design Convergence Participation"), "human Roadmap is missing the final semantic design convergence participation");
   const agents = fs.readFileSync(path.join(root, "AGENTS.md"), "utf8");
   required(agents.includes("Roadmap Gate"), "AGENTS.md must require the Roadmap Gate");
   const packageJson = fs.readFileSync(path.join(root, "package.json"), "utf8");
@@ -91,8 +110,12 @@ function classifyIntent(rawIntent, value) {
   if (boundaryMatches.length > 0) return decision("BOUNDARY_CHANGE", [], [], boundaryMatches.map((rule) => `${rule.id}: ${rule.reason}`), "REPLACEMENT_ADR_REQUIRED");
   if (matches(normalized, value.deviationSignals ?? [])) return decision("DEVIATION", [], [], ["Intent explicitly changes the accepted Roadmap, milestone order, or product boundary."], "ROADMAP_REVISION_REQUIRED");
   const matchedMilestones = value.milestones.filter((milestone) => matches(normalized, milestone.signals)).map((milestone) => milestone.id);
-  const matchedStandingWork = value.standingWork.filter((item) => matches(normalized, item.signals)).map((item) => item.id);
-  if (matchedMilestones.length > 0 || matchedStandingWork.length > 0) return decision("ALIGNED", matchedMilestones, matchedStandingWork, ["Intent matches declared Roadmap work."], "NONE");
+  const matchedStandingItems = value.standingWork.filter((item) => matches(normalized, item.signals));
+  const capabilityExpansion = matches(normalized, value.intentPolicy?.capabilityExpansionSignals ?? []);
+  const alignedStandingItems = matchedStandingItems.filter((item) => !capabilityExpansion || item.allowsCapabilityExpansion === true);
+  const matchedStandingWork = matchedStandingItems.map((item) => item.id);
+  if (matchedMilestones.length > 0 || alignedStandingItems.length > 0) return decision("ALIGNED", matchedMilestones, alignedStandingItems.map((item) => item.id), ["Intent matches declared Roadmap work."], "NONE");
+  if (matchedStandingWork.length > 0 && capabilityExpansion) return decision("UNPLANNED", [], matchedStandingWork, ["Standing-work wording cannot authorize a product capability expansion."], "USER_REVIEW_REQUIRED");
   return decision("UNPLANNED", [], [], ["Intent does not match a declared milestone or standing maintenance class."], "USER_REVIEW_REQUIRED");
 }
 
@@ -139,6 +162,10 @@ function normalize(value) {
 
 function semver(value) {
   return /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(String(value ?? ""));
+}
+
+function arrayEquals(actual, expected) {
+  return Array.isArray(actual) && actual.length === expected.length && actual.every((value, index) => value === expected[index]);
 }
 
 function inReleaseLine(version, line) {

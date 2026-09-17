@@ -10,6 +10,19 @@ workflows:
   - id: evolve-single-local-project
     scenario: evolve
     sources: [sourceProjects]
+  - id: inspect-professional-semantics
+    scenario: semantic-grounding
+    sources: [semanticCandidateSet, ontologyConceptContext, harnessSemanticRequirements]
+    operations: [semantic.foundation.inspect, semantic.candidates.inspect, semantic.grounding.inspect, semantic.compatibility.inspect]
+    outcomes: [RESOLVED, UNRESOLVED_CONCEPT, AMBIGUOUS_CONCEPT, CONFLICTING_CONCEPT, EXTENSION_REQUIRED, EVIDENCE_INSUFFICIENT]
+    authority: advisory-to-harness-lifecycle-only
+  - id: govern-project-ontology-and-professional-packs
+    scenario: maintenance
+    sources: [professionalPacks, projectOntologyProposal, baseSnapshot, externalSemanticEvidence, certificationEvidence]
+    operations: [pack.scaffold.inspect, pack.inspect, pack.resolve.inspect, pack.lifecycle.create, pack.lifecycle.transition, pack.benchmark.inspect, pack.gold-case.inspect, pack.certification.inspect, semantic.evidence-adapter.inspect, semantic.evidence.import.inspect, project-ontology.proposal.inspect, project-ontology.proposal.transition, project-ontology.snapshot.resolve, project-ontology.projections.inspect, project-ontology.skill.inspect, project-ontology.artifact.publish, project-ontology.artifact.transition]
+    publicationOperationsRequire: authorize_plan_publication_operation
+    authority: separate-proposal-approval-publication-installation-and-activation
+    exclusions: [executable-packs, automatic-trust, automatic-publication, automatic-activation, evopilot-runtime-calls, incremental-reasoning]
   - id: evolve-local-project-root
     scenario: evolve
     sources: [sourceRoot]

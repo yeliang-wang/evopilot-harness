@@ -34,7 +34,7 @@ metadata:
   name: software-classification
   version: 1.0.0
 spec:
-  engineRange: ">=4.5.0 <4.6.0"
+  engineRange: ">=4.5.0 <5.0.0"
   requiredCapabilities:
     - taxonomy-c14n/v1
     - source-concept-hypothesis/v1

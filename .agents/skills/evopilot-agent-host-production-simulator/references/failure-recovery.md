@@ -16,8 +16,12 @@ For an authorized independent-Host batch, classify the failure through the
 `RUNNER_PROJECTION` and `TOOLING_DRIFT` may continue automatically after their
 bounded correction. Host transport, Source binding, semantic mismatch, stale
 binding and uncertain mutation stop at their declared authority boundary.
-`PRODUCT_BEHAVIOR` always returns to a new Candidate and the complete required
-impact and regression path.
+An unrefined `PRODUCT_BEHAVIOR` stops. Deterministic evidence may classify it
+as `PRODUCT_DEFECT_REPAIRABLE`, which still stops this Candidate-local run but
+may enter a separately authorized campaign-level bounded repair, append-only
+successor Candidate, and complete impact/regression path. A
+`PRODUCT_SEMANTIC_CHANGE` returns to Target Review. The Host simulator never
+edits source or creates the successor itself.
 
 WorkBuddy has no Codex desktop-control or evidence-export dependency. A Computer Use, Accessibility, SO06, startup-probe, transport-receipt, screenshot, transcript, receipt or digest issue is outside the WorkBuddy acceptance path. Codex does not recover, supervise or classify individual WorkBuddy cases. The designated human withholds the final declaration until the complete range has been performed; Candidate reinstall, Source mutation and Host substitution remain forbidden recovery actions.
 

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/ontology-foundation-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "metaTypes", "relationTypes", "limits", "authority", "foundationDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-ontology-foundation/v1" },
+    "version": { "const": 1 },
+    "metaTypes": { "type": "array", "minItems": 14, "maxItems": 14, "uniqueItems": true, "items": { "enum": ["ENTITY", "ATTRIBUTE", "RELATIONSHIP", "RULE", "EVENT", "ACTION", "ACTOR", "ROLE", "PERMISSION", "STATE", "WORKFLOW", "CAPABILITY", "SYSTEM", "DATA_ASSET"] } },
+    "relationTypes": { "type": "array", "minItems": 11, "maxItems": 11, "uniqueItems": true, "items": { "enum": ["IS_A", "PART_OF", "REQUIRES", "PERFORMS", "CONSTRAINS", "TRIGGERS", "RECOVERS_WITH", "VALIDATED_BY", "ALTERNATIVE_TO", "MITIGATES", "PRODUCES"] } },
+    "limits": { "type": "object", "additionalProperties": false, "required": ["maxCandidates", "maxConcepts", "maxEvidenceRefsPerCandidate"], "properties": { "maxCandidates": { "type": "integer", "minimum": 1, "maximum": 512 }, "maxConcepts": { "type": "integer", "minimum": 1, "maximum": 4096 }, "maxEvidenceRefsPerCandidate": { "type": "integer", "minimum": 1, "maximum": 64 } } },
+    "authority": { "type": "object", "required": ["engineOwnedMetaModel", "containsBusinessValues", "executable", "mayDecideEligibility", "mayApprove", "mayPublish"], "properties": { "engineOwnedMetaModel": { "const": true }, "containsBusinessValues": { "const": false }, "executable": { "const": false }, "mayDecideEligibility": { "const": false }, "mayApprove": { "const": false }, "mayPublish": { "const": false } } },
+    "foundationDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } }
+}

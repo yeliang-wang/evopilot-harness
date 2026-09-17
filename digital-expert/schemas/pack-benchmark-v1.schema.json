@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/pack-benchmark-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "version", "cases", "metrics", "provenance", "evidenceRefs", "authority", "benchmarkDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-pack-benchmark/v1"},
+    "id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
+    "cases": {"type": "array"},
+    "metrics": {"type": "array", "items": {"type": "string"}},
+    "provenance": {"type": "object"},
+    "evidenceRefs": {"type": "array", "items": {"type": "string"}},
+    "authority": {"type": "object"},
+    "benchmarkDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

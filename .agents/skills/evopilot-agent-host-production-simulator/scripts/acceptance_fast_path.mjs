@@ -19,14 +19,16 @@ const REPLAYABLE_DECISIONS = new Set([
   "CLOSE"
 ]);
 const FAILURE_POLICIES = Object.freeze({
-  RUNNER_PROJECTION: { rerunScope: "AFFECTED_STAGE_ONLY", requiresNewCandidate: false, automaticRetryAllowed: true },
-  TOOLING_DRIFT: { rerunScope: "AFFECTED_TOOLING_CHECK_ONLY", requiresNewCandidate: false, automaticRetryAllowed: true },
-  HOST_TRANSPORT: { rerunScope: "AFFECTED_HOST_LEG_ONLY", requiresNewCandidate: false, automaticRetryAllowed: false },
-  SOURCE_BINDING: { rerunScope: "AFFECTED_SOURCE_WAVE_ONLY", requiresNewCandidate: false, automaticRetryAllowed: false },
-  PRODUCT_BEHAVIOR: { rerunScope: "IMPACT_CLOSURE_THEN_FULL_REQUIRED_MATRIX", requiresNewCandidate: true, automaticRetryAllowed: false },
-  SEMANTIC_MISMATCH: { rerunScope: "EXACT_HUMAN_DECISION", requiresNewCandidate: false, automaticRetryAllowed: false },
-  STALE_BINDING: { rerunScope: "CROSS_LAYER_PREFLIGHT", requiresNewCandidate: false, automaticRetryAllowed: false },
-  UNCERTAIN_MUTATION: { rerunScope: "RESOLVE_CURRENT_SESSION_WITHOUT_REPLAY", requiresNewCandidate: false, automaticRetryAllowed: false }
+  RUNNER_PROJECTION: { rerunScope: "AFFECTED_STAGE_ONLY", requiresNewCandidate: false, automaticRetryAllowed: true, campaignRecoveryEligible: true },
+  TOOLING_DRIFT: { rerunScope: "AFFECTED_TOOLING_CHECK_ONLY", requiresNewCandidate: false, automaticRetryAllowed: true, campaignRecoveryEligible: true },
+  HOST_TRANSPORT: { rerunScope: "AFFECTED_HOST_LEG_ONLY", requiresNewCandidate: false, automaticRetryAllowed: false, campaignRecoveryEligible: true },
+  SOURCE_BINDING: { rerunScope: "AFFECTED_SOURCE_WAVE_ONLY", requiresNewCandidate: false, automaticRetryAllowed: false, campaignRecoveryEligible: true },
+  PRODUCT_BEHAVIOR: { rerunScope: "IMPACT_CLOSURE_THEN_FULL_REQUIRED_MATRIX", requiresNewCandidate: true, automaticRetryAllowed: false, campaignRecoveryEligible: false },
+  PRODUCT_DEFECT_REPAIRABLE: { rerunScope: "IMPACT_CLOSURE_THEN_FULL_REQUIRED_MATRIX", requiresNewCandidate: true, automaticRetryAllowed: false, campaignRecoveryEligible: true },
+  PRODUCT_SEMANTIC_CHANGE: { rerunScope: "TARGET_REVIEW", requiresNewCandidate: false, automaticRetryAllowed: false, campaignRecoveryEligible: false },
+  SEMANTIC_MISMATCH: { rerunScope: "EXACT_HUMAN_DECISION", requiresNewCandidate: false, automaticRetryAllowed: false, campaignRecoveryEligible: false },
+  STALE_BINDING: { rerunScope: "CROSS_LAYER_PREFLIGHT", requiresNewCandidate: false, automaticRetryAllowed: false, campaignRecoveryEligible: true },
+  UNCERTAIN_MUTATION: { rerunScope: "RESOLVE_CURRENT_SESSION_WITHOUT_REPLAY", requiresNewCandidate: false, automaticRetryAllowed: false, campaignRecoveryEligible: false }
 });
 
 const args = parseArgs(process.argv.slice(2));

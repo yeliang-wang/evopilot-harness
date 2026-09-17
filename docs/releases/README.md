@@ -2,8 +2,11 @@
 
 Release notes document shipped behavior and validation for each Engine version. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
 
+- [4.7.0 candidate](4.7.0.md) - governed Project Ontology, declarative multi-Pack lifecycle, immutable Artifact Set, deterministic projections, and ProjectOntologySkill. Not released.
+
 ## Current
 
+- [4.6.0 candidate](4.6.0.md) - professional Source-to-Harness reasoning, minimal Ontology Foundation grounding, optional Bundle semantic requirements, and Eligibility-independent compatibility. Not released.
 - [4.5.0 candidate](4.5.0.md) - source-first user-owned business classification plus the complete retained v4.4 Harness producer lifecycle. Not released.
 - [4.4.0 current release](4.4.0.md) - Engine-owned Business Decision Views, complete Compliance Audit Envelopes, Source-to-Harness Reasoning Maps, Agent Operations Protocol v3, and cross-Host semantic determinism.
 - [4.3.0](4.3.0.md) - deterministic third-party Agent interaction compliance, Agent Operations Protocol v2, complete canonical Interaction Frames, visible transcript receipts, and fail-closed human gates.

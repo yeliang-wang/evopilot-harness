@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/project-ontology-proposal-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "proposalId", "revision", "stage", "project", "baseDigest", "resolvedPackSet", "conflictSet", "createdBy", "createdAt", "decisions", "authority", "proposalDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-project-ontology-proposal/v1"},
+    "proposalId": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "stage": {"enum": ["DRAFT", "APPLIED", "IN_REVIEW", "APPROVED", "REJECTED"]},
+    "project": {"type": "object"},
+    "baseDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "resolvedPackSet": {"type": "object"},
+    "overlay": {"type": ["object", "null"]},
+    "conflictSet": {"type": "array"},
+    "createdBy": {"type": "string", "minLength": 1},
+    "createdAt": {"type": "string", "minLength": 1},
+    "decisions": {"type": "array"},
+    "authority": {"type": "object"},
+    "proposalDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

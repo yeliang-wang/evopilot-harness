@@ -12,6 +12,13 @@ const DIRECTORIES = [
   "catalogs/organization/assets/bundles",
   "catalogs/organization/proposals",
   "ontology",
+  "ontology/packs/community",
+  "ontology/packs/domain-team",
+  "ontology/packs/private-organization",
+  "ontology/project-proposals",
+  "ontology/project-artifacts",
+  "ontology/external-evidence",
+  "ontology/certifications",
   "policies/matcher",
   "policies/advisor",
   "policies/comparison",
@@ -174,6 +181,9 @@ export function workspaceStatus(home, { modelMigration } = {}) {
       feedback: path.join(resolved, "feedback"),
       comparisons: path.join(resolved, "comparisons")
       ,learning: path.join(resolved, "learning")
+      ,ontology: path.join(resolved, "ontology")
+      ,professionalPacks: path.join(resolved, "ontology/packs")
+      ,projectOntologyArtifacts: path.join(resolved, "ontology/project-artifacts")
     }
   };
 }

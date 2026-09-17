@@ -32,6 +32,8 @@ try {
   assert.ok(fs.existsSync(cli), "installed evopilot-harness binary is missing");
   const version = JSON.parse(run(cli, ["--version", "--json"], app));
   assert.equal(version.version, expectedVersion);
+  const workBuddyPlugin = JSON.parse(fs.readFileSync(path.join(packageRoot, "digital-expert", "installers", "workbuddy", "expert", ".codebuddy-plugin", "plugin.json"), "utf8"));
+  assert.equal(workBuddyPlugin.version, expectedVersion, "installed WorkBuddy plugin manifest must match the package version");
 
   const bootstrap = JSON.parse(run(cli, ["agent", "bootstrap", "--host", "workbuddy", "--workspace", workspace, "--json"], app));
   assert.equal(bootstrap.status, "READY");

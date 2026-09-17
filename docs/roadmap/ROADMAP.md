@@ -12,7 +12,12 @@ The Roadmap governs the Engine, not the contents of a user's Organization Catalo
 
 ## Product Direction
 
-`evopilot-harness` is the user's Harness asset library and independent Harness producer. It converts evidence into model-external execution environments that are reusable, constrained, reviewable, and verifiable.
+`evopilot-harness` is the governed semantic and professional execution asset producer for the EvoPilot ecosystem. It contains two independently versioned asset planes over shared Evidence, Proposal, Review, Approval, Publication, Catalog, Registry, provenance, dependency, evaluation, and rollback infrastructure:
+
+- The **Semantic Asset Plane** owns `OntologyFoundation`, Domain/Product/Organization Packs, `ProjectOntologyOverlay`, `ProjectOntologyProposal`, `ResolvedProjectOntologySnapshot`, `ProjectOntologyArtifactSet`, `ProjectOntologySkill`, grounding, projection, validation, and publication.
+- The **Harness Asset Plane** owns `HarnessComponent`, `HarnessProfile`, `HarnessBundle`, `EvaluationPack`, validators, evidence requirements, failure and recovery rules, and publication.
+
+Approval or publication in one plane never approves, publishes, activates, or binds an asset in the other plane. Project Ontology tells an Agent what a third-party project's business concepts, relations, rules, events, actions, and permission semantics mean; Harness assets tell an Agent how to perform and verify professional work. Neither asset family replaces the other.
 
 Its next evolution is to use governed production feedback to improve Harness precision and professional completeness:
 
@@ -167,16 +172,27 @@ The objective is cumulative Source-first Harness evolution: an ordinary user sup
 - Use the v4.5 classification context to improve professional reasoning while proving that taxonomy labels, retriever scores, and LLM similarity remain context only and never become Harness Eligibility, composition, approval, or publication authority.
 - Compare the enhanced professional reasoning and Bundle composition against a frozen v4.5.0 baseline using governed, context-equivalent evidence, uncertainty, conflict, and no-regression gates; calibration remains advisory and cannot activate policy automatically.
 - Preserve every v4.5.0 classification, Harness evolution, review, approval, publication, Host-conformance, recovery, and safe-close capability and require complete cumulative end-to-end replay before accepting any v4.6.0 quality improvement.
+- Define the minimal Engine-owned `OntologyFoundation` meta-model for Entity, Attribute, Relationship, Rule, Event, Action, Actor, Role, Permission, State, Workflow, Capability, System, and DataAsset without built-in vertical truth.
+- Extract evidence-bound semantic candidates from static Source and resolve them through `OntologyGroundingResolver/v1`, whose exact outcomes are `RESOLVED`, `UNRESOLVED_CONCEPT`, `AMBIGUOUS_CONCEPT`, `CONFLICTING_CONCEPT`, `EXTENSION_REQUIRED`, and `EVIDENCE_INSUFFICIENT`.
+- Forbid an LLM from inventing or directly selecting authoritative ontology identifiers.
+- Add versioned `semanticRequirements` to HarnessBundle matching and review while keeping semantic compatibility separate from Harness Eligibility.
+- Do not publish `ProjectOntologyArtifactSet` or `ProjectOntologySkill` in v4.6.0.
 
 The objective is to improve the depth and quality of capabilities already present in v4.5.0, not to restore professional Source-to-Harness reasoning, HarnessProfile, HarnessBundle, Proposal, approval, or publication functionality that a prior release removed. v4.6.0 remains additive and cumulative.
 
-### v4.7.0: Governed Multi-Pack and Organization Lifecycle
+### v4.7.0: Governed Multi-Pack, Project Ontology, and Organization Lifecycle
 
 - Extend the stable v4.5 Taxonomy envelope, namespaces, canonical snapshots, and context bindings with versioned Domain, Product, Organization, and `DomainHarnessPack` resources, imports, precedence, equivalence, replacement, deprecation, and fail-closed merge semantics.
 - Separate editable drafts from immutable resolved publication snapshots; approval, publication, and Evolution Context activation remain independent actions.
 - Add base-digest, optimistic-concurrency, conflict-set, atomic-publication-set, semantic-version and dependency-propagation, migration, and rollback contracts.
 - Provide Pack scaffolding, linting, validation, dependency inspection, installation, update, rollback, documentation, benchmark, Gold Case, quality-level, optional-signing, and certification tooling.
 - Separate community, domain-team, and private Organization roots with explicit provenance, trust, author, reviewer, approver, and publisher roles.
+- Add independently versioned `DomainOntologyPack`, `ProductOntologyPack`, `OrganizationOntologyPack`, and `ProjectOntologyOverlay` resources; `ProjectOntologyProposal/v1`; and immutable, fully resolved `ResolvedProjectOntologySnapshot/v1`.
+- Publish `ProjectOntologyArtifactSet/v1` with manifest, canonical snapshot, provenance, project binding, lock, dependency, and digest closure.
+- Generate deterministic applicable projections for human-readable YAML, OWL, RDF Turtle, JSON-LD, bounded SWRL, and SHACL. Declare a projection non-applicable instead of fabricating it.
+- Compile deterministic `ProjectOntologySkill/v1` as the Agent-facing access and guidance form, never as the sole truth store.
+- Keep Draft, apply, Review, Approval, Publication, installation, activation, successor, rollback, and deprecation stages independent.
+- Add `ExternalSemanticEvidenceAdapter/v1` for read-only, provenance-preserving import from external catalogs, vocabularies, RDF/OWL sources, or knowledge graphs; imported content remains inactive Evidence.
 
 ### v4.8.0: Scalable Semantic Interoperability and Incremental Reasoning
 
@@ -185,17 +201,60 @@ The objective is to improve the depth and quality of capabilities already presen
 - Add content-addressed semantic and graph indexes, affected-subgraph calculation, selective Source re-analysis, incremental dependency propagation, and full-recompute equivalence proofs.
 - Add bounded concurrency, cache-digest binding, performance budgets, decision telemetry, large-Catalog impact analysis, and federated read-only Pack discovery.
 - Preserve source Catalog, version, digest, provenance, trust, and authority context across interoperability, indexing, caching, and federation.
+- Add `OntologyReasoningProfile/v1` with `NONE`, `RDFS`, `OWL_RL`, `SWRL_SAFE`, and qualified `EXTERNAL_REASONER` profiles, each bound to supported rules, bounded depth and resources, reasoner identity/version, deterministic failure, and proof paths.
+- Produce content-addressed indexes that EvoPilot can consume read-only for runtime semantic slicing without a live mutable Harness dependency.
+- Prove semantic round-trip and full-recompute equivalence across the canonical snapshot, projections, indexes, incremental affected-subgraph calculation, and cache.
+- Exclude a general-purpose graph database, arbitrary executable Pack, unbounded OWL or SWRL inference, automatic imported-vocabulary activation, and live cross-organization authority.
 
-## Deferred Discussion Register
+## Project Ontology End-to-End Acceptance Policy
 
-The following item records a reviewed discussion outcome only. It is not a
-versioned milestone, accepted product scope, Evolution Target, implementation
-authorization, acceptance obligation, release requirement, or version
-commitment. Discussion must not resume until v4.5.0 has been formally
-published and independently verified from the public distribution boundary.
-At that point, EvoPilot and `evopilot-harness` must rerun their Roadmap Gates,
-review the cross-project boundary, and explicitly decide whether the proposal
-enters a later version and, if so, which version.
+Every Target keeps at most five top-level ordinary-human journeys by default, with independently evidenced machine variants:
+
+1. unknown Source to a governed project business semantic map;
+2. unresolved, ambiguous, conflicting, insufficient, and extension-required semantics followed by explicit repair and re-analysis;
+3. one snapshot to deterministic YAML, OWL, RDF, JSON-LD, SWRL, SHACL, and `ProjectOntologySkill` outputs;
+4. cumulative classification, Harness Eligibility, Harness evolution, review, approval, separate publication, and supply into a dual-bound EvoPilot Goal Loop;
+5. successor versions, drift, failure, permission denial, restart, rollback, cross-Host consistency, and Ontology/Memory/Evidence separation.
+
+All v4.5 capabilities remain cumulative and release-blocking. WorkBuddy retains the accepted designated-human final-range declaration. Complete non-WorkBuddy variants remain machine-evidenced. Runner, fixture, manifest, network, or projection failures do not create a new product Candidate unless packaged product bytes change through a confirmed product repair.
+
+## EvoPilot-Series Final Semantic Design Convergence Participation
+
+The Harness contribution is an exact cumulative sequence: 4.6.0 professional
+reasoning and ontology grounding, 4.7.0 governed Project Ontology and multi-Pack
+publication, and terminal 4.8.0 scalable semantic interoperability, indexes,
+and bounded reasoning profiles. Each version requires its own approved
+Evolution Target bound to this repository's current Roadmap digest, all current
+and inherited acceptance, real E2E coverage, impact closure,
+`NO_REGRESSION`, and exact Candidate, package, asset, dependency, and evidence
+digests. Passing a later version never backfills missing acceptance for an
+earlier one.
+
+After 4.6.0, 4.7.0, and 4.8.0 pass independently, Harness supplies the exact
+immutable 4.8.0 ontology, index, reasoning-profile, HarnessProfile,
+HarnessComponent, and HarnessBundle closure to the terminal cross-product E2E.
+EvoPilot Runtime consumes those assets read-only. The terminal E2E is evidence
+for the central convergence claim only: it cannot approve, publish, republish,
+or release a Harness asset or product. A Harness-owned failure routes to a
+separately governed evopilot-harness repair or successor Target, and every
+Harness release decision remains independent.
+
+## Planned Cross-Project Semantic Contracts
+
+- `project-ontology-artifact-supply/v1`: publish immutable `ProjectOntologyArtifactSet` and `ProjectOntologySkill` assets for read-only EvoPilot consumption.
+- `semantic-harness-compatibility/v1`: declare versioned HarnessBundle semantic requirements without turning compatibility into Harness Eligibility or asset approval.
+- `ontology-grounded-goal-loop/v1`: allow EvoPilot to pin semantic and Harness assets together and supply digest-bound semantic slices to qualified Agent Runtimes.
+- `semantic-dashboard-projection/v1`: allow Dashboard to render EvoPilot-owned API projections without source-asset or runtime-state ownership.
+
+Each product, asset family, Schema, Skill, and contract remains independently versioned. A passing gate or release in one repository is evidence only for another unless an accepted contract imports it explicitly.
+
+## Resolved Cross-Project Discussion Register
+
+The v4.5.0 publication precondition was satisfied by the public non-draft,
+non-prerelease GitHub Release on 2026-09-03 and was rechecked against the local
+tag, package version, `origin/main` commit, and public Release boundary on
+2026-09-05. The following record is a cross-project decision, not an
+`evopilot-harness` milestone or implementation authorization.
 
 ### EvoPilot-owned execution Lifecycle Harness
 
@@ -204,31 +263,41 @@ enters a later version and, if so, which version.
   evolution, review, approval, evaluation, publication, Catalog, and Registry.
   EvoPilot continues to own project Goal/Target execution and project release
   decisions.
-- After v4.5.0 publication, discuss a versioned EvoPilot execution-lifecycle
-  model that can select and immutably bind one resolved lifecycle for a Goal or
-  Target while referencing one or more published, digest-pinned
-  `HarnessBundle` assets. The proposed execution lifecycle may define stages,
-  transitions, gates, evidence closure, retries, human decisions, completion,
-  and release-decision inputs without giving EvoPilot Harness authoring or
-  publication authority.
-- The future design should support multiple lifecycle definitions selected by
-  software type, task class, risk, environment, or release mode. A concrete run
-  remains bound to one exact resolved definition and must not silently switch
-  lifecycle during execution.
-- Treat Alpha, Beta, RC, and GA as a possible built-in compatibility profile,
-  not as the universal lifecycle model. Other possible profiles, including
-  library, database, documentation, security-hotfix, and non-release
-  exploration lifecycles, remain examples for future review rather than
-  accepted product requirements.
+- The discussion is resolved into the EvoPilot `v4.0.0` Roadmap and its
+  `docs/architecture/adr/0002-open-lifecycle-harness.md` architecture decision.
+  EvoPilot owns versioned project-execution definitions, resolution, immutable
+  run bindings, execution evidence, and project release decisions while
+  referencing published digest-pinned `HarnessBundle` assets.
+- Lifecycle definitions are human-readable declarative YAML with an open stage
+  graph and a closed versioned Action/Capability Registry. A concrete run binds
+  one exact resolved definition and cannot silently switch lifecycle.
+- Parameters are defined by a reusable input schema. WorkBuddy, Codex, or
+  another conformant Agent host asks only unresolved relevant questions; CI,
+  CLI, and API callers use the same schema headlessly. Parameter collection is
+  not approval, and raw secrets use references rather than conversation.
+- Deterministic reversible work is automatic by default. Human decisions remain
+  only for missing authority, irreversible or externally visible effects,
+  production or credential access, release/publication, exceptions, material
+  ambiguity, unresolved risk, or uncertain mutations. One digest-bound
+  authorization may cover an unchanged bounded automatic plan.
+- DataRig enterprise-internal delivery and this repository's public
+  open-source release lifecycle are EvoPilot reference profiles and conformance
+  cases, not hard-coded Engine branches. Alpha/Beta/RC/GA is an EvoPilot
+  compatibility profile rather than the universal lifecycle.
+- Third-party Agent hosts normally integrate with EvoPilot through MCP for
+  conversation and presentation; direct API, SDK, and CLI automation remains
+  valid. No host receives lifecycle, approval, publication, or project-release
+  authority from transport.
 - Do not redefine `HarnessBundle` as an execution lifecycle or move EvoPilot
   Goal Loop execution into `evopilot-harness`. Any future cross-project
   contract change requires explicit Roadmap and ADR review in the affected
   repositories.
 
-This deferred item has no effect on the v4.5.0 milestone, approved v4.5.0
-Evolution Target, completed implementation, frozen Candidate bytes, acceptance
-portfolio, release readiness, or release authority. It does not reserve v4.6,
-v4.7, v4.8, or any other version.
+This resolution has no effect on the v4.5.0 milestone, approved v4.5.0
+Evolution Target, completed implementation, Candidate or release bytes,
+acceptance portfolio, or release authority. It adds no `evopilot-harness`
+capability and does not reserve or change v4.6, v4.7, v4.8, or another Harness
+version.
 
 ## Evidence Basis
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/project-ontology-artifact-set-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "kind", "apiVersion", "metadata", "spec", "authority", "artifactSetDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-project-ontology-artifact-set/v1"},
+    "kind": {"const": "ProjectOntologyArtifactSet"},
+    "apiVersion": {"const": "semantics.evopilot.io/v1"},
+    "metadata": {"type": "object"},
+    "spec": {
+      "type": "object",
+      "required": ["project", "manifest", "snapshot", "snapshotDigest", "foundationDigest", "provenance", "dependencyLock", "projectionSet", "projectOntologySkill", "publication"],
+      "properties": {
+        "project": {"type": "object"},
+        "manifest": {"type": "object"},
+        "snapshot": {"type": "object"},
+        "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "foundationDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "provenance": {"type": "array"},
+        "dependencyLock": {"type": "object"},
+        "projectionSet": {"type": "object"},
+        "projectOntologySkill": {"type": "object"},
+        "publication": {"type": "object"}
+      }
+    },
+    "authority": {"type": "object"},
+    "artifactSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

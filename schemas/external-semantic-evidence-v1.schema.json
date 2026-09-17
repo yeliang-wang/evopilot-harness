@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/external-semantic-evidence-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "adapter", "source", "records", "authority", "evidencePackageDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-external-semantic-evidence/v1"},
+    "adapter": {"type": ["object", "null"]},
+    "source": {"type": "object"},
+    "fetchedAt": {"type": ["string", "null"]},
+    "records": {"type": "array"},
+    "authority": {
+      "type": "object",
+      "required": ["readOnlyImport", "inactiveEvidence", "mayOverridePack", "mayActivate", "mayApprove", "mayPublish"],
+      "properties": {
+        "readOnlyImport": {"const": true},
+        "inactiveEvidence": {"const": true},
+        "mayOverridePack": {"const": false},
+        "mayActivate": {"const": false},
+        "mayApprove": {"const": false},
+        "mayPublish": {"const": false}
+      }
+    },
+    "evidencePackageDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

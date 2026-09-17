@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/pack-certification-v1.schema.json",
+  "type": "object",
+  "required": ["schema", "pack", "benchmark", "goldCases", "algorithm", "policy", "toolchain", "qualityLevel", "evidenceRefs", "authority", "certificationDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-pack-certification/v1"},
+    "pack": {"type": "object"},
+    "benchmark": {"type": "object"},
+    "goldCases": {"type": "array"},
+    "algorithm": {"type": "object"},
+    "policy": {"type": "object"},
+    "toolchain": {"type": "object"},
+    "qualityLevel": {"type": "string"},
+    "signer": {},
+    "evidenceRefs": {"type": "array", "items": {"type": "string"}},
+    "authority": {"type": "object"},
+    "certificationDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

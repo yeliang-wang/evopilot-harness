@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/professional-pack-v1.schema.json",
+  "title": "Declarative Professional Pack v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec", "status"],
+  "properties": {
+    "apiVersion": {"const": "semantics.evopilot.io/v1"},
+    "kind": {"enum": ["DomainOntologyPack", "ProductOntologyPack", "OrganizationOntologyPack", "ProjectOntologyOverlay", "DomainHarnessPack"]},
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "name", "namespace", "root", "visibility", "generation", "owner", "provenance", "labels", "kind", "digest"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"},
+        "name": {"type": "string", "minLength": 1},
+        "namespace": {"type": "string", "minLength": 2},
+        "root": {"enum": ["COMMUNITY", "DOMAIN_TEAM", "PRIVATE_ORGANIZATION"]},
+        "visibility": {"enum": ["PUBLIC", "DOMAIN", "PRIVATE"]},
+        "generation": {"type": "integer", "minimum": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "provenance": {"type": "object"},
+        "labels": {"type": "object", "additionalProperties": {"type": "string"}},
+        "kind": {"type": "string"},
+        "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["imports", "concepts", "equivalences", "replacements", "deprecations", "rules", "shapes", "harnessGuidance", "authority"],
+      "properties": {
+        "imports": {"type": "array"},
+        "concepts": {"type": "array"},
+        "equivalences": {"type": "array"},
+        "replacements": {"type": "array"},
+        "deprecations": {"type": "array"},
+        "rules": {"type": "array"},
+        "shapes": {"type": "array"},
+        "harnessGuidance": {"type": "array"},
+        "authority": {
+          "type": "object",
+          "required": ["declarativeOnly", "executable", "activationRequiresIndependentDecision"],
+          "properties": {
+            "declarativeOnly": {"const": true},
+            "executable": {"const": false},
+            "activationRequiresIndependentDecision": {"const": true}
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase", "conditions", "observedGeneration", "engineOwned"],
+      "properties": {
+        "phase": {"enum": ["DRAFT", "APPLIED", "IN_REVIEW", "APPROVED", "PUBLISHED", "INSTALLED", "ACTIVE", "SUPERSEDED", "ROLLED_BACK", "DEPRECATED"]},
+        "conditions": {"type": "array"},
+        "observedGeneration": {"type": "integer", "minimum": 1},
+        "engineOwned": {"const": true}
+      }
+    }
+  }
+}

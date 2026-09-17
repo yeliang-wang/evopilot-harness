@@ -28,8 +28,13 @@ Classify a failure before retrying:
   authority;
 - `SOURCE_BINDING` reruns only the affected frozen Source wave after separate
   authority;
-- `PRODUCT_BEHAVIOR` requires a new Candidate, impact closure and the complete
-  Target-required matrix;
+- `PRODUCT_DEFECT_REPAIRABLE` requires a new Candidate, impact closure and the
+  complete Target-required matrix; the Candidate-local fast path stops, while
+  a separate campaign recovery gate may authorize the successor under an
+  unchanged approved Target and explicit bounded repair envelope;
+- `PRODUCT_BEHAVIOR` is an unrefined product failure and cannot enter automatic
+  campaign recovery until deterministic evidence reclassifies it;
+- `PRODUCT_SEMANTIC_CHANGE` returns to Target Review;
 - `SEMANTIC_MISMATCH` stops for the exact human decision;
 - `STALE_BINDING` returns to cross-layer preflight;
 - `UNCERTAIN_MUTATION` resolves the current Session without replay.
@@ -37,6 +42,12 @@ Classify a failure before retrying:
 Historical attempts remain in the state event list and evidence tree. Never
 turn a runner or transport correction into Candidate evidence, and never use a
 targeted rerun to waive the complete final Target matrix.
+
+`campaignRecoveryEligible` is classification metadata, not repair authority.
+This Skill never edits product source or creates a successor Candidate. The
+governing lifecycle campaign must independently prove its recovery policy,
+Target, allowed paths, budgets, and retained authority stops; the successor
+always receives a new binding and state file.
 
 ## Controlled decision replay
 

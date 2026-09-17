@@ -112,16 +112,23 @@ assert.ok(validateTargetManifest(pinnedCandidateV2).some((error) => error.includ
 
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-binding-test-"));
 try {
+  const realCaseCount = validated.targetManifest.coverage.realCaseIds.length;
+  const machineVariantCount = validated.targetManifest.coverage.machineVariantIds.length;
+  const variantsPerCase = Math.floor(machineVariantCount / realCaseCount);
+  const variantRemainder = machineVariantCount % realCaseCount;
+  let variantOffset = 0;
   const target = {
     id: validated.targetManifest.target.id,
     revision: validated.targetManifest.target.revision,
     status: validated.targetManifest.target.status,
     approvals: { target: { authorizationDigest: validated.targetManifest.target.authorizationDigest } },
     roadmapBindings: [{ roadmapDigest: validated.targetManifest.target.roadmapDigest }],
-    acceptance: Array.from({ length: 203 }, (_, index) => ({ id: `AC${String(index + 1).padStart(3, "0")}` })),
+    acceptance: Array.from({ length: validated.targetManifest.coverage.acceptanceCount }, (_, index) => ({ id: `AC${String(index + 1).padStart(3, "0")}` })),
     realCaseCoverage: validated.targetManifest.coverage.realCaseIds.map((id, index) => {
-      const offsets = [0, 2, 8, 10, 14, 18];
-      return { id, hosts: ["WorkBuddy"], machineVariants: validated.targetManifest.coverage.machineVariantIds.slice(offsets[index], offsets[index + 1]).map((variantId) => ({ id: variantId })) };
+      const count = variantsPerCase + (index < variantRemainder ? 1 : 0);
+      const machineVariants = validated.targetManifest.coverage.machineVariantIds.slice(variantOffset, variantOffset + count).map((variantId) => ({ id: variantId }));
+      variantOffset += count;
+      return { id, hosts: ["WorkBuddy"], machineVariants };
     })
   };
   const targetFile = path.join(temporaryRoot, "target.json");

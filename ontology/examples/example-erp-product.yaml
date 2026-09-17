@@ -1,0 +1,61 @@
+apiVersion: semantics.evopilot.io/v1
+kind: ProductOntologyPack
+metadata:
+  id: example-erp-product
+  version: 1.0.0
+  name: Example ERP Product
+  namespace: example.erp
+  root: COMMUNITY
+  visibility: PUBLIC
+  generation: 1
+  owner: evopilot-harness-example-maintainers
+  provenance:
+    author: evopilot-harness
+    reviewers: []
+    approvers: []
+    publishers: []
+    sourceRefs:
+      - docs://example-only
+  labels:
+    exampleOnly: "true"
+    universalAuthority: "false"
+  kind: ProductOntologyPack
+  digest: sha256:850171730513b0d40229f6ef8a8d5d258595e5f5b075336f9c5ef7f34c0027c3
+spec:
+  imports: []
+  concepts:
+    - conceptId: example.erp:ledger
+      label: Ledger
+      metaType: DATA_ASSET
+      definition: An illustrative ERP ledger.
+      aliases: []
+      relationships: []
+      evidenceRefs:
+        - docs://example-only
+      replaces: null
+      deprecated: false
+    - conceptId: example.erp:posting
+      label: Posting
+      metaType: ACTION
+      definition: An illustrative ERP posting action.
+      aliases: []
+      relationships: []
+      evidenceRefs:
+        - docs://example-only
+      replaces: null
+      deprecated: false
+  equivalences: []
+  replacements: []
+  deprecations: []
+  rules: []
+  shapes: []
+  harnessGuidance: []
+  authority:
+    declarativeOnly: true
+    executable: false
+    activationRequiresIndependentDecision: true
+status:
+  phase: DRAFT
+  conditions: []
+  observedGeneration: 1
+  engineOwned: true

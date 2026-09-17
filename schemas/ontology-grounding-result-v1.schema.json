@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/ontology-grounding-result-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "foundationDigest", "candidateSetDigest", "sourceSnapshotDigest", "evidenceGraphDigest", "conceptSetDigest", "results", "outcomeCounts", "precedence", "priorResultDigests", "presentation", "authority", "groundingResultDigest"],
+  "properties": {
+    "schema": { "const": "evopilot-harness-ontology-grounding-result/v1" },
+    "foundationDigest": { "$ref": "#/$defs/digest" },
+    "candidateSetDigest": { "$ref": "#/$defs/digest" },
+    "sourceSnapshotDigest": { "$ref": "#/$defs/digest" },
+    "evidenceGraphDigest": { "$ref": "#/$defs/digest" },
+    "conceptSetDigest": { "$ref": "#/$defs/digest" },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["candidateId", "outcome", "resolvedConceptId", "candidateConceptIds", "conflictConceptIds", "evidenceIds", "evidenceFamilies", "uncertainty", "explanation", "userActions", "proposedExtension", "decisionSignals"],
+        "properties": {
+          "candidateId": { "type": "string" },
+          "outcome": { "$ref": "#/$defs/outcome" },
+          "resolvedConceptId": { "type": ["string", "null"] },
+          "candidateConceptIds": { "type": "array", "items": { "type": "string" } },
+          "conflictConceptIds": { "type": "array", "items": { "type": "string" } },
+          "evidenceIds": { "type": "array", "items": { "type": "string" } },
+          "evidenceFamilies": { "type": "array", "items": { "type": "string" } },
+          "uncertainty": { "enum": ["LOW", "BOUNDED", "HIGH"] },
+          "explanation": { "type": "string" },
+          "userActions": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "proposedExtension": { "type": ["object", "null"] },
+          "decisionSignals": { "type": "object" }
+        }
+      }
+    },
+    "outcomeCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["RESOLVED", "UNRESOLVED_CONCEPT", "AMBIGUOUS_CONCEPT", "CONFLICTING_CONCEPT", "EXTENSION_REQUIRED", "EVIDENCE_INSUFFICIENT"],
+      "properties": {
+        "RESOLVED": { "type": "integer" },
+        "UNRESOLVED_CONCEPT": { "type": "integer" },
+        "AMBIGUOUS_CONCEPT": { "type": "integer" },
+        "CONFLICTING_CONCEPT": { "type": "integer" },
+        "EXTENSION_REQUIRED": { "type": "integer" },
+        "EVIDENCE_INSUFFICIENT": { "type": "integer" }
+      }
+    },
+    "precedence": { "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true, "items": { "$ref": "#/$defs/outcome" } },
+    "priorResultDigests": { "type": "array", "items": { "$ref": "#/$defs/digest" } },
+    "presentation": { "type": "object", "additionalProperties": false, "required": ["schema", "locale", "title", "items", "auditTermsHiddenFromPrimaryView", "hostAuthored"], "properties": { "schema": { "const": "evopilot-harness-ontology-grounding-presentation/v1" }, "locale": { "enum": ["zh-CN", "en"] }, "title": { "type": "string" }, "items": { "type": "array", "items": { "type": "object" } }, "auditTermsHiddenFromPrimaryView": { "type": "array", "items": { "type": "string" } }, "hostAuthored": { "const": false } } },
+    "authority": { "type": "object" },
+    "groundingResultDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "outcome": { "enum": ["RESOLVED", "UNRESOLVED_CONCEPT", "AMBIGUOUS_CONCEPT", "CONFLICTING_CONCEPT", "EXTENSION_REQUIRED", "EVIDENCE_INSUFFICIENT"] }
+  }
+}

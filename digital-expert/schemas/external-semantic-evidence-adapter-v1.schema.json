@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/external-semantic-evidence-adapter-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "id", "version", "sourceTypes", "provenance", "behavior", "authority", "adapterDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-external-semantic-evidence-adapter/v1"},
+    "kind": {"const": "ExternalSemanticEvidenceAdapter"},
+    "id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
+    "sourceTypes": {"type": "array", "items": {"enum": ["CATALOG", "VOCABULARY", "RDF", "OWL", "KNOWLEDGE_GRAPH"]}},
+    "provenance": {"type": "object"},
+    "behavior": {"type": "object"},
+    "authority": {"type": "object"},
+    "adapterDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

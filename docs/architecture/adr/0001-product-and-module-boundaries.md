@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Module 8 is superseded for v4.5.0 and later by [ADR 0005](0005-source-first-business-classification.md); the remaining boundaries stay accepted.
+Accepted. Module 8 is superseded for v4.5.0 and later by [ADR 0005](0005-source-first-business-classification.md), additively extended for v4.6.0 by [ADR 0006](0006-professional-reasoning-and-ontology-grounding.md), and extended within the same authority boundary for v4.7.0 by [ADR 0007](0007-governed-project-ontology-and-professional-packs.md); the remaining boundaries stay accepted.
 
 ## Context
 
@@ -35,7 +35,7 @@ The source domain is intentionally open, so ownership must be stricter than the 
 | 5 | Source Ingestion | Local project/root discovery, dedupe/grouping, GitHub checkout, attachment/log/history/note/research intake, and approved structured feedback reading | Asset publication, source-project execution, or feedback-origin replay |
 | 6 | Snapshot/Redaction | Bounded excerpts, secret/private-data redaction, stable source digests | Raw secret publication or semantic decisions |
 | 7 | Evidence Graph | Stable `evidenceId`, node authority, concepts, graph digest | Final matching or approval authority |
-| 8 | Semantic Foundation and Taxonomy Resolution | Minimal Domain/Product axes and relation primitives; validation and immutable resolution of one user-authored non-executable Taxonomy | Built-in business values, classifier policy, Eligibility, approval, publication, or Taxonomy activation |
+| 8 | Semantic Foundation, Taxonomy Resolution, Ontology Grounding, and Semantic Asset Plane | Minimal Domain/Product axes; Engine-owned business-neutral meta-types and relation primitives; validation and immutable resolution of user-authored non-executable Taxonomy and Professional Packs; evidence-bound grounding; Project Ontology Proposal, immutable snapshot, deterministic projections, Artifact Set, Skill, and explicit lifecycle records | Built-in business values, executable Pack rules, classifier policy, Eligibility, inferred approval/publication/activation, consumer mutation authority, automatic imported-vocabulary activation, or LLM-owned identifiers |
 | 9 | MatchPolicyPack | Eligibility minimums, BM25 configuration, weights, thresholds, risk/Advisor triggers | Source parsing or approval |
 | 10 | Eligibility Gate | Decide whether evidence supports a repeatable model-external engineering task | General software taxonomy classification |
 | 11 | Candidate Retrieval/Scoring | BM25 and role, boundary, capability, execution, evidence, conflict, novelty factors | Publication or LLM-only decisions |
@@ -59,6 +59,7 @@ The source domain is intentionally open, so ownership must be stricter than the 
 Evidence Sources
   -> Source Ingestion -> Snapshot/Redaction -> Evidence Graph
   -> Semantic Foundation + user Taxonomy -> taxonomy-blind classification -> explicit handoff
+  -> professional semantic candidates -> deterministic Ontology grounding -> independent semantic compatibility
   -> Match Policy -> Eligibility -> Retrieval/Scoring -> Aggregator
   -> Advisor Policy + GLM Advisor
   -> Proposal -> Proposal Review Engine -> Component/Profile/Bundle + Evaluation
