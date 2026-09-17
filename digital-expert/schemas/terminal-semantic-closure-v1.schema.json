@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/terminal-semantic-closure-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "apiVersion", "kind", "version", "status", "snapshot", "reasoningProfile", "semanticIndex", "graphIndex", "projectionSet", "roundTripReport", "harnessAssets", "dependencyLocks", "evaluations", "rollbackLinks", "provenance", "publication", "authority", "closureDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-terminal-semantic-closure/v1"},
+    "apiVersion": {"const": "semantics.evopilot.io/v1"},
+    "kind": {"const": "TerminalSemanticClosure"},
+    "version": {"const": "4.8.0"},
+    "status": {"enum": ["CANDIDATE", "PUBLISHED"]},
+    "snapshot": {"type": "object"},
+    "reasoningProfile": {"type": "object"},
+    "semanticIndex": {"type": "object"},
+    "graphIndex": {"type": "object"},
+    "projectionSet": {"type": "object"},
+    "roundTripReport": {"type": "object"},
+    "harnessAssets": {"type": "array", "minItems": 3, "items": {"type": "object"}},
+    "dependencyLocks": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "evaluations": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "rollbackLinks": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "provenance": {"type": "object"},
+    "publication": {"type": ["object", "null"]},
+    "authority": {
+      "type": "object",
+      "required": ["immutable", "consumerReadOnly", "liveMutableHarnessDependency", "grantsConsumerMutation", "grantsConsumerApproval", "grantsConsumerPublication", "grantsReleaseAuthority"],
+      "properties": {
+        "immutable": {"const": true},
+        "consumerReadOnly": {"const": true},
+        "liveMutableHarnessDependency": {"const": false},
+        "grantsConsumerMutation": {"const": false},
+        "grantsConsumerApproval": {"const": false},
+        "grantsConsumerPublication": {"const": false},
+        "grantsReleaseAuthority": {"const": false}
+      }
+    },
+    "closureDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

@@ -42,6 +42,7 @@ The command regenerates tracked legacy Catalog, Registry, and Hub snapshots. Ins
 | Controlled comparison and calibration | `node --test tests/v4.1.test.mjs` |
 | Digital Expert generation | `npm run digital-expert:check` |
 | Agent-native protocol and lifecycle | `node --test tests/v4.test.mjs` |
+| v4.8 semantic interoperability | `node --test tests/v4.8-semantic-interoperability.test.mjs` |
 | npm package contract | `node --test tests/npm-distribution.test.mjs && npm run package:verify && npm run package:smoke` |
 | Actual WorkBuddy installed package | `npm run package:workbuddy -- --evidence-dir /absolute/evidence/directory` |
 | Legacy Catalog | `npm run catalog:publish && npm run catalog:validate` |
@@ -136,4 +137,4 @@ node src/index.mjs hub v3-serve \
 
 Verify `/api/health`, `/api/hub/snapshot`, `/api/v3/snapshot`, desktop and mobile layout, assets, proposals, Packs, five-way decisions, typed Delta summaries, compatibility/blast-radius/rollback findings, positive/negative Evaluation coverage, feedback counts/effectiveness/uncertainty, comparison status/recommendation/uncertainty/limitations, calibration ranking/regressions/conflicts, source types, GLM usage, and the generated `produce` command. Confirm that no secret or unredacted source content is rendered and every non-GET request returns 405.
 
-See [v4.1 Acceptance](v4.1-acceptance.md) and [v3 Acceptance Baseline](v3-acceptance.md) for the release-quality interpretation of these checks.
+See [v4.8.0 Acceptance](v4.8.0-acceptance.md), [v4.1 Acceptance](v4.1-acceptance.md), and [v3 Acceptance Baseline](v3-acceptance.md) for the release-quality interpretation of these checks.

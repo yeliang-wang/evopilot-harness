@@ -86,7 +86,7 @@ test("Semantic compatibility is independent from Harness Eligibility", () => {
   assert.equal(report.authority.mayOverrideEligibility, false);
 });
 
-test("HarnessBundle accepts optional digest-closed semantic requirements and rejects v4.8 ontology assets", () => {
+test("HarnessBundle accepts optional digest-closed semantic requirements and v4.8 assets require complete schemas", () => {
   const foundation = resolveOntologyFoundation();
   const semanticRequirements = createHarnessSemanticRequirements({ foundationDigest: foundation.foundationDigest, requiredConcepts: [{ conceptId: "cap.cache", metaType: "CAPABILITY", rationale: "Required capability", evidenceRefs: ["evidence-content"] }] });
   const bundle = {
@@ -102,7 +102,10 @@ test("HarnessBundle accepts optional digest-closed semantic requirements and rej
   assert.equal(validateDocument(bundle).status, "VALIDATED");
   bundle.spec.semanticRequirements.requiredConcepts[0].conceptId = "cap.changed";
   assert.equal(validateDocument(bundle).status, "FAILED");
-  assert.match(validateDocument({ kind: "SemanticIndex" }).errors[0].message, /v4\.8/);
+  const incompleteIndex = validateDocument({ kind: "SemanticIndex" });
+  assert.equal(incompleteIndex.status, "FAILED");
+  assert.equal(incompleteIndex.valid, false);
+  assert.match(incompleteIndex.errors[0].message, /required property/);
 });
 
 test("v4.6 semantic diagnostics are exposed through the Engine adapter", async () => {

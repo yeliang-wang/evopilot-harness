@@ -24,6 +24,7 @@ All mutable v3 commands accept `--workspace <dir>`; the default is `EVOPILOT_HAR
 | `ontology inspect|validate|diff|publish` | Versioned Ontology Pack lifecycle. |
 | `pack scaffold|inspect|resolve|lifecycle-init|transition|benchmark|gold-case|certify|evidence-adapter|import-evidence` | Declarative Professional Pack authoring diagnostics, exact resolution, governed lifecycle, reviewed evidence, certification, and inactive external semantic imports. |
 | `project-ontology propose|transition|resolve|project|skill|publish|artifact-transition` | Project Ontology Proposal, immutable snapshot, deterministic projections, Skill, separately authorized publication, and post-publication lifecycle. |
+| `semantic reasoning-profile|index|affected-subgraph|compute|compare-computations|federate|interoperability|round-trip|closure|closure-publish|closure-slice` | Bounded v4.8 reasoning, content-addressed indexing, incremental/full equivalence, read-only federation, semantic projections, terminal closure, separate publication, and offline consumer slicing. |
 | `policy inspect|validate|diff|publish` | Matcher, Advisor, or Comparison Policy Pack lifecycle. |
 | `llm v3-models` | Read redacted GLM configuration readiness from manual `models.json`; no network call. |
 | `llm v3-doctor` | Make a minimal live GLM request and report redacted connectivity, model, usage, timing, and failure type. |
@@ -74,6 +75,8 @@ The report schema is `evopilot-harness-proposal-review/v1`. It includes determin
 `llm v3-models` returns `readinessScope=CONFIGURATION_ONLY` and `connectionVerified=false`. Use `llm v3-doctor --models-file <file> --json` before a production run that requires Advisor review. `produce` persists every Advisor attempt, including failures, under the external Workspace. Large graphs use the Advisor Policy's deterministic evidence projection (default: 48 nodes, 96,000 characters, 2,000 characters per excerpt); the Run records complete-Graph and projection digests, selected/omitted counts, ids, kinds, and source coverage. Advisor Policy can permit one structure/citation-only repair for invalid JSON or a rejected output contract; `attempts[]`, aggregate `usage`, and both validations remain auditable. With `--advisor required`, an unsuccessful final Advisor result produces `status=BLOCKED`, a non-zero exit code, and `nextAction=repair-advisor-and-rerun` while retaining evidence and Proposal artifacts for diagnosis.
 
 See [quickstart.md](quickstart.md), [automation.md](automation.md), [v3 Production Lifecycle](../guides/v3-production-lifecycle.md), and [Controlled Comparative Evidence](../guides/controlled-comparative-evidence.md).
+
+The v4.8 semantic commands are atomic diagnostic and CI surfaces. `semantic closure-publish` requires its own publication authorization, while `semantic closure-slice` accepts only an exact published closure digest and never grants mutation, approval, publication, or Release authority. See [Scalable Semantic Interoperability](../guides/semantic-interoperability.md).
 
 ## Feedback Evidence
 

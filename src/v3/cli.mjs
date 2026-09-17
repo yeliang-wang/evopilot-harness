@@ -23,6 +23,7 @@ import { createSemanticCandidateSet, resolveOntologyFoundation, resolveOntologyG
 import { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from "../v4/semantics/semantic-compatibility.mjs";
 import { createExternalSemanticEvidenceAdapter, createPackBenchmarkPackage, createPackCertificationRecord, createPackGoldCasePackage, createPackLifecycleRecord, createProfessionalPack, importExternalSemanticEvidence, inspectProfessionalPack, resolveProfessionalPackSet, transitionPackLifecycle } from "../v4/semantics/professional-packs.mjs";
 import { compileProjectOntologySkill, createArtifactLifecycleRecord, createProjectOntologyProposal, createProjectionSet, publishProjectOntologyArtifactSet, resolveProjectOntologySnapshot, transitionProjectOntologyProposal } from "../v4/semantics/project-ontology.mjs";
+import { buildSemanticIndex, calculateAffectedSubgraph, compareSemanticComputations, computeSemanticState, createInteroperabilityProjectionSet, createOntologyReasoningProfile, createTerminalSemanticClosure, discoverFederatedPacks, publishTerminalSemanticClosure, sliceTerminalSemanticClosure, verifySemanticRoundTrip } from "../v4/semantics/semantic-interoperability.mjs";
 
 const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "semantic", "pack", "project-ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
 
@@ -112,6 +113,29 @@ async function dispatch(args, group, action, id) {
     const groundingResult = readYaml(requiredOption(args, "grounding-result"));
     return output(args, evaluateSemanticCompatibility({ requirements, groundingResult }));
   }
+  if (group === "semantic" && action === "reasoning-profile") return output(args, createOntologyReasoningProfile(readYaml(requiredFileOption(args))));
+  if (group === "semantic" && action === "index") {
+    return output(args, buildSemanticIndex({snapshot: readYaml(requiredOption(args, "snapshot")), assets: listOption(args, "asset").map((file) => readYaml(file)), algorithm: option(args, "algorithm") ? readYaml(requiredOption(args, "algorithm")) : null, policy: option(args, "policy") ? readYaml(requiredOption(args, "policy")) : null, toolchain: option(args, "toolchain") ? readYaml(requiredOption(args, "toolchain")) : null, cache: option(args, "cache") ? readYaml(requiredOption(args, "cache")) : null}));
+  }
+  if (group === "semantic" && action === "affected-subgraph") {
+    return output(args, calculateAffectedSubgraph({index: readYaml(requiredOption(args, "index")), profile: readYaml(requiredOption(args, "profile")), changedConceptIds: listOption(args, "changed-concept"), cacheDigest: option(args, "cache-digest")}));
+  }
+  if (group === "semantic" && action === "compute") {
+    return output(args, computeSemanticState({index: readYaml(requiredOption(args, "index")), profile: readYaml(requiredOption(args, "profile")), mode: option(args, "mode", "FULL"), affectedSubgraph: option(args, "affected-subgraph") ? readYaml(requiredOption(args, "affected-subgraph")) : null, externalReasonerResult: option(args, "external-reasoner-result") ? readYaml(requiredOption(args, "external-reasoner-result")) : null, execution: option(args, "execution") ? readYaml(requiredOption(args, "execution")) : {}}));
+  }
+  if (group === "semantic" && action === "compare-computations") return output(args, compareSemanticComputations({incremental: readYaml(requiredOption(args, "incremental")), full: readYaml(requiredOption(args, "full"))}));
+  if (group === "semantic" && action === "federate") return output(args, discoverFederatedPacks(readYaml(requiredFileOption(args))));
+  if (group === "semantic" && action === "interoperability") {
+    const input = readYaml(requiredFileOption(args));
+    return output(args, createInteroperabilityProjectionSet({...input, snapshot: readYaml(requiredOption(args, "snapshot")), profile: readYaml(requiredOption(args, "profile")), index: readYaml(requiredOption(args, "index"))}));
+  }
+  if (group === "semantic" && action === "round-trip") return output(args, verifySemanticRoundTrip({snapshot: readYaml(requiredOption(args, "snapshot")), projectionSet: readYaml(requiredOption(args, "projection-set")), index: readYaml(requiredOption(args, "index")), incremental: readYaml(requiredOption(args, "incremental")), full: readYaml(requiredOption(args, "full"))}));
+  if (group === "semantic" && action === "closure") {
+    const manifest = option(args, "file") ? readYaml(requiredFileOption(args)) : {};
+    return output(args, createTerminalSemanticClosure({...manifest, snapshot: readYaml(requiredOption(args, "snapshot")), profile: readYaml(requiredOption(args, "profile")), index: readYaml(requiredOption(args, "index")), projectionSet: readYaml(requiredOption(args, "projection-set")), roundTripReport: readYaml(requiredOption(args, "round-trip-report")), harnessAssets: listOption(args, "harness-asset").map((file) => readYaml(file))}));
+  }
+  if (group === "semantic" && action === "closure-publish") return output(args, publishTerminalSemanticClosure({closure: readYaml(requiredOption(args, "closure")), publication: readYaml(requiredOption(args, "publication"))}));
+  if (group === "semantic" && action === "closure-slice") return output(args, sliceTerminalSemanticClosure({closure: readYaml(requiredOption(args, "closure")), conceptIds: listOption(args, "concept-id"), expectedClosureDigest: requiredOption(args, "expected-closure-digest")}));
   if (group === "pack" && action === "scaffold") return output(args, createProfessionalPack(readYaml(requiredFileOption(args))));
   if (group === "pack" && action === "inspect") return output(args, inspectProfessionalPack(readYaml(requiredFileOption(args)), {availablePacks: listOption(args, "available-pack").map((file) => readYaml(file))}));
   if (group === "pack" && action === "resolve") {

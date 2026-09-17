@@ -24,6 +24,7 @@ const RUNTIME_INTEGRITY_FILES = Object.freeze([
   "src/v4/classification/engine.mjs",
   "src/v4/semantics/ontology-grounding.mjs",
   "src/v4/semantics/semantic-compatibility.mjs",
+  "src/v4/semantics/semantic-interoperability.mjs",
   "src/v4/operation-job/store.mjs",
   "src/v4/operation-job/worker.mjs",
   "src/v4/agent-host-installer.mjs",

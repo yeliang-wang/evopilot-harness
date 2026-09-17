@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-index-v1.schema.json",
+  "title": "SemanticIndex v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "apiVersion", "kind", "snapshotDigest", "algorithm", "policy", "toolchain", "cache", "nodes", "edges", "assets", "statistics", "authority", "indexDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-semantic-index/v1"},
+    "apiVersion": {"const": "semantics.evopilot.io/v1"},
+    "kind": {"const": "SemanticIndex"},
+    "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "algorithm": {"type": "object"},
+    "policy": {"type": "object"},
+    "toolchain": {"type": "object"},
+    "cache": {"type": ["object", "null"]},
+    "nodes": {"type": "array", "items": {"type": "object"}},
+    "edges": {"type": "array", "items": {"type": "object"}},
+    "assets": {"type": "array", "items": {"type": "object"}},
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeCount", "edgeCount", "assetCount"],
+      "properties": {
+        "nodeCount": {"type": "integer", "minimum": 0},
+        "edgeCount": {"type": "integer", "minimum": 0},
+        "assetCount": {"type": "integer", "minimum": 0}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "required": ["contentAddressed", "readOnly", "staleResultsAllowed", "mixedContextAllowed", "mayMutateSource"],
+      "properties": {
+        "contentAddressed": {"const": true},
+        "readOnly": {"const": true},
+        "staleResultsAllowed": {"const": false},
+        "mixedContextAllowed": {"const": false},
+        "mayMutateSource": {"const": false}
+      }
+    },
+    "indexDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

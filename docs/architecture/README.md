@@ -12,6 +12,7 @@ Start here when reviewing the current v3 system, repository boundaries, Catalog 
 - [ADR 0005: Source-first Business Classification And Cumulative Harness Handoff](adr/0005-source-first-business-classification.md) - user-authored classification schemes, deterministic classification, Advisor non-authority, and explicit handoff to the retained producer lifecycle.
 - [ADR 0006: Professional Reasoning And Ontology Grounding](adr/0006-professional-reasoning-and-ontology-grounding.md) - minimal Foundation, evidence-bound grounding, optional Bundle semantic requirements, and Eligibility-independent compatibility.
 - [ADR 0007: Governed Project Ontology And Declarative Professional Packs](adr/0007-governed-project-ontology-and-professional-packs.md) - non-executable multi-Pack resolution, immutable project ontology publication, deterministic projections, and independent lifecycle authority.
+- [ADR 0008: Bounded Scalable Semantic Interoperability](adr/0008-scalable-semantic-interoperability.md) - reasoning profiles, content-addressed indexes, incremental/full equivalence, read-only federation, and terminal consumer closure.
 - [v3 Reasoning Contract](../reference/v3-reasoning-contract.md) - Evidence Graph, eligibility, matcher, and LLM authority.
 - [Catalog Consumption Boundary](catalog-consumption-boundary.md) - legacy v2 boundary between publication and EvoPilot consumption.
 - [Catalog Contract](../reference/catalog-contract.md) - published Catalog format and digest rules.

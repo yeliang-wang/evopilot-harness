@@ -4,6 +4,8 @@ Use this index to choose the shortest path for your task. Generic architecture a
 
 Current release: [`v4.7.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.7.0), published on GitHub and as [`@evopilot/harness@4.7.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.7.0). See [Release Notes](releases/4.7.0.md) for governed Project Ontology and declarative professional Pack lifecycle capabilities.
 
+Current development Target: [v4.8.0 scalable semantic interoperability](releases/4.8.0.md). Implementation is authorized; acceptance and Release remain pending.
+
 ## Learn The Product
 
 1. [Product Roadmap](roadmap/ROADMAP.md) - accepted production-feedback, asset-quality, Agent-native operations, version, and deviation plan.
@@ -25,6 +27,7 @@ Current release: [`v4.7.0`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [npm First-Publication Release Review](operations/npm-first-publication-review.md) - one-time package creation, external npm account configuration, stop rules, and mandatory OIDC handoff.
 - [v4.4.0 Revision 8 Acceptance](operations/v4.4.0-acceptance.md) - Engine-owned professional Source-to-Harness reasoning and presentation sandbox, Evolution Context, inherited regression, real WorkBuddy and cross-Host zero-drift evidence, and release-readiness boundary.
 - [v4.5.0 Acceptance Closure](operations/v4.5.0-acceptance.md) - source-first business classification, cumulative v4.4 lifecycle handoff, five composite machine variants, five designated-human WorkBuddy journeys, and release-build verification.
+- [v4.8.0 Acceptance Plan](operations/v4.8.0-acceptance.md) - 22 current criteria, 247 inherited criteria, RC01–RC05, incremental/full equivalence, federation, package, Host, and no-regression requirements.
 - [v4.3.0 Candidate Acceptance](operations/v4.3.0-acceptance.md) - deterministic third-party Agent interaction compliance, multi-source repair, and real WorkBuddy Proposal Review evidence.
 - [v4.1.2 Acceptance](operations/v4.1.2-acceptance.md) - documentation synchronization, drift guards, package, regression, artifact, and release-gate evidence.
 - [v4.2.0 Candidate Acceptance](operations/v4.2.0-acceptance.md) - Target revision 2's 15 criteria, professional-learning contracts, installed-package and real WorkBuddy evidence, compatibility, security, and release boundary.
@@ -48,6 +51,7 @@ Current release: [`v4.7.0`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [Source-first Business Classification](guides/business-classification.md) - user-owned 业务分类方案, deterministic classification outcomes, missing-category guidance, and explicit Harness handoff.
 - [Ontology Grounding And Bundle Semantic Requirements](guides/ontology-grounding.md) - the v4.6 implementation surface for evidence-bound professional concepts and Eligibility-independent Bundle compatibility; formal acceptance and release remain pending.
 - [Governed Project Ontology And Professional Packs](guides/project-ontology.md) - the v4.7 declarative Pack, immutable project ontology, projection, Skill, and independent lifecycle surface; acceptance and release remain pending.
+- [Scalable Semantic Interoperability](guides/semantic-interoperability.md) - the v4.8 bounded reasoning, index, affected-subgraph, projection, federation, and terminal closure surface; acceptance and release remain pending.
 
 ## Integrate A Consumer
 
@@ -86,4 +90,4 @@ Current release: [`v4.7.0`](https://github.com/yeliang-wang/evopilot-harness/rel
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), additively deepened for v4.6 by [ADR 0006](architecture/adr/0006-professional-reasoning-and-ontology-grounding.md), and extended with the v4.7 declarative Semantic Asset Plane by [ADR 0007](architecture/adr/0007-governed-project-ontology-and-professional-packs.md). Controlled comparative evidence is governed by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.7.0.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), additively deepened for v4.6 by [ADR 0006](architecture/adr/0006-professional-reasoning-and-ontology-grounding.md), extended with the v4.7 declarative Semantic Asset Plane by [ADR 0007](architecture/adr/0007-governed-project-ontology-and-professional-packs.md), and scaled under bounded v4.8 interoperability by [ADR 0008](architecture/adr/0008-scalable-semantic-interoperability.md). Controlled comparative evidence is governed by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.7.0; v4.8.0 remains an unreleased development Target.

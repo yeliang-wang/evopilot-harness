@@ -3,6 +3,7 @@
 Release notes document shipped behavior and validation for each Engine version. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
 
 - [4.7.0 current release](4.7.0.md) - governed Project Ontology, declarative multi-Pack lifecycle, immutable Artifact Set, deterministic projections, and ProjectOntologySkill.
+- [4.8.0 candidate](4.8.0.md) - bounded reasoning profiles, content-addressed semantic indexes, incremental/full equivalence, read-only federation, interoperable projections, and terminal immutable closure. Release authorized; public readback pending.
 
 ## Current
 

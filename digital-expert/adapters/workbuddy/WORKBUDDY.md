@@ -18,13 +18,13 @@ For an installation managed by `evopilot-harness agent install --host workbuddy`
 
 WorkBuddy is attachment transport, exact Engine rendering, MCP invocation, and explicit decision transport only. It must pass the exact attachment path/reference to the governed Session without using WorkBuddy search, shell commands, document parsing, archive/XML inspection, OCR, generic attachment analysis, or Host-LLM reasoning on the file. If WorkBuddy starts interpreting an Evidence Source outside the Harness MCP Session, stop with `HOST_INTERACTION_COMPLIANCE_UNAVAILABLE`; do not present that Host output as Harness evidence or a Business Decision View.
 
-For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.7.0 version`.
+For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.8.0 version`.
 
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.7.0`
-- Core digest: `sha256:e1b2b408032d5a4f19759544712261a190debcf4ca128e583be3a822931e50c7`
+- Expert version: `4.8.0`
+- Core digest: `sha256:8712a4dde41f15e2668cf8007d25be93a1afbb42d1887c4da9d0b765f085f4a5`
 - Agent protocol: `evopilot-harness-agent-operations/v3`
 - Engine API: `harness.evopilot.io/v3`
 - MCP command: `evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness`
@@ -100,7 +100,7 @@ The canonical presentation-producing MCP response path automatically records `re
 
 For every gate, separate the human decision from the Engine credential: the human answers one plain-language question about the currently rendered immutable object; the Host transports only the exact hidden `decisionHandle` and one finite choice; the Engine resolves and validates every digest-bound token internally. Generic continuation cannot authorize a gate that was not displayed, and an earlier or stale handle cannot authorize a later or changed object.
 
-For v4.7 Project Ontology work, use only the declared `pack.*`, `semantic.evidence.import.inspect`, and `project-ontology.*` Engine operations. Read-only inspection never grants mutation authority. A Pack or Project Ontology transition must run inside an approved Session; publication must use the separately authorized publication operation. Stop on a missing dependency, exact-version or digest mismatch, import cycle, namespace collision, incompatible override, private-root leak, stale base snapshot, unresolved conflict, or skipped lifecycle transition. Do not invoke EvoPilot Runtime, simulate v4.8 incremental reasoning, or collapse the immutable resolved snapshot into generated projections or Skills.
+For v4.7 Project Ontology and v4.8 semantic interoperability work, use only the declared `pack.*`, `project-ontology.*`, and `semantic.*` Engine operations. Read-only inspection never grants mutation authority. A Pack or Project Ontology transition must run inside an approved Session; Project Ontology or terminal semantic-closure publication must use the separately authorized publication operation. Treat external vocabularies as inactive provenance-bound evidence, external reasoners as qualified bounded evidence providers, and federated Catalog roots as independently governed read-only sources. Stop on a missing dependency, exact-version or digest mismatch, import cycle, namespace collision, incompatible override, private-root leak, stale cache or index, mixed context, reasoning-budget exhaustion, non-equivalent incremental/full outcomes, unavailable proof, federated identity conflict, unresolved conflict, or skipped lifecycle transition. Never execute an external reasoner, mutate a remote Catalog, invoke EvoPilot Runtime, infer cross-product E2E completion, or collapse the immutable resolved snapshot into indexes, projections, Skills, or consumer slices as a new truth source.
 
 When the human explicitly asks to reevaluate against the current Source, Catalog, Ontology, Policy, Advisor profile, intent, locale, or presentation-template environment, use `reevaluate_operation_session`. It creates a new append-only Session and Plan, preserves the prior Session and Evolution Context unchanged, presents the deterministic old/new context difference, and stops at the new Plan decision. Never silently replace a prior context or reuse an approval from it.
 

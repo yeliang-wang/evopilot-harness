@@ -78,7 +78,7 @@ const groundingAnchors = [
   ["src/v4/semantics/ontology-grounding.mjs", "llmMayAssignAuthoritativeConceptId: false", "LLM grounding non-authority"],
   ["src/v4/semantics/semantic-compatibility.mjs", "harnessEligibilityIndependent: true", "semantic compatibility and Eligibility separation"],
   ["schemas/harness-asset-v3.schema.json", "semanticRequirements", "optional HarnessBundle semantic requirements"],
-  ["src/v3/schema.mjs", "FUTURE_ONTOLOGY_ASSET_KINDS", "v4.8 asset boundary rejection"],
+  ["src/v3/schema.mjs", "OntologyReasoningProfile", "v4.8 semantic interoperability schema routing"],
   ["src/v3/catalog.mjs", "requiredConceptCount", "Catalog semantic metadata projection"],
   ["src/v3/hub.mjs", "semanticRequirements", "Harness Hub semantic projection"],
   ["src/v4/engine-adapter.mjs", "semantic.grounding.inspect", "MCP semantic diagnostic projection"]
@@ -96,6 +96,19 @@ const projectOntologyAnchors = [
   ["src/v4/engine-adapter.mjs", "project-ontology.artifact.publish", "Project Ontology Engine operation boundary"]
 ];
 
+const semanticInteroperabilityAnchors = [
+  ["docs/architecture/adr/0008-scalable-semantic-interoperability.md", "Accepted for implementation", "v4.8 semantic interoperability ADR"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "ONTOLOGY_REASONING_PROFILE_SCHEMA", "bounded Ontology Reasoning Profile"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "SEMANTIC_CACHE_DIGEST_MISMATCH", "cache digest fail-closed behavior"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "compareSemanticComputations", "incremental and full recompute equivalence"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "FEDERATED_PACK_CONFLICT", "federated Catalog identity conflict rejection"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "externalReasonerMayMutate: false", "external reasoner non-authority"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "liveMutableHarnessDependency: false", "read-only consumer closure"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "sliceTerminalSemanticClosure", "offline read-only consumer slicing"],
+  ["src/v4/semantics/semantic-interoperability.mjs", "TERMINAL_CLOSURE_MANIFEST_INCOMPLETE", "terminal dependency, evaluation, and rollback closure"],
+  ["src/v4/engine-adapter.mjs", "semantic.closure.publish", "separately authorized terminal closure publication"]
+];
+
 const learningAnchors = [
   ["src/v3/learning.mjs", "ingestLearningDocument", "Curriculum/Research/Contribution Immutable Intake"],
   ["src/v3/learning.mjs", "createEvidenceRunManifest", "Evidence Run Manifest"],
@@ -111,6 +124,7 @@ for (const [file, needle, moduleName] of learningAnchors) mustContain(file, need
 for (const [file, needle, moduleName] of classificationAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of groundingAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 for (const [file, needle, moduleName] of projectOntologyAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
+for (const [file, needle, moduleName] of semanticInteroperabilityAnchors) mustContain(file, needle, `${moduleName} boundary anchor is missing`);
 
 mustContain("AGENTS.md", "28 enforced Engine module boundaries", "root agent instructions must reference the complete Engine module boundary set");
 mustContain("docs/architecture/adr/0001-product-and-module-boundaries.md", "Accepted", "module boundary ADR must remain accepted");
@@ -212,6 +226,9 @@ for (const file of ["src/v4/semantics/professional-packs.mjs", "src/v4/semantics
   mustNotContain(file, "approveProposal", "Project Ontology must not approve Harness Proposals");
   mustNotContain(file, "publishProposal", "Project Ontology must not publish Harness Proposals");
 }
+mustNotMatch("src/v4/semantics/semantic-interoperability.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "semantic interoperability must remain deterministic, offline, and unable to execute external reasoners");
+mustNotContain("src/v4/semantics/semantic-interoperability.mjs", "approveProposal", "semantic interoperability must not approve Harness Proposals");
+mustNotContain("src/v4/semantics/semantic-interoperability.mjs", "publishProposal", "semantic interoperability must not publish Harness Proposals");
 mustNotMatch("src/v4/classification/source-descriptor.mjs", /from\s+["']node:(?:http|https|net|tls|dgram)["']|\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "Source Resolver may use bounded argument-vector Git only and must not open arbitrary network or shell execution");
 mustContain("src/v4/classification/source-descriptor.mjs", 'GIT_TERMINAL_PROMPT: "0"', "Source Resolver must disable interactive credential prompting");
 mustContain("src/v4/classification/source-descriptor.mjs", 'sourceExecution: false', "Source Resolver must preserve Source non-execution");
@@ -254,7 +271,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length} Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors, ${classificationAnchors.length} v4.5 classification anchors, ${groundingAnchors.length} v4.6 grounding anchors, ${projectOntologyAnchors.length} v4.7 Project Ontology anchors).`);
+console.log(`Architecture boundary verification passed (${anchors.length}/28 Engine-module anchors, ${agentAnchors.length} Agent-operation enforcement anchors, ${learningAnchors.length}/6 v4.2 professional-learning anchors, ${classificationAnchors.length} v4.5 classification anchors, ${groundingAnchors.length} v4.6 grounding anchors, ${projectOntologyAnchors.length} v4.7 Project Ontology anchors, ${semanticInteroperabilityAnchors.length} v4.8 semantic interoperability anchors).`);
 
 function read(relativePath) {
   const file = path.join(root, relativePath);

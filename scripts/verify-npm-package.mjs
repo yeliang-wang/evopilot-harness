@@ -57,8 +57,18 @@ const required = [
   "schemas/resolved-project-ontology-snapshot-v1.schema.json",
   "schemas/project-ontology-artifact-set-v1.schema.json",
   "schemas/project-ontology-skill-v1.schema.json",
+  "schemas/ontology-reasoning-profile-v1.schema.json",
+  "schemas/semantic-index-v1.schema.json",
+  "schemas/affected-subgraph-v1.schema.json",
+  "schemas/semantic-computation-v1.schema.json",
+  "schemas/federated-pack-discovery-v1.schema.json",
+  "schemas/semantic-interoperability-projection-set-v1.schema.json",
+  "schemas/semantic-round-trip-report-v1.schema.json",
+  "schemas/terminal-semantic-closure-v1.schema.json",
+  "schemas/terminal-semantic-slice-v1.schema.json",
   "src/v4/semantics/professional-packs.mjs",
   "src/v4/semantics/project-ontology.mjs",
+  "src/v4/semantics/semantic-interoperability.mjs",
   "ontology/examples/example-finance-domain.yaml",
   "ontology/examples/example-crm-product.yaml",
   "policies/completeness/default.yaml",
@@ -87,7 +97,7 @@ for (const file of files) {
   assert.ok(!forbiddenExact.has(file), `${file} must not be packaged`);
 }
 
-assert.ok(files.length <= 300, `npm package contains too many files: ${files.length}`);
+assert.ok(files.length <= 320, `npm package contains too many files: ${files.length}`);
 assert.ok(packed.unpackedSize <= 2_500_000, `npm package is too large when unpacked: ${packed.unpackedSize}`);
 
 const secretPatterns = [

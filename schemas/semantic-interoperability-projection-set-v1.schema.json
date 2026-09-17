@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-interoperability-projection-set-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "snapshotDigest", "profileDigest", "indexDigest", "canonicalSemanticDigest", "externalMappings", "multilingualTerms", "projections", "authority", "projectionSetDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-semantic-interoperability-projection-set/v1"},
+    "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "profileDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "indexDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "canonicalSemanticDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "externalMappings": {"type": "array", "items": {"type": "object"}},
+    "multilingualTerms": {"type": "array", "items": {"type": "object"}},
+    "projections": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "object"}},
+    "authority": {"type": "object"},
+    "projectionSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

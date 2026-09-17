@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/federated-pack-discovery-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "apiVersion", "kind", "query", "roots", "discoveredPacks", "authority", "discoveryDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-federated-pack-discovery/v1"},
+    "apiVersion": {"const": "semantics.evopilot.io/v1"},
+    "kind": {"const": "FederatedPackDiscovery"},
+    "query": {"type": "object"},
+    "roots": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "discoveredPacks": {"type": "array", "items": {"type": "object"}},
+    "authority": {
+      "type": "object",
+      "required": ["readOnly", "rootsRemainIndependent", "sharedMutation", "automaticTrust", "automaticInstallation", "automaticPublication"],
+      "properties": {
+        "readOnly": {"const": true},
+        "rootsRemainIndependent": {"const": true},
+        "sharedMutation": {"const": false},
+        "automaticTrust": {"const": false},
+        "automaticInstallation": {"const": false},
+        "automaticPublication": {"const": false}
+      }
+    },
+    "discoveryDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/terminal-semantic-slice-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "closureDigest", "requestedConceptIds", "bindings", "authority", "sliceDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-terminal-semantic-slice/v1"},
+    "closureDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "requestedConceptIds": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "bindings": {"type": "object"},
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["readOnly", "offline", "liveHarnessDependency", "mayMutate", "mayApprove", "mayPublish", "mayRelease"],
+      "properties": {
+        "readOnly": {"const": true},
+        "offline": {"const": true},
+        "liveHarnessDependency": {"const": false},
+        "mayMutate": {"const": false},
+        "mayApprove": {"const": false},
+        "mayPublish": {"const": false},
+        "mayRelease": {"const": false}
+      }
+    },
+    "sliceDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

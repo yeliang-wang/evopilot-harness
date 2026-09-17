@@ -64,6 +64,17 @@ engineOperations:
   - semantic.candidates.inspect
   - semantic.grounding.inspect
   - semantic.compatibility.inspect
+  - semantic.reasoning-profile.inspect
+  - semantic.index.inspect
+  - semantic.affected-subgraph.inspect
+  - semantic.compute.inspect
+  - semantic.compute.compare
+  - semantic.federation.discover
+  - semantic.interoperability.inspect
+  - semantic.round-trip.inspect
+  - semantic.closure.inspect
+  - semantic.closure.publish
+  - semantic.closure.slice
   - pack.scaffold.inspect
   - pack.inspect
   - pack.resolve.inspect
@@ -144,6 +155,7 @@ conformanceEvidence:
     - tests/v4.test.mjs
     - tests/v4.1.test.mjs
     - tests/v4.2.test.mjs
+    - tests/v4.8-semantic-interoperability.test.mjs
   realSessionProtocol:
     - digital-expert/conformance/generic-host.mjs
     - docs/operations/v4-acceptance.md
@@ -351,6 +363,40 @@ coverage:
     semantic.compatibility.inspect:
       <<: *semantic_operations
       marker: semantic.compatibility.inspect
+    semantic.reasoning-profile.inspect: &semantic_interoperability_operations
+      testFile: tests/v4.8-semantic-interoperability.test.mjs
+      testName: v4.8 Engine adapter exposes the bounded semantic interoperability operation family
+      marker: semantic.reasoning-profile.inspect
+    semantic.index.inspect:
+      <<: *semantic_interoperability_operations
+      marker: semantic.index.inspect
+    semantic.affected-subgraph.inspect:
+      <<: *semantic_interoperability_operations
+      marker: semantic.affected-subgraph.inspect
+    semantic.compute.inspect:
+      <<: *semantic_interoperability_operations
+      marker: semantic.compute.inspect
+    semantic.compute.compare:
+      <<: *semantic_interoperability_operations
+      marker: semantic.compute.compare
+    semantic.federation.discover:
+      <<: *semantic_interoperability_operations
+      marker: semantic.federation.discover
+    semantic.interoperability.inspect:
+      <<: *semantic_interoperability_operations
+      marker: semantic.interoperability.inspect
+    semantic.round-trip.inspect:
+      <<: *semantic_interoperability_operations
+      marker: semantic.round-trip.inspect
+    semantic.closure.inspect:
+      <<: *semantic_interoperability_operations
+      marker: semantic.closure.inspect
+    semantic.closure.publish:
+      <<: *semantic_interoperability_operations
+      marker: semantic.closure.publish
+    semantic.closure.slice:
+      <<: *semantic_interoperability_operations
+      marker: semantic.closure.slice
     pack.scaffold.inspect: &project_ontology_operations
       testFile: tests/v4.7-project-ontology.test.mjs
       testName: v4.7 Engine adapter exposes complete governed Pack and Project Ontology operation family

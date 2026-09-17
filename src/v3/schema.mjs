@@ -36,7 +36,11 @@ const SCHEMAS = {
   ProjectOntologyOverlay: "professional-pack-v1.schema.json",
   DomainHarnessPack: "professional-pack-v1.schema.json",
   ProjectOntologyArtifactSet: "project-ontology-artifact-set-v1.schema.json",
-  ProjectOntologySkill: "project-ontology-skill-v1.schema.json"
+  ProjectOntologySkill: "project-ontology-skill-v1.schema.json",
+  OntologyReasoningProfile: "ontology-reasoning-profile-v1.schema.json",
+  SemanticIndex: "semantic-index-v1.schema.json",
+  FederatedPackDiscovery: "federated-pack-discovery-v1.schema.json",
+  TerminalSemanticClosure: "terminal-semantic-closure-v1.schema.json"
 };
 
 const VERSIONED_SCHEMAS = {
@@ -66,14 +70,21 @@ const CONTRACT_SCHEMAS = {
   "evopilot-harness-professional-pack-inspection/v1": "professional-pack-inspection-v1.schema.json",
   "evopilot-harness-pack-benchmark/v1": "pack-benchmark-v1.schema.json",
   "evopilot-harness-pack-gold-case/v1": "pack-gold-case-v1.schema.json",
-  "evopilot-harness-external-semantic-evidence-adapter/v1": "external-semantic-evidence-adapter-v1.schema.json"
+  "evopilot-harness-external-semantic-evidence-adapter/v1": "external-semantic-evidence-adapter-v1.schema.json",
+  "evopilot-harness-ontology-reasoning-profile/v1": "ontology-reasoning-profile-v1.schema.json",
+  "evopilot-harness-semantic-index/v1": "semantic-index-v1.schema.json",
+  "evopilot-harness-affected-subgraph/v1": "affected-subgraph-v1.schema.json",
+  "evopilot-harness-semantic-computation/v1": "semantic-computation-v1.schema.json",
+  "evopilot-harness-federated-pack-discovery/v1": "federated-pack-discovery-v1.schema.json",
+  "evopilot-harness-semantic-interoperability-projection-set/v1": "semantic-interoperability-projection-set-v1.schema.json",
+  "evopilot-harness-semantic-round-trip-report/v1": "semantic-round-trip-report-v1.schema.json",
+  "evopilot-harness-terminal-semantic-closure/v1": "terminal-semantic-closure-v1.schema.json",
+  "evopilot-harness-terminal-semantic-slice/v1": "terminal-semantic-slice-v1.schema.json"
 };
 
 const validatorCache = new Map();
-const FUTURE_ONTOLOGY_ASSET_KINDS = new Set(["OntologyReasoningProfile", "SemanticIndex", "FederatedPackDiscovery"]);
 
 export function validateDocument(document, file = "<memory>") {
-  if (FUTURE_ONTOLOGY_ASSET_KINDS.has(document?.kind)) return { status: "FAILED", valid: false, file, kind: document.kind, errors: [{ path: "/kind", message: "v4.8 semantic interoperability asset kinds are outside the v4.7 product boundary" }] };
   const schemaName = CONTRACT_SCHEMAS[document?.schema] ?? VERSIONED_SCHEMAS[document?.kind]?.[document?.apiVersion] ?? SCHEMAS[document?.kind];
   if (!schemaName) return { status: "FAILED", valid: false, file, kind: document?.kind ?? null, errors: [{ path: "/kind", message: "unsupported Harness document kind or contract schema" }] };
   let validate = validatorCache.get(schemaName);

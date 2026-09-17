@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/affected-subgraph-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "indexDigest", "profileDigest", "cacheDigest", "changedConceptIds", "affectedConceptIds", "unaffectedConceptCount", "proofPaths", "iterations", "authority", "affectedSubgraphDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-affected-subgraph/v1"},
+    "indexDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "profileDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "cacheDigest": {"type": ["string", "null"]},
+    "changedConceptIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "affectedConceptIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "unaffectedConceptCount": {"type": "integer", "minimum": 0},
+    "proofPaths": {"type": "array", "items": {"type": "object"}},
+    "iterations": {"type": "integer", "minimum": 0},
+    "authority": {"type": "object"},
+    "affectedSubgraphDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

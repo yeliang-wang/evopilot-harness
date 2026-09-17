@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-round-trip-report-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "snapshotDigest", "indexDigest", "projectionSetDigest", "incrementalComputationDigest", "fullComputationDigest", "bindingChecks", "allApplicableDigestsPresent", "allFormatsApplicable", "canonicalSemanticsPreserved", "unsupportedFormats", "computationEquivalence", "authority", "reportDigest"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-semantic-round-trip-report/v1"},
+    "status": {"enum": ["PASSED", "FAILED"]},
+    "snapshotDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "indexDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "projectionSetDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "incrementalComputationDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "fullComputationDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "bindingChecks": {"type": "object"},
+    "allApplicableDigestsPresent": {"type": "boolean"},
+    "allFormatsApplicable": {"type": "boolean"},
+    "canonicalSemanticsPreserved": {"type": "boolean"},
+    "unsupportedFormats": {"type": "array", "items": {"type": "object"}},
+    "computationEquivalence": {"type": "object"},
+    "authority": {"type": "object"},
+    "reportDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}
