@@ -1,0 +1,265 @@
+{
+  "schema": "evopilot-evolution-target/v1",
+  "id": "evopilot-harness-v4.8.0-repository-e2e-corpus",
+  "revision": 1,
+  "status": "APPROVED",
+  "intent": "Add a dedicated repository-local tests/e2e corpus for evopilot-harness, with reusable executable scenarios and version-bound manifests for v4.6.0, v4.7.0, and v4.8.0 that project authoritative Evolution Target acceptance contracts and reference immutable external evidence without duplicating authority.",
+  "objective": "Make the already-governed v4.6.0 through v4.8.0 E2E contracts discoverable, mechanically verifiable, and reproducible from one repository-local entry point while preserving governance/targets as the sole acceptance authority and leaving released product semantics unchanged.",
+  "evidence": [
+    {
+      "ref": "conversation:user-requested-evopilot-harness-repository-e2e-corpus-2026-09-17",
+      "authority": "user request to prepare and execute a governed change; not Target approval or Release authorization"
+    },
+    {
+      "ref": "governance/roadmap.yaml#evopilot-harness-evolution-governance",
+      "authority": "authoritative standing-work Roadmap binding"
+    },
+    {
+      "ref": "governance/targets/evopilot-harness-v4.8.0-scalable-semantic-interoperability.json#sha256:284a65989fee3613c2331dfe7c0c5b1463be303b9e60a31cffc6b41dfb5b3472",
+      "authority": "released v4.8.0 cumulative acceptance baseline and existing RC01-RC05 source contract"
+    },
+    {
+      "ref": "local://evopilot-evolution-runs/00cb09ed2a7d/audit-result.json",
+      "authority": "read-only repository-structure audit evidence; grants no product authority"
+    }
+  ],
+  "roadmapBindings": [
+    {
+      "repo": "/Users/wangyejing/project/harness/evopilot-harness",
+      "project": "evopilot-harness",
+      "matchedStandingWork": "evopilot-harness-evolution-governance",
+      "targetVersion": "4.8.0",
+      "classification": "ALIGNED",
+      "roadmapDigest": "sha256:6e03bad5bca577a7d2d9607b21278e768ac0cc0b92dcbd80d23e875f263e09a7"
+    }
+  ],
+  "scope": {
+    "include": [
+      "a dedicated tests/e2e directory with one documented repository-local entry point",
+      "a machine-readable manifest schema and fail-closed validator for version-bound E2E projections",
+      "version manifests for evopilot-harness 4.6.0, 4.7.0, and 4.8.0 bound to exact authoritative Target file digests and RC01-RC05 definitions",
+      "reusable scenario metadata, expected terminal states, prohibited effects, and evidence-reference requirements without copying authoritative acceptance prose into a second authority source",
+      "automated tests proving valid manifests pass and stale Target digests, unknown cases, incomplete coverage, unsafe paths, or authority duplication fail closed",
+      "documentation explaining the separation between executable E2E projections, authoritative Evolution Targets, and external immutable execution evidence"
+    ],
+    "exclude": [
+      "any change to Engine, CLI, MCP, Digital Expert, Agent adapter, Harness Asset, Catalog, Registry, Ontology, Policy, Evaluation, or publication behavior",
+      "any change to the released v4.6.0, v4.7.0, or v4.8.0 Evolution Targets or their acceptance status",
+      "copying private or large Host transcripts, credentials, Source contents, or mutable external evidence into the repository",
+      "retroactively invalidating an accepted or released version solely because its E2E corpus was previously distributed across governance, runner, and external evidence surfaces",
+      "new package publication, GitHub Release, npm release, version bump, product-boundary change, or Release authorization"
+    ]
+  },
+  "compatibilityPolicy": {
+    "mode": "INHERIT"
+  },
+  "acceptanceModel": {
+    "schema": "evopilot-acceptance-coverage/v1",
+    "coveragePolicy": "ALL_ROADMAP_AND_CURRENT_ACCEPTANCE_COVERED",
+    "roadmapCoverage": [
+      {
+        "roadmapCriterionDigest": "sha256:254da705b2100e4c832dd8e6b0e38f036faf3e185d0d0dc88224a5b75bb79a39",
+        "acceptanceIds": ["C01", "F04"]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:b33476eac4d19aa23af94d685770f9d304b48cb8f17afe70ffb300431c7e0be6",
+        "acceptanceIds": ["C01", "F02", "F04"]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:57458fd2618c1019d416d9ae6d94a1ad3ebfc897b0c559a6aa98e0e39593d6d6",
+        "acceptanceIds": ["C01", "F02", "F04"]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:dcc41ecb614416059d37b5e0ae0a77e5438d9ec6ea23d5e84dd1a7aa74c8a416",
+        "acceptanceIds": ["C01", "C03", "F04"]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:61a432f160703357104d26082b9769f4f90c82d08a3f848cdbd7fcaf0f2ff441",
+        "acceptanceIds": ["C01", "C03", "F04"]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:77a4b1debfb03aee275be970512734cb54ede175dfd9cbeef4cf3049e10b6ccb",
+        "acceptanceIds": ["C01", "F02", "F04"]
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "F01",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "One repository-local command discovers and validates the dedicated tests/e2e corpus without requiring private external evidence to be copied into the checkout.",
+      "requiredEvidence": "passing automated invocation of the repository-local E2E validator and its test suite from the repository root",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "F02",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "The 4.6.0, 4.7.0, and 4.8.0 manifests bind exact authoritative Target file digests and project every declared RC01-RC05 case without inventing or dropping a case.",
+      "requiredEvidence": "validator output proving exact Target digest, version, case-id, and coverage agreement for all three manifests",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "F03",
+      "category": "FUNCTIONAL",
+      "critical": false,
+      "criterion": "Reusable scenario metadata and runner contracts are shared without duplicating version-specific authoritative acceptance semantics.",
+      "requiredEvidence": "structural tests and documentation-link validation showing manifests reference shared schemas or runners and authoritative Target locations",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "F04",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "Target digest drift, unsupported versions, missing or reordered RC cases, unsafe evidence references, incomplete mappings, and authority duplication fail closed with deterministic diagnostics.",
+      "requiredEvidence": "negative automated cases covering each declared fail-closed condition",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "C01",
+      "category": "CAPABILITY",
+      "critical": true,
+      "criterion": "governance/targets remains the sole authority for acceptance meaning and status; tests/e2e is an executable projection and cannot approve, validate, release, or rewrite a Target.",
+      "requiredEvidence": "schema, validator, architecture guard, and documentation checks proving one-way read-only projection",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "C02",
+      "category": "CAPABILITY",
+      "critical": true,
+      "criterion": "A contributor can locate version coverage, run validation, and identify the authoritative Target and evidence references from tests/e2e without reconstructing the prior release conversation.",
+      "requiredEvidence": "repository-local README, manifest index, command transcript, and documentation-link validation",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "C03",
+      "category": "CAPABILITY",
+      "critical": false,
+      "criterion": "External execution evidence remains referenced by immutable locator and digest, while secrets, private transcripts, mutable state, and large raw artifacts remain outside the repository.",
+      "requiredEvidence": "positive and negative validator tests for evidence reference shape and prohibited embedded evidence fields",
+      "status": "PENDING",
+      "evidenceRefs": []
+    }
+  ],
+  "acceptanceLineage": [
+    {
+      "id": "V480-RELEASED-CLOSURE",
+      "origin": "evopilot-harness-v4.8.0-scalable-semantic-interoperability@revision-1/released-cumulative-closure",
+      "criterionDigest": "sha256:f7690b0dcb3b256fbf72e72506b089986f077275524a6c0cfafb3710dd1f0c51",
+      "evidenceRef": "governance/targets/evopilot-harness-v4.8.0-scalable-semantic-interoperability.json#sha256:284a65989fee3613c2331dfe7c0c5b1463be303b9e60a31cffc6b41dfb5b3472"
+    }
+  ],
+  "inheritedAcceptance": [
+    {
+      "id": "V480-RELEASED-CLOSURE",
+      "origin": "evopilot-harness-v4.8.0-scalable-semantic-interoperability@revision-1/released-cumulative-closure",
+      "criterion": "The released evopilot-harness 4.8.0 Target, its cumulative acceptance closure, and its authority boundaries remain unchanged while repository-local E2E projections are added.",
+      "requiredEvidence": "unchanged authoritative Target digest, passing Roadmap and architecture gates, full existing test suite, and package-content comparison showing no released product surface change",
+      "status": "PENDING",
+      "evidenceRefs": []
+    }
+  ],
+  "regressionImpact": [
+    {
+      "area": "repository E2E projection, governance validation, documentation routing, and package-boundary safety",
+      "affectedAcceptanceIds": ["V480-RELEASED-CLOSURE"]
+    }
+  ],
+  "excludedHistoricalAcceptance": [],
+  "realCaseCoverage": [
+    {
+      "id": "RC01",
+      "scenario": "A fresh checkout validates the v4.6.0 E2E manifest against its exact released Target and enumerates RC01-RC05 in authoritative order.",
+      "coversAcceptanceIds": ["F01", "F02", "F03", "C01", "C02"],
+      "hosts": ["local-node-e2e-host/v1"],
+      "startingState": "clean checkout with repository dependencies available and no private acceptance workspace mounted",
+      "terminalState": "v4.6.0 manifest validation passes and reports the exact Target digest and five projected case ids",
+      "prohibitedEffects": ["Target mutation", "external evidence copying", "publication", "source-project execution"],
+      "requiredEvidence": "machine-readable validator result plus node:test coverage for the v4.6.0 projection",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "RC02",
+      "scenario": "A fresh checkout validates the v4.7.0 E2E manifest against its exact released Target and enumerates RC01-RC05 in authoritative order.",
+      "coversAcceptanceIds": ["F01", "F02", "F03", "C01", "C02"],
+      "hosts": ["local-node-e2e-host/v1"],
+      "startingState": "clean checkout with repository dependencies available and no private acceptance workspace mounted",
+      "terminalState": "v4.7.0 manifest validation passes and reports the exact Target digest and five projected case ids",
+      "prohibitedEffects": ["Target mutation", "external evidence copying", "publication", "source-project execution"],
+      "requiredEvidence": "machine-readable validator result plus node:test coverage for the v4.7.0 projection",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "RC03",
+      "scenario": "A fresh checkout validates the v4.8.0 E2E manifest against its exact released Target and enumerates RC01-RC05 in authoritative order.",
+      "coversAcceptanceIds": ["F01", "F02", "F03", "C01", "C02", "C03"],
+      "hosts": ["local-node-e2e-host/v1"],
+      "startingState": "clean checkout with repository dependencies available and no private acceptance workspace mounted",
+      "terminalState": "v4.8.0 manifest validation passes and reports the exact Target digest, five projected case ids, and immutable evidence locators",
+      "prohibitedEffects": ["Target mutation", "external evidence copying", "publication", "source-project execution"],
+      "requiredEvidence": "machine-readable validator result plus node:test coverage for the v4.8.0 projection",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "RC04",
+      "scenario": "Tampered fixtures exercise digest drift, unsupported version, incomplete or reordered RC coverage, unsafe evidence references, and embedded-authority attempts.",
+      "coversAcceptanceIds": ["F04", "C01", "C03"],
+      "hosts": ["local-node-e2e-host/v1"],
+      "startingState": "isolated temporary copies of valid manifests with one controlled defect per fixture",
+      "terminalState": "every invalid fixture fails closed with its deterministic diagnostic and no repository or external mutation",
+      "prohibitedEffects": ["accepting stale bindings", "writing governance status", "reading secrets", "network access", "publication"],
+      "requiredEvidence": "negative node:test matrix and machine-readable failure classifications",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "RC05",
+      "scenario": "The aggregate repository-local E2E command validates all supported versions, documentation links, authority separation, and package-boundary safety in one deterministic run.",
+      "coversAcceptanceIds": ["F01", "F02", "F03", "F04", "C01", "C02", "C03"],
+      "hosts": ["local-node-e2e-host/v1"],
+      "startingState": "fresh repository checkout using only checked-in files and ordinary local Node tooling",
+      "terminalState": "all version projections and negative tests pass, the released Target files remain byte-identical, and npm package contents exclude repository-only E2E governance assets",
+      "prohibitedEffects": ["product behavior change", "Target mutation", "external evidence copying", "network dependency", "package publication"],
+      "requiredEvidence": "aggregate command transcript, full repository validation, unchanged Target digests, and npm package-content verification",
+      "status": "PENDING",
+      "evidenceRefs": []
+    }
+  ],
+  "noRegressionRequired": true,
+  "acceptanceClosurePolicy": "ALL_REQUIRED_PASS",
+  "failurePolicy": "RETURN_TO_IMPLEMENTATION_AND_REVALIDATE",
+  "noRegression": {
+    "status": "PENDING",
+    "evidenceRefs": []
+  },
+  "approvals": {
+    "target": {
+      "decision": "APPROVED",
+      "by": "user",
+      "evidenceRef": "conversation:user-approved-evopilot-harness-repository-e2e-corpus-target-2026-09-17",
+      "authorizationDigest": "sha256:b28f2d1f81c9b766bc6b02ea05d28ef95afa7a0cce14e88df83a57057e177de4"
+    },
+    "release": {
+      "decision": "PENDING",
+      "by": null,
+      "evidenceRef": null,
+      "authorizationDigest": null
+    }
+  },
+  "release": {
+    "actions": ["commit"],
+    "versions": {
+      "evopilot-harness": "4.8.0"
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schema": "evopilot-harness-e2e-manifest/v1",
+  "projectionMode": "HISTORICAL_ACCEPTANCE_PROJECTION",
+  "version": "4.7.0",
+  "authority": {
+    "source": "governance/targets",
+    "readOnly": true,
+    "grantsAcceptance": false,
+    "grantsRelease": false
+  },
+  "target": {
+    "path": "governance/targets/evopilot-harness-v4.7.0-governed-project-ontology-and-multi-pack-lifecycle.json",
+    "id": "evopilot-harness-v4.7.0-governed-project-ontology-and-multi-pack-lifecycle",
+    "revision": 1,
+    "sha256": "sha256:7d0e7ee0fd50a1d88e9adcc2078e4899311d50d4af6366a2fd70d8aeb079a484"
+  },
+  "scenarioProfile": "../../scenarios/target-case-projection.json",
+  "requiredCaseOrder": ["RC01", "RC02", "RC03", "RC04", "RC05"],
+  "cases": [
+    {
+      "id": "RC01",
+      "targetPointer": "/realCaseCoverage/0",
+      "acceptanceIds": ["F01", "F04", "F05", "F07", "F11", "C01", "C04", "C06"],
+      "evidencePointer": "/realCaseCoverage/0/evidenceRefs"
+    },
+    {
+      "id": "RC02",
+      "targetPointer": "/realCaseCoverage/1",
+      "acceptanceIds": ["F02", "F03", "C02", "C03", "C06"],
+      "evidencePointer": "/realCaseCoverage/1/evidenceRefs"
+    },
+    {
+      "id": "RC03",
+      "targetPointer": "/realCaseCoverage/2",
+      "acceptanceIds": ["F06", "F08", "F09", "F10", "C05", "C07"],
+      "evidencePointer": "/realCaseCoverage/2/evidenceRefs"
+    },
+    {
+      "id": "RC04",
+      "targetPointer": "/realCaseCoverage/3",
+      "acceptanceIds": ["F12", "C03", "C08", "C09"],
+      "evidencePointer": "/realCaseCoverage/3/evidenceRefs"
+    },
+    {
+      "id": "RC05",
+      "targetPointer": "/realCaseCoverage/4",
+      "acceptanceIds": ["F02", "F03", "F05", "F08", "F10", "F11", "F12", "C01", "C02", "C04", "C07", "C09", "C10"],
+      "evidencePointer": "/realCaseCoverage/4/evidenceRefs"
+    }
+  ],
+  "evidencePolicy": {
+    "mode": "TARGET_POINTERS_ONLY",
+    "immutableBinding": "TARGET_FILE_SHA256",
+    "embeddedEvidence": false
+  }
+}

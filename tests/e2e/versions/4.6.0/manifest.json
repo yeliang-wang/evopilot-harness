@@ -1,0 +1,56 @@
+{
+  "schema": "evopilot-harness-e2e-manifest/v1",
+  "projectionMode": "HISTORICAL_ACCEPTANCE_PROJECTION",
+  "version": "4.6.0",
+  "authority": {
+    "source": "governance/targets",
+    "readOnly": true,
+    "grantsAcceptance": false,
+    "grantsRelease": false
+  },
+  "target": {
+    "path": "governance/targets/evopilot-harness-v4.6.0-professional-reasoning-and-ontology-grounding.json",
+    "id": "evopilot-harness-v4.6.0-professional-reasoning-and-ontology-grounding",
+    "revision": 1,
+    "sha256": "sha256:f812a6d956911a5fed2e0170984efe3761092dc9be2c5c70d3544adf36941d16"
+  },
+  "scenarioProfile": "../../scenarios/target-case-projection.json",
+  "requiredCaseOrder": ["RC01", "RC02", "RC03", "RC04", "RC05"],
+  "cases": [
+    {
+      "id": "RC01",
+      "targetPointer": "/realCaseCoverage/0",
+      "acceptanceIds": ["F01", "F02", "F03", "F04", "F07", "C01", "C04", "C05", "C09"],
+      "evidencePointer": "/realCaseCoverage/0/evidenceRefs"
+    },
+    {
+      "id": "RC02",
+      "targetPointer": "/realCaseCoverage/1",
+      "acceptanceIds": ["F03", "F04", "F08", "C02", "C07", "C09"],
+      "evidencePointer": "/realCaseCoverage/1/evidenceRefs"
+    },
+    {
+      "id": "RC03",
+      "targetPointer": "/realCaseCoverage/2",
+      "acceptanceIds": ["F05", "F07", "F08", "F09", "F12", "C01", "C02", "C03", "C04", "C10"],
+      "evidencePointer": "/realCaseCoverage/2/evidenceRefs"
+    },
+    {
+      "id": "RC04",
+      "targetPointer": "/realCaseCoverage/3",
+      "acceptanceIds": ["F05", "F06", "F09", "F11", "C03", "C06", "C08", "C09", "C10"],
+      "evidencePointer": "/realCaseCoverage/3/evidenceRefs"
+    },
+    {
+      "id": "RC05",
+      "targetPointer": "/realCaseCoverage/4",
+      "acceptanceIds": ["F06", "F10", "F11", "F12", "C05", "C06", "C08", "C10"],
+      "evidencePointer": "/realCaseCoverage/4/evidenceRefs"
+    }
+  ],
+  "evidencePolicy": {
+    "mode": "TARGET_POINTERS_ONLY",
+    "immutableBinding": "TARGET_FILE_SHA256",
+    "embeddedEvidence": false
+  }
+}

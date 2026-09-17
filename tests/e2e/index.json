@@ -1,0 +1,17 @@
+{
+  "schema": "evopilot-harness-e2e-index/v1",
+  "versions": [
+    {
+      "version": "4.6.0",
+      "manifest": "versions/4.6.0/manifest.json"
+    },
+    {
+      "version": "4.7.0",
+      "manifest": "versions/4.7.0/manifest.json"
+    },
+    {
+      "version": "4.8.0",
+      "manifest": "versions/4.8.0/manifest.json"
+    }
+  ]
+}

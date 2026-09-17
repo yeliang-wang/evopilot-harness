@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/harness-e2e-manifest-v1.json",
+  "title": "EvoPilot Harness repository E2E manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "projectionMode",
+    "version",
+    "authority",
+    "target",
+    "scenarioProfile",
+    "requiredCaseOrder",
+    "cases",
+    "evidencePolicy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "evopilot-harness-e2e-manifest/v1"
+    },
+    "projectionMode": {
+      "const": "HISTORICAL_ACCEPTANCE_PROJECTION"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "readOnly", "grantsAcceptance", "grantsRelease"],
+      "properties": {
+        "source": { "const": "governance/targets" },
+        "readOnly": { "const": true },
+        "grantsAcceptance": { "const": false },
+        "grantsRelease": { "const": false }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "id", "revision", "sha256"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^governance/targets/[^/]+\\.json$" },
+        "id": { "type": "string", "minLength": 1 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "scenarioProfile": {
+      "const": "../../scenarios/target-case-projection.json"
+    },
+    "requiredCaseOrder": {
+      "const": ["RC01", "RC02", "RC03", "RC04", "RC05"]
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "targetPointer", "acceptanceIds", "evidencePointer"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^RC0[1-5]$" },
+          "targetPointer": { "type": "string", "pattern": "^/realCaseCoverage/[0-4]$" },
+          "acceptanceIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[FC][0-9]{2}$" },
+            "uniqueItems": true
+          },
+          "evidencePointer": { "type": "string", "pattern": "^/realCaseCoverage/[0-4]/evidenceRefs$" }
+        }
+      }
+    },
+    "evidencePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "immutableBinding", "embeddedEvidence"],
+      "properties": {
+        "mode": { "const": "TARGET_POINTERS_ONLY" },
+        "immutableBinding": { "const": "TARGET_FILE_SHA256" },
+        "embeddedEvidence": { "const": false }
+      }
+    }
+  }
+}

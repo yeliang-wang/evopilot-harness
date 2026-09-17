@@ -1,0 +1,20 @@
+{
+  "schema": "evopilot-harness-e2e-scenario-profile/v1",
+  "id": "target-case-projection",
+  "purpose": "Validate a read-only, version-bound projection of authoritative Evolution Target real cases without replaying historical external effects.",
+  "steps": [
+    "resolve the repository-relative authoritative Target path",
+    "verify the exact Target file SHA-256 binding",
+    "compare version, Target identity, revision, case order, acceptance coverage, and evidence pointers",
+    "emit a deterministic read-only validation report"
+  ],
+  "terminalState": "TARGET_PROJECTION_VALIDATED",
+  "prohibitedEffects": [
+    "Target mutation",
+    "acceptance or release decision creation",
+    "external evidence copying",
+    "source-project execution",
+    "network access",
+    "publication"
+  ]
+}
