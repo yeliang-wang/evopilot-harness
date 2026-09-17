@@ -7,12 +7,12 @@
 Source version, GitHub Release, and npm package are separate evidence layers. Container publication and deployment are outside this distribution scope. Before using a public package, verify the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.7.0 version
+npm view @evopilot/harness@4.8.0 version
 ```
 
-If the command does not return `4.7.0`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
+If the command does not return `4.8.0`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
 
-The current Roadmap-published baseline is `4.7.0`. Verify npm Registry metadata, signatures, provenance, and the corresponding GitHub Release independently before relying on either distribution layer.
+The current Roadmap-published baseline is `4.8.0`. Verify npm Registry metadata, signatures, provenance, and the corresponding GitHub Release independently before relying on either distribution layer.
 
 ## Choose One Installation Path
 
@@ -24,7 +24,7 @@ Use only after the Registry check succeeds:
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.7.0
+npm install --save-exact @evopilot/harness@4.8.0
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
@@ -40,7 +40,7 @@ npm pack --pack-destination /absolute/package/output
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact /absolute/package/output/evopilot-harness-4.7.0.tgz
+npm install --save-exact /absolute/package/output/evopilot-harness-4.8.0.tgz
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 

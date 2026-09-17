@@ -8,19 +8,19 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current published Engine release: [`v4.7.0`](../releases/4.7.0.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, or npm publication. Container publication and deployment are outside this product's release scope. Historical notes are indexed in [Release Notes](../releases/README.md).
+Current published Engine release: [`v4.8.0`](../releases/4.8.0.md). Verify the latest completed GitHub Release and public npm version independently. Implementation and acceptance do not authorize commit, tag, GitHub Release, or npm publication. Container publication and deployment are outside this product's release scope. Historical notes are indexed in [Release Notes](../releases/README.md).
 
 ## Current Publication Ledger
 
-| Layer | v4.7.0 evidence | Status |
+| Layer | v4.8.0 evidence | Status |
 |---|---|---|
-| Source | Tag `v4.7.0` | Published on `main` and bound to commit `8ffcd225fa26647aa1a06f3465f7c0eabdbdd8e1`. |
-| CI | Commit and tag workflows for `v4.7.0` | Completed successfully before release closure. |
-| GitHub artifacts | `v4.7.0` source archive, npm tarball, SPDX SBOM, provenance, and checksums | Built, verified, and published by the tag workflow. |
-| GitHub Release | [v4.7.0](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.7.0) | Published, not draft or prerelease. |
-| npm | [`@evopilot/harness@4.7.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.7.0) | Published as `latest` with Registry signatures and SLSA provenance. |
-| npm workflow | Trusted Publishing for tag `v4.7.0` | OIDC-only publication with exact-version installation and Agent/MCP smoke. |
-| GHCR / remote deployment | Not included in the v4.7.0 authorization | Not published or deployed by this release. |
+| Source | Tag `v4.8.0` | Published on `main` and bound to commit `5c54e7c197ed183c529047d12273ba064a8b26ca`. |
+| CI | Release Artifacts run `35212180436` | Completed successfully before release closure. |
+| GitHub artifacts | `v4.8.0` source archive, npm tarball, SPDX SBOM, provenance, and checksums | Built, verified, and published by the tag workflow. |
+| GitHub Release | [v4.8.0](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0) | Published, not draft or prerelease. |
+| npm | [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0) | Published as `latest` with Registry signatures and SLSA provenance; npm and GitHub tarballs share `sha256:b71041d349103c2a0dcdd251da808d03d153c64195058eade28b2a7a24b5462b`. |
+| npm workflow | Trusted Publishing run `35212384013` for tag `v4.8.0` | OIDC-only publication with exact-version installation and Agent/MCP smoke. |
+| GHCR / remote deployment | Not included in the v4.8.0 authorization | Not published or deployed by this release. |
 
 ## Version Policy
 

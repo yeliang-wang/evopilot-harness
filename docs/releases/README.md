@@ -2,11 +2,11 @@
 
 Release notes document shipped behavior and validation for each Engine version. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
 
-- [4.7.0 current release](4.7.0.md) - governed Project Ontology, declarative multi-Pack lifecycle, immutable Artifact Set, deterministic projections, and ProjectOntologySkill.
-- [4.8.0 candidate](4.8.0.md) - bounded reasoning profiles, content-addressed semantic indexes, incremental/full equivalence, read-only federation, interoperable projections, and terminal immutable closure. Release authorized; public readback pending.
+- [4.8.0 current release](4.8.0.md) - bounded reasoning profiles, content-addressed semantic indexes, incremental/full equivalence, read-only federation, interoperable projections, and terminal immutable closure.
 
 ## Current
 
+- [4.7.0](4.7.0.md) - governed Project Ontology, declarative multi-Pack lifecycle, immutable Artifact Set, deterministic projections, and ProjectOntologySkill.
 - [4.6.0 candidate](4.6.0.md) - professional Source-to-Harness reasoning, minimal Ontology Foundation grounding, optional Bundle semantic requirements, and Eligibility-independent compatibility. Not released.
 - [4.5.0](4.5.0.md) - source-first user-owned business classification plus the complete retained v4.4 Harness producer lifecycle.
 - [4.4.0](4.4.0.md) - Engine-owned Business Decision Views, complete Compliance Audit Envelopes, Source-to-Harness Reasoning Maps, Agent Operations Protocol v3, and cross-Host semantic determinism.
@@ -16,7 +16,7 @@ Release notes document shipped behavior and validation for each Engine version. 
 - [4.2.2 candidate](4.2.2.md) - external Workspace model configuration repair for installed Agent hosts, safe v4.2.1 migration, and consistent Advisor/Review/doctor resolution.
 - [4.2.1](4.2.1.md) - extensible Agent-host installer lifecycle with WorkBuddy expert registration, preview-bound mutation, ownership-safe repair and uninstall, and installed-package stdio MCP operation.
 - [4.2.0 candidate](4.2.0.md) - governed professional Asset learning, static research and contribution evidence, immutable curriculum/run bindings, completeness vectors, and evidence-only domain/role proposals. Not released.
-- [4.1.2 current release](4.1.2.md) - documentation-system synchronization, Agent-link correction, and deterministic release-state drift guards for the unchanged v4.1 runtime.
+- [4.1.2](4.1.2.md) - documentation-system synchronization, Agent-link correction, and deterministic release-state drift guards for the unchanged v4.1 runtime.
 - [4.1.1](4.1.1.md) - npm OIDC Trusted Publishing repair for the unchanged v4.1 runtime, published through GitHub Release and npm with provenance.
 - [4.1.0](4.1.0.md) - controlled Baseline/Candidate evidence, immutable rescoring, matching and Proposal policy calibration, Agent report review gates, and clean installed-package MCP operation. The GitHub Release completed; npm publication did not.
 - [4.0.2](4.0.2.md) - curated npm runtime package, Agent bootstrap, Trusted Publishing contract, and real WorkBuddy installed-package conformance.
