@@ -1,0 +1,78 @@
+name: Release Candidate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/release-candidate.yml'
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Exact source commit
+        required: true
+        type: string
+      target_id:
+        description: Approved release Target id
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-candidate-${{ inputs.commit_sha || github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CANDIDATE_COMMIT: ${{ inputs.commit_sha || github.event.pull_request.head.sha }}
+      TARGET_ID: ${{ inputs.target_id || 'evopilot-harness-v4.8.1-semantic-catalog-supply-repair' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit_sha || github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Bind exact approved source and Target
+        id: binding
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$TARGET_ID" =~ ^[a-z0-9][a-z0-9.-]*$ ]]
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_COMMIT"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const pkg=JSON.parse(fs.readFileSync('package.json'));
+          const target=JSON.parse(fs.readFileSync(`governance/targets/${process.env.TARGET_ID}.json`));
+          assert.equal(target.id,process.env.TARGET_ID);
+          assert.equal(target.status,'APPROVED');
+          assert.equal(target.roadmapBindings[0].targetVersion,pkg.version);
+          assert.match(target.approvals.target.authorizationDigest,/^sha256:[a-f0-9]{64}$/);
+          fs.appendFileSync(process.env.GITHUB_ENV,`VERSION=${pkg.version}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,`version=${pkg.version}\n`);
+          NODE
+      - run: npm ci
+      - name: Full verification
+        run: npm run check
+      - name: Verify release scope
+        run: npm run roadmap:release -- "$VERSION"
+      - name: Build release set once without publication
+        env:
+          EVOPILOT_RELEASE_CHECK_ALREADY_PASSED: 'true'
+        run: GITHUB_REF_NAME="v$VERSION" npm run release:artifact
+      - name: Verify source, package, checksums and provenance
+        run: npm run verify:release-artifact
+      - name: Retain immutable release set for fresh installation
+        uses: actions/upload-artifact@v4
+        with:
+          name: evopilot-harness-${{ steps.binding.outputs.version }}-candidate-release-set
+          path: dist/release/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
