@@ -74,6 +74,11 @@
       "bytes": 2455
     },
     {
+      "path": "installers/workbuddy/expert/.codebuddy-plugin/plugin.json",
+      "sha256": "sha256:e4b76ecdc32501177938101d559337a9b9f4c3e209da3f41024563488f1aa361",
+      "bytes": 1971
+    },
+    {
       "path": "installers/workbuddy/expert/skills/evopilot-harness-digital-expert/SKILL.md",
       "sha256": "sha256:6918bf1cede8667a019ec8aca8db9e1fedcc7360400e6d05637d81fc981ba048",
       "bytes": 47604

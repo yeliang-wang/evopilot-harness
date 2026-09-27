@@ -18,7 +18,25 @@ assert.equal(manifest.publishConfig?.provenance, true);
 assert.equal(manifest.bin?.["evopilot-harness"], "src/index.mjs");
 assert.ok(Array.isArray(manifest.files) && manifest.files.length > 0, "files allowlist is required");
 
+// The approved 4.8.1 supply adds these twelve runtime files to the previous
+// package. Keep the old ceiling for every other file instead of broadly raising
+// the package budget; each newly allowed supply file is also mandatory.
+const semanticSupplyFiles = [
+  "schemas/semantic-catalog-lock-v1.schema.json",
+  "schemas/semantic-catalog-pointer-v1.schema.json",
+  "schemas/semantic-catalog-policy-v1.schema.json",
+  "schemas/semantic-catalog-receipt-v1.schema.json",
+  "schemas/semantic-catalog-recovery-v1.schema.json",
+  "schemas/semantic-catalog-v1.schema.json",
+  "src/v4/semantics/catalog-budget.mjs",
+  "src/v4/semantics/catalog-contract.mjs",
+  "src/v4/semantics/catalog-generation.mjs",
+  "src/v4/semantics/catalog-materials.mjs",
+  "src/v4/semantics/catalog-store.mjs",
+  "src/v4/semantics/catalog-supply.mjs"
+];
 const required = [
+  ...semanticSupplyFiles,
   "package.json",
   "README.md",
   "LICENSE",
@@ -97,7 +115,8 @@ for (const file of files) {
   assert.ok(!forbiddenExact.has(file), `${file} must not be packaged`);
 }
 
-assert.ok(files.length <= 320, `npm package contains too many files: ${files.length}`);
+const legacyFileCount = files.filter((file) => !semanticSupplyFiles.includes(file)).length;
+assert.ok(legacyFileCount <= 320, `npm package contains too many non-supply files: ${legacyFileCount}`);
 assert.ok(packed.unpackedSize <= 2_500_000, `npm package is too large when unpacked: ${packed.unpackedSize}`);
 
 const secretPatterns = [
