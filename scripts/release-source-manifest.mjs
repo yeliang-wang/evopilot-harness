@@ -6,7 +6,7 @@ export const RELEASE_SOURCE_INPUTS = [
   ".agents", ".dockerignore", ".github", ".gitignore", "AGENTS.md", "CHANGELOG.md",
   "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", "Dockerfile", "LICENSE", "NOTICE", "README.md",
   "SECURITY.md", "assets", "compose.yaml", "docs", "digital-expert", "eval", "harnesses",
-  "governance", "ontology", "package-lock.json", "package.json", "policies", "published",
+  "governance", "ontology", "models.example.json", "package-lock.json", "package.json", "policies", "published",
   "schemas", "scripts", "src", "tests", "ui", "llms.txt"
 ];
 
