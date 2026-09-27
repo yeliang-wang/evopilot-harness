@@ -76,7 +76,7 @@ test("npm Trusted Publishing workflow is OIDC-only and version-bound", () => {
   assert.match(publishedVersionCheck.run, /npm view "\$PACKAGE_NAME@\$VERSION" version --json/);
   assert.match(publishedVersionCheck.run, /PACKAGE_ALREADY_PUBLISHED=true/);
   assert.equal(publish.if, "env.PACKAGE_ALREADY_PUBLISHED != 'true'");
-  assert.equal(publish.run, "npm publish --access public --provenance --tag \"$DIST_TAG\"");
+  assert.equal(publish.run, 'npm publish "$CANDIDATE_TARBALL" --ignore-scripts --access public --provenance --tag "$DIST_TAG"');
   assert.match(workflowText, /npm install --global npm@11\.5\.1/);
   assert.match(workflowText, /Tag .* does not match package version/);
   assert.match(workflowText, /\*-alpha\.\*\) DIST_TAG=alpha/);
@@ -140,25 +140,24 @@ test("npm first-publication preflight fails closed once the package exists", () 
   assert.equal(ambiguous.error.code, "REGISTRY_PROBE_FAILED");
 });
 
-test("GHCR publication remains disabled for tag releases and requires manual authorization input", () => {
+test("Harness promotion stays on GitHub Release and npm distribution boundaries", () => {
   const workflow = parseYaml(fs.readFileSync(path.join(root, ".github/workflows/release-artifacts.yml"), "utf8"));
-  assert.equal(workflow.on.workflow_dispatch.inputs.publish_ghcr.default, false);
-  for (const name of ["Set up Docker Buildx", "Login to GHCR", "Build and push immutable image"]) {
-    const step = workflow.jobs["release-artifacts"].steps.find((item) => item.name === name);
-    assert.equal(step.if, "${{ github.event_name == 'workflow_dispatch' && inputs.publish_ghcr }}", name);
-  }
+  assert.deepEqual(Object.keys(workflow.on), ["workflow_dispatch"]);
+  assert.equal(workflow.permissions.packages, undefined);
+  assert.doesNotMatch(JSON.stringify(workflow), /ghcr|docker\/|build-push|publish_ghcr/);
 });
 
-test("release artifact workflow restores a clean tag checkout and reuses only a CI-passed check", () => {
+test("release promotion requires pinned Candidate bytes and never rebuilds or overwrites assets", () => {
   const workflowText = fs.readFileSync(path.join(root, ".github/workflows/release-artifacts.yml"), "utf8");
-  const buildScript = fs.readFileSync(path.join(root, "scripts/build-release-artifacts.mjs"), "utf8");
-  assert.match(workflowText, /git restore --worktree --staged \./);
-  assert.match(workflowText, /git status --porcelain/);
-  assert.match(workflowText, /EVOPILOT_RELEASE_CHECK_ALREADY_PASSED: "true"/);
-  assert.match(workflowText, /PYTHONDONTWRITEBYTECODE: "1"/);
-  assert.doesNotMatch(workflowText, /CI: "false"/);
-  assert.match(buildScript, /EVOPILOT_RELEASE_CHECK_ALREADY_PASSED === "true"/);
-  assert.match(buildScript, /process\.env\.CI !== "true"/);
+  for (const file of ["release-artifacts.yml", "npm-packages.yml"]) {
+    const text = fs.readFileSync(path.join(root, ".github/workflows", file), "utf8"), workflow = parseYaml(text);
+    for (const name of ["candidate_run_id", "candidate_artifact_digest", "candidate_package_digest"]) assert.equal(workflow.on.workflow_dispatch.inputs[name].required, true);
+    assert.match(text, /node scripts\/prepare-candidate-promotion\.mjs/);
+    assert.doesNotMatch(text, /npm (?:ci|pack)\b|release:artifact|--clobber|git restore/);
+  }
+  assert.match(workflowText, /EXISTING_RELEASE_BYTES_DIFFER/);
+  assert.match(workflowText, /--verify-tag/);
+  assert.match(workflowText, /diff -r dist\/release/);
 });
 
 test("WorkBuddy acceptance grants only the MCP tools required by the selected scenario", () => {

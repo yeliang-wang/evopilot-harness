@@ -14,6 +14,33 @@ If the command does not return `4.8.0`, that public package is not available. A 
 
 The current Roadmap-published baseline is `4.8.0`. Verify npm Registry metadata, signatures, provenance, and the corresponding GitHub Release independently before relying on either distribution layer.
 
+## Promote An Accepted Candidate
+
+The 4.8.1 publication workflows promote the frozen Release Candidate files.
+Complete exact installed-Candidate acceptance and the separate Evolution Target
+release gate before dispatching either workflow. A successful Candidate build,
+artifact digest, or this transport's byte verification is not release authority.
+
+Both `Release Artifacts` and `NPM Package` require the authorized tag,
+`candidate_run_id`, `candidate_artifact_digest` (the Actions ZIP's `sha256:`
+digest), and `candidate_package_digest` (the accepted npm tarball's `sha256:`
+digest). The tag must resolve to the Candidate's exact source commit. The
+preflight refuses a failed, expired, foreign, forked or substituted Candidate,
+verifies the complete five-file release set and clean source provenance, and
+checks the source archive against the checked-out tag. It never runs a build or
+packs a new npm archive.
+
+`Release Artifacts` is manual: pushing a tag alone does not publish. It uploads
+the accepted files, compares existing assets before resuming, never overwrites
+different bytes, and downloads the final release for byte comparison. It does
+not publish containers. `NPM Package` keeps the existing `npm` environment and
+OIDC Trusted Publishing identity, publishes the verified tarball with lifecycle
+scripts disabled, then compares public Registry integrity with that exact
+tarball before checking provenance and a fresh public installation. An existing
+public version is verified, never replaced. Keep the Candidate artifact until
+both independent public distribution checks finish; an expired artifact is a
+stop, not permission to rebuild it.
+
 ## Choose One Installation Path
 
 ### Exact Public Package

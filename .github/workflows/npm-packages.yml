@@ -8,12 +8,26 @@ on:
         required: true
         type: string
 
+      candidate_run_id:
+        description: "Successful accepted Release Candidate run ID"
+        required: true
+        type: string
+      candidate_artifact_digest:
+        description: "Accepted Actions artifact sha256 digest"
+        required: true
+        type: string
+      candidate_package_digest:
+        description: "Accepted npm tarball sha256 digest"
+        required: true
+        type: string
+
 concurrency:
   group: npm-package-${{ inputs.tag }}
   cancel-in-progress: false
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 jobs:
@@ -41,11 +55,21 @@ jobs:
           echo "$NPM_VERSION"
           NPM_VERSION="$NPM_VERSION" node -e 'const [major, minor, patch] = process.env.NPM_VERSION.split(".").map(Number); if (major < 11 || (major === 11 && (minor < 5 || (minor === 5 && patch < 1)))) process.exit(1)'
 
-      - run: npm ci
-      - run: npm run check
-      - run: npm pack --dry-run --json > npm-pack-manifest.json
+      - name: Verify exact accepted Candidate release set
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ARTIFACT_DIGEST: ${{ inputs.candidate_artifact_digest }}
+          CANDIDATE_PACKAGE_DIGEST: ${{ inputs.candidate_package_digest }}
+        run: node scripts/prepare-candidate-promotion.mjs
+
+      - name: Verify Roadmap release alignment
+        run: npm run roadmap:release -- "$(node -p "require('./package.json').version")"
 
       - name: Bind package and release tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
           PACKAGE_NAME="$(node -p "require('./package.json').name")"
@@ -54,8 +78,8 @@ jobs:
             echo "::error::Unexpected npm package identity: $PACKAGE_NAME"
             exit 1
           fi
-          if [ "${{ inputs.tag }}" != "v$VERSION" ]; then
-            echo "::error::Tag ${{ inputs.tag }} does not match package version $VERSION"
+          if [ "$RELEASE_TAG" != "v$VERSION" ]; then
+            echo "::error::Tag $RELEASE_TAG does not match package version $VERSION"
             exit 1
           fi
           case "$VERSION" in
@@ -81,7 +105,7 @@ jobs:
 
       - name: Publish with npm Trusted Publishing
         if: env.PACKAGE_ALREADY_PUBLISHED != 'true'
-        run: npm publish --access public --provenance --tag "$DIST_TAG"
+        run: npm publish "$CANDIDATE_TARBALL" --ignore-scripts --access public --provenance --tag "$DIST_TAG"
 
       - name: Verify registry metadata and attestation
         run: |
@@ -98,7 +122,8 @@ jobs:
           const distTags = JSON.parse(fs.readFileSync('npm-dist-tags.json', 'utf8'));
           if (value.name !== process.env.PACKAGE_NAME || value.version !== process.env.VERSION) throw new Error('npm identity mismatch');
           if (distTags?.[process.env.DIST_TAG] !== process.env.VERSION) throw new Error('npm dist-tag mismatch');
-          if (!value.dist?.integrity) throw new Error('npm integrity is missing');
+          const expectedIntegrity = 'sha512-' + require('crypto').createHash('sha512').update(fs.readFileSync(process.env.CANDIDATE_TARBALL)).digest('base64');
+          if (value.dist?.integrity !== expectedIntegrity) throw new Error('Published npm bytes differ from accepted Candidate');
           if (!Array.isArray(value.dist?.signatures) || value.dist.signatures.length === 0) throw new Error('npm signatures are missing');
           if (value.dist?.attestations?.provenance?.predicateType !== 'https://slsa.dev/provenance/v1') throw new Error('SLSA provenance is missing');
           NODE
