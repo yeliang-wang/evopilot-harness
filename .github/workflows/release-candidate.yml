@@ -29,6 +29,7 @@ jobs:
     env:
       CANDIDATE_COMMIT: ${{ inputs.commit_sha || github.event.pull_request.head.sha }}
       TARGET_ID: ${{ inputs.target_id || 'evopilot-harness-v4.8.1-semantic-catalog-supply-repair' }}
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,7 +60,16 @@ jobs:
           NODE
       - run: npm ci
       - name: Full verification
-        run: npm run check
+        # The check regenerates location-dependent Catalog documentation.
+        # Verify the same commit separately so generated test output is never
+        # packaged and the builder's clean-checkout guard remains mandatory.
+        run: |
+          set -euo pipefail
+          CHECK_ROOT="$RUNNER_TEMP/harness-source-check"
+          git worktree add --detach "$CHECK_ROOT" "$CANDIDATE_COMMIT"
+          cd "$CHECK_ROOT"
+          npm ci
+          npm run check
       - name: Verify release scope
         run: npm run roadmap:release -- "$VERSION"
       - name: Build release set once without publication
