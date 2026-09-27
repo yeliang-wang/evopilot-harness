@@ -94,6 +94,19 @@ export function recordModelVerification(home, modelsFile, doctor) {
   return inspectModelReadiness(workspace, resolvedModels);
 }
 
+// A failed live recheck must not leave the earlier successful receipt active.
+// Only invalidate the configuration actually checked, preserving unrelated or
+// newly changed bindings and the old receipt metadata for diagnosis.
+export function invalidateModelVerification(home, modelsFile, configurationDigest) {
+  const receiptFile = path.join(path.resolve(home), "model-readiness.json");
+  let receipt;
+  try { receipt = JSON.parse(fs.readFileSync(receiptFile, "utf8")); } catch { return; }
+  if (receipt.schema !== RECEIPT_SCHEMA || receipt.modelsFile !== path.resolve(modelsFile)
+    || receipt.configurationDigest !== configurationDigest || receipt.connectionVerified !== true) return;
+  writeJson(receiptFile, {...receipt, connectionVerified: false, invalidatedAt: new Date().toISOString()});
+  fs.chmodSync(receiptFile, 0o600);
+}
+
 function result(status, workspace, modelsFile, receiptFile, extra) {
   return { schema: MODEL_READINESS_SCHEMA, status, productInstallation: "INDEPENDENT", workspace, modelsFile, receiptFile, ...extra };
 }

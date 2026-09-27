@@ -7,7 +7,7 @@ import path from "node:path";
 import test from "node:test";
 import { agentBootstrap } from "../src/v4/bootstrap.mjs";
 import { executeV3Operation } from "../src/v3/cli.mjs";
-import { inspectModelReadiness } from "../src/v3/model-readiness.mjs";
+import { inspectModelReadiness, invalidateModelVerification } from "../src/v3/model-readiness.mjs";
 import { initializeWorkspace } from "../src/v3/workspace.mjs";
 
 test("LLM readiness is separate from product installation and starts actionable", () => {
@@ -96,3 +96,56 @@ async function modelService(t) {
   t.after(() => new Promise((resolve) => server.close(resolve)));
   return { url: `http://127.0.0.1:${server.address().port}/v4` };
 }
+
+for (const failure of ["authentication", "transport"]) {
+  test(`failed reinitialization invalidates earlier readiness: ${failure}`, async (t) => {
+    let fail = false;
+    const requests = [];
+    const server = http.createServer((request, response) => {
+      requests.push(request.url);
+      request.resume();
+      request.on("end", () => {
+        if (fail && failure === "transport") return request.socket.destroy();
+        response.writeHead(fail ? 401 : 200, {"content-type": "application/json"});
+        response.end(fail ? JSON.stringify({error: "fixture denied"}) : JSON.stringify({choices: [{message: {content: '{"status":"ok"}'}}]}));
+      });
+    });
+    await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+    t.after(() => new Promise(resolve => server.close(resolve)));
+    const home = temporaryHome(); initializeWorkspace(home);
+    const modelsFile = path.join(home, "models.json");
+    fs.writeFileSync(modelsFile, JSON.stringify({models: [{id: "fixture-model", vendor: "zhipu", apiKey: "fixture-private-key", url: `http://127.0.0.1:${server.address().port}/v4`}]}));
+    const before = digestFile(modelsFile);
+    const invoke = () => executeV3Operation({positionals: ["llm", "v3-initialize"], options: {workspace: home, "timeout-ms": 1000}});
+    const first = await invoke(); assert.equal(first.result.connectionVerified, true);
+    fail = true;
+    const denied = await invoke();
+    assert.equal(denied.exitCode, 2);
+    assert.equal(denied.result.connectionVerified, false);
+    assert.equal(denied.result.status, "CONFIGURED_UNVERIFIED");
+    assert.equal(inspectModelReadiness(home, modelsFile).connectionVerified, false);
+    assert.equal(digestFile(modelsFile), before);
+    assert.doesNotMatch(JSON.stringify(denied.result), /fixture-private-key/);
+    assert.doesNotMatch(fs.readFileSync(path.join(home, "model-readiness.json"), "utf8"), /fixture-private-key/);
+    assert.equal(requests.length, 2, "must not retry or fall back after a failed check");
+    fail = false;
+    const repaired = await invoke(); assert.equal(repaired.result.connectionVerified, true);
+    assert.equal(inspectModelReadiness(home, modelsFile).status, "CONFIGURED_AND_VERIFIED");
+  });
+}
+
+
+test("readiness invalidation preserves unrelated bindings and creates no absent receipt", () => {
+  const home = temporaryHome();
+  const modelsFile = path.join(home, "models.json");
+  invalidateModelVerification(home, modelsFile, "sha256:old");
+  assert.deepEqual(fs.readdirSync(home), []);
+  const receiptFile = path.join(home, "model-readiness.json");
+  const receipt = {schema: "evopilot-harness-model-verification-receipt/v1", modelsFile, configurationDigest: "sha256:new", connectionVerified: true};
+  fs.writeFileSync(receiptFile, JSON.stringify(receipt));
+  const before = fs.readFileSync(receiptFile);
+  invalidateModelVerification(home, modelsFile, "sha256:old");
+  assert.deepEqual(fs.readFileSync(receiptFile), before);
+  invalidateModelVerification(home, path.join(home, "different-models.json"), "sha256:new");
+  assert.deepEqual(fs.readFileSync(receiptFile), before);
+});

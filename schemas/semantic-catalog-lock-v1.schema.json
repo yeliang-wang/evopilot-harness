@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-catalog-lock-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "catalogId",
+    "nonce",
+    "pid",
+    "hostDigest",
+    "rootDigest",
+    "receiptDigest",
+    "requestDigest",
+    "expectedHead",
+    "lockDigest"
+  ],
+  "properties": {
+    "schema": {
+      "const": "evopilot-harness-semantic-catalog-lock/v1"
+    },
+    "catalogId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[a-f0-9-]{36}$"
+    },
+    "pid": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "hostDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "rootDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "receiptDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "expectedHead": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "lockDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-catalog-receipt-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "catalogId",
+    "generationDigest",
+    "expectedHead",
+    "action",
+    "requestDigest",
+    "authorization",
+    "receiptDigest"
+  ],
+  "properties": {
+    "schema": {
+      "const": "evopilot-harness-semantic-catalog-receipt/v1"
+    },
+    "catalogId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "generationDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "expectedHead": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "action": {
+      "enum": [
+        "PUBLISH",
+        "ROLLBACK",
+        "REVOKE"
+      ]
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "actor",
+        "authorizationDigest"
+      ],
+      "properties": {
+        "decision": {
+          "const": "AUTHORIZED"
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "authorizationDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "receiptDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "transitionDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

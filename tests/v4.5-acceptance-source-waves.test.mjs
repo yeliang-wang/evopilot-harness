@@ -214,3 +214,55 @@ function hypothesis(purpose, inventory, normal = true) {
 function temporary(label) { return fs.mkdtempSync(path.join(os.tmpdir(), `evopilot-v45-${label}-`)); }
 function write(home, name, value) { const file = path.join(home, name); fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`); return file; }
 function sha(value) { return `sha256:${crypto.createHash("sha256").update(Buffer.isBuffer(value) ? value : String(value)).digest("hex")}`; }
+
+// Successor contract retains a one-query/one-repository machine wave. These
+// offline fixtures exercise plan/oracle validation only, never live discovery,
+// Candidate formation, real Host execution or WorkBuddy operation.
+test("single-source successor discovery plan validates offline and rejects altered selection bindings", () => {
+  const home = temporary("one-source-successor");
+  const plan = discoveryPlan();
+  plan.targetRevision = 13;
+  plan.workBuddyCaseIds = ["RC01", "RC02", "RC03", "RC04", "RC05"];
+  plan.queries = [{ ...plan.queries[0], selectionCount: 1 }];
+  plan.selection = { ...plan.selection, exactRepositoryCount: 1, selectionCountPerQuery: 1, minimumPrimaryLanguages: 1, maximumRepositoriesPerLanguage: 1 };
+  plan.blindedOracle.requiredOutcomeDistribution = { TAXONOMY_MATCHED: 1 };
+  const run = value => {
+    const file = write(home, "plan.json", value);
+    return spawnSync(process.execPath, [path.join(root, "scripts/run-live-github-discovery.mjs"), "--plan", file, "--validate-plan-only"], { cwd: root, encoding: "utf8" });
+  };
+  const accepted = run(plan);
+  assert.equal(accepted.status, 0, accepted.stderr);
+  assert.deepEqual(JSON.parse(accepted.stdout).queryIds, [plan.queries[0].id]);
+  for (const mutate of [
+    value => { value.selection.exactRepositoryCount = 2; },
+    value => { value.queries[0].selectionCount = 2; },
+    value => { value.selection.replacementAfterSelectionFreeze = true; },
+    value => { value.selection.candidateOutputAvailableDuringSelection = true; }
+  ]) {
+    const changed = structuredClone(plan); mutate(changed);
+    const refused = run(changed);
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stderr, /GITHUB_DISCOVERY_PLAN_(SELECTION_)?INVALID/);
+  }
+  const planDigest = sha(JSON.stringify(plan)), taxonomyDigest = sha("synthetic-taxonomy");
+  const profile = {
+    schema: "evopilot-harness-github-pre-adjudication-profile/v1",
+    status: "FROZEN_CANDIDATE_BLIND", algorithm: "candidate-blind-static-taxonomy-pre-adjudication/v1",
+    planDigest, taxonomyDigest, candidateOutputObserved: false, candidateInvocationCount: 0,
+    queryAssignments: [{ queryId: plan.queries[0].id, requiredBranch: "TAXONOMY_MATCHED" }],
+    authority: { candidateOutputMayAffectSelection: false }
+  };
+  const validate = value => validatePreAdjudicationProfile({ profile: value, profileDigest: sha(JSON.stringify(value)), plan, planDigest, taxonomy: acceptanceTaxonomy(), taxonomyDigest });
+  assert.equal(validate(profile).assignments.size, 1);
+  assert.deepEqual(validate(profile).requiredDistribution, { TAXONOMY_MATCHED: 1, TAXONOMY_EXTENSION_SUGGESTED: 0, TAXONOMY_EVIDENCE_INSUFFICIENT: 0, TAXONOMY_AMBIGUOUS: 0 });
+  for (const mutate of [
+    value => { value.queryAssignments = []; },
+    value => { value.queryAssignments[0].requiredBranch = "TAXONOMY_AMBIGUOUS"; },
+    value => { value.candidateOutputObserved = true; },
+    value => { value.candidateInvocationCount = 1; },
+    value => { value.planDigest = sha("changed-plan"); }
+  ]) {
+    const changed = structuredClone(profile); mutate(changed);
+    assert.throws(() => validate(changed));
+  }
+});

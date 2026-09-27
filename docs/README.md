@@ -4,7 +4,7 @@ Use this index to choose the shortest path for your task. Generic architecture a
 
 Current release: [`v4.8.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0), published on GitHub and as [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0). See [Release Notes](releases/4.8.0.md) for bounded semantic reasoning, incremental equivalence, federation, interoperable projections, and terminal immutable closure.
 
-The terminal Harness Roadmap Target, [v4.8.0 scalable semantic interoperability](releases/4.8.0.md), has completed acceptance and Release. The later cross-product convergence E2E remains an EvoPilot-series decision outside this repository.
+The [v4.8.0 scalable semantic interoperability](releases/4.8.0.md) Target has completed acceptance and Release. The accepted Roadmap now includes a separately governed 4.8.1 semantic Catalog supply repair; its [internal implementation checkpoint](reference/semantic-catalog-implementation.md) is not acceptance or Release. The later cross-product convergence E2E remains an EvoPilot-series decision outside this repository.
 
 ## Learn The Product
 
@@ -57,6 +57,7 @@ The terminal Harness Roadmap Target, [v4.8.0 scalable semantic interoperability]
 
 - [How Harness Works](guides/how-harness-works.md#6-how-a-control-plane-uses-a-published-harness) - current v3 immutable Bundle consumption boundary.
 - [Catalog Contract](reference/catalog-contract.md) - Catalog structure and validation.
+- [Semantic Catalog Implementation](reference/semantic-catalog-implementation.md) - unreleased 4.8.1 internal layers, local test scope, and remaining integration.
 - [Registry Contract](reference/registry-contract.md) - multi-Catalog discovery.
 - [Catalog Consumption Boundary](architecture/catalog-consumption-boundary.md) - legacy v2 producer/consumer contract.
 - [Selected Harness Binding](reference/selected-harness-binding.md) - legacy v2 selection evidence.

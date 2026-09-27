@@ -1,5 +1,6 @@
 # Release Notes
 
+- [4.8.1 candidate](4.8.1.md) — unreleased semantic Catalog supply source work; acceptance pending.
 Release notes document shipped behavior and validation for each Engine version. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
 
 - [4.8.0 current release](4.8.0.md) - bounded reasoning profiles, content-addressed semantic indexes, incremental/full equivalence, read-only federation, interoperable projections, and terminal immutable closure.

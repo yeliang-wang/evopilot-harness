@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-catalog-recovery-v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "catalogId",
+    "lockDigest",
+    "expectedHead",
+    "recoveryRequestDigest",
+    "publicationOutcome",
+    "authorization",
+    "recoveryDigest"
+  ],
+  "properties": {
+    "schema": {
+      "const": "evopilot-harness-semantic-catalog-recovery/v1"
+    },
+    "catalogId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "lockDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "expectedHead": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "recoveryRequestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "publicationRequestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "publicationOutcome": {
+      "enum": [
+        "PREFLIGHT",
+        "COMMITTED",
+        "NOT_COMMITTED"
+      ]
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "actor",
+        "authorizationDigest"
+      ],
+      "properties": {
+        "decision": {
+          "const": "AUTHORIZED"
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "authorizationDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "recoveryDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

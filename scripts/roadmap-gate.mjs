@@ -19,6 +19,10 @@ try {
 }
 
 const errors = validateRoadmap(roadmap);
+const hostPolicy = roadmap.releaseHostCoveragePolicy;
+const expectedHostPolicy = {"schema":"evopilot-release-host-scope/v1","versions":{"evopilot-harness":"4.8.1","evopilot-runtime":"6.3.0","evopilot-evolution-expert":"2.3.0"},"requiredHosts":["Codex"],"otherHostLiveAcceptanceRequired":false,"crossHostAcceptanceClaimAllowed":false,"generatedAdapterContractsRetained":true,"genericMcpAndHeadlessTransportTestsRetained":true,"exactCodexVersionAndQualificationRequired":true,"activeSoakSeconds":5400,"historicalPassTransferAllowed":false};
+if (JSON.stringify(hostPolicy) !== JSON.stringify(expectedHostPolicy)) errors.push("exact Codex-only release Host policy required");
+
 if (errors.length > 0) emit({ schema: "evopilot-roadmap-gate-result/v1", project: roadmap?.project, classification: "INVALID", approvalRequired: true, errors, nextAction: "repair-roadmap-contract" }, 1);
 
 if (releaseVersion) {
@@ -57,7 +61,7 @@ function validateRoadmap(value) {
   required(Array.isArray(value?.ownership?.mustNotOwn) && value.ownership.mustNotOwn.length > 0, "ownership.mustNotOwn is required");
   required(semver(value?.versionPolicy?.publishedBaseline), "publishedBaseline must be SemVer");
   required(semver(value?.versionPolicy?.currentWorkingVersion), "currentWorkingVersion must be SemVer");
-  required(value?.versionPolicy?.publishedBaseline === "4.8.0" && value?.versionPolicy?.currentWorkingVersion === "4.6.0", "Harness Roadmap must preserve public 4.8.0 and bind current 4.6.0");
+  required(value?.versionPolicy?.publishedBaseline === "4.8.0" && value?.versionPolicy?.currentWorkingVersion === "4.8.1", "Harness Roadmap must preserve public 4.8.0 and bind current 4.8.1");
   required(Array.isArray(value?.milestones) && value.milestones.length > 0, "milestones are required");
   const ids = new Set();
   for (const milestone of value?.milestones ?? []) {
@@ -77,12 +81,35 @@ function validateRoadmap(value) {
   required(convergence?.schema === "evopilot-series-semantic-design-convergence-participation/v1", "series convergence participation schema is invalid");
   required(convergence?.convergenceContractRef === "evopilot-series-semantic-design-convergence", "series convergence participation must reference the central convergence contract");
   required(convergence?.owningRepository === "evopilot-harness" && convergence?.role === "IMMUTABLE_SEMANTIC_AND_HARNESS_ASSET_PRODUCER", "series convergence must preserve the Harness producer role");
-  required(arrayEquals(convergence?.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0"]) && convergence?.terminalVersion === "4.8.0", "series convergence must preserve the Harness 4.6.0 to terminal 4.8.0 sequence");
+  required(arrayEquals(convergence?.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0", "4.8.1"]) && convergence?.terminalVersion === "4.8.1", "series convergence must preserve the Harness 4.6.0 to terminal 4.8.1 sequence");
   for (const requirement of ["one independently approved Evolution Target bound to the current evopilot-harness Roadmap digest", "all current and inherited acceptance", "real end-to-end coverage for that exact Harness version", "impact closure and NO_REGRESSION", "exact Candidate, package, published asset, dependency, and evidence digests"]) {
     required(convergence?.everyVersionRequires?.includes(requirement), `series convergence is missing per-version Harness requirement: ${requirement}`);
   }
   required(Array.isArray(convergence?.terminalContribution) && convergence.terminalContribution.length === 3, "series convergence must preserve the exact Harness terminal contribution");
   required(convergence?.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority === false && convergence?.individualHarnessReleaseAuthorityRemainsIndependent === true, "terminal convergence E2E must not grant or merge Harness authority");
+  required(value?.seriesConvergenceParticipation?.convergenceContractRevision === 3, "Harness must reference central convergence revision 3");
+  const supplyMilestone = value?.milestones?.find((item) => item.id === "evopilot-harness-4.8.1-semantic-catalog-supply-repair");
+  required(supplyMilestone?.targetVersion === "4.8.1" && supplyMilestone?.status === "PLANNED" && supplyMilestone?.acceptance?.length === 7, "semantic supply repair milestone and seven acceptance obligations are required");
+  const supply = value?.semanticCatalogSupplyPolicy;
+  required(supply?.schema === "evopilot-semantic-catalog-supply-policy/v1", "semantic Catalog supply invariant: schema");
+  required(supply?.contract === "semantic-catalog-supply/v1", "semantic Catalog supply invariant: contract");
+  required(supply?.producerVersion === "4.8.1", "semantic Catalog supply invariant: producerVersion");
+  required(supply?.runtimeVersion === "6.3.0", "semantic Catalog supply invariant: runtimeVersion");
+  required(supply?.expertVersion === "2.3.0", "semantic Catalog supply invariant: expertVersion");
+  required(supply?.catalogMode === "ADDITIVE_SEPARATE_SEMANTIC_INDEX", "semantic Catalog supply invariant: catalogMode");
+  required(supply?.registryContainsAssets === false, "semantic Catalog supply invariant: registryContainsAssets");
+  required(supply?.legacyCatalogBytesPreserved === true, "semantic Catalog supply invariant: legacyCatalogBytesPreserved");
+  required(supply?.existingSemanticAssetSchemasPreserved === true, "semantic Catalog supply invariant: existingSemanticAssetSchemasPreserved");
+  required(supply?.standalonePublicationImpliesDiscovery === false, "semantic Catalog supply invariant: standalonePublicationImpliesDiscovery");
+  required(supply?.completeClosureRequired === true, "semantic Catalog supply invariant: completeClosureRequired");
+  required(supply?.independentPublicationRequired === true, "semantic Catalog supply invariant: independentPublicationRequired");
+  required(supply?.consumerReadOnly === true, "semantic Catalog supply invariant: consumerReadOnly");
+  required(supply?.atomicPublicationRequired === true, "semantic Catalog supply invariant: atomicPublicationRequired");
+  required(supply?.mandatorySigning === false, "semantic Catalog supply invariant: mandatorySigning");
+  required(supply?.unindexedFallbackAllowed === false, "semantic Catalog supply invariant: unindexedFallbackAllowed");
+  required(supply?.automaticApprovalOrPassTransfer === false, "semantic Catalog supply invariant: automaticApprovalOrPassTransfer");
+  required(supply?.perVersionE2ERequired === true, "semantic Catalog supply invariant: perVersionE2ERequired");
+  required(supply?.terminalE2ERequired === true, "semantic Catalog supply invariant: terminalE2ERequired");
   const packageVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
   const knownVersions = new Set([value?.versionPolicy?.publishedBaseline, value?.versionPolicy?.currentWorkingVersion, ...(value?.milestones ?? []).map((item) => item.targetVersion)]);
   const declaredReleaseVersion = (value?.milestones ?? []).some((item) => inReleaseLine(packageVersion, item.releaseLine));

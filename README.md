@@ -12,6 +12,10 @@
 
 Current published release: [`v4.8.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0), also available as [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0) with Registry signatures and SLSA provenance.
 
+This source tree targets **4.8.1 semantic Catalog supply**, not yet accepted or
+published. Engine version changes do not rewrite existing semantic asset versions,
+schemas or published digests. Candidate installation and Release remain separate.
+
 ![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 
 [Documentation](docs/README.md) | [Agent Quickstart](docs/agent/quickstart.md) | [Controlled Comparison](docs/guides/controlled-comparative-evidence.md) | [npm Distribution](docs/operations/npm-distribution.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [MCP Reference](docs/agent/mcp-reference.md) | [Release Notes](docs/releases/README.md)

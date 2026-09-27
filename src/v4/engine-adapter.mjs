@@ -4,6 +4,7 @@ import { executeV3Operation } from "../v3/cli.mjs";
 import { digest, persistedJson } from "../v3/utils.mjs";
 import { assertExternalWorkspace, assertWorkspaceTreeConfined, resolveWorkspacePath } from "./constants.mjs";
 import { assertNoSensitiveMaterial } from "./security/sensitive.mjs";
+import { semanticCatalogOperation } from "./semantics/catalog-supply.mjs";
 
 const COMMON_SOURCE_FIELDS = [
   "sourceProjects", "sourceRoot", "githubRepositories", "attachments", "productionLogs",
@@ -57,6 +58,16 @@ const DEFINITIONS = {
   "semantic.closure.inspect": definition(["semantic", "closure"], ["file", "snapshot", "profile", "index", "projectionSet", "roundTripReport", "harnessAssets"], "direct"),
   "semantic.closure.publish": definition(["semantic", "closure-publish"], ["closure", "publication"], "publication"),
   "semantic.closure.slice": definition(["semantic", "closure-slice"], ["closure", "conceptIds", "expectedClosureDigest"], "direct"),
+  "semantic.catalog.preview": definition(["semantic", "catalog-preview"], ["catalogId", "file", "inputDigest"], "direct"),
+  "semantic.catalog.inspect": definition(["semantic", "catalog-inspect"], ["catalogId"], "direct"),
+  "semantic.catalog.readback": definition(["semantic", "catalog-readback"], ["catalogId", "requestId"], "direct"),
+  "semantic.catalog.publish": definition(["semantic", "catalog-publish"], ["catalogId", "file", "inputDigest", "expectedGenerationDigest", "expectedHead", "requestId", "publication"], "publication"),
+  "semantic.catalog.transition-preview": definition(["semantic", "catalog-transition-preview"], ["catalogId", "transition", "targetPointerDigest", "revokedDigests", "expectedHead"], "direct"),
+  "semantic.catalog.rollback": definition(["semantic", "catalog-rollback"], ["catalogId", "targetPointerDigest", "expectedGenerationDigest", "expectedHead", "requestId", "publication"], "publication"),
+  "semantic.catalog.revoke": definition(["semantic", "catalog-revoke"], ["catalogId", "revokedDigests", "expectedGenerationDigest", "expectedHead", "requestId", "publication"], "publication"),
+  "semantic.catalog.recovery-inspect": definition(["semantic", "catalog-recovery-inspect"], ["catalogId"], "direct"),
+  "semantic.catalog.recovery-readback": definition(["semantic", "catalog-recovery-readback"], ["catalogId", "recoveryId"], "direct"),
+  "semantic.catalog.recover": definition(["semantic", "catalog-recover"], ["catalogId", "expectedLockDigest", "expectedHead", "recoveryId", "publication"], "publication"),
   "pack.scaffold.inspect": definition(["pack", "scaffold"], ["file"], "direct"),
   "pack.inspect": definition(["pack", "inspect"], ["file", "availablePacks"], "direct"),
   "pack.resolve.inspect": definition(["pack", "resolve"], ["packs", "precedence", "targetRoot", "base", "expectedBaseDigest"], "direct"),
@@ -198,6 +209,21 @@ export async function invokeEngineOperation({ home, operation, input = {}, autho
     if (receipt.operation !== operation || receipt.inputDigest !== digest(input)) {
       throw operationError("IDEMPOTENCY_RECEIPT_MISMATCH", `The idempotency receipt for ${idempotencyKey} is bound to different input.`, "stop-and-inspect-operation-receipt");
     }
+    // A cached Engine result is history, not continuing Catalog authority.
+    // Revalidate the durable publication without repeating its mutation.
+    if (["semantic.catalog.publish", "semantic.catalog.rollback", "semantic.catalog.revoke"].includes(operation) && receipt.result.exitCode === 0) {
+      const verified = await semanticCatalogOperation({home: workspace, action: "readback", catalogId: input.catalogId, requestId: input.requestId});
+      if (verified.status !== "COMMITTED" || verified.pointer.generationDigest !== input.expectedGenerationDigest ||
+        verified.pointer.pointerDigest !== receipt.result.result.pointer.pointerDigest) {
+        throw operationError("IDEMPOTENCY_RECEIPT_BINDING_FAILURE", "Semantic publication readback does not match the cached result.", "stop-and-inspect-operation-receipt");
+      }
+    }
+    if (operation === "semantic.catalog.recover" && receipt.result.exitCode === 0) {
+      const verified = await semanticCatalogOperation({home: workspace, action: "recovery-readback", catalogId: input.catalogId, recoveryId: input.recoveryId});
+      if (verified.status !== "RECOVERED" || verified.record.recoveryDigest !== receipt.result.result.record.recoveryDigest) {
+        throw operationError("IDEMPOTENCY_RECEIPT_BINDING_FAILURE", "Semantic recovery readback does not match the cached result.", "stop-and-inspect-operation-receipt");
+      }
+    }
     return persistedJson(receipt.result);
   }
   const positionals = [...spec.positionals];
@@ -206,7 +232,7 @@ export async function invokeEngineOperation({ home, operation, input = {}, autho
   for (const field of spec.fields) {
     if (field === spec.idField || input[field] == null) continue;
     const optionName = OPTION_NAMES[field] ?? camelToKebab(field);
-    options[optionName] = normalizeOption(input[field]);
+    options[optionName] = field === "revokedDigests" ? JSON.stringify(input[field]) : normalizeOption(input[field]);
   }
   const response = await executeV3Operation({ positionals, options });
   const result = {

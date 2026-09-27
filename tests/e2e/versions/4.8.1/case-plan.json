@@ -1,0 +1,247 @@
+{
+  "schema": "evopilot-harness-e2e-development-plan/v1",
+  "version": "4.8.1",
+  "projectionMode": "DEVELOPMENT_CASE_PLAN",
+  "target": {
+    "id": "evopilot-harness-v4.8.1-semantic-catalog-supply-repair",
+    "revision": 2,
+    "fileDigest": "sha256:0bcb14f31f6da80d7940e3868a1354a4e9f52c05df49b047efbf7d0bcd2e6254"
+  },
+  "acceptanceIds": [
+    "H-F01",
+    "H-F02",
+    "H-F03",
+    "H-F04",
+    "H-F05",
+    "H-F06",
+    "H-F07",
+    "H-C01",
+    "H-C02",
+    "H-C03",
+    "H-C04"
+  ],
+  "inheritedObligationsPointer": "/inheritedAcceptance",
+  "cases": [
+    {
+      "id": "RC01",
+      "scenario": "Complete authorized semantic publication and indexed discovery",
+      "hosts": [
+        "Codex"
+      ],
+      "targetPointer": "/realCaseCoverage/0",
+      "coversAcceptanceIds": [
+        "H-F01",
+        "H-F02",
+        "H-C01"
+      ],
+      "machineVariants": [
+        {
+          "id": "RC01-M1",
+          "scenario": "ArtifactSet embedded Skill/closure/dependency publish-discover-read chain",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/0/machineVariants/0",
+          "coversAcceptanceIds": [
+            "H-F01",
+            "H-F02",
+            "H-C01"
+          ]
+        },
+        {
+          "id": "RC01-M2",
+          "scenario": "Unindexed/disabled/missing-material and forged-publication denial",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/0/machineVariants/1",
+          "coversAcceptanceIds": [
+            "H-F01",
+            "H-F02",
+            "H-C01"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC02",
+      "scenario": "Missing, conflicting, unsupported or unauthorized supply",
+      "hosts": [
+        "Codex"
+      ],
+      "targetPointer": "/realCaseCoverage/1",
+      "coversAcceptanceIds": [
+        "H-F04",
+        "H-F06",
+        "H-C02"
+      ],
+      "machineVariants": [
+        {
+          "id": "RC02-M1",
+          "scenario": "Path/symlink/schema/identity/scope/revocation/injection denial matrix",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/1/machineVariants/0",
+          "coversAcceptanceIds": [
+            "H-F04",
+            "H-F06",
+            "H-C02"
+          ]
+        },
+        {
+          "id": "RC02-M2",
+          "scenario": "Exact bounded input and no-source-execution controls",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/1/machineVariants/1",
+          "coversAcceptanceIds": [
+            "H-F04",
+            "H-F06",
+            "H-C02"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC03",
+      "scenario": "Compatibility and cumulative version corpus",
+      "hosts": [
+        "Codex"
+      ],
+      "targetPointer": "/realCaseCoverage/2",
+      "coversAcceptanceIds": [
+        "H-F05",
+        "H-C03",
+        "H-C04"
+      ],
+      "machineVariants": [
+        {
+          "id": "RC03-M1",
+          "scenario": "Old v3 consumer and independent Engine/asset version compatibility",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/2/machineVariants/0",
+          "coversAcceptanceIds": [
+            "H-F05",
+            "H-C03",
+            "H-C04"
+          ]
+        },
+        {
+          "id": "RC03-M2",
+          "scenario": "Complete historical criterion and corpus replay, all machine variants",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/2/machineVariants/1",
+          "coversAcceptanceIds": [
+            "H-F05",
+            "H-C03",
+            "H-C04"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC04",
+      "scenario": "Independent read-only consumer handoff",
+      "hosts": [
+        "Codex"
+      ],
+      "targetPointer": "/realCaseCoverage/3",
+      "coversAcceptanceIds": [
+        "H-F01",
+        "H-F02",
+        "H-C01",
+        "H-C02"
+      ],
+      "machineVariants": [
+        {
+          "id": "RC04-M1",
+          "scenario": "Fresh installed independent consumer positive binding",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/3/machineVariants/0",
+          "coversAcceptanceIds": [
+            "H-F01",
+            "H-F02",
+            "H-C01",
+            "H-C02"
+          ]
+        },
+        {
+          "id": "RC04-M2",
+          "scenario": "No mutation, no fallback, no ownership transfer negative controls",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/3/machineVariants/1",
+          "coversAcceptanceIds": [
+            "H-F01",
+            "H-F02",
+            "H-C01",
+            "H-C02"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "RC05",
+      "scenario": "Concurrent publish, interruption, growth and rollback",
+      "hosts": [
+        "Codex"
+      ],
+      "targetPointer": "/realCaseCoverage/4",
+      "coversAcceptanceIds": [
+        "H-F03",
+        "H-F07",
+        "H-C04"
+      ],
+      "machineVariants": [
+        {
+          "id": "RC05-M1",
+          "scenario": "CAS race and every crash window with durable receipt readback",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/4/machineVariants/0",
+          "coversAcceptanceIds": [
+            "H-F03",
+            "H-F07",
+            "H-C04"
+          ]
+        },
+        {
+          "id": "RC05-M2",
+          "scenario": "Growth/revocation/rollback/restart and full impact closure",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/4/machineVariants/1",
+          "coversAcceptanceIds": [
+            "H-F03",
+            "H-F07",
+            "H-C04"
+          ]
+        }
+      ]
+    }
+  ],
+  "supportingLocalSuites": [
+    "tests/v4.8.1-semantic-catalog-contract.test.mjs",
+    "tests/v4.8.1-semantic-catalog-materials.test.mjs",
+    "tests/v4.8.1-semantic-catalog-store.test.mjs",
+    "tests/v4.8.1-semantic-catalog-supply.test.mjs",
+    "tests/v4.8.1-semantic-catalog-public-negative.test.mjs"
+  ],
+  "evidencePolicy": "LOCAL_SYNTHETIC_SUPPORT_ONLY_NOT_RC_ACCEPTANCE",
+  "authority": {
+    "productAuthority": false,
+    "acceptanceAuthority": false,
+    "releaseAuthority": false
+  }
+}

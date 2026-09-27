@@ -229,6 +229,22 @@ for (const file of ["src/v4/semantics/professional-packs.mjs", "src/v4/semantics
 mustNotMatch("src/v4/semantics/semantic-interoperability.mjs", /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:execFileSync|execSync|spawn|spawnSync)\b/, "semantic interoperability must remain deterministic, offline, and unable to execute external reasoners");
 mustNotContain("src/v4/semantics/semantic-interoperability.mjs", "approveProposal", "semantic interoperability must not approve Harness Proposals");
 mustNotContain("src/v4/semantics/semantic-interoperability.mjs", "publishProposal", "semantic interoperability must not publish Harness Proposals");
+for (const file of ["catalog-contract", "catalog-materials", "catalog-generation", "catalog-store", "catalog-supply"].map(name => `src/v4/semantics/${name}.mjs`)) {
+  mustNotMatch(file, /from\s+["']node:(?:http|https|net|tls|dgram|child_process)["']|\b(?:fetch|execFileSync|execSync|spawn|spawnSync)\s*\(/, "semantic Catalog supply must remain local, offline, and unable to execute Source code");
+  mustNotContain(file, "approveProposal", "semantic Catalog supply must not approve Harness Proposals");
+  mustNotContain(file, "publishProposal", "semantic Catalog supply must not publish Harness Proposals");
+}
+mustContain("src/v4/semantics/catalog-supply.mjs", "semanticPublicationSubject", "Catalog publication authority must bind exact generation, expected head and request");
+mustContain("src/v4/semantics/catalog-supply.mjs", "ASSET_PUBLICATION", "asset publication must remain independent from Catalog publication");
+mustContain("src/v4/semantics/catalog-supply.mjs", "checkLegacyMembership", "semantic materials must preserve and verify original v3 Catalog membership");
+mustContain("src/v4/semantics/catalog-generation.mjs", 'jsonPointer: "/spec/projectOntologySkill"', "embedded Skill discovery must bind its ArtifactSet parent");
+mustContain("src/v4/engine-adapter.mjs", '"semantic.catalog.publish": definition(["semantic", "catalog-publish"]', "semantic Catalog publication must use the Engine operation path");
+mustContain("schemas/semantic-catalog-policy-v1.schema.json", '"additionalProperties": false', "operator-owned semantic policy must reject undeclared authority");
+mustContain("src/v4/semantics/catalog-supply.mjs", "CATALOG_RECOVERY", "recovery must require its own exact operator grant");
+mustContain("src/v4/semantics/catalog-store.mjs", 'ownerState === "DEAD"', "recovery must not steal a live or unknown owner's lock");
+mustContain("src/v4/semantics/catalog-store.mjs", 'process.kill(owner.pid, 0)', "owner inspection must use only the non-signalling existence probe");
+mustNotMatch("src/v4/semantics/catalog-store.mjs", /process\.kill\([^\n]*,\s*(?:[1-9]|["'])/, "recovery must never terminate an owner process");
+mustContain("docs/architecture/adr/0009-additive-semantic-catalog-supply.md", "does not replace", "semantic supply ADR must preserve accepted ownership boundaries");
 mustNotMatch("src/v4/classification/source-descriptor.mjs", /from\s+["']node:(?:http|https|net|tls|dgram)["']|\b(?:execSync|spawn|spawnSync)\b|shell\s*:\s*true/, "Source Resolver may use bounded argument-vector Git only and must not open arbitrary network or shell execution");
 mustContain("src/v4/classification/source-descriptor.mjs", 'GIT_TERMINAL_PROMPT: "0"', "Source Resolver must disable interactive credential prompting");
 mustContain("src/v4/classification/source-descriptor.mjs", 'sourceExecution: false', "Source Resolver must preserve Source non-execution");

@@ -2,6 +2,14 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## Unreleased — 4.8.1 Semantic Catalog Supply
+
+- Added the governed, bounded, immutable semantic Catalog supply contract for
+  read-only Runtime consumers while preserving existing semantic asset versions.
+- Updated Engine and generated Digital Expert version projections to 4.8.1.
+- Source verification does not establish installed-package or real-Host acceptance;
+  existing 4.8.0 publication and evidence remain immutable.
+
 ## 4.2.3 - 2026-08-21
 
 ### Added

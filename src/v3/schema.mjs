@@ -52,6 +52,12 @@ const VERSIONED_SCHEMAS = {
 };
 
 const CONTRACT_SCHEMAS = {
+  "evopilot-harness-semantic-catalog-pointer/v1": "semantic-catalog-pointer-v1.schema.json",
+  "evopilot-harness-semantic-catalog/v1": "semantic-catalog-v1.schema.json",
+  "evopilot-harness-semantic-catalog-receipt/v1": "semantic-catalog-receipt-v1.schema.json",
+  "evopilot-harness-semantic-catalog-lock/v1": "semantic-catalog-lock-v1.schema.json",
+  "evopilot-harness-semantic-catalog-recovery/v1": "semantic-catalog-recovery-v1.schema.json",
+  "evopilot-harness-semantic-catalog-policy/v1": "semantic-catalog-policy-v1.schema.json",
   "evopilot-harness-ontology-foundation/v1": "ontology-foundation-v1.schema.json",
   "evopilot-harness-semantic-candidate-set/v1": "semantic-candidate-set-v1.schema.json",
   "evopilot-harness-ontology-grounding-result/v1": "ontology-grounding-result-v1.schema.json",

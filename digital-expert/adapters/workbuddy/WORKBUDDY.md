@@ -18,13 +18,13 @@ For an installation managed by `evopilot-harness agent install --host workbuddy`
 
 WorkBuddy is attachment transport, exact Engine rendering, MCP invocation, and explicit decision transport only. It must pass the exact attachment path/reference to the governed Session without using WorkBuddy search, shell commands, document parsing, archive/XML inspection, OCR, generic attachment analysis, or Host-LLM reasoning on the file. If WorkBuddy starts interpreting an Evidence Source outside the Harness MCP Session, stop with `HOST_INTERACTION_COMPLIANCE_UNAVAILABLE`; do not present that Host output as Harness evidence or a Business Decision View.
 
-For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.8.0 version`.
+For a least-privilege headless startup check, allow only WorkBuddy's `DeferExecuteTool` dispatcher and `mcp__evopilot-harness__inspect_capabilities`. Do not use `bypassPermissions` as conformance evidence. Public npm availability must be verified separately with `npm view @evopilot/harness@4.8.1 version`.
 
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.8.0`
-- Core digest: `sha256:8712a4dde41f15e2668cf8007d25be93a1afbb42d1887c4da9d0b765f085f4a5`
+- Expert version: `4.8.1`
+- Core digest: `sha256:273f685987ac612b730dd303c564650a4dfce03734284828575ab9ffc1a363aa`
 - Agent protocol: `evopilot-harness-agent-operations/v3`
 - Engine API: `harness.evopilot.io/v3`
 - MCP command: `evopilot-harness mcp serve --transport stdio --workspace $HOME/.evopilot-harness`
@@ -221,6 +221,13 @@ workflows:
     publicationOperationsRequire: authorize_plan_publication_operation
     authority: separate-proposal-approval-publication-installation-and-activation
     exclusions: [executable-packs, automatic-trust, automatic-publication, automatic-activation, evopilot-runtime-calls, incremental-reasoning]
+  - id: supply-reviewed-semantic-catalog
+    scenario: maintenance
+    sources: [operations]
+    operations: [semantic.catalog.preview, semantic.catalog.inspect, semantic.catalog.readback, semantic.catalog.publish, semantic.catalog.transition-preview, semantic.catalog.rollback, semantic.catalog.revoke, semantic.catalog.recovery-inspect, semantic.catalog.recovery-readback, semantic.catalog.recover]
+    publicationOperationsRequire: authorize_plan_publication_operation
+    authority: separate-plan-confirmation-asset-publication-exact-generation-transition-and-recovery
+    exclusions: [implicit-trust, arbitrary-roots, automatic-publication, mutation-replay-after-unknown, consumer-side-repair, evopilot-runtime-mutation]
   - id: evolve-local-project-root
     scenario: evolve
     sources: [sourceRoot]

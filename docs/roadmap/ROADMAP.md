@@ -206,6 +206,10 @@ The objective is to improve the depth and quality of capabilities already presen
 - Prove semantic round-trip and full-recompute equivalence across the canonical snapshot, projections, indexes, incremental affected-subgraph calculation, and cache.
 - Exclude a general-purpose graph database, arbitrary executable Pack, unbounded OWL or SWRL inference, automatic imported-vocabulary activation, and live cross-organization authority.
 
+### v4.8.1: Semantic Catalog Supply Repair
+
+Status: `PLANNED`. Repair the missing indexed supply path using an additive semantic Catalog index and immutable complete dependency generations under existing enabled Registry roots. Preserve v3 Catalog bytes, existing semantic asset schemas and publication authority. Runtime remains read-only. Require independent version-specific E2E, complete inheritance, atomic/concurrent publication and recovery, negative path/permission/digest tests, and NO_REGRESSION before separate Release authorization.
+
 ## Project Ontology End-to-End Acceptance Policy
 
 Every Target keeps at most five top-level ordinary-human journeys by default, with independently evidenced machine variants:
@@ -222,16 +226,16 @@ All v4.5 capabilities remain cumulative and release-blocking. WorkBuddy retains 
 
 The Harness contribution is an exact cumulative sequence: 4.6.0 professional
 reasoning and ontology grounding, 4.7.0 governed Project Ontology and multi-Pack
-publication, and terminal 4.8.0 scalable semantic interoperability, indexes,
-and bounded reasoning profiles. Each version requires its own approved
+publication, 4.8.0 scalable semantic interoperability, indexes,
+and bounded reasoning profiles, then terminal 4.8.1 semantic Catalog supply repair. Each version requires its own approved
 Evolution Target bound to this repository's current Roadmap digest, all current
 and inherited acceptance, real E2E coverage, impact closure,
 `NO_REGRESSION`, and exact Candidate, package, asset, dependency, and evidence
 digests. Passing a later version never backfills missing acceptance for an
 earlier one.
 
-After 4.6.0, 4.7.0, and 4.8.0 pass independently, Harness supplies the exact
-immutable 4.8.0 ontology, index, reasoning-profile, HarnessProfile,
+After 4.6.0, 4.7.0, 4.8.0 and 4.8.1 pass independently, Harness Engine 4.8.1 supplies the exact
+immutable ontology, index, reasoning-profile, HarnessProfile,
 HarnessComponent, and HarnessBundle closure to the terminal cross-product E2E.
 EvoPilot Runtime consumes those assets read-only. The terminal E2E is evidence
 for the central convergence claim only: it cannot approve, publish, republish,
@@ -351,3 +355,13 @@ Codex workflow governance is also standing work when it only binds Engine evolut
 11. A compatibility reset, refactor, milestone exclusion, or historical-acceptance partition cannot delete a released product capability. Any intended capability removal or deprecation requires an explicit Roadmap capability-change proposal and user approval.
 
 Release tags must be declared by the machine Roadmap and pass `npm run roadmap:release -- <version>`.
+
+## Semantic Catalog Supply Contract Revision r3
+
+`semantic-catalog-supply/v1` repairs the separately published semantic asset discovery gap with an additive, complete, immutable semantic index under the existing Catalog root. Registry still lists roots, not assets; old Catalog and semantic schemas remain unchanged. Only explicitly authorized Harness publication may advance the index. Runtime consumes exact published generations read-only, rejecting missing, unsupported, conflicting, stale, revoked, partial, permission-denied and unsafe-path inputs without fallback. Engine 4.8.1 and existing asset/closure versions are independent.
+
+This revision changes the terminal Engine dependency to 4.8.1 while retaining 4.6.0/4.7.0/4.8.0 history, every independent version E2E and the final series E2E. Runtime 6.3.0, Expert 2.3.0, optional Dashboard, excluded Runtime 6.4.0, secure-input inheritance, active soak and NO_REGRESSION remain unchanged. Historical r2 approvals are evidence, not authority for new bindings. Missing approval documents must be restored exactly or replaced by explicitly reviewed successor Targets; no digest may be invented. Roadmap approval does not authorize product implementation, commit, CI, real Host use, asset publication or Release.
+
+### Current convergence release: Codex-only acceptance
+
+For Harness 4.8.1, Runtime 6.3.0 and Expert 2.3.0 only, live Host acceptance requires exact-version qualified Codex. This explicit successor policy overrides inherited WorkBuddy, Claude Code, independent-Host and cross-Host execution requirements. Published historical evidence and Roadmaps keep their historical meaning. All generated adapter contracts and generic MCP/headless transport checks remain, without a real cross-Host acceptance claim. All non-Host functionality, security, exact installed artifacts, 5400-second active soak, impact closure and NO_REGRESSION remain required. Release remains separately governed.

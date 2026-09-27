@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evopilot.dev/schemas/semantic-catalog-policy-v1.schema.json",
+  "title": "Operator-owned Semantic Catalog Policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "catalogs"],
+  "properties": {
+    "schema": {"const": "evopilot-harness-semantic-catalog-policy/v1"},
+    "catalogs": {"type": "array", "maxItems": 16, "items": {"$ref": "#/$defs/catalog"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tenantId", "workspaceId", "projectId"],
+      "properties": {"tenantId": {"$ref": "#/$defs/id"}, "workspaceId": {"$ref": "#/$defs/id"}, "projectId": {"$ref": "#/$defs/id"}}
+    },
+    "grant": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision", "actor", "authorizationDigest", "subjectDigest", "purpose", "revoked", "expiresAt"],
+      "properties": {
+        "decision": {"const": "AUTHORIZED"},
+        "actor": {"type": "string", "minLength": 1, "maxLength": 256},
+        "authorizationDigest": {"$ref": "#/$defs/digest"},
+        "subjectDigest": {"$ref": "#/$defs/digest"},
+        "purpose": {"enum": ["ASSET_PUBLICATION", "CATALOG_PUBLICATION", "CATALOG_RECOVERY"]},
+        "revoked": {"type": "boolean"},
+        "expiresAt": {"type": ["string", "null"], "maxLength": 64},
+        "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
+        "at": {"type": "string", "maxLength": 64}
+      }
+    },
+    "catalog": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "permission", "trustContext", "rootBindingDigest", "scopes", "grants"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "permission": {"enum": ["GRANTED", "DENIED"]},
+        "trustContext": {"$ref": "#/$defs/id"},
+        "rootBindingDigest": {"$ref": "#/$defs/digest"},
+        "scopes": {"type": "array", "maxItems": 4096, "items": {
+          "type": "object", "additionalProperties": false, "required": ["scope", "visibilities"],
+          "properties": {
+            "scope": {"$ref": "#/$defs/scope"},
+            "visibilities": {"type": "array", "maxItems": 3, "uniqueItems": true, "items": {"enum": ["PUBLIC", "DOMAIN", "PRIVATE"]}}
+          }
+        }},
+        "grants": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/grant"}}
+      }
+    }
+  }
+}

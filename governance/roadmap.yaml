@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-09-17",
+  "updatedAt": "2026-09-21",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -25,7 +25,7 @@
   },
   "versionPolicy": {
     "publishedBaseline": "4.8.0",
-    "currentWorkingVersion": "4.6.0",
+    "currentWorkingVersion": "4.8.1",
     "versionsEvolveIndependently": true,
     "productCapabilitiesEvolveCumulatively": true,
     "artifactCompatibilityMayResetWithEvidence": true,
@@ -41,7 +41,23 @@
     ]
   },
   "intentPolicy": {
-    "capabilityExpansionSignals": ["add", "build", "create", "implement", "introduce", "replace", "upgrade", "新增", "创建", "实现", "引入", "替换", "升级", "公共化", "产品化"]
+    "capabilityExpansionSignals": [
+      "add",
+      "build",
+      "create",
+      "implement",
+      "introduce",
+      "replace",
+      "upgrade",
+      "新增",
+      "创建",
+      "实现",
+      "引入",
+      "替换",
+      "升级",
+      "公共化",
+      "产品化"
+    ]
   },
   "realHostAcceptancePolicy": {
     "policyVersion": "human-operated-workbuddy/v1",
@@ -74,7 +90,13 @@
       "schema": "compact-real-case-portfolio/v1",
       "effectiveFrom": "4.5.0",
       "v4.5.0TopLevelJourneyCount": 5,
-      "v4.5.0JourneyIds": ["RC01", "RC02", "RC03", "RC04", "RC05"],
+      "v4.5.0JourneyIds": [
+        "RC01",
+        "RC02",
+        "RC03",
+        "RC04",
+        "RC05"
+      ],
       "futureDefaultMaximum": 5,
       "futureException": "A later Target may exceed five only when an independent authority boundary, incompatible starting or terminal state, or materially different real-Host interaction cannot be represented safely as a machine variant, and the larger portfolio is explicitly reviewed and approved.",
       "variantPolicy": "Source classes, classification outcomes, Advisor states, hostile inputs, deterministic replay, Harness outcomes, GitHub diversity and regression combinations that share one human-visible start, authority sequence and terminal lifecycle are independent machine variants with separate assertions, results and evidence references.",
@@ -101,7 +123,12 @@
       "Engine-owned semantics, human gates, Source non-execution, approval and publication separation, required human actions, independent-Host evidence and no-regression requirements remain unchanged",
       "the final declaration grants no publication or release authority",
       "a Roadmap digest change returns an existing Target to review but does not by itself require an unchanged Candidate package to be rebuilt or reinstalled"
-    ]
+    ],
+    "currentReleaseOverride": {
+      "version": "4.8.1",
+      "policyRef": "releaseHostCoveragePolicy",
+      "historicalScopeUnchanged": true
+    }
   },
   "projectOntologyAcceptancePolicy": {
     "topLevelJourneyMaximum": 5,
@@ -123,8 +150,13 @@
     "convergenceContractRef": "evopilot-series-semantic-design-convergence",
     "owningRepository": "evopilot-harness",
     "role": "IMMUTABLE_SEMANTIC_AND_HARNESS_ASSET_PRODUCER",
-    "requiredVersionSequence": ["4.6.0", "4.7.0", "4.8.0"],
-    "terminalVersion": "4.8.0",
+    "requiredVersionSequence": [
+      "4.6.0",
+      "4.7.0",
+      "4.8.0",
+      "4.8.1"
+    ],
+    "terminalVersion": "4.8.1",
     "everyVersionRequires": [
       "one independently approved Evolution Target bound to the current evopilot-harness Roadmap digest",
       "all current and inherited acceptance",
@@ -133,51 +165,149 @@
       "exact Candidate, package, published asset, dependency, and evidence digests"
     ],
     "terminalContribution": [
-      "publish the exact immutable 4.8.0 ontology, index, reasoning-profile, HarnessProfile, HarnessComponent, and HarnessBundle closure",
+      "Harness Engine 4.8.1 supplies the exact separately published immutable semantic and Harness asset closure through semantic-catalog-supply/v1; existing asset versions and digests remain unchanged",
       "supply that exact closure read-only to EvoPilot Runtime 6.3.0 for the terminal cross-product convergence E2E",
       "preserve permission denial, drift, rollback, publication separation, cumulative inherited acceptance, and NO_REGRESSION evidence"
     ],
     "terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority": false,
     "individualHarnessReleaseAuthorityRemainsIndependent": true,
-    "failureRouting": "A Harness-owned failure creates or revises a separately governed evopilot-harness repair or successor Evolution Target; it cannot be waived or repaired by another product."
+    "failureRouting": "A Harness-owned failure creates or revises a separately governed evopilot-harness repair or successor Evolution Target; it cannot be waived or repaired by another product.",
+    "convergenceContractRevision": 3
   },
   "standingWork": [
     {
       "id": "evopilot-harness-maintenance",
       "description": "Correctness, security, documentation synchronization, dependency maintenance, compatibility, and release repair that does not add an unplanned product capability or change an accepted boundary.",
-      "signals": ["bug fix", "security repair", "documentation synchronization", "dependency maintenance", "compatibility repair", "regression repair", "correctness repair", "缺陷修复", "安全修复", "文档同步", "依赖维护", "兼容性修复", "回归修复", "正确性修复"]
+      "signals": [
+        "bug fix",
+        "security repair",
+        "documentation synchronization",
+        "dependency maintenance",
+        "compatibility repair",
+        "regression repair",
+        "correctness repair",
+        "缺陷修复",
+        "安全修复",
+        "文档同步",
+        "依赖维护",
+        "兼容性修复",
+        "回归修复",
+        "正确性修复"
+      ]
     },
     {
       "id": "evopilot-harness-evolution-governance",
       "description": "Repository and Codex workflow governance that binds Engine evolution to reviewed evidence, this Roadmap, an approved Evolution Target, deterministic acceptance, and separately authorized release without changing Harness product behavior, asset authority, or boundaries.",
-      "signals": ["evolution governance", "roadmap governance", "roadmap binding", "evolution target", "conversational orchestrator", "演进治理", "roadmap 绑定", "演进目标", "对话式编排"],
+      "signals": [
+        "evolution governance",
+        "roadmap governance",
+        "roadmap binding",
+        "evolution target",
+        "conversational orchestrator",
+        "演进治理",
+        "roadmap 绑定",
+        "演进目标",
+        "对话式编排"
+      ],
       "allowsCapabilityExpansion": true
     },
     {
       "id": "evopilot-harness-series-convergence-participation",
       "description": "Provide exact per-version Harness evidence and the immutable 4.8.0 asset closure required by the central final semantic design convergence contract without transferring Harness approval, publication, or release authority.",
-      "signals": ["final product design convergence", "semantic design convergence", "terminal cross-product convergence e2e", "whole-series convergence e2e", "最终产品设计收敛", "最终跨产品 e2e", "整体 e2e"],
+      "signals": [
+        "final product design convergence",
+        "semantic design convergence",
+        "terminal cross-product convergence e2e",
+        "whole-series convergence e2e",
+        "最终产品设计收敛",
+        "最终跨产品 e2e",
+        "整体 e2e"
+      ],
       "allowsCapabilityExpansion": true
     },
     {
       "id": "evopilot-harness-4.0-installed-distribution-maintenance",
       "description": "Maintain the installed Agent distribution, including curated npm packaging, isolated Agent-host conformance, provenance, host-neutral installer lifecycle contracts, and host-specific adapters such as WorkBuddy without changing Harness lifecycle behavior or product boundaries. npm account, organization, scope, token, 2FA, and actual Registry publication remain separately reviewed external release configuration.",
-      "signals": ["npm distribution", "installed agent distribution", "npm package", "npm trusted publishing", "first-publication bootstrap", "first publication bootstrap", "npm bootstrap", "agent host installer", "workbuddy expert install", "workbuddy package conformance", "npm 分发", "npm 包", "npm 首发 bootstrap", "npm 首次发布", "第三方 agent 安装", "workbuddy 数字专家", "workbuddy 包验收"]
+      "signals": [
+        "npm distribution",
+        "installed agent distribution",
+        "npm package",
+        "npm trusted publishing",
+        "first-publication bootstrap",
+        "first publication bootstrap",
+        "npm bootstrap",
+        "agent host installer",
+        "workbuddy expert install",
+        "workbuddy package conformance",
+        "npm 分发",
+        "npm 包",
+        "npm 首发 bootstrap",
+        "npm 首次发布",
+        "第三方 agent 安装",
+        "workbuddy 数字专家",
+        "workbuddy 包验收"
+      ]
     },
     {
       "id": "evopilot-harness-4.2-explicit-user-llm-configuration",
       "description": "Maintain a provider-neutral installed Harness by requiring every operator to explicitly bind and verify user-owned LLM configuration in an external Workspace. Release packages and Agent hosts must not supply, infer, or borrow a default provider, model, endpoint, or credential.",
-      "signals": ["explicit user llm configuration", "zero default llm", "no default model", "user-owned model profile", "llm configuration required", "provider-neutral llm", "显式用户 llm 配置", "零缺省 llm", "无默认模型", "用户自定义模型", "必须配置 llm"]
+      "signals": [
+        "explicit user llm configuration",
+        "zero default llm",
+        "no default model",
+        "user-owned model profile",
+        "llm configuration required",
+        "provider-neutral llm",
+        "显式用户 llm 配置",
+        "零缺省 llm",
+        "无默认模型",
+        "用户自定义模型",
+        "必须配置 llm"
+      ]
     },
     {
       "id": "evopilot-harness-human-operated-workbuddy-acceptance",
       "description": "Maintain release-blocking real WorkBuddy acceptance through a designated human operator while Codex and EvoPilot-series Skills prepare the complete compact runbook set, remain outside WorkBuddy control and observation, and wait for the final range declaration without weakening any Target criterion, machine variant, lifecycle gate, Host-conformance requirement or release boundary.",
-      "signals": ["human-operated WorkBuddy acceptance", "manual WorkBuddy acceptance", "WorkBuddy human acceptance", "Codex does not control WorkBuddy", "compact real-case portfolio", "five top-level journeys", "machine variant matrix", "synthetic label oracle", "WorkBuddy 人工验收", "人工操作 WorkBuddy", "Codex 不操作 WorkBuddy", "人工执行真实主机验收", "五条顶层旅程", "机器变体矩阵", "禁止人工分类真值"]
+      "signals": [
+        "human-operated WorkBuddy acceptance",
+        "manual WorkBuddy acceptance",
+        "WorkBuddy human acceptance",
+        "Codex does not control WorkBuddy",
+        "compact real-case portfolio",
+        "five top-level journeys",
+        "machine variant matrix",
+        "synthetic label oracle",
+        "WorkBuddy 人工验收",
+        "人工操作 WorkBuddy",
+        "Codex 不操作 WorkBuddy",
+        "人工执行真实主机验收",
+        "五条顶层旅程",
+        "机器变体矩阵",
+        "禁止人工分类真值"
+      ]
     },
     {
       "id": "evopilot-harness-open-source-productization",
       "description": "Harden public contribution, repository metadata, dependency and security automation, product-native wording, and deterministic Roadmap/Release synchronization without changing Harness behavior, product boundaries, or supported distribution channels.",
-      "signals": ["open source productization", "open-source productization", "open-source governance", "issue forms", "pull request template", "dependabot", "github metadata", "security automation", "external reference cleanup", "release state drift", "开源产品化", "开源治理", "贡献模板", "依赖维护", "github 元数据", "安全自动化", "发布状态漂移"]
+      "signals": [
+        "open source productization",
+        "open-source productization",
+        "open-source governance",
+        "issue forms",
+        "pull request template",
+        "dependabot",
+        "github metadata",
+        "security automation",
+        "external reference cleanup",
+        "release state drift",
+        "开源产品化",
+        "开源治理",
+        "贡献模板",
+        "依赖维护",
+        "github 元数据",
+        "安全自动化",
+        "发布状态漂移"
+      ]
     }
   ],
   "milestones": [
@@ -199,8 +329,23 @@
         "effectiveness claims retain sample, context, uncertainty, source diversity, and version provenance",
         "source projects remain statically read and are never executed"
       ],
-      "signals": ["harnessexecutionfeedbackpackage", "harness execution feedback", "feedback package", "runtime feedback", "effectiveness aggregation", "evaluationpack reward", "执行反馈包", "生产反馈", "效果聚合", "评估包"],
-      "exclusions": ["Goal Loop execution", "automatic Harness publication", "model training"]
+      "signals": [
+        "harnessexecutionfeedbackpackage",
+        "harness execution feedback",
+        "feedback package",
+        "runtime feedback",
+        "effectiveness aggregation",
+        "evaluationpack reward",
+        "执行反馈包",
+        "生产反馈",
+        "效果聚合",
+        "评估包"
+      ],
+      "exclusions": [
+        "Goal Loop execution",
+        "automatic Harness publication",
+        "model training"
+      ]
     },
     {
       "id": "evopilot-harness-3.4-evidence-driven-asset-delta",
@@ -221,8 +366,29 @@
         "LLM advice cannot override deterministic NO_CHANGE, NEED_MORE_EVIDENCE, schema, Evaluation, or human gates",
         "only explicit review, approval, validation, and publication create a new asset version"
       ],
-      "signals": ["evidence-driven asset delta", "asset delta proposal", "evaluationpack v3", "portable evaluation cases", "positive negative cases", "profile delta", "component delta", "bundle delta", "impact analysis", "证据驱动资产变更", "资产变更提案", "正反例", "影响分析", "回滚分析"],
-      "exclusions": ["Pairwise experiment ingestion", "Champion/Challenger", "automatic approval", "project execution", "consumer-side release decision"]
+      "signals": [
+        "evidence-driven asset delta",
+        "asset delta proposal",
+        "evaluationpack v3",
+        "portable evaluation cases",
+        "positive negative cases",
+        "profile delta",
+        "component delta",
+        "bundle delta",
+        "impact analysis",
+        "证据驱动资产变更",
+        "资产变更提案",
+        "正反例",
+        "影响分析",
+        "回滚分析"
+      ],
+      "exclusions": [
+        "Pairwise experiment ingestion",
+        "Champion/Challenger",
+        "automatic approval",
+        "project execution",
+        "consumer-side release decision"
+      ]
     },
     {
       "id": "evopilot-harness-4.0-agent-native-operations",
@@ -245,8 +411,36 @@
         "process crash, Agent interruption, Advisor failure, incompatible versions, insufficient evidence, blocked review, and cancelled publication remain resumable or terminal with structured next actions and no silent fallback",
         "all public Agent-native claims are backed by real protocol, process, persistence, security, and cross-Adapter acceptance evidence"
       ],
-      "signals": ["agent-native harness operations", "digital expert", "digital expert pack", "harness operation server", "agent operation session", "local mcp", "stdio mcp", "codex adapter", "workbuddy adapter", "claude code adapter", "question-driven expert", "agent-native operation", "数字专家", "数字人", "问答式数字专家", "本地 mcp", "agent 原生操作", "会话恢复"],
-      "exclusions": ["source-project command execution", "EvoPilot Goal Loop", "general-purpose Agent runtime", "embedded conversational model", "automatic approval", "automatic publication", "automatic model credential creation", "remote multi-tenant Agent service"]
+      "signals": [
+        "agent-native harness operations",
+        "digital expert",
+        "digital expert pack",
+        "harness operation server",
+        "agent operation session",
+        "local mcp",
+        "stdio mcp",
+        "codex adapter",
+        "workbuddy adapter",
+        "claude code adapter",
+        "question-driven expert",
+        "agent-native operation",
+        "数字专家",
+        "数字人",
+        "问答式数字专家",
+        "本地 mcp",
+        "agent 原生操作",
+        "会话恢复"
+      ],
+      "exclusions": [
+        "source-project command execution",
+        "EvoPilot Goal Loop",
+        "general-purpose Agent runtime",
+        "embedded conversational model",
+        "automatic approval",
+        "automatic publication",
+        "automatic model credential creation",
+        "remote multi-tenant Agent service"
+      ]
     },
     {
       "id": "evopilot-harness-4.1-controlled-comparative-evidence",
@@ -266,8 +460,26 @@
         "quality claims report samples, uncertainty, conflicts, and separate contract coverage from independently reviewed accuracy",
         "Pairwise evidence and LLM advice cannot approve, publish, or override deterministic, schema, Evaluation, or human gates"
       ],
-      "signals": ["controlled comparative evidence", "pairwise feedback", "baseline candidate", "comparison evidence package", "matching calibration", "proposal quality benchmark", "cross-version regression", "受控对比证据", "成对反馈", "基线候选", "匹配校准", "跨版本回归"],
-      "exclusions": ["project execution", "automatic asset promotion", "automatic publication", "embedded model trainer"]
+      "signals": [
+        "controlled comparative evidence",
+        "pairwise feedback",
+        "baseline candidate",
+        "comparison evidence package",
+        "matching calibration",
+        "proposal quality benchmark",
+        "cross-version regression",
+        "受控对比证据",
+        "成对反馈",
+        "基线候选",
+        "匹配校准",
+        "跨版本回归"
+      ],
+      "exclusions": [
+        "project execution",
+        "automatic asset promotion",
+        "automatic publication",
+        "embedded model trainer"
+      ]
     },
     {
       "id": "evopilot-harness-4.2-professional-asset-learning",
@@ -287,8 +499,24 @@
         "new domains and roles are inferred from evidence rather than predefined user project categories",
         "LLM remains advisory and Engine releases remain independent from user Harness asset evolution"
       ],
-      "signals": ["professional asset learning", "asset curriculum", "research evidence adapter", "long-horizon asset quality", "domain role inference", "专业资产学习", "资产课程", "研究证据", "长期资产质量", "领域角色推理"],
-      "exclusions": ["embedded model trainer", "unrestricted internet authority", "automatic publication", "hard-coded domain expansion"]
+      "signals": [
+        "professional asset learning",
+        "asset curriculum",
+        "research evidence adapter",
+        "long-horizon asset quality",
+        "domain role inference",
+        "专业资产学习",
+        "资产课程",
+        "研究证据",
+        "长期资产质量",
+        "领域角色推理"
+      ],
+      "exclusions": [
+        "embedded model trainer",
+        "unrestricted internet authority",
+        "automatic publication",
+        "hard-coded domain expansion"
+      ]
     },
     {
       "id": "evopilot-harness-4.3-deterministic-agent-interaction-compliance",
@@ -309,8 +537,28 @@
         "Proposal Review Engine verdicts, Evaluation semantics, Asset lifecycle authority, model configuration, source integrity, and Catalog publication rules remain unchanged",
         "real WorkBuddy production simulation verifies visible frame content and order rather than inferring success from Session status or tool completion"
       ],
-      "signals": ["deterministic agent interaction compliance", "interaction frame", "interaction controller", "governed human gate compatible", "third-party agent interaction", "workbuddy interaction compliance", "确定性 agent 交互合规", "交互帧", "交互控制器", "第三方 agent 交互", "workbuddy 交互合规"],
-      "exclusions": ["Proposal Review Engine semantic changes", "general-purpose Agent runtime", "automatic approval", "automatic publication", "source-project execution", "EvoPilot Goal Loop", "cloud or remote Agent service"]
+      "signals": [
+        "deterministic agent interaction compliance",
+        "interaction frame",
+        "interaction controller",
+        "governed human gate compatible",
+        "third-party agent interaction",
+        "workbuddy interaction compliance",
+        "确定性 agent 交互合规",
+        "交互帧",
+        "交互控制器",
+        "第三方 agent 交互",
+        "workbuddy 交互合规"
+      ],
+      "exclusions": [
+        "Proposal Review Engine semantic changes",
+        "general-purpose Agent runtime",
+        "automatic approval",
+        "automatic publication",
+        "source-project execution",
+        "EvoPilot Goal Loop",
+        "cloud or remote Agent service"
+      ]
     },
     {
       "id": "evopilot-harness-4.4-deterministic-business-centric-interaction",
@@ -343,8 +591,47 @@
         "MCP disconnect, timeout, restart, reconnect, and repeated start requests recover by immutable Session, input, Job, and result digests without repeating an uncertain Engine or LLM mutation",
         "synchronous and asynchronous Proposal Review paths produce the same authoritative Review, BusinessDecisionView, and decision-definition digests"
       ],
-      "signals": ["deterministic business-centric harness interaction", "business decision view", "compliance audit envelope", "source-to-harness reasoning map", "source to harness reasoning", "agent operations protocol v3", "cross-host business view", "engine-owned business presentation", "engine frame host surface boundary", "fresh workbuddy production lifecycle", "four engine-owned harness business phases", "long-running MCP operation", "MCP request timeout", "OperationJob", "disconnect recovery", "cross-host long task", "确定性业务交互", "业务决策视图", "合规审计封装", "source 到 harness 推导", "跨 agent 业务视图", "engine 内生业务呈现", "engine frame 与 host surface 边界", "全新 workbuddy 生产流程", "四个 harness 业务环节", "长时 MCP 操作", "断连恢复"],
-      "exclusions": ["general-purpose Agent runtime", "embedded conversational model", "Agent-owned Harness reasoning", "automatic approval", "automatic publication", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
+      "signals": [
+        "deterministic business-centric harness interaction",
+        "business decision view",
+        "compliance audit envelope",
+        "source-to-harness reasoning map",
+        "source to harness reasoning",
+        "agent operations protocol v3",
+        "cross-host business view",
+        "engine-owned business presentation",
+        "engine frame host surface boundary",
+        "fresh workbuddy production lifecycle",
+        "four engine-owned harness business phases",
+        "long-running MCP operation",
+        "MCP request timeout",
+        "OperationJob",
+        "disconnect recovery",
+        "cross-host long task",
+        "确定性业务交互",
+        "业务决策视图",
+        "合规审计封装",
+        "source 到 harness 推导",
+        "跨 agent 业务视图",
+        "engine 内生业务呈现",
+        "engine frame 与 host surface 边界",
+        "全新 workbuddy 生产流程",
+        "四个 harness 业务环节",
+        "长时 MCP 操作",
+        "断连恢复"
+      ],
+      "exclusions": [
+        "general-purpose Agent runtime",
+        "embedded conversational model",
+        "Agent-owned Harness reasoning",
+        "automatic approval",
+        "automatic publication",
+        "source-project execution",
+        "EvoPilot Goal Loop",
+        "GHCR",
+        "container distribution",
+        "cloud or remote Agent service"
+      ]
     },
     {
       "id": "evopilot-harness-4.5-declarative-user-taxonomy",
@@ -408,8 +695,82 @@
         "a replacement ADR defines the module 8 Semantic Foundation and Taxonomy Resolution ownership, dependency direction, prohibited authority, compatibility reset, and replacement conditions, and executable architecture guards enforce it before implementation acceptance",
         "v4.5.0 is explicitly validated as an evidence-bound clean pre-production compatibility baseline: the Target binds concrete no-production-consumer evidence, places every historical criterion exactly once into inherited or restated capability lineage or compatibility-specific excluded lineage, excludes only pre-v4.5 artifact, protocol and direct-upgrade compatibility, and passes the complete cumulative product-capability, safety, authority, determinism, immutable-publication, credential, Source non-execution and Host-boundary baseline on the replacement design"
       ],
-      "signals": ["source-first business classification", "open world taxonomy classifier", "source concept hypothesis", "taxonomy blind concept extraction", "multi signal candidate retrieval", "semantic classification", "hierarchy aware classification", "classification confidence margin", "taxonomy ambiguous", "declarative user taxonomy", "semantic foundation", "taxonomy resolution", "resolved taxonomy snapshot", "taxonomy sufficiency", "taxonomy evidence insufficient", "user-defined domain", "user-defined product", "taxonomy extension suggested", "unknown domain product", "taxonomy engine compatibility", "taxonomy required capabilities", "taxonomy canonical digest", "false broad match", "algorithm plus LLM classification", "human-operated WorkBuddy", "designated human range completion", "final RC range completion declaration", "no WorkBuddy execution artifacts", "WorkBuddy human-operation legs", "compact real-case portfolio", "five top-level journeys", "machine variant matrix", "synthetic label oracle", "业务分类方案", "项目分类分析", "业务领域", "产品或系统类型", "分类覆盖情况", "素材语义分类", "开放世界分类", "多信号候选召回", "分类歧义", "未知分类", "分类扩展建议", "禁止宽泛匹配", "人工操作 WorkBuddy", "最终 RC 范围完成声明", "不收集 WorkBuddy 执行证据", "五条顶层旅程", "机器变体矩阵", "禁止人工分类真值"],
-      "exclusions": ["pre-v4.5 Workspace, Session, Harness definition, configuration, Ontology, Catalog, Harness Asset schema, MCP protocol, installed runtime state, or direct-upgrade compatibility and migration", "Harness Eligibility semantic changes", "complete Ontology platform", "multi-Pack merge", "Organization Pack governance", "DomainHarnessPack ecosystem", "semantic-web mapping", "incremental graph reasoning", "automatic online learning", "automatic taxonomy mutation or activation", "automatic classifier-policy or threshold activation", "LLM-owned final classification", "Agent-host reasoning", "executable plugins", "built-in business classification values", "model training", "source-project execution", "EvoPilot Goal Loop", "GHCR", "container distribution", "cloud or remote Agent service"]
+      "signals": [
+        "source-first business classification",
+        "open world taxonomy classifier",
+        "source concept hypothesis",
+        "taxonomy blind concept extraction",
+        "multi signal candidate retrieval",
+        "semantic classification",
+        "hierarchy aware classification",
+        "classification confidence margin",
+        "taxonomy ambiguous",
+        "declarative user taxonomy",
+        "semantic foundation",
+        "taxonomy resolution",
+        "resolved taxonomy snapshot",
+        "taxonomy sufficiency",
+        "taxonomy evidence insufficient",
+        "user-defined domain",
+        "user-defined product",
+        "taxonomy extension suggested",
+        "unknown domain product",
+        "taxonomy engine compatibility",
+        "taxonomy required capabilities",
+        "taxonomy canonical digest",
+        "false broad match",
+        "algorithm plus LLM classification",
+        "human-operated WorkBuddy",
+        "designated human range completion",
+        "final RC range completion declaration",
+        "no WorkBuddy execution artifacts",
+        "WorkBuddy human-operation legs",
+        "compact real-case portfolio",
+        "five top-level journeys",
+        "machine variant matrix",
+        "synthetic label oracle",
+        "业务分类方案",
+        "项目分类分析",
+        "业务领域",
+        "产品或系统类型",
+        "分类覆盖情况",
+        "素材语义分类",
+        "开放世界分类",
+        "多信号候选召回",
+        "分类歧义",
+        "未知分类",
+        "分类扩展建议",
+        "禁止宽泛匹配",
+        "人工操作 WorkBuddy",
+        "最终 RC 范围完成声明",
+        "不收集 WorkBuddy 执行证据",
+        "五条顶层旅程",
+        "机器变体矩阵",
+        "禁止人工分类真值"
+      ],
+      "exclusions": [
+        "pre-v4.5 Workspace, Session, Harness definition, configuration, Ontology, Catalog, Harness Asset schema, MCP protocol, installed runtime state, or direct-upgrade compatibility and migration",
+        "Harness Eligibility semantic changes",
+        "complete Ontology platform",
+        "multi-Pack merge",
+        "Organization Pack governance",
+        "DomainHarnessPack ecosystem",
+        "semantic-web mapping",
+        "incremental graph reasoning",
+        "automatic online learning",
+        "automatic taxonomy mutation or activation",
+        "automatic classifier-policy or threshold activation",
+        "LLM-owned final classification",
+        "Agent-host reasoning",
+        "executable plugins",
+        "built-in business classification values",
+        "model training",
+        "source-project execution",
+        "EvoPilot Goal Loop",
+        "GHCR",
+        "container distribution",
+        "cloud or remote Agent service"
+      ]
     },
     {
       "id": "evopilot-harness-4.6-professional-source-to-harness-reasoning",
@@ -439,8 +800,42 @@
         "an LLM cannot invent or directly select authoritative ontology identifiers",
         "v4.6.0 does not publish ProjectOntologyArtifactSet or ProjectOntologySkill"
       ],
-      "signals": ["professional source to harness reasoning", "professional harness extraction", "capability extraction", "compose harness bundle", "harness evolution algorithm", "professional reasoning depth", "bundle quality", "ontology grounding", "OntologyFoundation", "OntologyGroundingResolver", "semantic requirements", "cumulative v4.5 capability baseline", "improve professional reasoning", "improve bundle quality", "preserve v4.5 capabilities", "专业 source 到 harness 推理", "专业能力提取", "bundle 组合", "专业推理深度", "bundle 质量", "本体落地", "累计 v4.5 能力基线", "增强专业推理", "增强 bundle 质量", "保留 v4.5 能力"],
-      "exclusions": ["multi-Pack ecosystem", "external semantic interoperability", "incremental graph reasoning", "automatic approval", "automatic publication", "model training", "source-project execution"]
+      "signals": [
+        "professional source to harness reasoning",
+        "professional harness extraction",
+        "capability extraction",
+        "compose harness bundle",
+        "harness evolution algorithm",
+        "professional reasoning depth",
+        "bundle quality",
+        "ontology grounding",
+        "OntologyFoundation",
+        "OntologyGroundingResolver",
+        "semantic requirements",
+        "cumulative v4.5 capability baseline",
+        "improve professional reasoning",
+        "improve bundle quality",
+        "preserve v4.5 capabilities",
+        "专业 source 到 harness 推理",
+        "专业能力提取",
+        "bundle 组合",
+        "专业推理深度",
+        "bundle 质量",
+        "本体落地",
+        "累计 v4.5 能力基线",
+        "增强专业推理",
+        "增强 bundle 质量",
+        "保留 v4.5 能力"
+      ],
+      "exclusions": [
+        "multi-Pack ecosystem",
+        "external semantic interoperability",
+        "incremental graph reasoning",
+        "automatic approval",
+        "automatic publication",
+        "model training",
+        "source-project execution"
+      ]
     },
     {
       "id": "evopilot-harness-4.7-governed-professional-pack-ecosystem",
@@ -470,8 +865,33 @@
         "quality and certification claims bind exact Pack, benchmark, algorithm, policy, and evidence versions",
         "Draft, apply, Review, Approval, Publication, installation, activation, successor, rollback, and deprecation remain independent stages"
       ],
-      "signals": ["professional pack ecosystem", "multi pack governance", "Project Ontology", "ProjectOntologyArtifactSet", "ProjectOntologySkill", "DomainOntologyPack", "ProjectOntologyOverlay", "DomainHarnessPack SDK", "pack registry", "pack authoring", "pack dependency conflict", "pack certification", "项目本体", "项目本体 Skill", "专业 pack 生态", "多 pack 治理", "领域 pack", "pack 治理"],
-      "exclusions": ["executable marketplace plugins", "automatic Pack trust", "automatic publication", "cloud marketplace service", "built-in universal vertical expertise"]
+      "signals": [
+        "professional pack ecosystem",
+        "multi pack governance",
+        "Project Ontology",
+        "ProjectOntologyArtifactSet",
+        "ProjectOntologySkill",
+        "DomainOntologyPack",
+        "ProjectOntologyOverlay",
+        "DomainHarnessPack SDK",
+        "pack registry",
+        "pack authoring",
+        "pack dependency conflict",
+        "pack certification",
+        "项目本体",
+        "项目本体 Skill",
+        "专业 pack 生态",
+        "多 pack 治理",
+        "领域 pack",
+        "pack 治理"
+      ],
+      "exclusions": [
+        "executable marketplace plugins",
+        "automatic Pack trust",
+        "automatic publication",
+        "cloud marketplace service",
+        "built-in universal vertical expertise"
+      ]
     },
     {
       "id": "evopilot-harness-4.8-scalable-semantic-interoperability",
@@ -497,8 +917,75 @@
         "large-corpus performance meets declared budgets without weakening evidence, conflict, approval, or publication gates",
         "federated discovery remains read-only and every consumed Pack retains its source Catalog, version, digest, and trust context"
       ],
-      "signals": ["semantic interoperability", "bounded scalable semantic reasoning", "OntologyReasoningProfile", "JSON-LD", "RDF", "OWL", "SHACL", "PROV-O", "incremental ontology reasoning", "ontology scale", "affected subgraph", "semantic index", "federated catalog", "有界语义推理", "语义互操作", "外部 ontology", "增量 ontology 推理", "ontology 规模化", "影响子图", "联邦 catalog"],
-      "exclusions": ["general-purpose knowledge graph platform", "arbitrary executable Pack", "unbounded OWL or SWRL reasoning", "shared mutable global ontology", "eventual authority", "automatic external vocabulary activation", "live cross-organization authority", "automatic cross-organization publication", "cloud control plane"]
+      "signals": [
+        "semantic interoperability",
+        "bounded scalable semantic reasoning",
+        "OntologyReasoningProfile",
+        "JSON-LD",
+        "RDF",
+        "OWL",
+        "SHACL",
+        "PROV-O",
+        "incremental ontology reasoning",
+        "ontology scale",
+        "affected subgraph",
+        "semantic index",
+        "federated catalog",
+        "有界语义推理",
+        "语义互操作",
+        "外部 ontology",
+        "增量 ontology 推理",
+        "ontology 规模化",
+        "影响子图",
+        "联邦 catalog"
+      ],
+      "exclusions": [
+        "general-purpose knowledge graph platform",
+        "arbitrary executable Pack",
+        "unbounded OWL or SWRL reasoning",
+        "shared mutable global ontology",
+        "eventual authority",
+        "automatic external vocabulary activation",
+        "live cross-organization authority",
+        "automatic cross-organization publication",
+        "cloud control plane"
+      ]
+    },
+    {
+      "id": "evopilot-harness-4.8.1-semantic-catalog-supply-repair",
+      "status": "PLANNED",
+      "targetVersion": "4.8.1",
+      "releaseLine": "4.8.x",
+      "objective": "Repair Registry/Catalog discovery of separately published immutable semantic assets without changing producer/consumer ownership or existing v3 and semantic asset formats.",
+      "outcomes": [
+        "additive semantic Catalog index under enabled Registry roots",
+        "complete digest-bound semantic artifact and Harness dependency closure",
+        "separate authorized atomic publication, concurrency and receipt-safe recovery",
+        "read-only compatible consumption with explicit unavailable and stale states"
+      ],
+      "acceptance": [
+        "discover published ArtifactSet and its embedded Skill plus published terminal closure through the enabled Catalog only",
+        "verify every referenced material and publication, scope, identity and digest; reject partial or mixed closure",
+        "preserve old Catalog and Harness-only behavior, old asset versions, digests and publication history",
+        "reject unindexed fallback, unsupported schema, identity conflict, permission denial, revoked material, symlink and path escape, unbounded input and secret leakage",
+        "prove atomic concurrent publication, uncertain-outcome readback, additive growth, restart, rollback and immutable old evidence",
+        "version-specific repository E2E, all current and inherited acceptance, exact qualified Codex under releaseHostCoveragePolicy, impact closure and NO_REGRESSION For this release, releaseHostCoveragePolicy takes precedence over inherited Host execution clauses: Codex is the only real Host acceptance path; all other behavior, security, adapter-contract, transport, active-soak and NO_REGRESSION obligations remain. No cross-Host conformance claim is made.",
+        "separate Engine Release from asset publication and from terminal series E2E authority"
+      ],
+      "signals": [
+        "semantic catalog supply repair",
+        "semantic-catalog-supply/v1",
+        "语义资产 catalog 供给",
+        "语义供给修复"
+      ],
+      "exclusions": [
+        "Runtime-owned Goal Loop execution",
+        "new knowledge domains or executable Packs",
+        "mandatory signing",
+        "overwrite or relabel published 4.8.0",
+        "Dashboard evolution",
+        "automatic approval, publication or acceptance transfer"
+      ]
     }
   ],
   "resolvedDiscussions": [
@@ -523,40 +1010,108 @@
       "id": "harness-must-not-execute-evopilot-loops",
       "classification": "BOUNDARY_CHANGE",
       "reason": "evopilot-harness produces Harness assets; EvoPilot owns project onboarding and Goal Loop execution.",
-      "signals": ["run goal loop in evopilot-harness", "onboard project in evopilot-harness", "project release decision in evopilot-harness", "在 evopilot-harness 执行 goal loop", "在 evopilot-harness 接入项目", "由 evopilot-harness 决定项目发布"]
+      "signals": [
+        "run goal loop in evopilot-harness",
+        "onboard project in evopilot-harness",
+        "project release decision in evopilot-harness",
+        "在 evopilot-harness 执行 goal loop",
+        "在 evopilot-harness 接入项目",
+        "由 evopilot-harness 决定项目发布"
+      ]
     },
     {
       "id": "harness-must-not-run-source-projects",
       "classification": "BOUNDARY_CHANGE",
       "reason": "Source ingestion is static; any future Evidence Runner requires a separate approved architecture and explicit authorization.",
-      "signals": ["execute source project", "run source project tests", "deploy source project", "执行 source project", "运行源项目测试", "部署源项目"]
+      "signals": [
+        "execute source project",
+        "run source project tests",
+        "deploy source project",
+        "执行 source project",
+        "运行源项目测试",
+        "部署源项目"
+      ]
     },
     {
       "id": "harness-must-not-train-models",
       "classification": "BOUNDARY_CHANGE",
       "reason": "evopilot-harness may use an advisory LLM but is not a model-training platform.",
-      "signals": ["train model inside evopilot-harness", "embedded rl trainer", "update model weights in harness", "在 evopilot-harness 训练模型", "harness 更新模型权重"]
+      "signals": [
+        "train model inside evopilot-harness",
+        "embedded rl trainer",
+        "update model weights in harness",
+        "在 evopilot-harness 训练模型",
+        "harness 更新模型权重"
+      ]
     },
     {
       "id": "taxonomy-must-not-own-harness-eligibility",
       "classification": "BOUNDARY_CHANGE",
       "reason": "Taxonomy Sufficiency classifies declared Domain and Product axes; the independent Eligibility Gate owns whether Source evidence supports a reusable model-external Harness task.",
-      "signals": ["taxonomy decides harness eligibility", "taxonomy returns not harness eligible", "taxonomy owns reusable task qualification", "taxonomy 决定 harness eligibility", "taxonomy 返回 not harness eligible", "taxonomy 判断可复用任务资格"]
+      "signals": [
+        "taxonomy decides harness eligibility",
+        "taxonomy returns not harness eligible",
+        "taxonomy owns reusable task qualification",
+        "taxonomy 决定 harness eligibility",
+        "taxonomy 返回 not harness eligible",
+        "taxonomy 判断可复用任务资格"
+      ]
     },
     {
       "id": "engine-must-not-hardcode-business-taxonomy",
       "classification": "BOUNDARY_CHANGE",
       "reason": "The v4.5 Engine Foundation owns semantic axes and relation primitives, not built-in business Domain or Product values or keyword-to-business-label authority.",
-      "signals": ["hard-code business taxonomy", "built-in domain values", "built-in product values", "engine business category list", "硬编码业务 taxonomy", "内置 domain 值", "内置 product 值", "engine 业务分类列表"]
+      "signals": [
+        "hard-code business taxonomy",
+        "built-in domain values",
+        "built-in product values",
+        "engine business category list",
+        "硬编码业务 taxonomy",
+        "内置 domain 值",
+        "内置 product 值",
+        "engine 业务分类列表"
+      ]
     },
     {
       "id": "llm-must-not-own-taxonomy-decision",
       "classification": "BOUNDARY_CHANGE",
       "reason": "The v4.5 LLM Advisor may contribute an immutable evidence-bound semantic signal, but only the Engine-owned versioned Decision Aggregator may apply classification policy and emit a Taxonomy Sufficiency result; no LLM response may mutate or activate the user's Taxonomy.",
-      "signals": ["LLM directly selects taxonomy", "LLM classification is final", "LLM mutates taxonomy", "advisor chooses domain product", "LLM 直接决定分类", "LLM 分类结果就是最终结果", "LLM 自动修改业务分类方案", "advisor 选择业务领域产品"]
+      "signals": [
+        "LLM directly selects taxonomy",
+        "LLM classification is final",
+        "LLM mutates taxonomy",
+        "advisor chooses domain product",
+        "LLM 直接决定分类",
+        "LLM 分类结果就是最终结果",
+        "LLM 自动修改业务分类方案",
+        "advisor 选择业务领域产品"
+      ]
     }
   ],
-  "deviationSignals": ["replace roadmap", "revise roadmap", "skip milestone", "reorder roadmap milestone", "move roadmap capability", "remove released capability", "defer released capability", "compatibility reset removes capability", "zero inherited acceptance for retained capability", "merge evopilot and evopilot-harness", "change product boundary", "替换 roadmap", "修订 roadmap", "跳过里程碑", "重排 roadmap 里程碑", "移动 roadmap 能力", "删除已发布能力", "延后已发布能力", "用兼容性重置删除能力", "保留能力但零继承验收", "合并 evopilot 和 evopilot-harness", "改变产品边界"],
+  "deviationSignals": [
+    "replace roadmap",
+    "revise roadmap",
+    "skip milestone",
+    "reorder roadmap milestone",
+    "move roadmap capability",
+    "remove released capability",
+    "defer released capability",
+    "compatibility reset removes capability",
+    "zero inherited acceptance for retained capability",
+    "merge evopilot and evopilot-harness",
+    "change product boundary",
+    "替换 roadmap",
+    "修订 roadmap",
+    "跳过里程碑",
+    "重排 roadmap 里程碑",
+    "移动 roadmap 能力",
+    "删除已发布能力",
+    "延后已发布能力",
+    "用兼容性重置删除能力",
+    "保留能力但零继承验收",
+    "合并 evopilot 和 evopilot-harness",
+    "改变产品边界"
+  ],
   "crossProjectContracts": [
     {
       "id": "published-harness-consumption/v3",
@@ -594,5 +1149,44 @@
       "direction": "evopilot -> evopilot-dashboard",
       "rule": "Dashboard renders EvoPilot-owned API projections and owns no source asset or runtime state."
     }
-  ]
+  ],
+  "semanticCatalogSupplyPolicy": {
+    "schema": "evopilot-semantic-catalog-supply-policy/v1",
+    "contract": "semantic-catalog-supply/v1",
+    "producerVersion": "4.8.1",
+    "runtimeVersion": "6.3.0",
+    "expertVersion": "2.3.0",
+    "catalogMode": "ADDITIVE_SEPARATE_SEMANTIC_INDEX",
+    "registryContainsAssets": false,
+    "legacyCatalogBytesPreserved": true,
+    "existingSemanticAssetSchemasPreserved": true,
+    "standalonePublicationImpliesDiscovery": false,
+    "completeClosureRequired": true,
+    "independentPublicationRequired": true,
+    "consumerReadOnly": true,
+    "atomicPublicationRequired": true,
+    "mandatorySigning": false,
+    "unindexedFallbackAllowed": false,
+    "automaticApprovalOrPassTransfer": false,
+    "perVersionE2ERequired": true,
+    "terminalE2ERequired": true
+  },
+  "releaseHostCoveragePolicy": {
+    "schema": "evopilot-release-host-scope/v1",
+    "versions": {
+      "evopilot-harness": "4.8.1",
+      "evopilot-runtime": "6.3.0",
+      "evopilot-evolution-expert": "2.3.0"
+    },
+    "requiredHosts": [
+      "Codex"
+    ],
+    "otherHostLiveAcceptanceRequired": false,
+    "crossHostAcceptanceClaimAllowed": false,
+    "generatedAdapterContractsRetained": true,
+    "genericMcpAndHeadlessTransportTestsRetained": true,
+    "exactCodexVersionAndQualificationRequired": true,
+    "activeSoakSeconds": 5400,
+    "historicalPassTransferAllowed": false
+  }
 }

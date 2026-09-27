@@ -17,16 +17,16 @@ test("Roadmap Gate validates the contract and declared package version", () => {
 test("Roadmap Gate binds the cumulative Harness convergence sequence and independent authority", () => {
   const roadmap = JSON.parse(fs.readFileSync(path.join(root, "governance/roadmap.yaml"), "utf8"));
   assert.equal(roadmap.versionPolicy.publishedBaseline, "4.8.0");
-  assert.equal(roadmap.versionPolicy.currentWorkingVersion, "4.6.0");
-  assert.deepEqual(roadmap.seriesConvergenceParticipation.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0"]);
-  assert.equal(roadmap.seriesConvergenceParticipation.terminalVersion, "4.8.0");
+  assert.equal(roadmap.versionPolicy.currentWorkingVersion, "4.8.1");
+  assert.deepEqual(roadmap.seriesConvergenceParticipation.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0", "4.8.1"]);
+  assert.equal(roadmap.seriesConvergenceParticipation.terminalVersion, "4.8.1");
   assert.equal(roadmap.seriesConvergenceParticipation.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority, false);
   assert.equal(roadmap.seriesConvergenceParticipation.individualHarnessReleaseAuthorityRemainsIndependent, true);
 });
 
 test("Roadmap Gate fails closed when Harness convergence evidence or authority is weakened", () => {
   for (const [name, mutate, pattern] of [
-    ["missing version", (roadmap) => { roadmap.seriesConvergenceParticipation.requiredVersionSequence.pop(); }, /4\.6\.0 to terminal 4\.8\.0/],
+    ["missing version", (roadmap) => { roadmap.seriesConvergenceParticipation.requiredVersionSequence.pop(); }, /4\.6\.0 to terminal 4\.8\.1/],
     ["missing real E2E", (roadmap) => { roadmap.seriesConvergenceParticipation.everyVersionRequires = []; }, /per-version Harness requirement/],
     ["merged release authority", (roadmap) => { roadmap.seriesConvergenceParticipation.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority = true; }, /must not grant or merge Harness authority/]
   ]) {
@@ -168,3 +168,11 @@ function runWithRoadmap(mutate) {
     fs.rmSync(tempDirectory, { recursive: true, force: true });
   }
 }
+
+test("Roadmap binds semantic Catalog supply repair without weakening authority", () => {
+  for (const key of ["schema","contract","producerVersion","runtimeVersion","expertVersion","catalogMode","registryContainsAssets","legacyCatalogBytesPreserved","existingSemanticAssetSchemasPreserved","standalonePublicationImpliesDiscovery","completeClosureRequired","independentPublicationRequired","consumerReadOnly","atomicPublicationRequired","mandatorySigning","unindexedFallbackAllowed","automaticApprovalOrPassTransfer","perVersionE2ERequired","terminalE2ERequired"]) {
+    const result = runWithRoadmap((roadmap) => { delete roadmap.semanticCatalogSupplyPolicy[key]; });
+    assert.equal(result.body.classification, "INVALID", key);
+    assert.match(result.body.errors.join(" "), /semantic Catalog supply invariant/);
+  }
+});

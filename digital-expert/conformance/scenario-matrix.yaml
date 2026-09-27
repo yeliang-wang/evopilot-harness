@@ -75,6 +75,16 @@ engineOperations:
   - semantic.closure.inspect
   - semantic.closure.publish
   - semantic.closure.slice
+  - semantic.catalog.preview
+  - semantic.catalog.inspect
+  - semantic.catalog.readback
+  - semantic.catalog.publish
+  - semantic.catalog.transition-preview
+  - semantic.catalog.rollback
+  - semantic.catalog.revoke
+  - semantic.catalog.recovery-inspect
+  - semantic.catalog.recovery-readback
+  - semantic.catalog.recover
   - pack.scaffold.inspect
   - pack.inspect
   - pack.resolve.inspect
@@ -156,6 +166,7 @@ conformanceEvidence:
     - tests/v4.1.test.mjs
     - tests/v4.2.test.mjs
     - tests/v4.8-semantic-interoperability.test.mjs
+    - tests/v4.8.1-semantic-catalog-supply.test.mjs
   realSessionProtocol:
     - digital-expert/conformance/generic-host.mjs
     - docs/operations/v4-acceptance.md
@@ -397,6 +408,38 @@ coverage:
     semantic.closure.slice:
       <<: *semantic_interoperability_operations
       marker: semantic.closure.slice
+    semantic.catalog.preview: &semantic_catalog_operations
+      testFile: tests/v4.8.1-semantic-catalog-supply.test.mjs
+      testName: local stdio MCP semantic supply separates plan confirmation, publication authority and readback
+      marker: semantic.catalog.preview
+    semantic.catalog.inspect:
+      <<: *semantic_catalog_operations
+      marker: semantic.catalog.inspect
+    semantic.catalog.readback:
+      <<: *semantic_catalog_operations
+      marker: semantic.catalog.readback
+    semantic.catalog.publish:
+      <<: *semantic_catalog_operations
+      marker: semantic.catalog.publish
+    semantic.catalog.transition-preview: &semantic_catalog_maintenance
+      testFile: tests/v4.8.1-semantic-catalog-supply.test.mjs
+      testName: local stdio MCP gates rollback revoke and recovery independently of diagnostics
+      marker: semantic.catalog.transition-preview
+    semantic.catalog.rollback:
+      <<: *semantic_catalog_maintenance
+      marker: semantic.catalog.rollback
+    semantic.catalog.revoke:
+      <<: *semantic_catalog_maintenance
+      marker: semantic.catalog.revoke
+    semantic.catalog.recovery-inspect:
+      <<: *semantic_catalog_maintenance
+      marker: semantic.catalog.recovery-inspect
+    semantic.catalog.recovery-readback:
+      <<: *semantic_catalog_maintenance
+      marker: semantic.catalog.recovery-readback
+    semantic.catalog.recover:
+      <<: *semantic_catalog_maintenance
+      marker: semantic.catalog.recover
     pack.scaffold.inspect: &project_ontology_operations
       testFile: tests/v4.7-project-ontology.test.mjs
       testName: v4.7 Engine adapter exposes complete governed Pack and Project Ontology operation family

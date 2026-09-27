@@ -18,12 +18,13 @@ import { validateDocument, validateFile, validateTree } from "./schema.mjs";
 import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, resolveWorkspaceModelsFile, workspaceStatus } from "./workspace.mjs";
-import { inspectModelReadiness, recordModelVerification } from "./model-readiness.mjs";
+import { inspectModelReadiness, recordModelVerification, invalidateModelVerification } from "./model-readiness.mjs";
 import { createSemanticCandidateSet, resolveOntologyFoundation, resolveOntologyGrounding } from "../v4/semantics/ontology-grounding.mjs";
 import { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from "../v4/semantics/semantic-compatibility.mjs";
 import { createExternalSemanticEvidenceAdapter, createPackBenchmarkPackage, createPackCertificationRecord, createPackGoldCasePackage, createPackLifecycleRecord, createProfessionalPack, importExternalSemanticEvidence, inspectProfessionalPack, resolveProfessionalPackSet, transitionPackLifecycle } from "../v4/semantics/professional-packs.mjs";
 import { compileProjectOntologySkill, createArtifactLifecycleRecord, createProjectOntologyProposal, createProjectionSet, publishProjectOntologyArtifactSet, resolveProjectOntologySnapshot, transitionProjectOntologyProposal } from "../v4/semantics/project-ontology.mjs";
 import { buildSemanticIndex, calculateAffectedSubgraph, compareSemanticComputations, computeSemanticState, createInteroperabilityProjectionSet, createOntologyReasoningProfile, createTerminalSemanticClosure, discoverFederatedPacks, publishTerminalSemanticClosure, sliceTerminalSemanticClosure, verifySemanticRoundTrip } from "../v4/semantics/semantic-interoperability.mjs";
+import { semanticCatalogOperation } from "../v4/semantics/catalog-supply.mjs";
 
 const V3_COMMANDS = new Set(["workspace", "produce", "proposal", "ontology", "semantic", "pack", "project-ontology", "policy", "migrate", "keys", "feedback", "comparison", "calibration", "learning"]);
 
@@ -40,7 +41,8 @@ export async function handleV3Command(argv) {
       schema: "evopilot-harness-error/v3",
       status: "FAILED",
       error: error instanceof Error ? error.message : String(error),
-      errorType: error instanceof Error ? error.name : "Error"
+      errorType: error instanceof Error ? error.name : "Error",
+      ...(error?.name === "SemanticCatalogError" ? {code: error.code, nextAction: error.nextAction} : {})
     };
     if (args.options.json) print(result, true);
     else process.stderr.write(`${result.error}\n`);
@@ -69,7 +71,8 @@ export async function executeV3Operation({ positionals, options = {} }) {
         status: "FAILED",
         error: error instanceof Error ? error.message : String(error),
         errorType: error instanceof Error ? error.name : "Error",
-        nextAction: error?.name === "UsageError" ? "repair-operation-input" : "inspect-engine-failure"
+        nextAction: error?.nextAction ?? (error?.name === "UsageError" ? "repair-operation-input" : "inspect-engine-failure"),
+        ...(error?.name === "SemanticCatalogError" ? {code: error.code} : {})
       }
     };
   }
@@ -97,6 +100,16 @@ async function dispatch(args, group, action, id) {
     return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
   requireWorkspace(home);
+  if (group === "semantic" && ["catalog-preview", "catalog-inspect", "catalog-publish", "catalog-readback",
+    "catalog-transition-preview", "catalog-rollback", "catalog-revoke", "catalog-recovery-inspect", "catalog-recovery-readback", "catalog-recover"].includes(action)) {
+    const result = await semanticCatalogOperation({home, action: action.slice("catalog-".length),
+      catalogId: option(args, "catalog-id", "organization"), file: option(args, "file"), inputDigest: option(args, "input-digest"),
+      expectedGenerationDigest: option(args, "expected-generation-digest"), expectedHead: option(args, "expected-head"),
+      requestId: option(args, "request-id"), publication: parseJsonOption(args, "publication", null),
+      transition: option(args, "transition"), targetPointerDigest: option(args, "target-pointer-digest"),
+      revokedDigests: parseJsonOption(args, "revoked-digests", null), expectedLockDigest: option(args, "expected-lock-digest"), recoveryId: option(args, "recovery-id")});
+    return output(args, result);
+  }
   if (group === "semantic" && action === "foundation") return output(args, resolveOntologyFoundation());
   if (group === "semantic" && action === "candidates") {
     const hypothesis = readYaml(requiredOption(args, "hypothesis"));
@@ -378,7 +391,10 @@ async function dispatch(args, group, action, id) {
     const inspected = inspectModels(file, option(args, "model"));
     if (inspected.status !== "READY") return output(args, { ...inspectModelReadiness(home, file), inspection: inspected }, 2);
     const doctor = await diagnoseModel(file, option(args, "model"), Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
-    if (doctor.status !== "READY") return output(args, { ...inspectModelReadiness(home, file), doctor, nextAction: "repair-model-configuration-or-connectivity" }, 2);
+    if (doctor.status !== "READY") {
+      invalidateModelVerification(home, file, readiness.configurationDigest);
+      return output(args, { ...inspectModelReadiness(home, file), doctor, nextAction: "repair-model-configuration-or-connectivity" }, 2);
+    }
     return output(args, { ...recordModelVerification(home, file, doctor), inspection: inspected, doctor });
   }
   if (group === "hub" && action === "v3-snapshot") return output(args, writeHubSnapshot(home, option(args, "out", path.join(home, "cache/hub-snapshot.json"))));
