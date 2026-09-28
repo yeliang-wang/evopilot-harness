@@ -89,7 +89,9 @@ function validateRoadmap(value) {
   required(convergence?.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority === false && convergence?.individualHarnessReleaseAuthorityRemainsIndependent === true, "terminal convergence E2E must not grant or merge Harness authority");
   required(value?.seriesConvergenceParticipation?.convergenceContractRevision === 3, "Harness must reference central convergence revision 3");
   const supplyMilestone = value?.milestones?.find((item) => item.id === "evopilot-harness-4.8.1-semantic-catalog-supply-repair");
-  required(supplyMilestone?.targetVersion === "4.8.1" && supplyMilestone?.status === "PLANNED" && supplyMilestone?.acceptance?.length === 7, "semantic supply repair milestone and seven acceptance obligations are required");
+  required(supplyMilestone?.targetVersion === "4.8.1" && supplyMilestone?.status === "PLANNED" && supplyMilestone?.acceptance?.length === 8, "semantic supply repair milestone must retain seven supply obligations and the approved Source content boundary repair");
+  required(supplyMilestone?.acceptance?.some((item) => item.startsWith("Source content boundary excludes protected Host, model and credential paths before")), "approved Source content boundary acceptance must remain declared");
+  required(value.sourceContentBoundaryPolicy?.identifier === "evopilot-harness-source-content-boundary/v1" && value.sourceContentBoundaryPolicy?.status === "APPROVED", "Source content boundary must bind the approved finite path policy");
   const supply = value?.semanticCatalogSupplyPolicy;
   required(supply?.schema === "evopilot-semantic-catalog-supply-policy/v1", "semantic Catalog supply invariant: schema");
   required(supply?.contract === "semantic-catalog-supply/v1", "semantic Catalog supply invariant: contract");

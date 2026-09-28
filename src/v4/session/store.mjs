@@ -193,7 +193,7 @@ function bindClassificationSources(session, sources) {
   const resolution = handoff.sourceResolution;
   if (!resolution || resolution.sourceDescriptorDigest !== handoff.sourceDescriptorDigest || resolution.sourceResolutionDigest !== handoff.sourceResolutionDigest) throw sessionError("CLASSIFICATION_SOURCE_BINDING_INVALID", "Classification handoff does not contain one exact SourceDescriptor resolution.", "restart-classification");
   const current = buildSourceConceptHypothesis(resolution);
-  if (current.sourceSnapshotDigest !== handoff.sourceSnapshotDigest) throw sessionError("CLASSIFICATION_SOURCE_DRIFT", "The classified Source changed after the explicit classification handoff; re-analysis is required before Harness work.", "restart-classification-with-current-source");
+  if (current.sourceSnapshotDigest !== handoff.sourceSnapshotDigest || current.hypothesisDigest !== handoff.hypothesisDigest) throw sessionError("CLASSIFICATION_SOURCE_DRIFT", "The classified Source changed after the explicit classification handoff; re-analysis is required before Harness work.", "restart-classification-with-current-source");
 
   const value = sources && typeof sources === "object" && !Array.isArray(sources) ? persistedJson(sources) : {};
   const sourceFields = ["sourceProjects", "sourceRoot", "githubRepositories", "githubRef", "attachments", "productionLogs", "historicalHarnesses", "notes", "researchUrls"];
@@ -232,6 +232,7 @@ export function confirmSessionPlan({ home, sessionId, expectedSessionDigest, exp
 export async function executeSessionPlan({ home, sessionId, expectedSessionDigest, expectedPlanDigest, retryConfirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["READY_TO_EXECUTE", "INTERRUPTED"]);
   if (session.planDigest !== expectedPlanDigest) throw sessionError("PLAN_DIGEST_MISMATCH", "The confirmed Operation Plan is stale.", "reload-and-review-operation-plan");
+  bindClassificationSources(session, session.plan.sources);
   if (session.status === "INTERRUPTED") {
     if (session.inFlightOperation) {
       throw sessionError("INTERRUPTED_OPERATION_RECONCILIATION_REQUIRED", "The interrupted Engine operation has an unknown outcome and cannot be retried until its receipt or unchanged Workspace state is reconciled.", session.nextAction);
@@ -348,6 +349,7 @@ export function authorizePlanPublicationOperation({ home, sessionId, expectedSes
 
 export async function resolveInterruptedOperation({ home, sessionId, expectedSessionDigest, expectedAttemptDigest, confirmedBy, confirmation, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest, ["INTERRUPTED"]);
+  bindClassificationSources(session, session.plan.sources);
   requirePresentedFrame(session, "RECOVERY_PRESENTATION");
   const attempt = session.inFlightOperation;
   if (!attempt || attempt.attemptDigest !== expectedAttemptDigest) {
@@ -755,6 +757,7 @@ export async function publishSessionProposal({ home, sessionId, proposalId, expe
 export function resumeAgentSession({ home, sessionId, expectedSessionDigest, adapterId, compatibility = operationCompatibility(), now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest);
   if (session.status === "CLOSED") throw sessionError("SESSION_CLOSED", "A closed session cannot be resumed.", "start-new-session");
+  bindClassificationSources(session, session.plan?.sources ?? {});
   const compatibilityBinding = assertOperationCompatibility(compatibility);
   if (!session.compatibility || digest(session.compatibility) !== digest(compatibilityBinding)) {
     throw sessionError("SESSION_COMPATIBILITY_BINDING_MISMATCH", "The Session is not bound to the current Product, Digital Expert Core, Agent protocol, and Engine API.", "start-compatible-session-or-use-matching-release");

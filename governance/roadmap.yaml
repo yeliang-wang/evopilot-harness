@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-09-21",
+  "updatedAt": "2026-09-28",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -961,7 +961,8 @@
         "additive semantic Catalog index under enabled Registry roots",
         "complete digest-bound semantic artifact and Harness dependency closure",
         "separate authorized atomic publication, concurrency and receipt-safe recovery",
-        "read-only compatible consumption with explicit unavailable and stale states"
+        "read-only compatible consumption with explicit unavailable and stale states",
+        "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable."
       ],
       "acceptance": [
         "discover published ArtifactSet and its embedded Skill plus published terminal closure through the enabled Catalog only",
@@ -970,13 +971,18 @@
         "reject unindexed fallback, unsupported schema, identity conflict, permission denial, revoked material, symlink and path escape, unbounded input and secret leakage",
         "prove atomic concurrent publication, uncertain-outcome readback, additive growth, restart, rollback and immutable old evidence",
         "version-specific repository E2E, all current and inherited acceptance, exact qualified Codex under releaseHostCoveragePolicy, impact closure and NO_REGRESSION For this release, releaseHostCoveragePolicy takes precedence over inherited Host execution clauses: Codex is the only real Host acceptance path; all other behavior, security, adapter-contract, transport, active-soak and NO_REGRESSION obligations remain. No cross-Host conformance claim is made.",
-        "separate Engine Release from asset publication and from terminal series E2E authority"
+        "separate Engine Release from asset publication and from terminal series E2E authority",
+        "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable."
       ],
       "signals": [
         "semantic catalog supply repair",
         "semantic-catalog-supply/v1",
         "语义资产 catalog 供给",
-        "语义供给修复"
+        "语义供给修复",
+        "source read-only security boundary",
+        "source content boundary",
+        "excluding private host",
+        "source path protection"
       ],
       "exclusions": [
         "Runtime-owned Goal Loop execution",
@@ -1188,5 +1194,90 @@
     "exactCodexVersionAndQualificationRequired": true,
     "activeSoakSeconds": 5400,
     "historicalPassTransferAllowed": false
+  },
+  "sourceContentBoundaryPolicy": {
+    "schema": "evopilot-proposed-source-path-policy/v1",
+    "status": "APPROVED",
+    "identifier": "evopilot-harness-source-content-boundary/v1",
+    "traversalRoot": "Exact declared directory root; protected matching applies to relative descendant segments, not unrelated ancestors such as the Codex-managed checkout parent.",
+    "protectedDirectorySegments": [
+      ".codex",
+      ".codebuddy",
+      ".workbuddy",
+      ".claude",
+      ".opencode",
+      ".cursor",
+      ".ssh",
+      ".aws",
+      ".azure",
+      ".kube",
+      ".gnupg",
+      ".config",
+      ".cache"
+    ],
+    "protectedFileBasenames": [
+      ".netrc",
+      ".npmrc",
+      ".pypirc",
+      ".git-credentials",
+      "auth.json",
+      "credentials.json",
+      "credentials.yaml",
+      "credentials.yml",
+      "models.json",
+      "models.yaml",
+      "models.yml",
+      "model-config.json",
+      "model-config.yaml",
+      "model-config.yml",
+      "mcp.json",
+      "mcp.config.json",
+      "mcp.config.yaml",
+      "mcp.config.yml"
+    ],
+    "environmentFiles": {
+      "deny": [
+        ".env",
+        ".env.*"
+      ],
+      "allowExplicitPublicExamples": [
+        ".env.example",
+        ".env.sample",
+        ".env.template"
+      ]
+    },
+    "keyFileExtensions": [
+      ".pem",
+      ".key",
+      ".p12",
+      ".pfx",
+      ".keystore"
+    ],
+    "directoryBehavior": "Exclude before descendant enumeration/content hashing and preserve deterministic order of remaining public files.",
+    "explicitFileBehavior": "Reject protected local path, resolved member, or protected canonical target with SOURCE_PROTECTED_PATH before content open/hash/extractor/model; do not silently omit a member.",
+    "explicitDirectoryBehavior": "Reject a root that itself selects a protected Host/state directory. A source repository may itself be inside an authorized managed checkout; its unrelated parent Host directory does not cause rejection.",
+    "links": "Never traverse symlink directory entries. Reject explicitly selected symlink roots/files/members before read. Check original path spelling and canonical target containment; do not allow a public alias to point to protected state.",
+    "publicFilesPreserved": [
+      "README and ordinary docs",
+      "package/pom/build metadata",
+      "source code",
+      "ordinary declarative project materials outside protected paths",
+      ".agents/skills and other public skill directories outside protected Host state roots"
+    ],
+    "intentionalCoverageChange": "Files under protected Host directories, including any co-located .codex/skills or .codebuddy/skills, are excluded by this conservative policy. Moving or selecting a replacement Source is not part of this proposal.",
+    "protectedDirectorySequences": [
+      [
+        ".local",
+        "share"
+      ],
+      [
+        "Library",
+        "Keychains"
+      ],
+      [
+        "Library",
+        "Application Support"
+      ]
+    ]
   }
 }

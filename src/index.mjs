@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { handleV3Command } from "./v3/cli.mjs";
+import { assertSourcePath, captureSourceFile, isProtectedSourcePath } from "./v4/source/path-policy.mjs";
 
 const CATALOG_BLOCK = "evopilot-harness-catalog";
 const REGISTRY_SCHEMA = "evopilot-harness-registry/v1";
@@ -1594,12 +1595,14 @@ function publishRun(args, run) {
 function collectSourceInputs(args) {
   const sources = [];
   const sourceProjects = stringListRaw(args, "source-project");
+  const files = [...stringListRaw(args, "file"), ...stringListRaw(args, "attachment")];
+  const logs = stringListRaw(args, "production-log");
+  for (const input of [...sourceProjects, ...files, ...logs]) assertSourcePath(input);
   for (const sourceProject of sourceProjects) sources.push(sourceProjectSource(sourceProject));
   const githubRepos = stringListRaw(args, "github-repo");
   for (let index = 0; index < githubRepos.length; index += 1) sources.push(githubRepositorySource(args, githubRepos[index], index));
-  const files = [...stringListRaw(args, "file"), ...stringListRaw(args, "attachment")];
   for (const file of files) sources.push(fileSource(file, "attachment"));
-  for (const file of stringListRaw(args, "production-log")) sources.push(fileSource(file, "production-log"));
+  for (const file of logs) sources.push(fileSource(file, "production-log"));
   for (const note of stringListRaw(args, "note")) sources.push(noteSource(note));
   return sources;
 }
@@ -1825,9 +1828,8 @@ function inferRepositoryName(input) {
 }
 
 function fileSource(filePath, type) {
-  const absolute = path.resolve(filePath);
-  if (!fs.existsSync(absolute)) throw usage(`${type} not found: ${filePath}`);
-  const raw = fs.readFileSync(absolute);
+  const absolute = assertSourcePath(filePath);
+  const raw = captureSourceFile(absolute).bytes;
   const textCandidate = raw.toString("utf8");
   const printableCount = textCandidate.match(/[\u0009\u000a\u000d\u0020-\u007e\u4e00-\u9fa5]/g)?.length ?? 0;
   const isMostlyText = raw.length === 0 || printableCount / Math.max(textCandidate.length, 1) > 0.85;
@@ -1855,15 +1857,17 @@ function noteSource(note) {
 }
 
 function scanSourceProject(root) {
+  assertSourcePath(root);
   const files = [];
   walk(root, files, 260);
   const selected = files.filter((file) => shouldReadForScan(file)).slice(0, 90);
   const excerpts = [];
   for (const file of selected) {
     try {
-      const text = fs.readFileSync(file, "utf8").slice(0, 12_000);
+      const text = captureSourceFile(file, { root }).bytes.toString("utf8").slice(0, 12_000);
       excerpts.push(`## ${path.relative(root, file)}\n${text}`);
-    } catch {
+    } catch (error) {
+      if (error?.name === "SourcePathError") throw error;
       // Ignore non-text files.
     }
   }
@@ -1883,13 +1887,15 @@ function scanSourceProject(root) {
   };
 }
 
-function walk(dir, files, limit) {
+function walk(dir, files, limit, root = dir) {
   if (files.length >= limit) return;
+  assertSourcePath(dir, { root });
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (files.length >= limit) return;
     if ([".git", ".svn", ".hg", ".idea", ".settings", "node_modules", "dist", "build", "target", ".next", "coverage", ".evopilot-harness"].includes(entry.name)) continue;
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, files, limit);
+    if (isProtectedSourcePath(full, { root })) continue;
+    if (entry.isDirectory()) walk(full, files, limit, root);
     else if (entry.isFile()) files.push(full);
   }
 }
@@ -2735,12 +2741,14 @@ function detectSensitiveMaterial(text) {
 }
 
 function discoverSourceProjects(root, options = {}) {
+  assertSourcePath(root);
   const maxDepth = Number.isFinite(options.maxDepth) ? options.maxDepth : 5;
   const includeModules = Boolean(options.includeModules);
   const limit = Number.isFinite(options.limit) ? options.limit : 50;
   const results = [];
   const visit = (dir, depth) => {
     if (results.length >= limit || depth > maxDepth) return;
+    assertSourcePath(dir, { root });
     const marker = sourceProjectMarker(dir);
     if (marker) {
       results.push({ path: dir, ...marker });
@@ -2755,6 +2763,7 @@ function discoverSourceProjects(root, options = {}) {
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       if ([".git", ".svn", ".hg", ".idea", ".settings", "node_modules", "target", "dist", "build", ".next", "coverage"].includes(entry.name)) continue;
+      if (isProtectedSourcePath(path.join(dir, entry.name), { root })) continue;
       visit(path.join(dir, entry.name), depth + 1);
     }
   };
@@ -2774,7 +2783,7 @@ function sourceProjectMarker(dir) {
   const hasLib = fs.existsSync(path.join(dir, "lib")) && fs.statSync(path.join(dir, "lib")).isDirectory();
   if (hasSrc && hasLib) markers.push("legacy-java-lib");
   if (markers.length === 0) return undefined;
-  const pomText = has("pom.xml") ? safeReadText(path.join(dir, "pom.xml"), 80_000) : "";
+  const pomText = has("pom.xml") ? captureSourceFile(path.join(dir, "pom.xml"), { root: dir }).bytes.toString("utf8").slice(0, 80_000) : "";
   const rootType = /<modules>[\s\S]*?<\/modules>/i.test(pomText)
     ? "maven-multi-module-root"
     : markers.includes("package.json")

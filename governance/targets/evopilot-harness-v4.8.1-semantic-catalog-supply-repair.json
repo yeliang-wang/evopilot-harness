@@ -1,9 +1,9 @@
 {
   "schema": "evopilot-evolution-target/v1",
   "id": "evopilot-harness-v4.8.1-semantic-catalog-supply-repair",
-  "revision": 2,
+  "revision": 3,
   "status": "APPROVED",
-  "intent": "semantic catalog supply repair",
+  "intent": "semantic catalog supply repair; source content boundary protection",
   "objective": "Complete separately authorized indexed semantic supply without changing existing producer/consumer boundaries or published asset formats.",
   "evidence": [
     {
@@ -17,6 +17,10 @@
     {
       "ref": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/harness-inheritance-map.json@sha256:3a78da9e4800684f6e1b881e80b5f2a248f98779a050ae9ff02da1625e1fe95b",
       "authority": "Verified source definition lineage; no PASS/approval transfer."
+    },
+    {
+      "ref": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/approved-repairs/user-decision.json@sha256:4358ac60d1e8dc335cb7ed3d0e3944e19b0f3c184b2f8c4f561704f92f710ead",
+      "authority": "Explicit user approval of reviewed defect repairs and associated Roadmap/Target amendments; no release authority."
     }
   ],
   "roadmapBindings": [
@@ -26,7 +30,7 @@
       "matchedMilestone": "evopilot-harness-4.8.1-semantic-catalog-supply-repair",
       "targetVersion": "4.8.1",
       "classification": "ALIGNED",
-      "roadmapDigest": "sha256:317792f49a7b6a38d92fa801b20f4e1920c65d87178514c9db3b43724b63d6af"
+      "roadmapDigest": "sha256:bb0948669c3269d852e73281024737fd17d156f954e670c4900eb31560afd07a"
     }
   ],
   "scope": {
@@ -36,14 +40,16 @@
       "Implement and verify the exact target-contract.json @sha256:61e75701781d57735159cb4f297e0b60906dbbc22daca0dc931263a959bbb215 constraints; bind contract and inheritance definitions in implementation/acceptance validators.",
       "Create owning-product versioned tests/e2e corpus and criterion validators; prepare one frozen release build and complete campaign preflight; local Candidate formation and isolated Codex acceptance may proceed only after exact artifact, installation, model-route, Host-qualification and evidence-binding prerequisites pass. Publication remains subject to the separate passing release gate.",
       "Reconcile exact preserved source lineage and implement only in a new isolated codex/ worktree under /tmp; no edits to unrelated user files.",
-      "For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer."
+      "For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
+      "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable. Exact approved detail: /Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/source-repair-review/repair-plan.md@sha256:0719738a57d7ccb0fc91621d60eb09f93ca52c2ff35667a460dfbc3d86f71507"
     ],
     "exclude": [
       "Preserve current unrelated checkout changes. Owning-product implementation and verification use the existing isolated source worktrees on this Mac. Acceptance uses separately bound isolated Candidate installations. Durable Targets and evidence stay outside /tmp.",
       "No production/database mutation, semantic asset publication, public prerelease, credential export or unbounded paid-provider execution. Build, installation and Codex acceptance are conditional on their exact preflight bindings; this Target approval alone does not mark acceptance PASSED or authorize publication without the separate release gate.",
       "No Dashboard implementation or dependency, Runtime 6.4 Learning Interoperability, standalone Expert 2.2.1 publication or separate Runtime 6.2 user patch. Existing published bytes, tags and evidence remain immutable.",
       "WorkBuddy and all other live Hosts are outside this release acceptance scope. Do not operate or collect WorkBuddy execution artifacts, request WorkBuddy declarations, or claim cross-Host acceptance. Retain generated-adapter contracts and generic transport tests.",
-      "No weakened approval, mandatory signature, source-project command execution, arbitrary executable Pack, secret import, hidden provider fallback or transfer of producer/consumer ownership."
+      "No weakened approval, mandatory signature, source-project command execution, arbitrary executable Pack, secret import, hidden provider fallback or transfer of producer/consumer ownership.",
+      "Current user-authorized execution stops after step 1/2 completion. No soak, formal acceptance closure, release gate, merge, tag or publication. Existing later acceptance obligations remain pending, not waived."
     ]
   },
   "compatibilityPolicy": {
@@ -102,6 +108,12 @@
         "acceptanceIds": [
           "H-F04",
           "H-C02"
+        ]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:d7af5af1ecbd2a2618b1d9f8292ee741db6b7842e7e37b970c80f3c77b3d580c",
+        "acceptanceIds": [
+          "H-F08"
         ]
       }
     ],
@@ -222,6 +234,15 @@
       "critical": true,
       "criterion": "All cumulative historical obligations, current criteria and five real journeys pass on exact 4.8.1 with impact closure and NO_REGRESSION; no acceptance status or human declaration transfers. [Current-release Host override: For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.]",
       "requiredEvidence": "Exact successor artifact/Target/contract/Host bindings, independent executable assertions, named negative controls and redacted evidence. Criterion-level inheritance and complete machine variants plus new designated-human declaration; no fixtures masquerading as real Host evidence. Current-release evidence override: For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "H-F08",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.",
+      "requiredEvidence": "Synthetic canary open/read/extractor instrumentation across every v4/v3/ordered/direct entry, nested and case variant protected paths, symlinks and replacement races; zero protected reads; stable public snapshots and changed public-content sensitivity; old cache/resume refusal with immutable historical bytes; fresh installed MCP and affected Source portfolio without Source commands.",
       "status": "PENDING",
       "evidenceRefs": []
     }
@@ -4814,7 +4835,8 @@
       "coversAcceptanceIds": [
         "H-F03",
         "H-F07",
-        "H-C04"
+        "H-C04",
+        "H-F08"
       ],
       "startingState": "Exact separately authorized fresh installed Harness4.8.1 with isolated fixture Catalog; isolated /tmp roots on this Mac; all needed model/Host/source/permission bindings preflighted; no active integration reused.",
       "terminalState": "Under the current Codex-only Host policy: All assigned independent assertions and inherited variants pass with immutable exact evidence; WorkBuddy leg requires a new final declaration; no Release or implicit asset publication. For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
@@ -4866,6 +4888,23 @@
           "requiredEvidence": "Exact successor artifact/Target/contract/Host bindings, independent executable assertions, named negative controls and redacted evidence. Exact successor artifact/Target/contract/Host bindings, independent executable assertions, named negative controls and redacted evidence. Two contenders yield one success; inject failure before/after generation and pointer writes; uncertain outcome readback suppresses duplicate mutation. Exact successor artifact/Target/contract/Host bindings, independent executable assertions, named negative controls and redacted evidence. Publish-grow-read-revoke-rollback-restart sequence; active bound dependency remains exact or explicitly blocked. Exact successor artifact/Target/contract/Host bindings, independent executable assertions, named negative controls and redacted evidence. Criterion-level inheritance and complete machine variants plus new designated-human declaration; no fixtures masquerading as real Host evidence. Full inherited cases mapped to this family, not sampling. For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
           "status": "PENDING",
           "evidenceRefs": []
+        },
+        {
+          "id": "RC05-M3",
+          "scenario": "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.",
+          "coversAcceptanceIds": [
+            "H-F08"
+          ],
+          "hosts": [
+            "Codex"
+          ],
+          "prohibitedEffects": [
+            "No Source commands or private configuration ingestion",
+            "No audit history mutation, privilege escalation, credential re-entry, automatic release or old PASS transfer"
+          ],
+          "requiredEvidence": "Synthetic canary open/read/extractor instrumentation across every v4/v3/ordered/direct entry, nested and case variant protected paths, symlinks and replacement races; zero protected reads; stable public snapshots and changed public-content sensitivity; old cache/resume refusal with immutable historical bytes; fresh installed MCP and affected Source portfolio without Source commands.",
+          "status": "PENDING",
+          "evidenceRefs": []
         }
       ]
     }
@@ -4881,8 +4920,8 @@
     "target": {
       "decision": "APPROVED",
       "by": "user",
-      "evidenceRef": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/user-decision.json",
-      "authorizationDigest": "sha256:0c5d5af5ca4ee2be6e73f86d3db77afceab0b9fee7392dddd90630e969155c6a"
+      "evidenceRef": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/approved-repairs/user-decision.json",
+      "authorizationDigest": "sha256:725293a88228204b31ca1b75dfe3a8bffbafb05ddae40e27cad7fbabdc9e63f4"
     },
     "release": {
       "decision": "PENDING"

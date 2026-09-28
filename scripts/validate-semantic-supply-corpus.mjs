@@ -13,7 +13,8 @@ export const LOCAL_SUITES = Object.freeze([
   "tests/v4.8.1-semantic-catalog-materials.test.mjs",
   "tests/v4.8.1-semantic-catalog-store.test.mjs",
   "tests/v4.8.1-semantic-catalog-supply.test.mjs",
-  "tests/v4.8.1-semantic-catalog-public-negative.test.mjs"
+  "tests/v4.8.1-semantic-catalog-public-negative.test.mjs",
+  "tests/v4.8.1-source-path-protection.test.mjs"
 ]);
 const sha = value => `sha256:${crypto.createHash("sha256").update(value).digest("hex")}`;
 function requireCorpus(condition, code) {
@@ -22,7 +23,7 @@ function requireCorpus(condition, code) {
 export function projectCasePlan(targetBytes) {
   const target = JSON.parse(targetBytes);
   requireCorpus(target.schema === "evopilot-evolution-target/v1" &&
-    target.id === "evopilot-harness-v4.8.1-semantic-catalog-supply-repair" && target.revision === 2, "TARGET_IDENTITY_MISMATCH");
+    target.id === "evopilot-harness-v4.8.1-semantic-catalog-supply-repair" && target.revision === 3, "TARGET_IDENTITY_MISMATCH");
   requireCorpus(Array.isArray(target.acceptance) && Array.isArray(target.realCaseCoverage), "TARGET_CASES_INVALID");
   requireCorpus(isDeepStrictEqual(target.realCaseCoverage.map(item => item.id), ["RC01", "RC02", "RC03", "RC04", "RC05"]), "TARGET_CASES_INVALID");
   return {

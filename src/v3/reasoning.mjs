@@ -1,3 +1,5 @@
+import { assertSourcePath, captureSourceFile, walkSourceFiles } from "../v4/source/path-policy.mjs";
+import { extractStaticSourceText } from "../v4/source/static-text.mjs";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -39,6 +41,7 @@ export function collectEvidence(args, home, { projectOverride } = {}) {
   }
   if (!inputs.length) throw new Error("Provide --source-project, --source-root, --github-repo, --attachment, --production-log, or --note.");
 
+  for (const input of inputs) if (!input.inline) assertSourcePath(input.input);
   const rawNodes = [];
   const sourceRecords = [];
   for (const input of inputs) {
@@ -87,7 +90,7 @@ export function discoverSourceProjects(root, { includeModules = false, limit = 1
   const resolved = path.resolve(root);
   const markers = new Set(["pom.xml", "package.json", "go.mod", "cargo.toml", "pyproject.toml", "build.gradle", "build.gradle.kts", "makefile", "cmakelists.txt"]);
   const discovered = new Set();
-  for (const file of walkFiles(resolved, (candidate) => markers.has(path.basename(candidate).toLowerCase()))) {
+  for (const file of walkSourceFiles(resolved, (candidate) => markers.has(path.basename(candidate).toLowerCase())).files) {
     discovered.add(path.dirname(file));
   }
   if (!discovered.size && fs.existsSync(resolved)) discovered.add(resolved);
@@ -377,7 +380,7 @@ function proposedProfileIntent(role, domainConcepts, graph) {
 
 function scanProject(root, sourceType, nodes) {
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) throw new Error(`Source project does not exist or is not a directory: ${root}`);
-  const files = walkFiles(root, (file) => isRelevantFile(file)).slice(0, 300);
+  const files = walkSourceFiles(root, (file) => isRelevantFile(file)).files.slice(0, 300);
   for (const file of files) {
     const relative = path.relative(root, file).split(path.sep).join("/");
     const node = nodeFromFile(file, sourceType, relative);
@@ -387,14 +390,14 @@ function scanProject(root, sourceType, nodes) {
 
 function nodeFromFile(file, sourceType, relative = path.basename(file)) {
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) throw new Error(`Source file does not exist: ${file}`);
-  const stat = fs.statSync(file);
+  const captured = captureSourceFile(file);
+  const stat = { size: captured.size };
   const extension = path.extname(file).toLowerCase();
   let content = "";
-  if (extension === ".pdf") content = extractCommand("pdftotext", [file, "-"]);
-  else if ([".docx", ".pptx"].includes(extension)) content = extractOffice(file);
-  else if (stat.size <= 256_000) content = fs.readFileSync(file, "utf8");
+  if ([".pdf", ".docx", ".pptx"].includes(extension)) content = extractStaticSourceText(file, { captured, maxBuffer: 2_000_000 });
+  else if (stat.size <= 256_000) content = captured.bytes.toString("utf8");
   const kind = inferKind(file, sourceType);
-  return nodeFromText(kind, relative, content || `${path.basename(file)} binary-or-unreadable attachment`, { source: file, sourceType, rawDigest: digest(fs.readFileSync(file)) });
+  return nodeFromText(kind, relative, content || `${path.basename(file)} binary-or-unreadable attachment`, { source: file, sourceType, rawDigest: digest(captured.bytes) });
 }
 
 function nodeFromText(kind, label, content, metadata = {}) {
@@ -446,11 +449,6 @@ function normalizeRepository(repository) {
   if (repository.startsWith("file:") || repository.startsWith("http:") || repository.startsWith("https:") || repository.startsWith("ssh:") || repository.startsWith("git@") || path.isAbsolute(repository)) return repository;
   if (/^[\w.-]+\/[\w.-]+$/.test(repository)) return `https://github.com/${repository.replace(/\.git$/, "")}.git`;
   return repository;
-}
-
-function extractOffice(file) {
-  const pattern = file.endsWith(".docx") ? "word/document.xml" : "ppt/slides/*.xml";
-  return extractCommand("unzip", ["-p", file, pattern]).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 }
 
 function extractCommand(command, args) {

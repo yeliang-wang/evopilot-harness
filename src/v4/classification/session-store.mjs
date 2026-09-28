@@ -1,3 +1,4 @@
+import { assertCurrentSourcePolicy } from "../source/path-policy.mjs";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -108,6 +109,7 @@ export function inspectClassificationSession(home, sessionId) {
 
 export function resumeClassificationSession({ home, sessionId, expectedSessionDigest, adapterId, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest);
+  assertCurrentSourcePolicy(session.currentResult);
   if (["HANDED_OFF", "CLOSED", "CANCELLED"].includes(session.status)) throw classificationError("CLASSIFICATION_SESSION_TERMINAL", "A handed-off, closed, or cancelled classification lifecycle cannot be resumed through classification.", "inspect-operation-session");
   const operationSession = resumeAgentSession({ home: session.workspace.home, sessionId: session.agentOperationSessionId, expectedSessionDigest: session.agentOperationSessionDigest, adapterId, now });
   session.agentOperationSessionDigest = operationSession.sessionDigest;
@@ -197,6 +199,8 @@ async function runClassificationAnalysis({ home, sourceDescriptor, resolvedSourc
     const recordedDigest = copy.analysisResultDigest;
     delete copy.analysisResultDigest;
     if (recordedDigest !== digest(copy)) throw classificationError("CLASSIFICATION_REPLAY_INTEGRITY_FAILED", "The completed classification replay result failed its immutable digest check.", "preserve-and-inspect-workspace");
+    assertCurrentSourcePolicy(result);
+    if (result.sourceSnapshotDigest !== prepared.hypothesis.sourceSnapshotDigest || result.hypothesisDigest !== prepared.hypothesis.hypothesisDigest || result.taxonomyDigest !== prepared.taxonomy.taxonomyDigest || result.retrieval?.retrievalDigest !== prepared.retrieval.retrievalDigest || digest(result.sourceConceptHypothesis) !== digest(prepared.hypothesis)) throw classificationError("CLASSIFICATION_REPLAY_CONTEXT_MISMATCH", "The completed classification result does not bind the current Source analysis.", "preserve-and-inspect-workspace");
     return { result, executionMode: "REPLAY", physicalAdvisorInvocationCount: 0, requestDigest, resolvedSource: resolution };
   }
   const result = await analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId: `attempt-${crypto.randomUUID()}`, intent, locale });

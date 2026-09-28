@@ -365,3 +365,12 @@ This revision changes the terminal Engine dependency to 4.8.1 while retaining 4.
 ### Current convergence release: Codex-only acceptance
 
 For Harness 4.8.1, Runtime 6.3.0 and Expert 2.3.0 only, live Host acceptance requires exact-version qualified Codex. This explicit successor policy overrides inherited WorkBuddy, Claude Code, independent-Host and cross-Host execution requirements. Published historical evidence and Roadmaps keep their historical meaning. All generated adapter contracts and generic MCP/headless transport checks remain, without a real cross-Host acceptance claim. All non-Host functionality, security, exact installed artifacts, 5400-second active soak, impact closure and NO_REGRESSION remain required. Release remains separately governed.
+
+
+### Approved acceptance defect repair (2026-09-28)
+
+Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.
+
+The approved finite path policy is `sourceContentBoundaryPolicy` in `governance/roadmap.yaml`. Entire Host state directories, including co-located `.codex/skills` and `.codebuddy/skills`, are excluded; public `.agents/skills` remains readable. Relative descendant matching permits an authorized repository beneath a managed checkout. Public-only Source snapshot digests remain stable; affected snapshots and policy-bound caches require fresh evidence. Content redaction remains additional protection, not a promise to identify arbitrary secrets without reading content.
+
+This repair retains the existing product versions and boundaries. Original acceptance and historical evidence remain intact. The current execution stops after steps 1 and 2; it does not authorize soak, formal acceptance closure, or publication.

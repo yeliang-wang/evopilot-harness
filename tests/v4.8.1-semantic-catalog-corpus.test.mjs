@@ -9,7 +9,7 @@ import { CORPUS_ROOT, PLAN_PATH, LOCAL_SUITES, projectCasePlan, safeRepositoryFi
 const checkedIn = JSON.parse(fs.readFileSync(path.join(CORPUS_ROOT, PLAN_PATH)));
 // Minimal synthetic Target tests projection mechanics, not real approval or evidence.
 const targetBytes = Buffer.from(JSON.stringify({schema: "evopilot-evolution-target/v1", id: checkedIn.target.id,
-  revision: 2, acceptance: checkedIn.acceptanceIds.map(id => ({id, status: "PENDING", evidenceRefs: []})),
+  revision: 3, acceptance: checkedIn.acceptanceIds.map(id => ({id, status: "PENDING", evidenceRefs: []})),
   realCaseCoverage: checkedIn.cases.map(({targetPointer, ...item}) => ({...item,
     machineVariants: item.machineVariants.map(({targetPointer, ...variant}) => variant)}))}));
 const fixture = () => projectCasePlan(targetBytes);
@@ -23,15 +23,15 @@ test("versioned local corpus includes the actual public negative matrix exactly 
   assert.throws(() => validateCasePlan(incomplete, targetBytes), code("CASE_PLAN_MISMATCH"));
 });
 
-test("development corpus declares five RC journeys, ten variants and eleven criteria without authority", () => {
+test("development corpus declares five RC journeys, eleven variants and twelve criteria without authority", () => {
   const plan = fixture();
   assert.deepEqual({...checkedIn, target: plan.target}, plan);
-  assert.equal(checkedIn.target.fileDigest, "sha256:0bcb14f31f6da80d7940e3868a1354a4e9f52c05df49b047efbf7d0bcd2e6254");
+  assert.equal(checkedIn.target.fileDigest, "sha256:9aed985247cfa303eb8ba8b716eb071933d56dc32c017492d8836af526496578");
   const report = validateCasePlan(plan, targetBytes);
   assert.equal(report.caseCount, 5);
   for (const item of [...plan.cases, ...plan.cases.flatMap(c => c.machineVariants)]) assert.deepEqual(item.hosts, ["Codex"]);
-  assert.equal(report.machineVariantCount, 10);
-  assert.equal(report.currentCriterionCount, 11);
+  assert.equal(report.machineVariantCount, 11);
+  assert.equal(report.currentCriterionCount, 12);
   assert.equal(report.formalAcceptance, "NOT_RUN");
   assert.equal(report.targetCriteriaClosed, 0);
   assert.equal(report.localSyntheticTests, "NOT_RUN");

@@ -32,7 +32,7 @@ Dockerfile and Compose files
 *.go, *.java, *.rs, *.py, *.ts, *.js
 ```
 
-The scan is bounded. It records file counts, selected files, top extensions, and extracted text excerpts.
+The scan is bounded. It records file counts, selected files, top extensions, and extracted text excerpts. The v2 compatibility scanner, project discovery, and supporting-file inputs enforce the same [static Source content boundary](business-classification.md#static-source-content-boundary) as v3/v4 before opening contents; Host configuration and credentials are excluded, linked inputs are refused, and each static file is limited to 256 MiB.
 
 ## GitHub Repository Source
 

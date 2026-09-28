@@ -1,3 +1,4 @@
+import { assertCurrentSourcePolicy } from "../source/path-policy.mjs";
 import { digest } from "../../v3/utils.mjs";
 import { buildSourceConceptHypothesis } from "./source-concept.mjs";
 import { canonicalCompare, resolveTaxonomy } from "./taxonomy.mjs";
@@ -66,6 +67,7 @@ export async function analyzePreparedSourceTaxonomy({ prepared, modelsFile, mode
 
 export function createClassificationHandoff({ classificationSessionId, result, decidedBy, decisionToken }) {
   if (result?.schema !== "evopilot-harness-taxonomy-analysis-result/v1" || result.aggregate !== "TAXONOMY_MATCHED") throw handoffError("CLASSIFICATION_MATCH_REQUIRED", "Only a complete TAXONOMY_MATCHED result can continue to Harness Eligibility.");
+  assertCurrentSourcePolicy(result);
   const expected = `CONTINUE_TO_HARNESS:${classificationSessionId}:${result.analysisResultDigest}`;
   if (decisionToken !== expected) throw handoffError("EXPLICIT_HANDOFF_DECISION_REQUIRED", `The exact classification handoff requires ${expected}.`);
   const core = {

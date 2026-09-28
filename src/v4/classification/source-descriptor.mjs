@@ -1,3 +1,4 @@
+import { assertSourcePath, captureSourceFile } from "../source/path-policy.mjs";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -84,6 +85,7 @@ export function resolveSourceDescriptor({ descriptor: descriptorInput, workspace
 function resolveLocalSource({ descriptor, descriptorDigest, now }) {
   const paths = descriptor.type === "ORDERED_ATTACHMENT_SET" ? descriptor.members.map((member) => member.path) : [descriptor.locator.path];
   for (const sourcePath of paths) {
+    assertSourcePath(sourcePath);
     if (!fs.existsSync(sourcePath)) throw sourceDescriptorError("SOURCE_NOT_FOUND", `Source does not exist: ${sourcePath}.`, "repair-source-locator");
   }
   if (descriptor.type === "LOCAL_FILE" && !fs.statSync(paths[0]).isFile()) throw sourceDescriptorError("SOURCE_TYPE_MISMATCH", `${descriptor.type} requires a file.`, "repair-source-type-or-locator");
@@ -119,7 +121,7 @@ function resolveLocalSource({ descriptor, descriptorDigest, now }) {
 function assertUnsupportedLocalGitFeatures(root) {
   if (fs.existsSync(path.join(root, ".gitmodules"))) throw sourceDescriptorError("SOURCE_GIT_SUBMODULE_UNSUPPORTED", "Git submodules are unsupported for v4.5 static Source acquisition.", "supply-source-without-submodules");
   const attributes = path.join(root, ".gitattributes");
-  if (fs.existsSync(attributes) && /(?:^|\s)filter\s*=\s*lfs(?:\s|$)/im.test(fs.readFileSync(attributes, "utf8"))) throw sourceDescriptorError("SOURCE_GIT_LFS_UNSUPPORTED", "Git LFS objects are unsupported for v4.5 static Source acquisition.", "supply-source-without-git-lfs");
+  if (fs.existsSync(attributes) && /(?:^|\s)filter\s*=\s*lfs(?:\s|$)/im.test(captureSourceFile(attributes, { root }).bytes.toString("utf8"))) throw sourceDescriptorError("SOURCE_GIT_LFS_UNSUPPORTED", "Git LFS objects are unsupported for v4.5 static Source acquisition.", "supply-source-without-git-lfs");
 }
 
 function resolveGitHubSource({ descriptor, descriptorDigest, workspace, now }) {
@@ -205,7 +207,7 @@ function materializeGitArchive({ bare, resolvedCommit, target }) {
 
 function discoverLicenses(root) {
   const files = fs.readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isFile() && /^(?:licen[cs]e|copying|notice)(?:[._-].*)?$/i.test(entry.name)).map((entry) => entry.name).sort();
-  return { status: files.length ? "DISCOVERED" : "NOT_DISCOVERED", files: files.map((file) => ({ name: file, digest: digest(fs.readFileSync(path.join(root, file))) })) };
+  return { status: files.length ? "DISCOVERED" : "NOT_DISCOVERED", files: files.map((file) => ({ name: file, digest: digest(captureSourceFile(path.join(root, file), { root }).bytes) })) };
 }
 
 function normalizeGitHubRepository(value) {
@@ -244,7 +246,7 @@ function inferLocalType(value) {
   return "LOCAL_FILE";
 }
 
-function canonicalLocalPath(value) { return path.resolve(String(value)); }
+function canonicalLocalPath(value) { return assertSourcePath(String(value), { mustExist: false }); }
 function normalizeSafeLabel(value) { const text = String(value ?? "").trim(); return text ? text.slice(0, 160) : null; }
 function normalizeSourceId(value, input, type) { const supplied = String(value ?? "").trim().toLowerCase(); const generated = `source-${digest({ type, locator: input.locator ?? input.path ?? input.repository ?? input.url ?? input.members }).slice(7, 23)}`; return validateSourceId(supplied || generated); }
 function generatedSourceId(binding) { return validateSourceId(`source-${digest(binding).slice(7, 23)}`); }

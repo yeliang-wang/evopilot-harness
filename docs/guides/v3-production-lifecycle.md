@@ -64,7 +64,7 @@ node src/index.mjs produce \
   --json
 ```
 
-PDF uses `pdftotext` when available. DOCX and PPTX text is extracted from their XML packages. All stored excerpts are redacted and written to `evidence/<run-id>/`.
+PDF uses `pdftotext` when available. DOCX and PPTX text is extracted from their XML packages. All stored excerpts are redacted and written to `evidence/<run-id>/`. Project discovery, project scans, attachments, production logs, and historical Harness inputs also enforce the [static Source content boundary](business-classification.md#static-source-content-boundary) before reading contents, including protected-path, link, and 256 MiB per-file limits. Advisor model configuration is outside that Source boundary.
 
 Controlled research is explicit:
 

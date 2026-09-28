@@ -4,8 +4,8 @@
   "projectionMode": "DEVELOPMENT_CASE_PLAN",
   "target": {
     "id": "evopilot-harness-v4.8.1-semantic-catalog-supply-repair",
-    "revision": 2,
-    "fileDigest": "sha256:0bcb14f31f6da80d7940e3868a1354a4e9f52c05df49b047efbf7d0bcd2e6254"
+    "revision": 3,
+    "fileDigest": "sha256:9aed985247cfa303eb8ba8b716eb071933d56dc32c017492d8836af526496578"
   },
   "acceptanceIds": [
     "H-F01",
@@ -18,7 +18,8 @@
     "H-C01",
     "H-C02",
     "H-C03",
-    "H-C04"
+    "H-C04",
+    "H-F08"
   ],
   "inheritedObligationsPointer": "/inheritedAcceptance",
   "cases": [
@@ -199,7 +200,8 @@
       "coversAcceptanceIds": [
         "H-F03",
         "H-F07",
-        "H-C04"
+        "H-C04",
+        "H-F08"
       ],
       "machineVariants": [
         {
@@ -227,6 +229,17 @@
             "H-F07",
             "H-C04"
           ]
+        },
+        {
+          "id": "RC05-M3",
+          "scenario": "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.",
+          "hosts": [
+            "Codex"
+          ],
+          "targetPointer": "/realCaseCoverage/4/machineVariants/2",
+          "coversAcceptanceIds": [
+            "H-F08"
+          ]
         }
       ]
     }
@@ -236,7 +249,8 @@
     "tests/v4.8.1-semantic-catalog-materials.test.mjs",
     "tests/v4.8.1-semantic-catalog-store.test.mjs",
     "tests/v4.8.1-semantic-catalog-supply.test.mjs",
-    "tests/v4.8.1-semantic-catalog-public-negative.test.mjs"
+    "tests/v4.8.1-semantic-catalog-public-negative.test.mjs",
+    "tests/v4.8.1-source-path-protection.test.mjs"
   ],
   "evidencePolicy": "LOCAL_SYNTHETIC_SUPPORT_ONLY_NOT_RC_ACCEPTANCE",
   "authority": {

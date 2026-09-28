@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import { digest, redact, walkFiles } from "../../v3/utils.mjs";
+import { digest, redact } from "../../v3/utils.mjs";
 import { extractStaticSourceText } from "../source/static-text.mjs";
+import { assertSourcePath, captureSourceFile, sourceContentBoundary, walkSourceFiles } from "../source/path-policy.mjs";
 import { canonicalCompare, normalizeTerm } from "./taxonomy.mjs";
 
 export const SOURCE_CONCEPT_HYPOTHESIS_SCHEMA = "evopilot-harness-source-concept-hypothesis/v1";
@@ -23,7 +24,8 @@ export function buildSourceConceptHypothesis(sourceInput) {
   const resolved = normalizeResolvedSource(sourceInput);
   const root = resolved.path;
   const singleFile = resolved.files ? false : fs.statSync(root).isFile();
-  const files = resolved.files ? resolved.files.slice(0, MAX_FILES).map((item) => item.path) : singleFile ? [root] : stratifiedSourceFiles(walkFiles(root, readableSourceFile), root, MAX_FILES);
+  const selection = !resolved.files && !singleFile ? walkSourceFiles(root, readableSourceFile) : { files: [], boundary: sourceContentBoundary() };
+  const files = resolved.files ? resolved.files.slice(0, MAX_FILES).map((item) => item.path) : singleFile ? [root] : stratifiedSourceFiles(selection.files, root, MAX_FILES);
   const characterBudgetPerFile = Math.max(MAX_CHARACTERS_PER_FILE, Math.floor(MAX_TOTAL_CHARACTERS / Math.max(1, files.length)));
   const orderedByPath = new Map((resolved.files ?? []).map((item) => [item.path, item]));
   const citations = [];
@@ -33,7 +35,8 @@ export function buildSourceConceptHypothesis(sourceInput) {
   const termWeights = new Map();
   let characters = 0;
   for (const file of files) {
-    const stat = fs.statSync(file);
+    const captured = captureSourceFile(file, { root: !resolved.files && !singleFile ? root : undefined });
+    const stat = { size: captured.size };
     const ordered = orderedByPath.get(file);
     const relative = ordered ? `${String(ordered.memberIndex + 1).padStart(3, "0")}-${ordered.sourceId}/${path.basename(file)}` : singleFile ? path.basename(file) : path.relative(root, file);
     const governanceOnly = /(?:^|\/)(?:CONTRIBUTING|CODE_OF_CONDUCT|SECURITY|SUPPORT|LICENSE)(?:\.[^/]*)?$/i.test(relative);
@@ -41,7 +44,7 @@ export function buildSourceConceptHypothesis(sourceInput) {
     const structuredFamily = lowTrust ? "low-trust-structured" : "structured";
     const contentFamily = lowTrust ? "low-trust-content" : "lexical-content";
     const extension = path.extname(file).toLowerCase() || "[none]";
-    const fileDigest = digest(fs.readFileSync(file));
+    const fileDigest = digest(captured.bytes);
     const boundedContainer = isBoundedContainerDocument(file);
     const contentReadable = readableSourceFile(file) && (stat.size <= MAX_FILE_BYTES || boundedContainer);
     sourceFiles.push({ sourceRef: relative, sourceDigest: fileDigest, bytes: stat.size, readable: contentReadable, ...(ordered ? { memberIndex: ordered.memberIndex, memberSourceId: ordered.sourceId } : {}) });
@@ -51,7 +54,7 @@ export function buildSourceConceptHypothesis(sourceInput) {
     const semanticOverview = isSemanticOverviewFile(file);
     if (!contentReadable) {
       if (semanticOverview && isPlainTextOverview(file)) {
-        const rawOverview = readTextPrefix(file, MAX_OVERVIEW_ANALYSIS_CHARACTERS);
+        const rawOverview = captured.bytes.subarray(0, MAX_FILE_BYTES).toString("utf8").slice(0, MAX_OVERVIEW_ANALYSIS_CHARACTERS);
         const analysisText = redact(rawOverview);
         addSemanticOverviewEvidence({ citations, termWeights, text: analysisText, relative, fileDigest, lowTrust, redactionApplied: analysisText !== rawOverview });
       }
@@ -59,7 +62,7 @@ export function buildSourceConceptHypothesis(sourceInput) {
     }
     const remaining = Math.max(0, MAX_TOTAL_CHARACTERS - characters);
     if (remaining === 0) continue;
-    const extracted = extractStaticSourceText(file);
+    const extracted = extractStaticSourceText(file, { captured });
     const redacted = redact(extracted);
     const text = redacted.slice(0, Math.min(characterBudgetPerFile, remaining));
     characters += text.length;
@@ -111,7 +114,7 @@ export function buildSourceConceptHypothesis(sourceInput) {
     contradictions: [],
     uncertainty: { status: concepts.length < 3 ? "HIGH" : "BOUNDED", reasons: concepts.length < 3 ? ["Too few supported concepts were extracted from the bounded static Source."] : [] },
     missingEvidence: concepts.length < 3 || new Set([...citations, ...dependencySignals, ...structuredSignals].map((item) => item.family)).size < 2 ? ["Provide more static Source files, dependency manifests, or design documentation."] : [],
-    provenance: { algorithm: "taxonomy-blind-source-concepts/v2", sampling: resolved.files ? "exact-ordered-members/v1" : "top-level-round-robin-diversified/v1", termFrequency: "one-vote-per-file-family/v1", semanticProjection: "overview-purpose-and-inventory/v1", taxonomyExposed: false, advisorUsed: false, sourceExecution: false, networkAccess: resolved.type === "GITHUB_REPOSITORY", limits: { maxFiles: MAX_FILES, maxConcepts: MAX_CONCEPTS, maxFileBytes: MAX_FILE_BYTES, maxCharactersPerFile: MAX_CHARACTERS_PER_FILE, maxOverviewAnalysisCharacters: MAX_OVERVIEW_ANALYSIS_CHARACTERS, maxTotalCharacters: MAX_TOTAL_CHARACTERS } }
+    provenance: { sourceContentBoundary: selection.boundary, algorithm: "taxonomy-blind-source-concepts/v2", sampling: resolved.files ? "exact-ordered-members/v1" : "top-level-round-robin-diversified/v1", termFrequency: "one-vote-per-file-family/v1", semanticProjection: "overview-purpose-and-inventory/v1", taxonomyExposed: false, advisorUsed: false, sourceExecution: false, networkAccess: resolved.type === "GITHUB_REPOSITORY", limits: { maxFiles: MAX_FILES, maxConcepts: MAX_CONCEPTS, maxFileBytes: MAX_FILE_BYTES, maxCharactersPerFile: MAX_CHARACTERS_PER_FILE, maxOverviewAnalysisCharacters: MAX_OVERVIEW_ANALYSIS_CHARACTERS, maxTotalCharacters: MAX_TOTAL_CHARACTERS } }
   };
   core.hypothesisDigest = digest(core);
   return core;
@@ -119,14 +122,14 @@ export function buildSourceConceptHypothesis(sourceInput) {
 
 function normalizeResolvedSource(sourceInput) {
   if (typeof sourceInput === "string") {
-    const root = path.resolve(sourceInput);
+    const root = assertSourcePath(sourceInput);
     if (!fs.existsSync(root)) throw sourceError("SOURCE_NOT_FOUND", `Source does not exist: ${root}`);
     return { path: root, files: null, type: fs.statSync(root).isFile() ? "LOCAL_FILE" : "LOCAL_DIRECTORY", sourceDescriptorDigest: digest({ legacyPath: root }), sourceResolutionDigest: digest({ legacyPath: root }) };
   }
   const root = sourceInput?.path ? path.resolve(sourceInput.path) : null;
   const files = Array.isArray(sourceInput?.files) ? sourceInput.files.map((item) => ({ ...item, path: path.resolve(item.path) })) : null;
   if (!root && !files?.length) throw sourceError("SOURCE_NOT_FOUND", "Resolved Source has no readable path or ordered members.");
-  for (const target of files?.map((item) => item.path) ?? [root]) if (!fs.existsSync(target)) throw sourceError("SOURCE_NOT_FOUND", `Source does not exist: ${target}`);
+  for (const target of files?.map((item) => item.path) ?? [root]) assertSourcePath(target);
   return { ...sourceInput, path: root, files };
 }
 
@@ -209,17 +212,6 @@ function isPlainTextOverview(file) {
 
 function isBoundedContainerDocument(file) {
   return /\.(?:docx|pptx|pdf)$/i.test(file);
-}
-
-function readTextPrefix(file, maxCharacters) {
-  const descriptor = fs.openSync(file, "r");
-  try {
-    const buffer = Buffer.alloc(Math.min(MAX_FILE_BYTES, fs.statSync(file).size));
-    const bytes = fs.readSync(descriptor, buffer, 0, buffer.length, 0);
-    return buffer.subarray(0, bytes).toString("utf8").slice(0, maxCharacters);
-  } finally {
-    fs.closeSync(descriptor);
-  }
 }
 
 function boundedRepresentativeExcerpt(text, maximumCharacters) {
