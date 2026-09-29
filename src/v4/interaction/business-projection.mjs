@@ -1,4 +1,5 @@
 import { digest, persistedJson, safeId } from "../../v3/utils.mjs";
+import { PROFESSIONAL_SOURCE_FIELDS, professionalFactsForSource } from "../../v3/professional-evidence.mjs";
 import {
   CANONICAL_PRESENTATION_DELIVERY_RECEIPT_SCHEMA,
   createAgentHostBoundaryContract,
@@ -287,7 +288,7 @@ function createDecisionDefinition({ stage, decision, subject, locale }) {
 }
 
 function createSourceToHarnessReasoningMap({ session, stage, subject, authoritative }) {
-  const sources = sourceEntries(authoritative);
+  const sources = sourceEntries(authoritative).map(source => ({ ...source, ...professionalFactsForSource(authoritative.reasoning?.professionalEvidence, source) }));
   const proposal = authoritative.proposal ?? authoritative.report?.proposal ?? null;
   const outcome = reasoningOutcome(authoritative, proposal);
   const entries = sources.map((source, index) => ({
@@ -303,7 +304,10 @@ function createSourceToHarnessReasoningMap({ session, stage, subject, authoritat
     alternatives: unique(source.alternatives ?? candidateAlternatives(authoritative)),
     uncertainty: source.uncertainty ?? authoritative.review?.evaluationSufficiency ?? authoritative.evaluation?.status ?? "NOT_REPORTED",
     nonAdoptionReason: ["REJECT", "NEED_MORE_EVIDENCE"].includes(source.outcome ?? outcome) ? (source.nonAdoptionReason ?? businessSummary(stage, authoritative)) : null,
-    catalogRelationship: source.catalogRelationship ?? catalogRelationship(authoritative)
+    catalogRelationship: source.catalogRelationship ?? catalogRelationship(authoritative),
+    ...Object.fromEntries(PROFESSIONAL_SOURCE_FIELDS.map(field => [field, unique(source[field])])),
+    facetEvidence: source.facetEvidence ?? [],
+    professionalEvidenceDigest: source.professionalEvidenceDigest ?? null
   }));
   const core = {
     schema: SOURCE_REASONING_MAP_SCHEMA,
@@ -427,9 +431,7 @@ function blockerNextAction(value, chinese) {
 }
 
 function sourceEntries(model) {
-  // A completed Review already binds each Source to its immutable identity and
-  // cited evidence. Plan paths are discovery inputs, not replacement identities
-  // for these reviewed Sources. Keep the complete Review in the audit model.
+  // Preserve the Review-bound Source identities; plan paths cannot replace them.
   if (Array.isArray(model.review?.projectMembership) && model.review.projectMembership.length) {
     return model.review.projectMembership.map((source) => ({
       ...source,
@@ -556,6 +558,11 @@ function professionalReasoningBusinessSummary(analysis, reasoningMap, zh) {
   if (!analysis) return reasoningBusinessSummary(reasoningMap, zh);
   return {
     [zh ? "提取算法" : "Extraction algorithm"]: analysis.extractionAlgorithm,
+    [zh ? "素材声明与待验证候选" : "Source declarations and unvalidated candidates"]: Object.fromEntries([
+      ["businessObjects", "业务对象"], ["capabilities", "能力"], ["tasks", "任务"], ["roles", "角色"],
+      ["constraints", "约束"], ["workflows", "流程"], ["failureModes", "失败模式"], ["recoveryStrategies", "恢复策略"],
+      ["validators", "验证规则"], ["positiveCases", "正向用例"], ["negativeCases", "负向用例"], ["risks", "风险"], ["expectedEffects", "预期效果"]
+    ].filter(([field]) => analysis.professionalFacets[field]?.length).map(([field, label]) => [zh ? label : humanize(field), analysis.professionalFacets[field].slice(0, 3)])),
     [zh ? "能力判断" : "Capability reasoning"]: analysis.capabilities.slice(0, 3).map((item) => ({
       [zh ? "能力" : "Capability"]: item.capabilityId,
       [zh ? "Source 证据" : "Source evidence"]: item.sourceEvidence.slice(0, 3).map((evidence) => ({ source: sourceLabel(evidence.sourceRef ?? evidence.sourceId), facts: (evidence.observedFacts ?? []).slice(0, 3) })),

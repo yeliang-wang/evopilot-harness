@@ -118,6 +118,7 @@ export function createSourceOutcomeExplanation({ stage, authoritative = {}, reas
     authoritative.review?.rationale,
     ...array(authoritative.review?.reasons),
     ...array(authoritative.eligibility?.reasons),
+    ...array(authoritative.reasoning?.rejectionReasons),
     ...array(reasoningMap.entries).map((entry) => entry.rationale)
   ]);
   const failedCriteria = unique([
@@ -128,16 +129,19 @@ export function createSourceOutcomeExplanation({ stage, authoritative = {}, reas
   const missingEvidence = unique([
     ...array(authoritative.missingEvidence),
     ...array(authoritative.review?.missingEvidence),
+    ...array(authoritative.reasoning?.professionalEvidence?.missingFields).map(field => `No explicit static evidence for ${field}.`),
     ...array(authoritative.review?.suggestedActions).filter((item) => /evidence|证据/i.test(String(item)))
   ]);
   const counterEvidence = unique([
     ...array(authoritative.counterEvidence),
     ...array(authoritative.review?.counterEvidence),
+    ...array(reasoningMap.entries).flatMap(entry => array(entry.counterEvidence)),
     ...array(authoritative.review?.findings).filter((item) => ["warning", "error", "blocker"].includes(String(item?.severity).toLowerCase())).map((item) => item.conclusion ?? item.reasons).flat()
   ]);
   const alternatives = unique([
     ...array(authoritative.alternatives),
     ...array(authoritative.candidates).map((item) => typeof item === "string" ? item : item?.id ?? item?.name),
+    ...array(authoritative.reasoning?.candidates).filter(item => !selectedProfileIds(authoritative.reasoning).has(item.id)).map(item => item.id),
     ...array(reasoningMap.entries).flatMap((entry) => array(entry.alternatives))
   ]);
   const core = {
@@ -190,7 +194,8 @@ export function createHarnessProfessionalAnalysis({ subject = {}, authoritative 
   const proposal = authoritative.proposal ?? authoritative.report?.proposal ?? {};
   const capabilities = array(reasoningMap.entries).map((entry, index) => ({
     capabilityId: entry.harnessCapability ?? `${subject.id ?? "capability"}-${index + 1}`,
-    sourceEvidence: [{ sourceId: entry.sourceId, sourceRef: entry.sourceRef, sourceDigest: entry.sourceDigest, evidenceIds: unique(entry.evidenceIds), observedFacts: unique(entry.observedFacts) }],
+    sourceEvidence: [{ sourceId: entry.sourceId, sourceRef: entry.sourceRef, sourceDigest: entry.sourceDigest, evidenceIds: unique(entry.evidenceIds), observedFacts: unique(entry.observedFacts) },
+      ...array(entry.facetEvidence).map(fact => ({ sourceId: entry.sourceId, sourceRef: fact.sourceRef, sourceDigest: fact.sourceDigest, evidenceIds: [fact.evidenceId], observedFacts: [fact.value], excerptDigest: fact.excerptDigest, locator: fact.locator, extractionMethod: fact.extractionMethod, uncertainty: fact.uncertainty }))],
     extractionMethod: ["STATIC_SOURCE_INGESTION", "EVIDENCE_GRAPH_NORMALIZATION", "ELIGIBILITY_GATE", "ONTOLOGY_MAPPING", "CATALOG_RETRIEVAL_AND_SCORING", "DECISION_AGGREGATION", "ARCHITECTURE_AND_EVALUATION_ASSESSMENT"],
     rationale: entry.rationale,
     confidence: normalizeConfidence(entry.uncertainty),
@@ -198,7 +203,7 @@ export function createHarnessProfessionalAnalysis({ subject = {}, authoritative 
     alternatives: unique(entry.alternatives),
     catalogRelationship: entry.catalogRelationship,
     evaluationCoverage: authoritative.review?.evaluationSufficiency?.status ?? proposal.evaluationCoverage?.status ?? proposal.evaluationPack?.spec?.status ?? "NOT_REPORTED",
-    knownLimits: unique(authoritative.limitations ?? authoritative.review?.limitations)
+    knownLimits: unique([...array(authoritative.limitations ?? authoritative.review?.limitations), ...array(authoritative.reasoning?.professionalEvidence?.knownLimits)])
   }));
   const core = {
     schema: HARNESS_PROFESSIONAL_ANALYSIS_SCHEMA,
@@ -211,7 +216,7 @@ export function createHarnessProfessionalAnalysis({ subject = {}, authoritative 
       recommendation: sourceOutcomeExplanation.outcome,
       existingRelationship: unique(capabilities.map((item) => item.catalogRelationship)),
       alternatives: sourceOutcomeExplanation.alternatives,
-      rejectedAlternatives: sourceOutcomeExplanation.alternatives.map((alternative) => ({ alternative, reason: "LOWER_EVIDENCE_OR_POLICY_FIT_THAN_THE_ENGINE_RECOMMENDATION" }))
+      rejectedAlternatives: sourceOutcomeExplanation.alternatives.map((alternative) => explainCatalogAlternative(alternative, authoritative.reasoning))
     },
     architectureAssessmentDigest: architectureAssessment?.architectureAssessmentDigest ?? null,
     confidence: aggregateConfidence(capabilities),
@@ -224,15 +229,33 @@ export function createHarnessProfessionalAnalysis({ subject = {}, authoritative 
   return core;
 }
 
+function selectedProfileIds(reasoning = {}) {
+  if (!["REUSE_EXISTING", "EVOLVE_EXISTING", "COMPOSE_NEW_BUNDLE", "NO_CHANGE"].includes(reasoning.decision)) return new Set();
+  return new Set([reasoning.targetProfile?.id, ...array(reasoning.composeProfiles).map(item => item.id)].filter(Boolean));
+}
+
+function explainCatalogAlternative(alternative, reasoning) {
+  const candidate = reasoning?.candidates?.find(item => item.id === alternative);
+  if (!candidate) return { alternative, reason: "NO_BOUND_CANDIDATE_COMPARISON_REPORTED" };
+  const selected = selectedProfileIds(reasoning);
+  const chosen = reasoning.candidates.filter(item => selected.has(item.id));
+  const reasons = [...array(candidate.rejectionReasons)];
+  if (chosen.length) reasons.push(`Candidate rank ${candidate.rank}, score ${candidate.totalScore}; selected ${chosen.map(item => `${item.id} rank ${item.rank}, score ${item.totalScore}`).join("; ")}.`);
+  else reasons.push(...array(reasoning.rejectionReasons));
+  if (!reasons.length) reasons.push(`No existing candidate was selected for the Engine outcome ${reasoning.decision}.`);
+  return { alternative, reason: reasons.join(" "), evidenceIds: unique(candidate.evidenceIds), factors: persistedJson(candidate.factors ?? {}), rank: candidate.rank, score: candidate.totalScore };
+}
+
 function extractProfessionalFacets({ authoritative = {}, reasoningMap = {}, sourceOutcomeExplanation }) {
   const entries = array(reasoningMap.entries);
   const collect = (...fields) => unique(fields.flatMap((field) => [
     ...array(authoritative[field]),
+    ...array(authoritative.reasoning?.professionalEvidence?.facets?.[field]),
     ...entries.flatMap((entry) => array(entry[field]))
   ]).map((item) => typeof item === "string" ? item : item?.id ?? item?.name ?? item?.description).filter(Boolean));
   return {
     businessObjects: collect("businessObjects", "entities"),
-    capabilities: unique(entries.map((entry) => entry.harnessCapability).filter(Boolean)),
+    capabilities: collect("capabilities").length ? collect("capabilities") : unique(entries.map((entry) => entry.harnessCapability).filter(Boolean)),
     tasks: collect("tasks", "taskClasses"),
     roles: collect("roles", "actors"),
     constraints: collect("constraints", "policies"),

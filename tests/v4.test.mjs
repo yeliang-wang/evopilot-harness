@@ -288,6 +288,7 @@ test("real stdio MCP persists a REVISE Proposal Review as a blocked Session", as
 test("Engine-owned OperationJob returns quickly, deduplicates repeated starts, and persists the authoritative Review", async () => {
   const home = temporary("operation-job-review");
   const source = createCacheSource(temporary("operation-job-review-source"));
+  fs.appendFileSync(path.join(source, "README.md"), "\nBusiness objects: Cache entry\nValidators: Entry expiry check\nCounter-evidence: Recovery execution is not demonstrated by this declaration\n");
   const reviewer = await startReviewServer({ delayMs: 250 });
   const modelsFile = path.join(home, "models.test.json");
   fs.mkdirSync(home, { recursive: true });
@@ -330,6 +331,11 @@ test("Engine-owned OperationJob returns quickly, deduplicates repeated starts, a
     const authoritativeSession = structured(await client.tool("inspect_operation_session", { sessionId: produced.sessionId }));
     assert.equal(authoritativeSession.sessionDigest, job.automaticPresentationDelivery.sessionDigest);
     assert.equal(authoritativeSession.status, "HUMAN_APPROVAL_REQUIRED");
+    const professional = authoritativeSession.interaction.currentFrame.businessView.professionalAnalysis;
+    assert.deepEqual(professional.professionalFacets.businessObjects, ["Cache entry"]);
+    assert.deepEqual(professional.professionalFacets.validators, ["Entry expiry check"]);
+    assert.ok(professional.counterEvidence.includes("Recovery execution is not demonstrated by this declaration"));
+    assert.ok(professional.capabilities.some(item => item.sourceEvidence.some(evidence => evidence.observedFacts.includes("Cache entry") && evidence.excerptDigest && evidence.locator.line)));
     const reviewOperation = authoritativeSession.operations.find((item) => item.operation === "proposal.review");
     assert.equal(reviewOperation.inputDigest, digest({ proposalId: authoritativeSession.proposals[0].proposalId }), "async transport must preserve the synchronous governed Review input");
     const reviewJournal = fs.readFileSync(path.join(home, "agent-sessions", produced.sessionId, "journal.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line)).find((item) => item.event === "PROPOSAL_REVIEW_COMPLETED");

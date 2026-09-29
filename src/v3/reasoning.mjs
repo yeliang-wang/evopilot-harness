@@ -1,5 +1,6 @@
 import { assertSourcePath, captureSourceFile, walkSourceFiles } from "../v4/source/path-policy.mjs";
 import { extractStaticSourceText } from "../v4/source/static-text.mjs";
+import { deriveProfessionalEvidence } from "./professional-evidence.mjs";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -114,6 +115,7 @@ export function reasonEvidence(graph, home, overrides = {}) {
     ontology: { id: knowledge.ontology.metadata.id, version: knowledge.ontology.metadata.version, digest: digest(knowledge.ontology) },
     policy: { id: knowledge.policy.metadata.id, version: knowledge.policy.metadata.version, digest: digest(knowledge.policy) },
     evidenceGraph: { runId: graph.runId, graphDigest: enriched.graphDigest, nodeCount: enriched.nodes.length },
+    professionalEvidence: deriveProfessionalEvidence(enriched, professional.nodes),
     eligibility,
     decision: decision.decision,
     targetProfile: decision.targetProfile,

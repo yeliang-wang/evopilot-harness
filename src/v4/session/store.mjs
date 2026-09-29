@@ -6,6 +6,7 @@ import { PACKAGE_ROOT } from "../../v3/constants.mjs";
 import { digest, persistedJson, safeId } from "../../v3/utils.mjs";
 import { inspectProposal } from "../../v3/lifecycle.mjs";
 import { inspectProposalReview, reviewInputDigest } from "../../v3/review.mjs";
+import { verifyProfessionalEvidence } from "../../v3/professional-evidence.mjs";
 import { readComparisonReport } from "../../v3/comparison.mjs";
 import { readCalibrationReport } from "../../v3/calibration.mjs";
 import { readLearningArtifact } from "../../v3/learning.mjs";
@@ -1003,6 +1004,7 @@ export function inspectLifecyclePresentationArchive(home, sessionId) {
         proposalDigest: reference.proposalDigest,
         review,
         reviewDigest: review.reportDigest,
+        ...boundProfessionalReasoning(session.workspace.home, proposal),
         sources: session.plan.sources ?? {},
         evaluation: proposal.evaluationCoverage ?? proposal.evaluationPack ?? { status: "BOUND_IN_PROPOSAL", proposedAssets: proposal.proposedAssets ?? [] },
         comparisonAssessment: review.comparisonAssessment ?? { status: "NOT_PROVIDED" },
@@ -1364,6 +1366,7 @@ function bindProposalReviewFrame(session, reference, now) {
       proposalDigest: reference.proposalDigest,
       review,
       reviewDigest: review.reportDigest,
+      ...boundProfessionalReasoning(session.workspace.home, proposal),
       sources: session.plan?.sources ?? {},
       evaluation: proposal.evaluationCoverage ?? proposal.evaluationPack ?? { status: "BOUND_IN_PROPOSAL", proposedAssets: proposal.proposedAssets ?? [] },
       comparisonAssessment: review.comparisonAssessment ?? { status: "NOT_PROVIDED" },
@@ -1374,6 +1377,20 @@ function bindProposalReviewFrame(session, reference, now) {
     allowedNextOperations: ["record_business_view_delivery"],
     now
   }));
+}
+
+function boundProfessionalReasoning(home, proposal) {
+  const runRoot = path.join(home, "evolution-runs", safeId(proposal.proposalId));
+  const reasoning = JSON.parse(fs.readFileSync(path.join(runRoot, "reasoning-result.json"), "utf8"));
+  // An older immutable result remains valid and is not silently re-extracted.
+  if (!reasoning.professionalEvidence) return {};
+  const graph = JSON.parse(fs.readFileSync(path.join(runRoot, "evidence-graph.json"), "utf8"));
+  const { graphDigest, ...graphContent } = graph;
+  if (digest(persistedJson(reasoning)) !== proposal.reasoningDigest || graphDigest !== proposal.evidenceGraphDigest
+    || digest(graphContent) !== graphDigest || !verifyProfessionalEvidence(reasoning.professionalEvidence, graph)) {
+    throw sessionError("PROFESSIONAL_EVIDENCE_BINDING_MISMATCH", "Professional facts no longer match the immutable Proposal and Evidence Graph.", "stop-and-inspect-evidence-binding");
+  }
+  return { reasoning };
 }
 
 function bindPublicationFrame(session, reference, proposal, now) {
