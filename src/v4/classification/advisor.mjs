@@ -2,6 +2,7 @@ import fs from "node:fs";
 import { digest } from "../../v3/utils.mjs";
 import { loadConfiguredModel, modelEndpoint, normalizeUsage, parseJsonContent, publicModel } from "../../v3/advisor.mjs";
 
+export const ADVISOR_PROMPT_VERSION = "advisor-candidate-analysis/v4";
 export const ADVISOR_INPUT_LIMITS = Object.freeze({ concepts: 64, evidencePerCandidate: 12, candidatesPerAxis: 12, standaloneEvidence: 24, excerptCharacters: 800 });
 
 const ADVISOR_EVIDENCE_FAMILIES = new Set([
@@ -48,7 +49,7 @@ export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, 
     rules: ["Read the bounded redacted Source excerpts before assessing semantic support.", "Assess the Source primary business responsibility rather than isolated framework, vendor, generated, historical, or secondary-module vocabulary.", "Assess every candidate independently; multiple candidates may be SUPPORT only when the current primary responsibility materially supports them.", "Apply supplied exclusion hints to semantically conflicting candidates.", "Use CONTRADICT only for direct Source evidence or a supplied exclusion hint, never merely because another candidate is stronger.", "Every SUPPORT or CONTRADICT item must cite at least one supplied evidenceId; only NEUTRAL may use an empty evidenceIds array.", "Return evidence-bound candidate support only.", "Use unresolvedConcepts only when the Source shows a coherent concept absent from the supplied taxonomy and bind it to a supplied parentId.", "Do not choose the final classification.", "Do not invent evidence ids.", "Do not mutate, approve, publish, execute, or broaden the candidate set."]
   };
   const modelBinding = advisorModelBinding(modelsFile, selectedModel, provider);
-  const analysisAttemptDigest = digest({ hypothesisDigest: hypothesis.hypothesisDigest, taxonomyDigest: taxonomy.taxonomyDigest, retrievalDigest: retrieval.retrievalDigest, inputDigest: digest(input), modelBinding, promptVersion: "advisor-candidate-analysis/v4", analysisAttemptId });
+  const analysisAttemptDigest = digest({ hypothesisDigest: hypothesis.hypothesisDigest, taxonomyDigest: taxonomy.taxonomyDigest, retrievalDigest: retrieval.retrievalDigest, inputDigest: digest(input), modelBinding, promptVersion: ADVISOR_PROMPT_VERSION, analysisAttemptId });
   const call = provider ?? createConfiguredProvider({ modelsFile, selectedModel, timeoutMs });
   if (!call) return blocked(analysisAttemptDigest, "MODEL_NOT_CONFIGURED", "A verified user-owned Harness model profile is required for every new classification analysis.");
   let raw;
@@ -60,7 +61,7 @@ export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, 
     schema: "evopilot-harness-advisor-candidate-analysis/v1",
     status: "SUCCEEDED",
     analysisAttemptDigest,
-    promptVersion: "advisor-candidate-analysis/v4",
+    promptVersion: ADVISOR_PROMPT_VERSION,
     inputDigest: digest(input),
     outputDigest: digest(raw),
     modelBinding: raw._provenance?.model ?? modelBinding,

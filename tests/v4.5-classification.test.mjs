@@ -10,12 +10,12 @@ import { stringify as stringifyYaml } from "yaml";
 import { analyzeSourceTaxonomy, createClassificationHandoff } from "../src/v4/classification/engine.mjs";
 import { createClassificationEvaluationReport } from "../src/v4/classification/evaluation.mjs";
 import { aggregateTaxonomyDecision, RETRIEVAL_CONFIG } from "../src/v4/classification/classifier.mjs";
-import { ADVISOR_INPUT_LIMITS } from "../src/v4/classification/advisor.mjs";
+import { ADVISOR_INPUT_LIMITS, ADVISOR_PROMPT_VERSION } from "../src/v4/classification/advisor.mjs";
 import { buildSourceConceptHypothesis } from "../src/v4/classification/source-concept.mjs";
 import { canonicalDocumentDigestFor, resolveTaxonomy } from "../src/v4/classification/taxonomy.mjs";
 import { initializeWorkspace } from "../src/v3/workspace.mjs";
 import { digest } from "../src/v3/utils.mjs";
-import { continueClassificationToHarness, inspectClassificationSession, resumeClassificationSession, startClassificationSession } from "../src/v4/classification/session-store.mjs";
+import { continueClassificationToHarness, inspectClassificationSession, reanalyzeClassificationSession, resumeClassificationSession, startClassificationSession } from "../src/v4/classification/session-store.mjs";
 import { REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../src/v4/interaction/professional-reasoning.mjs";
 import { createSessionPlan } from "../src/v4/session/store.mjs";
 import { governedHostInteraction, structured, TestMcpClient } from "./helpers/mcp-client.mjs";
@@ -867,6 +867,84 @@ test("an unfinished classification resumes through its bound generic AgentOperat
   assert.equal(resumed.status, "TAXONOMY_MATCHED");
   assert.notEqual(resumed.agentOperationSessionDigest, started.agentOperationSessionDigest);
   assert.equal(inspectClassificationSession(home, resumed.sessionId).sessionDigest, resumed.sessionDigest);
+});
+
+test("explicit classification reanalysis leaves legacy prompt-unbound caches and original attempts immutable", async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-v45-prompt-key-"));
+  initializeWorkspace(home);
+  let calls = 0;
+  function stableAdvisor(input) { calls += 1; return supportingAdvisor(input); }
+  const input = { home, source: sourceFixture(), taxonomy: taxonomy(), intent: "preserve prior prompt history", locale: "zh-CN", advisorProvider: stableAdvisor };
+  const first = await startClassificationSession(input);
+  const result = first.currentResult;
+  const legacyRequest = {
+    sourceSnapshotDigest: result.sourceSnapshotDigest,
+    taxonomyDigest: result.taxonomyDigest,
+    hypothesisDigest: result.hypothesisDigest,
+    retrievalDigest: result.retrieval.retrievalDigest,
+    modelBinding: result.advisor.modelBinding,
+    providerBinding: "stableAdvisor",
+    intent: input.intent,
+    locale: input.locale,
+    presentationTemplateVersion: "evopilot-harness-taxonomy-presentation/v1"
+  };
+  assert.equal(first.attempts[0].analysisRequestDigest, digest({ ...legacyRequest, promptVersion: ADVISOR_PROMPT_VERSION }));
+  const currentFile = path.join(home, "classification-results", `${first.attempts[0].analysisRequestDigest.slice(7)}.json`);
+  const legacyFile = path.join(home, "classification-results", `${digest(legacyRequest).slice(7)}.json`);
+  fs.renameSync(currentFile, legacyFile);
+  const priorBytes = fs.readFileSync(legacyFile);
+  assert.deepEqual(inspectClassificationSession(home, first.sessionId), first);
+  assert.equal(calls, 1);
+  const next = await reanalyzeClassificationSession({ ...input, sessionId: first.sessionId, expectedSessionDigest: first.sessionDigest });
+  assert.equal(calls, 2);
+  assert.equal(next.attempts.length, 2);
+  assert.deepEqual(next.attempts[0], first.attempts[0]);
+  assert.equal(next.attempts[1].executionMode, "NEW_ANALYSIS");
+  assert.equal(next.attempts[1].physicalAdvisorInvocationCount, 1);
+  assert.notEqual(next.attempts[1].analysisAttemptDigest, first.attempts[0].analysisAttemptDigest);
+  assert.equal(next.currentResult.advisor.promptVersion, ADVISOR_PROMPT_VERSION);
+  assert.deepEqual(fs.readFileSync(legacyFile), priorBytes);
+});
+
+test("a resealed stale prompt cache is refused without modifying the Session or calling the Advisor", async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-v45-prompt-reject-"));
+  initializeWorkspace(home);
+  let calls = 0;
+  function stableAdvisor(input) { calls += 1; return supportingAdvisor(input); }
+  const input = { home, source: sourceFixture(), taxonomy: taxonomy(), intent: "reject stale prompt cache", advisorProvider: stableAdvisor };
+  const first = await startClassificationSession(input);
+  const cacheFile = path.join(home, "classification-results", `${first.attempts[0].analysisRequestDigest.slice(7)}.json`);
+  const stale = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+  stale.advisor.promptVersion = "advisor-candidate-analysis/v3";
+  delete stale.advisor.advisorReceiptDigest;
+  stale.advisor.advisorReceiptDigest = digest(stale.advisor);
+  delete stale.analysisResultDigest;
+  stale.analysisResultDigest = digest(stale);
+  fs.writeFileSync(cacheFile, JSON.stringify(stale));
+  const cacheBytes = fs.readFileSync(cacheFile);
+  await assert.rejects(reanalyzeClassificationSession({ ...input, sessionId: first.sessionId, expectedSessionDigest: first.sessionDigest }), { code: "CLASSIFICATION_REPLAY_CONTEXT_MISMATCH" });
+  assert.deepEqual(inspectClassificationSession(home, first.sessionId), first);
+  assert.deepEqual(fs.readFileSync(cacheFile), cacheBytes);
+  assert.equal(calls, 1);
+});
+
+test("an explicit model change makes one new classification attempt and same-context replay makes none", async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-v45-model-reanalysis-"));
+  initializeWorkspace(home);
+  let calls = 0;
+  function stableAdvisor(input) { calls += 1; return supportingAdvisor(input); }
+  const input = { home, source: sourceFixture(), taxonomy: taxonomy(), intent: "explicit model change", advisorProvider: stableAdvisor };
+  const first = await startClassificationSession({ ...input, model: "first-model" });
+  const next = await reanalyzeClassificationSession({ ...input, model: "second-model", sessionId: first.sessionId, expectedSessionDigest: first.sessionDigest });
+  assert.equal(calls, 2);
+  assert.equal(next.attempts[1].executionMode, "NEW_ANALYSIS");
+  assert.notEqual(next.attempts[1].analysisRequestDigest, first.attempts[0].analysisRequestDigest);
+  assert.deepEqual(next.attempts[0], first.attempts[0]);
+  const replay = await reanalyzeClassificationSession({ ...input, model: "second-model", sessionId: next.sessionId, expectedSessionDigest: next.sessionDigest });
+  assert.equal(calls, 2);
+  assert.equal(replay.attempts[2].executionMode, "REPLAY");
+  assert.equal(replay.attempts[2].physicalAdvisorInvocationCount, 0);
+  assert.equal(replay.currentResult.analysisResultDigest, next.currentResult.analysisResultDigest);
 });
 
 test("blocked Advisor attempts are never cached or silently repeated", async () => {

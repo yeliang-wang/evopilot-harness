@@ -8,7 +8,7 @@ import { digest, persistedJson, writeJson } from "../../v3/utils.mjs";
 import { requireWorkspace } from "../../v3/workspace.mjs";
 import { assertExternalWorkspace, assertWorkspaceTreeConfined, resolveWorkspacePath } from "../constants.mjs";
 import { createAgentSession, inspectAgentSession, resumeAgentSession, updateAgentSessionClassification } from "../session/store.mjs";
-import { advisorModelBinding } from "./advisor.mjs";
+import { ADVISOR_PROMPT_VERSION, advisorModelBinding } from "./advisor.mjs";
 import { analyzePreparedSourceTaxonomy, createClassificationHandoff, prepareResolvedSourceTaxonomyAnalysis } from "./engine.mjs";
 import { resolveSourceDescriptor } from "./source-descriptor.mjs";
 import { canonicalCompare, resolveTaxonomy } from "./taxonomy.mjs";
@@ -185,6 +185,7 @@ async function runClassificationAnalysis({ home, sourceDescriptor, resolvedSourc
     taxonomyDigest: prepared.taxonomy.taxonomyDigest,
     hypothesisDigest: prepared.hypothesis.hypothesisDigest,
     retrievalDigest: prepared.retrieval.retrievalDigest,
+    promptVersion: ADVISOR_PROMPT_VERSION,
     modelBinding: advisorModelBinding(modelsFile, model, advisorProvider),
     providerBinding: advisorProvider ? advisorProvider.name || "anonymous-injected-provider" : null,
     intent: intent ?? "analyze-source-business-classification",
@@ -200,7 +201,7 @@ async function runClassificationAnalysis({ home, sourceDescriptor, resolvedSourc
     delete copy.analysisResultDigest;
     if (recordedDigest !== digest(copy)) throw classificationError("CLASSIFICATION_REPLAY_INTEGRITY_FAILED", "The completed classification replay result failed its immutable digest check.", "preserve-and-inspect-workspace");
     assertCurrentSourcePolicy(result);
-    if (result.sourceSnapshotDigest !== prepared.hypothesis.sourceSnapshotDigest || result.hypothesisDigest !== prepared.hypothesis.hypothesisDigest || result.taxonomyDigest !== prepared.taxonomy.taxonomyDigest || result.retrieval?.retrievalDigest !== prepared.retrieval.retrievalDigest || digest(result.sourceConceptHypothesis) !== digest(prepared.hypothesis)) throw classificationError("CLASSIFICATION_REPLAY_CONTEXT_MISMATCH", "The completed classification result does not bind the current Source analysis.", "preserve-and-inspect-workspace");
+    if (result.advisor?.promptVersion !== ADVISOR_PROMPT_VERSION || result.sourceSnapshotDigest !== prepared.hypothesis.sourceSnapshotDigest || result.hypothesisDigest !== prepared.hypothesis.hypothesisDigest || result.taxonomyDigest !== prepared.taxonomy.taxonomyDigest || result.retrieval?.retrievalDigest !== prepared.retrieval.retrievalDigest || digest(result.sourceConceptHypothesis) !== digest(prepared.hypothesis)) throw classificationError("CLASSIFICATION_REPLAY_CONTEXT_MISMATCH", "The completed classification result does not bind the current Source analysis or Advisor prompt.", "preserve-and-inspect-workspace");
     return { result, executionMode: "REPLAY", physicalAdvisorInvocationCount: 0, requestDigest, resolvedSource: resolution };
   }
   const result = await analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId: `attempt-${crypto.randomUUID()}`, intent, locale });

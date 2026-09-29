@@ -14,6 +14,8 @@ The presentation sandbox is an Engine-owned schema and rendering boundary. It is
 
 A same-context replay reads the immutable professional objects and archived Frames. It does not rerun Source ingestion, matching, Advisor calls, approval, publication, close, or cleanup. A Source, Catalog, Ontology, policy, Advisor profile, intent, locale, or template-version change requires explicit reevaluation and a new context digest; silent reuse is forbidden.
 
+Classification cache keys also bind the current Advisor prompt version. Explicit reanalysis after a prompt change creates a new attempt; a stale prompt receipt at the current key fails closed. Historical Session inspection preserves its original result and never calls the Advisor.
+
 ## Storage
 
 ```text

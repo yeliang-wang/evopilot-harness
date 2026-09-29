@@ -8,7 +8,7 @@
 
 > Build user-owned Harness assets from evidence with your Agent and local Engine.
 
-`evopilot-harness` turns evidence into reviewed, immutable Harness assets and Bundles in user-owned Catalogs. Its portable Digital Expert guides Codex or another compatible Agent through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
+`evopilot-harness` creates reviewed, immutable assets in user-owned Catalogs. Its Digital Expert guides compatible Agents through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
 
 Current published release: [`v4.8.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0), also available as [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0) with Registry signatures and SLSA provenance.
 
@@ -66,7 +66,7 @@ evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-har
 # Review the plan, then repeat with --confirm <planDigest>.
 ```
 
-Load the returned Adapter in Codex, WorkBuddy, Claude Code, or another compatible host. Then configure the host with the returned local stdio MCP command. Source development may use `node /absolute/path/to/evopilot-harness/src/index.mjs`; installed operation does not require the repository checkout.
+Load the returned Adapter and local stdio MCP command in a compatible host. Source development may use `node /absolute/path/to/evopilot-harness/src/index.mjs`; installed operation needs no checkout.
 
 Then tell the Agent:
 
@@ -176,7 +176,7 @@ The canonical v3 asset uses `harness.evopilot.io/v3` and is product-neutral. A B
 
 ## Independent Versions
 
-Engine, Harness assets, Ontology, Policy, Evaluation, and Catalog each have their own version or digest. Publishing or evolving a user Harness does not require an Engine, EvoPilot, or Dashboard release.
+Engine, assets, Ontology, Policy, Evaluation, and Catalog versions or digests are independent. User Harness evolution and publication require no Engine, EvoPilot, or Dashboard release.
 
 The Engine checkout is read-only during production. User assets, evidence, policies, runs, evaluations, keys, and Catalogs live under `EVOPILOT_HARNESS_HOME`.
 
