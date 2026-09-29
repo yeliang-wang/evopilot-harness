@@ -1,9 +1,8 @@
 {
   "schema": "evopilot-evolution-target/v1",
   "id": "evopilot-harness-v4.8.1-semantic-catalog-supply-repair",
-  "revision": 3,
-  "status": "APPROVED",
-  "intent": "semantic catalog supply repair; source content boundary protection",
+  "revision": 4,
+  "intent": "semantic catalog supply repair; source content boundary protection; blocked business decision guidance consistency; proposal Review lifecycle stage context",
   "objective": "Complete separately authorized indexed semantic supply without changing existing producer/consumer boundaries or published asset formats.",
   "evidence": [
     {
@@ -30,7 +29,7 @@
       "matchedMilestone": "evopilot-harness-4.8.1-semantic-catalog-supply-repair",
       "targetVersion": "4.8.1",
       "classification": "ALIGNED",
-      "roadmapDigest": "sha256:bb0948669c3269d852e73281024737fd17d156f954e670c4900eb31560afd07a"
+      "roadmapDigest": "sha256:594e9674bc5ded7c32112e6df529fce97eaa35f4216d4412254cb8b1a16f3840"
     }
   ],
   "scope": {
@@ -41,7 +40,9 @@
       "Create owning-product versioned tests/e2e corpus and criterion validators; prepare one frozen release build and complete campaign preflight; local Candidate formation and isolated Codex acceptance may proceed only after exact artifact, installation, model-route, Host-qualification and evidence-binding prerequisites pass. Publication remains subject to the separate passing release gate.",
       "Reconcile exact preserved source lineage and implement only in a new isolated codex/ worktree under /tmp; no edits to unrelated user files.",
       "For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
-      "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable. Exact approved detail: /Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/source-repair-review/repair-plan.md@sha256:0719738a57d7ccb0fc91621d60eb09f93ca52c2ff35667a460dfbc3d86f71507"
+      "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable. Exact approved detail: /Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/source-repair-review/repair-plan.md@sha256:0719738a57d7ccb0fc91621d60eb09f93ca52c2ff35667a460dfbc3d86f71507",
+      "A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.",
+      "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority."
     ],
     "exclude": [
       "Preserve current unrelated checkout changes. Owning-product implementation and verification use the existing isolated source worktrees on this Mac. Acceptance uses separately bound isolated Candidate installations. Durable Targets and evidence stay outside /tmp.",
@@ -49,7 +50,8 @@
       "No Dashboard implementation or dependency, Runtime 6.4 Learning Interoperability, standalone Expert 2.2.1 publication or separate Runtime 6.2 user patch. Existing published bytes, tags and evidence remain immutable.",
       "WorkBuddy and all other live Hosts are outside this release acceptance scope. Do not operate or collect WorkBuddy execution artifacts, request WorkBuddy declarations, or claim cross-Host acceptance. Retain generated-adapter contracts and generic transport tests.",
       "No weakened approval, mandatory signature, source-project command execution, arbitrary executable Pack, secret import, hidden provider fallback or transfer of producer/consumer ownership.",
-      "Current user-authorized execution stops after step 1/2 completion. No soak, formal acceptance closure, release gate, merge, tag or publication. Existing later acceptance obligations remain pending, not waived."
+      "Current user-authorized execution stops after step 1/2 completion. No soak, formal acceptance closure, release gate, merge, tag or publication. Existing later acceptance obligations remain pending, not waived.",
+      "No new remediation mutation, Proposal editing, retry or cancellation branch; no old receipt rewrite, forced Review verdict, PolicyPack edit or human Evaluation gate bypass. Authorized execution still stops at step 1/2; no acceptance or release authorization is added."
     ]
   },
   "compatibilityPolicy": {
@@ -114,6 +116,18 @@
         "roadmapCriterionDigest": "sha256:d7af5af1ecbd2a2618b1d9f8292ee741db6b7842e7e37b970c80f3c77b3d580c",
         "acceptanceIds": [
           "H-F08"
+        ]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:bad48b1e63cc499e70c8828d5442364dbb60b1f97c2edb081f5b4eee08c315ad",
+        "acceptanceIds": [
+          "H-F09"
+        ]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:5240798cc99f3d0de55cd77c798ac0beb9718345d4597b1ca98770aedd30899e",
+        "acceptanceIds": [
+          "H-F10"
         ]
       }
     ],
@@ -243,6 +257,24 @@
       "critical": true,
       "criterion": "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.",
       "requiredEvidence": "Synthetic canary open/read/extractor instrumentation across every v4/v3/ordered/direct entry, nested and case variant protected paths, symlinks and replacement races; zero protected reads; stable public snapshots and changed public-content sensitivity; old cache/resume refusal with immutable historical bytes; fresh installed MCP and affected Source portfolio without Source commands.",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "H-F09",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.",
+      "requiredEvidence": "New and historical-current-frame synthetic tests; zero writes/model calls; exact canonical guidance and receipt digest retained; stale handle/unpresented/actor/undeclared choice negatives; current installed MCP proof on the blocked current frame without granting authority. Full impact tests and regenerated ordinary-user documentation checks.",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "H-F10",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority.",
+      "requiredEvidence": "Captured initial and contract-repair loopback-provider requests prove the same current review stage and existing Evaluation rationale plus complete unchanged cases; valid pending-human-review fixture can receive READY while approval without evaluationReviewed remains blocked; materially deficient case fixture retains REVISE or NEED_MORE_EVIDENCE. New installed actual Codex Review uses the same Source and independent oracle under the existing bounded budget; outcome is not forced. Source/digest and policy bytes remain unchanged.",
       "status": "PENDING",
       "evidenceRefs": []
     }
@@ -4836,7 +4868,9 @@
         "H-F03",
         "H-F07",
         "H-C04",
-        "H-F08"
+        "H-F08",
+        "H-F09",
+        "H-F10"
       ],
       "startingState": "Exact separately authorized fresh installed Harness4.8.1 with isolated fixture Catalog; isolated /tmp roots on this Mac; all needed model/Host/source/permission bindings preflighted; no active integration reused.",
       "terminalState": "Under the current Codex-only Host policy: All assigned independent assertions and inherited variants pass with immutable exact evidence; WorkBuddy leg requires a new final declaration; no Release or implicit asset publication. For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
@@ -4905,6 +4939,40 @@
           "requiredEvidence": "Synthetic canary open/read/extractor instrumentation across every v4/v3/ordered/direct entry, nested and case variant protected paths, symlinks and replacement races; zero protected reads; stable public snapshots and changed public-content sensitivity; old cache/resume refusal with immutable historical bytes; fresh installed MCP and affected Source portfolio without Source commands.",
           "status": "PENDING",
           "evidenceRefs": []
+        },
+        {
+          "id": "RC05-M4",
+          "scenario": "A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.",
+          "coversAcceptanceIds": [
+            "H-F09"
+          ],
+          "hosts": [
+            "Codex"
+          ],
+          "prohibitedEffects": [
+            "No new authority, Source command/private read, credential re-entry, forced verdict, publication or historical receipt rewriting",
+            "No real Host other than Codex; synthetic contracts do not claim other Host execution"
+          ],
+          "requiredEvidence": "New and historical-current-frame synthetic tests; zero writes/model calls; exact canonical guidance and receipt digest retained; stale handle/unpresented/actor/undeclared choice negatives; current installed MCP proof on the blocked current frame without granting authority. Full impact tests and regenerated ordinary-user documentation checks.",
+          "status": "PENDING",
+          "evidenceRefs": []
+        },
+        {
+          "id": "RC05-M5",
+          "scenario": "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority.",
+          "coversAcceptanceIds": [
+            "H-F10"
+          ],
+          "hosts": [
+            "Codex"
+          ],
+          "prohibitedEffects": [
+            "No new authority, Source command/private read, credential re-entry, forced verdict, publication or historical receipt rewriting",
+            "No real Host other than Codex; synthetic contracts do not claim other Host execution"
+          ],
+          "requiredEvidence": "Captured initial and contract-repair loopback-provider requests prove the same current review stage and existing Evaluation rationale plus complete unchanged cases; valid pending-human-review fixture can receive READY while approval without evaluationReviewed remains blocked; materially deficient case fixture retains REVISE or NEED_MORE_EVIDENCE. New installed actual Codex Review uses the same Source and independent oracle under the existing bounded budget; outcome is not forced. Source/digest and policy bytes remain unchanged.",
+          "status": "PENDING",
+          "evidenceRefs": []
         }
       ]
     }
@@ -4920,8 +4988,8 @@
     "target": {
       "decision": "APPROVED",
       "by": "user",
-      "evidenceRef": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/approved-repairs/user-decision.json",
-      "authorizationDigest": "sha256:725293a88228204b31ca1b75dfe3a8bffbafb05ddae40e27cad7fbabdc9e63f4"
+      "evidenceRef": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/approved-repairs/lifecycle-guidance-review/user-decision-20260929.json",
+      "authorizationDigest": "sha256:7494524b45e22300a09e3147a97f830ee002336770251bfdd9c11c62e00d2fd4"
     },
     "release": {
       "decision": "PENDING"
@@ -4939,5 +5007,6 @@
     "versions": {
       "evopilot-harness": "4.8.1"
     }
-  }
+  },
+  "status": "APPROVED"
 }

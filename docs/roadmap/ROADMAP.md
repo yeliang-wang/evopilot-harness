@@ -210,6 +210,13 @@ The objective is to improve the depth and quality of capabilities already presen
 
 Status: `PLANNED`. Repair the missing indexed supply path using an additive semantic Catalog index and immutable complete dependency generations under existing enabled Registry roots. Preserve v3 Catalog bytes, existing semantic asset schemas and publication authority. Runtime remains read-only. Require independent version-specific E2E, complete inheritance, atomic/concurrent publication and recovery, negative path/permission/digest tests, and NO_REGRESSION before separate Release authorization.
 
+This milestone includes the following bounded corrections:
+
+- A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.
+- At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority.
+
+These corrections preserve all original professional and authority gates. They add no new end-user journey, paid-provider authority, acceptance closure, or Release authorization.
+
 ## Project Ontology End-to-End Acceptance Policy
 
 Every Target keeps at most five top-level ordinary-human journeys by default, with independently evidenced machine variants:

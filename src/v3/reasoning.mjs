@@ -106,7 +106,7 @@ export function reasonEvidence(graph, home, overrides = {}) {
   const assetRoots = [path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")];
   const profiles = discoverAssets(assetRoots).filter((record) => record.asset.kind === "HarnessProfile");
   const candidates = retrieveAndScore(enriched, profiles, knowledge);
-  const decision = decide(eligibility, candidates, knowledge.policy, enriched, knowledge.ontology);
+  const decision = decide(eligibility, candidates, knowledge.policy, enriched, knowledge.ontology, profiles);
   const result = {
     schema: REASONING_SCHEMA,
     algorithmVersion: "eligibility-bm25-multifactor-delta/v4",
@@ -229,10 +229,11 @@ function retrieveAndScore(graph, profiles, knowledge) {
   const docs = profiles.map((record) => profileDocument(record));
   const bm25Scores = bm25(queryTokens, docs.map((doc) => doc.tokens), knowledge.policy.spec.retrieval);
   const maxBm25 = Math.max(...bm25Scores, 0.0001);
-  const detectedConcepts = unique(graph.nodes.flatMap((node) => node.concepts ?? []));
+  const professionalNodes = graph.nodes.filter(isProfessionalBoundaryEvidence);
+  const detectedConcepts = unique(professionalNodes.flatMap((node) => node.concepts ?? []));
   const evidenceKinds = unique(graph.nodes.map((node) => node.kind));
   const deltaEvidenceKinds = evidenceKinds.filter((kind) => !["operator-note"].includes(kind));
-  const detectedRole = detectRole(graph, knowledge.ontology);
+  const detectedRole = detectRole({ ...graph, nodes: professionalNodes }, knowledge.ontology);
   const weights = knowledge.policy.spec.weights;
   const candidates = profiles.map((record, index) => {
     const profile = record.asset;
@@ -251,7 +252,8 @@ function retrieveAndScore(graph, profiles, knowledge) {
     const positiveWeight = weights.role + weights.boundary + weights.capability + weights.execution + weights.evidence;
     const positiveScore = (role * weights.role + boundary * weights.boundary + capability * weights.capability + execution * weights.execution + evidence * weights.evidence) / positiveWeight;
     const total = clamp(positiveScore - negativeConflict * weights.negativeConflict - novelty * weights.novelty);
-    const evidenceIds = graph.nodes.filter((node) => (node.concepts ?? []).some((concept) => positive.includes(concept))).slice(0, 8).map((node) => node.evidenceId);
+    const professionalConcepts = positive.filter((concept) => concept !== "executable-engineering");
+    const evidenceIds = professionalNodes.filter((node) => (node.concepts ?? []).some((concept) => professionalConcepts.includes(concept))).slice(0, 8).map((node) => node.evidenceId);
     return {
       rank: 0,
       id: profile.metadata.id,
@@ -275,21 +277,22 @@ function retrieveAndScore(graph, profiles, knowledge) {
   return candidates.slice(0, knowledge.policy.spec.retrieval.topK).map((candidate, index) => ({ ...candidate, rank: index + 1 }));
 }
 
-function decide(eligibility, candidates, policy, graph, ontology) {
+function decide(eligibility, candidates, policy, graph, ontology, profiles) {
   if (eligibility.decision === "INSUFFICIENT_EVIDENCE") {
     return { decision: "NEED_MORE_EVIDENCE", confidence: 1, rejectionReasons: eligibility.reasons, evidenceIds: eligibility.evidenceIds };
   }
   if (eligibility.decision !== "ELIGIBLE") {
     return { decision: eligibility.decision, confidence: 1, rejectionReasons: eligibility.reasons, evidenceIds: eligibility.evidenceIds };
   }
-  const domainConcepts = unique(graph.nodes.flatMap((node) => node.concepts ?? []).filter((concept) => concept !== "executable-engineering"));
-  const detectedRole = detectRole(graph, ontology);
-  const proposedProfile = proposedProfileIntent(detectedRole, domainConcepts, graph);
-  if (!candidates.length) {
-    return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: 0.7, rejectionReasons: ["No published HarnessProfile candidates exist."], evidenceIds: eligibility.evidenceIds };
-  }
+  const professionalGraph = { ...graph, nodes: graph.nodes.filter(isProfessionalBoundaryEvidence) };
+  const domainConcepts = unique(professionalGraph.nodes.flatMap((node) => node.concepts ?? []).filter((concept) => concept !== "executable-engineering"));
+  const detectedRole = detectRole(professionalGraph, ontology);
+  const proposedProfile = proposedProfileIntent(detectedRole, domainConcepts, professionalGraph);
   if (!domainConcepts.length) {
     return { decision: "NEED_MORE_EVIDENCE", proposedProfile, confidence: 0.7, rejectionReasons: ["No published Ontology concept explains the evidenced engineering domain; more discriminating evidence is required before an Ontology or Profile delta can be proposed."], evidenceIds: eligibility.evidenceIds };
+  }
+  if (!candidates.length) {
+    return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: 0.7, rejectionReasons: ["No published HarnessProfile candidates exist."], evidenceIds: eligibility.evidenceIds };
   }
   if (detectedRole && detectedRole.matched - detectedRole.conflicts > 0 && !candidates.some((candidate) => candidate.domain === detectedRole.domain)) {
     return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: 0.82, rejectionReasons: [`Detected role ${detectedRole.id} has no published HarnessProfile in domain ${detectedRole.domain}.`], evidenceIds: unique([...eligibility.evidenceIds, ...graph.nodes.filter((node) => (node.concepts ?? []).some((concept) => detectedRole.concepts.includes(concept))).map((node) => node.evidenceId).slice(0, 8)]) };
@@ -304,7 +307,9 @@ function decide(eligibility, candidates, policy, graph, ontology) {
     return { decision: "PROPOSE_NEW_PROFILE", proposedProfile, confidence: round(1 - top.totalScore), rejectionReasons: [`Best existing profile score ${top.totalScore} is at or below new-profile maximum ${thresholds.newProfileMaximum}.`, ...top.rejectionReasons], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
   }
   if (second && top.totalScore >= thresholds.composeBundle && second.totalScore >= thresholds.composeBundle && top.domain !== second.domain && delta >= thresholds.ambiguousDelta) {
-    return { decision: "COMPOSE_NEW_BUNDLE", confidence: round((top.totalScore + second.totalScore) / 2), composeProfiles: [pickProfile(top), pickProfile(second)], rejectionReasons: ["Evidence spans two independently strong profile boundaries."], evidenceIds: unique([...top.evidenceIds, ...second.evidenceIds]) };
+    const evidence = independentCompositionEvidence(top, second, profiles, professionalGraph);
+    if (!evidence) return { decision: "NEED_MORE_EVIDENCE", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: ["Cross-domain composition requires independent professional concept evidence for each Profile; shared engineering evidence is insufficient."], evidenceIds: unique([...top.evidenceIds, ...second.evidenceIds]) };
+    return { decision: "COMPOSE_NEW_BUNDLE", confidence: round((top.totalScore + second.totalScore) / 2), composeProfiles: [pickProfile(top), pickProfile(second)], rejectionReasons: ["Evidence spans two independently strong profile boundaries."], evidenceIds: evidence };
   }
   if (second && delta < thresholds.ambiguousDelta) {
     return { decision: "NEED_MORE_EVIDENCE", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: [`Top-candidate delta ${round(delta)} is below ambiguity threshold ${thresholds.ambiguousDelta}; more discriminating evidence is required.`], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds, ...second.evidenceIds]) };
@@ -316,6 +321,25 @@ function decide(eligibility, candidates, policy, graph, ontology) {
     return { decision: "EVOLVE_EXISTING", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: top.rejectionReasons, evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
   }
   return { decision: "NEED_MORE_EVIDENCE", confidence: round(top.totalScore), targetProfile: pickProfile(top), rejectionReasons: [`Best score ${top.totalScore} does not reach evolve-existing threshold ${thresholds.evolveExisting}; the current evidence cannot justify an existing-asset delta.`, ...top.rejectionReasons], evidenceIds: unique([...eligibility.evidenceIds, ...top.evidenceIds]) };
+}
+
+// Dependency, test, example, and contributor instructions remain in the full
+// evidence graph, but cannot establish the Source's own professional boundary.
+// Use the Source-relative label, never its checkout's parent directory name.
+function isProfessionalBoundaryEvidence(node) {
+  if (!["source-project", "github-repository"].includes(node.sourceType)) return true;
+  const relative = String(node.label ?? "").replaceAll("\\", "/");
+  if (/(?:^|\/)(?:AGENTS|CLAUDE|CONTRIBUTING|CONTRIBUTORS|AUTHORS|MAINTAINERS|GOVERNANCE|CODE_OF_CONDUCT|SECURITY|SUPPORT|LICENSE|COPYING)(?:\.[^/]*)?$/i.test(relative)) return false;
+  return !/(?:^|\/)(?:\.github|\.svn|\.settings|deps|dependencies|vendor|vendors|third[-_]?party|opensource|fixture|fixtures|test|tests|example|examples|sample|samples|generated|gen)(?:\/|$)/i.test(relative);
+}
+
+function independentCompositionEvidence(left, right, profiles, graph) {
+  const concepts = (candidate) => profiles.find((record) => record.asset.metadata.id === candidate.id && record.asset.metadata.version === candidate.version)?.asset.spec.match.positiveConcepts.filter((concept) => concept !== "executable-engineering") ?? [];
+  const leftConcepts = concepts(left), rightConcepts = concepts(right);
+  const evidence = (own, other) => graph.nodes.filter((node) => (node.concepts ?? []).some((concept) => own.includes(concept) && !other.includes(concept))).slice(0, 8).map((node) => node.evidenceId);
+  const leftEvidence = evidence(leftConcepts, rightConcepts), rightEvidence = evidence(rightConcepts, leftConcepts);
+  // One source node can genuinely establish both distinct responsibilities.
+  return leftEvidence.length && rightEvidence.length ? unique([...leftEvidence, ...rightEvidence]) : null;
 }
 
 function detectRole(graph, ontology) {

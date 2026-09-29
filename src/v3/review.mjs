@@ -105,6 +105,11 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
     proposalDigest,
     deterministicReasoning: reasoning,
     deterministicGates: deterministic.gates,
+    evaluationReviewContext: {
+      stage: "SEMANTIC_REVIEW_BEFORE_HUMAN_APPROVAL",
+      evaluationSufficiency: deterministic.evaluationSufficiency,
+      humanAcknowledgementPending: (proposal.blockers ?? []).includes("evaluation-review-required")
+    },
     controlledComparison: deterministic.comparisonAssessment,
     originalAdvisor: proposal.advisor,
     evidenceGraph: projection.nodes,
@@ -118,6 +123,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
       "For a corpus, assess group coherence and every source membership; use SPLIT when one reusable boundary does not fit all members.",
       "Assess new-versus-evolve relationships against existing Catalog assets and identify duplicate, conflicting, or overly broad definitions.",
       "Assess whether the Profile or Bundle is specific, professional, executable, constrained, evidence-backed, and evaluable.",
+      "Assess Evaluation case content, positive and negative coverage, assertions, and evidence independently. A pending human evaluation acknowledgement alone is not a case-content defect: that acknowledgement follows a READY_FOR_HUMAN_APPROVAL Review. Unreviewed cases or INSUFFICIENT_EVAL_EVIDENCE do not by themselves decide this semantic verdict. Substantive evaluation deficiencies still require a non-ready verdict; keep the separate human acknowledgement and publication gates intact.",
       "Cite only supplied evidenceId values for source-derived membership, boundary, Advisor, and multi-source coherence conclusions. Catalog overlap, Proposal structure, definition quality, evaluation sufficiency, and non-source findings may use an empty evidenceIds array. Never invent evidence.",
       "Do not approve, publish, execute source code, mutate configuration, or override deterministic safety gates."
     ]
@@ -157,7 +163,7 @@ async function runSemanticReview({ args, home, proposal, proposalDigest, graph, 
       evidenceProjection: projection.summary,
       retryable: attempt.retryable
     });
-    activeRequest = reviewRepairRequest(model, policy, contract, graph, sources, attempt);
+    activeRequest = reviewRepairRequest(model, policy, contract, graph, sources, attempt, prompt);
   }
 }
 
@@ -482,9 +488,11 @@ function normalizeSemanticAssessment(value, sources) {
   return { assessment: normalized, identityFailures: unique(identityFailures) };
 }
 
-function reviewRepairRequest(model, policy, contract, graph, sources, previous) {
+function reviewRepairRequest(model, policy, contract, graph, sources, previous, originalPrompt) {
   return reviewRequest(model, policy, {
     task: "Repair the previous Proposal Review output so it exactly satisfies the existing Review Contract.",
+    evaluationReviewContext: originalPrompt.evaluationReviewContext,
+    evaluationPack: originalPrompt.proposal.evaluationPack,
     outputContract: { ...contract, outputShape: semanticOutputShape() },
     allowedEvidenceIds: graph.nodes.map((node) => node.evidenceId),
     requiredSources: sources.map((source) => ({
@@ -502,6 +510,7 @@ function reviewRepairRequest(model, policy, contract, graph, sources, previous) 
       "For projectMembership return only sourceId, status, rationale, and evidenceIds; source identity is bound by the Engine.",
       "Every membership evidenceIds value must come from that required source's allowedEvidenceIds.",
       "Repair structure and citations only.",
+      "Preserve the original semantic verdict and evaluation stage. Pending human acknowledgement is not a completed approval; do not mark cases reviewed or remove substantive evaluation findings.",
       "Do not approve, publish, execute, or mutate configuration."
     ]
   });

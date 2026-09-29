@@ -962,7 +962,9 @@
         "complete digest-bound semantic artifact and Harness dependency closure",
         "separate authorized atomic publication, concurrency and receipt-safe recovery",
         "read-only compatible consumption with explicit unavailable and stale states",
-        "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable."
+        "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.",
+        "A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.",
+        "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority."
       ],
       "acceptance": [
         "discover published ArtifactSet and its embedded Skill plus published terminal closure through the enabled Catalog only",
@@ -972,7 +974,9 @@
         "prove atomic concurrent publication, uncertain-outcome readback, additive growth, restart, rollback and immutable old evidence",
         "version-specific repository E2E, all current and inherited acceptance, exact qualified Codex under releaseHostCoveragePolicy, impact closure and NO_REGRESSION For this release, releaseHostCoveragePolicy takes precedence over inherited Host execution clauses: Codex is the only real Host acceptance path; all other behavior, security, adapter-contract, transport, active-soak and NO_REGRESSION obligations remain. No cross-Host conformance claim is made.",
         "separate Engine Release from asset publication and from terminal series E2E authority",
-        "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable."
+        "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable.",
+        "A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.",
+        "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority."
       ],
       "signals": [
         "semantic catalog supply repair",
@@ -982,7 +986,10 @@
         "source read-only security boundary",
         "source content boundary",
         "excluding private host",
-        "source path protection"
+        "source path protection",
+        "blocked business decision guidance consistency",
+        "REVIEW_REMEDIATION",
+        "proposal Review lifecycle stage context"
       ],
       "exclusions": [
         "Runtime-owned Goal Loop execution",
@@ -990,7 +997,8 @@
         "mandatory signing",
         "overwrite or relabel published 4.8.0",
         "Dashboard evolution",
-        "automatic approval, publication or acceptance transfer"
+        "automatic approval, publication or acceptance transfer",
+        "No new remediation mutation or cancel/retry authority, no forced semantic verdict, no automatic human Evaluation approval, and no PolicyPack revision."
       ]
     }
   ],

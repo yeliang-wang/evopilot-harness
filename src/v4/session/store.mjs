@@ -612,6 +612,9 @@ export async function submitSessionBusinessDecision({ home, sessionId, decisionH
 
   if (choice === "PRESERVE_FOR_LATER") return businessDecisionProgress(current, choice, "preserve-current-session");
 
+  // Re-present the existing blocker guidance without granting or changing authority.
+  if (frame.stage === "BLOCKER_PRESENTATION" && choice === "REVIEW_REMEDIATION") return current;
+
   if (frame.stage === "PLAN_PRESENTATION" && choice === "APPROVE") {
     const confirmed = confirmSessionPlan({
       home,

@@ -51,6 +51,21 @@ For `PROPOSE_NEW_PROFILE`, the deterministic result also emits `proposedProfile`
 
 `executable-engineering` is a shared eligibility concept, not domain evidence. It contributes to execution readiness but is excluded from role detection. When no domain-specific concept is evidenced, the Proposal decision is `NEED_MORE_EVIDENCE`; the Engine does not generate a generic `unclassified` Profile.
 
+Contributor instructions, maintainer lists, vendored dependencies, tests, examples,
+and generated files remain in the complete Evidence Graph. Their concepts do not
+establish the source project's own role, matching boundary, or novel domain
+capabilities. This distinction uses paths relative to the selected Source root;
+a project stored under a parent named `vendor` or `examples` retains its normal
+evidence. Candidate citations prefer professional concepts and cannot be filled
+by the shared `executable-engineering` concept.
+
+Cross-domain composition also requires evidence for a distinct professional
+concept from each Profile. The same file may establish both responsibilities;
+no file-count ratio excludes a smaller legitimate module. A strong aggregate
+score without independently supported boundaries produces `NEED_MORE_EVIDENCE`
+instead of a composed Bundle. These deterministic checks do not replace the
+independent Proposal Review or the later Evaluation and publication decisions.
+
 ## Final Decisions
 
 | Decision | Effect |

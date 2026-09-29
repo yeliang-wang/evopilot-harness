@@ -150,6 +150,16 @@ Policy-required Advisor failures return `BLOCKED`, persist a redacted Advisor Ru
 
 The semantic Proposal reviewer is a second, independent LLM contract. Its verdict and suggestions belong to the Engine report, not the Guided Operator Skill. It cannot alter the deterministic decision, repair missing impact closure, approve, or publish. For multi-source repair, the Engine repeats the complete immutable source projection, accepts model-authored membership status, rationale, and citations, and canonicalizes source identity from that projection. Missing, duplicate, unknown, identity-mutated, empty-reference, cross-source-cited, failed, rejected, stale, digest-mismatched, or non-ready Review Reports block approval. Every mutating decision requires `--evaluation-reviewed`; all Evaluation cases must be approved, all required polarities must be represented, and the pack must be `READY`. Approval binds the current Review Report and stores an approved-content digest. Publication rereads those bindings and rejects any Proposal change made after approval.
 
+Semantic Review evaluates the actual Evaluation cases before the human evaluation
+acknowledgement. Its request includes that stage and the separate human gate, so
+pending acknowledgement alone does not imply a defect in the cases. A bounded
+format repair retains that context, the same EvaluationPack, and the original
+semantic verdict. Missing
+coverage, invalid assertions, or unsupported evidence can still require a
+non-ready verdict. A ready Review keeps `evaluation-review-required` in place
+until the authorized human decision; it does not mark cases reviewed or permit
+publication.
+
 Publication rebuilds the Delta from the exact `published` asset and Evaluation documents, then validates their schemas, digests, derived changes, impact fields, and references. It preflights every asset, Evaluation, and Delta destination before the first write. Existing immutable paths block the entire publication rather than leaving partial state.
 
 ## 7. Validate And Sign

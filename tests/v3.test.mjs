@@ -416,6 +416,9 @@ test("proposal approval is blocked without a current READY Review Report", async
   assert.equal(review.status, "ACTION_REQUIRED");
   assert.equal(review.verdict, "REVISE");
   assert.equal(review.nextAction, "revise-proposal");
+  const reviewPrompt = JSON.parse(service.requests.at(-1).request.messages[1].content);
+  assert.equal(reviewPrompt.evaluationReviewContext.humanAcknowledgementPending, true);
+  assert.equal(review.evaluationSufficiency.status, "FAIL");
   assert.ok(review.findings.some((finding) => finding.severity === "blocking"));
   const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--evaluation-reviewed", "--json"]);
   assert.ok(blocked.blockers.includes("proposal-review-verdict:revise"));
@@ -471,6 +474,14 @@ test("all mutating decisions require reviewed Evaluation cases before approval",
     assert.equal(produced.reasoning.decision, expectedDecision);
     const review = await runJsonAsync(["proposal", "review", produced.runId, "--workspace", home, "--models-file", modelsFile, "--json"]);
     assert.equal(review.verdict, "READY_FOR_HUMAN_APPROVAL");
+    const reviewPrompt = JSON.parse(service.requests.at(-1).request.messages[1].content);
+    assert.equal(reviewPrompt.evaluationReviewContext.stage, "SEMANTIC_REVIEW_BEFORE_HUMAN_APPROVAL");
+    assert.equal(reviewPrompt.evaluationReviewContext.humanAcknowledgementPending, true);
+    assert.equal(reviewPrompt.evaluationReviewContext.evaluationSufficiency.status, "INSUFFICIENT_EVAL_EVIDENCE");
+    assert.match(reviewPrompt.evaluationReviewContext.evaluationSufficiency.rationale, /separate human-reviewed gate/);
+    assert.ok(reviewPrompt.proposal.evaluationPack.spec.cases.every((item) => item.reviewStatus === "unreviewed"));
+    assert.ok(review.remainingBlockers.includes("evaluation-review-required"));
+    assert.match(reviewPrompt.rules.join("\n"), /Substantive evaluation deficiencies still require a non-ready verdict/);
     const blocked = runJsonFailure(["proposal", "approve", produced.runId, "--workspace", home, "--confirmed-by", "admin@example.com", "--confirmation", "Reviewed.", "--json"]);
     assert.deepEqual(blocked.blockers, ["evaluation-review-required"]);
     if (expectedDecision === "COMPOSE_NEW_BUNDLE") {
@@ -585,6 +596,9 @@ test("proposal review repairs a 13-source membership response with complete Engi
   const repairPrompt = JSON.parse(reviewRequests[1].messages[1].content);
   assert.equal(initialPrompt.sources.length, 13);
   assert.equal(repairPrompt.requiredSources.length, 13);
+  assert.deepEqual(repairPrompt.evaluationReviewContext, initialPrompt.evaluationReviewContext);
+  assert.deepEqual(repairPrompt.evaluationPack, initialPrompt.proposal.evaluationPack);
+  assert.match(repairPrompt.rules.join("\n"), /Preserve the original semantic verdict/);
   assert.equal(Object.hasOwn(repairPrompt, "requiredSourceIds"), false);
   assert.equal(review.reviewer.attempts.length, 2);
   assert.equal(review.reviewer.attempts[0].validation.checks.find((check) => check.id === "source-membership-closure").status, "FAIL");
