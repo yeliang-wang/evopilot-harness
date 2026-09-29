@@ -71,6 +71,7 @@ stateDiagram-v2
 - Compatibility binds Product, Digital Expert Core, Agent protocol, and Engine API before the first mutation and again on cross-Agent resume.
 - Plan binds scenario, sources, operations, stop points, and authority by `planDigest`.
 - A maintenance publication authorization binds Plan digest, operation index, operation digest, and human identity value.
+- The declared `AUTHORIZE` business choice resolves those bindings from the current presented operation and calls the same authorization guard. It records permission only; a later advance executes the operation.
 - A planned Engine operation receipt binds its stable idempotency key, operation, input digest, full structured result, and receipt digest.
 - An evidence report reference binds report type, id, digest, rendered deterministic fields, review status, reviewer value, and review time. Acknowledgement revalidates the persisted report before changing Session state.
 - Proposal approval binds Engine `reviewInputDigest`, Review `reportDigest`, Evaluation review, confirmation, and reviewer value.

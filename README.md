@@ -6,7 +6,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-> An Agent-native, user-owned Harness asset factory for turning model-external execution environments, actions, constraints, evidence, and validators into reusable production assets.
+> Build reusable, user-owned Harness assets from evidence through your Agent and the deterministic local Engine.
 
 `evopilot-harness` ingests project and operational evidence, determines whether it belongs in a Harness, proposes a new or evolved asset, enforces human review, and publishes immutable assets and executable Bundles through user-owned Catalogs. In v4, a human talks to a portable Digital Expert loaded by Codex or another compatible Agent; the Agent operates the deterministic Engine through a local stdio MCP process. It runs independently from EvoPilot and Dashboard.
 
@@ -76,7 +76,7 @@ Then tell the Agent:
 自动展示 Engine Proposal Review，并分别停在批准和发布决策点。
 ```
 
-The Digital Expert asks one missing question at a time. The human does not enter Harness lifecycle CLI commands. The Agent starts MCP, prepares the external Workspace, persists an `AgentOperationSession`, calls the Engine, renders the complete Review, and stops for explicit digest-bound decisions. Planned operations use durable idempotency receipts; interrupted unknown outcomes fail closed, and maintenance publication has a separate operation authorization. Project roots, Git repositories, attachments, production logs, historical Harnesses, notes, feedback, controlled Baseline/Candidate comparison, matching and Proposal calibration, governed professional-learning evidence, maintenance, diagnostics, resume, cancellation, close, and owned-session cleanup are covered. Comparison, calibration, and Professional Completeness reports enter a separate digest-bound review acknowledgement state. Source and research ingestion remains static and never runs project build, test, deploy, business, adapter, or network acquisition commands.
+The Digital Expert asks one missing question at a time and operates MCP. `AgentOperationSession` persists the Plan, full Review and separate decisions. Receipts protect interrupted operations; maintenance publication needs separate authorization. Comparison, calibration and Professional Completeness reports require separate review acknowledgement. The [MCP reference](docs/agent/mcp-reference.md) covers Sources, feedback, learning, maintenance, diagnostics and recovery. Static ingestion never runs Source build, test, deploy, business, adapter or network acquisition commands.
 
 See [Agent-native quickstart](docs/agent/quickstart.md), [npm distribution](docs/operations/npm-distribution.md), [Digital Expert](docs/agent/digital-expert.md), [MCP reference](docs/agent/mcp-reference.md), and [Session protocol](docs/agent/session-protocol.md).
 

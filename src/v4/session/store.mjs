@@ -635,6 +635,15 @@ export async function submitSessionBusinessDecision({ home, sessionId, decisionH
     return prepareProposalApprovalDecision({ home, sessionId, expectedSessionDigest: current.sessionDigest, confirmedBy: actor, now });
   }
 
+  if (frame.stage === "OPERATION_AUTHORIZATION_PRESENTATION" && choice === "AUTHORIZE") {
+    const { operationIndex, operationDigest } = current.pendingOperationAuthorization ?? {};
+    const authorized = authorizePlanPublicationOperation({ home, sessionId,
+      expectedSessionDigest: current.sessionDigest, expectedPlanDigest: current.planDigest,
+      operationIndex, expectedOperationDigest: operationDigest, confirmedBy: actor,
+      confirmation: `AUTHORIZE_PLAN_PUBLICATION:${sessionId}:${current.planDigest}:${operationIndex}:${operationDigest}`, now });
+    return businessDecisionProgress(authorized, choice, "advance-authorized-session-operation");
+  }
+
   if (frame.stage === "PROPOSAL_APPROVAL_DECISION" && choice === "APPROVE") {
     const reference = current.proposals.find((item) => item.status !== "APPROVED") ?? current.proposals[0];
     if (!reference?.proposalId || !reference?.proposalDigest || !reference?.review?.reportDigest) throw sessionError("PROPOSAL_DECISION_BINDING_INCOMPLETE", "The current Proposal decision is missing immutable Proposal or Review bindings.", "reload-current-proposal-decision");
