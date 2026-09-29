@@ -5,6 +5,8 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { inspectModels, loadConfiguredModel } from "../src/v3/advisor.mjs";
+import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 import { agentBootstrap } from "../src/v4/bootstrap.mjs";
 import { executeV3Operation } from "../src/v3/cli.mjs";
 import { inspectModelReadiness, invalidateModelVerification } from "../src/v3/model-readiness.mjs";
@@ -85,16 +87,19 @@ function digestFile(file) {
 }
 
 async function modelService(t) {
+  const requests = [];
   const server = http.createServer((request, response) => {
-    request.resume();
+    let body = "";
+    request.on("data", (chunk) => { body += chunk; });
     request.on("end", () => {
+      requests.push(JSON.parse(body));
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ status: "ok" }) } }], usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 } }));
     });
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   t.after(() => new Promise((resolve) => server.close(resolve)));
-  return { url: `http://127.0.0.1:${server.address().port}/v4` };
+  return { url: `http://127.0.0.1:${server.address().port}/v4`, requests };
 }
 
 for (const failure of ["authentication", "transport"]) {
@@ -148,4 +153,43 @@ test("readiness invalidation preserves unrelated bindings and creates no absent 
   assert.deepEqual(fs.readFileSync(receiptFile), before);
   invalidateModelVerification(home, path.join(home, "different-models.json"), "sha256:new");
   assert.deepEqual(fs.readFileSync(receiptFile), before);
+});
+
+test("explicit model selection never falls back through inspection, loading, CLI, or MCP", async (t) => {
+  const home = temporaryHome();
+  initializeWorkspace(home);
+  const service = await modelService(t);
+  const modelsFile = path.join(home, "models.json");
+  const models = [
+    { id: "first", vendor: "provider-one", apiKey: "synthetic-first-key", url: service.url },
+    { id: "second", vendor: "provider-two", apiKey: "synthetic-second-key", url: service.url },
+    { id: "unusable", vendor: "provider-two", url: service.url }
+  ];
+  fs.writeFileSync(modelsFile, JSON.stringify({ models }), { mode: 0o600 });
+  const before = digestFile(modelsFile);
+  assert.equal(inspectModels(modelsFile).selected.id, "first");
+  assert.equal(loadConfiguredModel(modelsFile).id, "first");
+  assert.equal(inspectModels(modelsFile, "second").selected.id, "second");
+  assert.equal(loadConfiguredModel(modelsFile, "second").id, "second");
+  assert.equal(loadConfiguredModel(modelsFile, "unusable"), null);
+  for (const selectedId of ["does-not-exist", ""]) {
+    assert.equal(inspectModels(modelsFile, selectedId).status, "NOT_CONFIGURED");
+    assert.equal(loadConfiguredModel(modelsFile, selectedId), null);
+    const result = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home, "models-file": modelsFile, model: selectedId, "timeout-ms": 5000 } });
+    assert.equal(result.exitCode, 2);
+    assert.equal(result.result.connectionVerified, false);
+    assert.equal(fs.existsSync(path.join(home, "model-readiness.json")), false);
+  }
+  const client = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: path.resolve(import.meta.dirname, "..") });
+  t.after(() => client.close());
+  await client.initialize();
+  const rejected = structured(await client.tool("initialize_model_configuration", { modelsFile, model: "does-not-exist", timeoutMs: 5000 }));
+  assert.equal(rejected.connectionVerified, false);
+  assert.equal(service.requests.length, 0, "unknown explicit selectors must make zero provider calls");
+  const accepted = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home, "models-file": modelsFile, model: "second", "timeout-ms": 5000 } });
+  assert.equal(accepted.result.status, "CONFIGURED_AND_VERIFIED");
+  assert.equal(accepted.result.doctor.model.id, "second");
+  assert.deepEqual(service.requests.map((request) => request.model), ["second"]);
+  assert.equal(digestFile(modelsFile), before);
+  assert.doesNotMatch(JSON.stringify([rejected, accepted]), /synthetic-(first|second)-key/);
 });
