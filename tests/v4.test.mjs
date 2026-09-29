@@ -342,6 +342,24 @@ test("Engine-owned OperationJob returns quickly, deduplicates repeated starts, a
     assert.equal(sameCompleted.jobId, first.jobId);
     assert.equal(sameCompleted.resultDigest, job.resultDigest);
     assert.equal(reviewer.requests(), 1);
+    const { inspectOperationJob } = await import("../src/v4/operation-job/store.mjs");
+    const otherHome = temporary("operation-job-unrelated-workspace");
+    initializeWorkspace(otherHome);
+    fs.mkdirSync(path.join(otherHome, "agent-operation-jobs"), { recursive: true });
+    const originalJob = path.join(home, "agent-operation-jobs", `${first.jobId}.json`);
+    const copiedJob = path.join(otherHome, "agent-operation-jobs", `${first.jobId}.json`);
+    fs.copyFileSync(originalJob, copiedJob);
+    assert.throws(() => inspectOperationJob({ home: otherHome, jobId: first.jobId }), (error) => error.code === "OPERATION_JOB_WORKSPACE_MISMATCH");
+    fs.cpSync(path.join(home, "agent-sessions", produced.sessionId), path.join(otherHome, "agent-sessions", produced.sessionId), { recursive: true });
+    assert.throws(() => inspectAgentSession(otherHome, produced.sessionId), (error) => error.code === "SESSION_WORKSPACE_MISMATCH");
+    assert.throws(() => inspectOperationJob({ home: otherHome, jobId: first.jobId }), (error) => error.code === "OPERATION_JOB_WORKSPACE_MISMATCH");
+    assert.equal(inspectOperationJob({ home, jobId: first.jobId }).resultDigest, job.resultDigest);
+    // A canonical alias is the same Workspace, not a forbidden relocation.
+    const alias = path.join(temporary("operation-job-workspace-alias"), "workspace");
+    fs.symlinkSync(home, alias);
+    assert.equal(inspectOperationJob({ home: alias, jobId: first.jobId }).resultDigest, job.resultDigest);
+    assert.equal(inspectAgentSession(alias, produced.sessionId).sessionId, produced.sessionId);
+    assert.equal(reviewer.requests(), 1, "ownership validation never re-executes the model");
   } finally {
     await client.close();
     await reviewer.close();

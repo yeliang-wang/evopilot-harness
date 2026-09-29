@@ -178,6 +178,13 @@ function readAndValidate(file) {
   }
   const expected = calculateJobDigest(job);
   if (job.jobDigest !== expected) throw jobError("OPERATION_JOB_INTEGRITY_FAILED", `OperationJob digest mismatch: ${file}.`, "stop-and-repair-operation-job");
+  const workspace = assertExternalWorkspace(path.dirname(path.dirname(file)));
+  // Completed results retain their owning Workspace even after explicit
+  // Session cleanup; in-flight jobs bind the still-present Session instead.
+  const owner = job.result?.workspace?.home ?? inspectAgentSession(workspace, job.sessionId).workspace.home;
+  if (assertExternalWorkspace(owner) !== workspace) {
+    throw jobError("OPERATION_JOB_WORKSPACE_MISMATCH", "OperationJob belongs to a different Workspace.", "use-the-operation-job-owning-workspace");
+  }
   return job;
 }
 
