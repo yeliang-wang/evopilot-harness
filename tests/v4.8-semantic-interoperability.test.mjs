@@ -25,7 +25,7 @@ import {
   verifySemanticRoundTrip
 } from "../src/v4/semantics/semantic-interoperability.mjs";
 
-function semanticSnapshot() {
+function semanticSnapshot(concepts = null) {
   const pack = createProfessionalPack({
     kind: "DomainOntologyPack",
     metadata: {
@@ -39,7 +39,7 @@ function semanticSnapshot() {
       provenance: {author: "author", reviewers: ["reviewer"], approvers: ["approver"], publishers: ["publisher"], sourceRefs: ["source://finance"]}
     },
     spec: {
-      concepts: [
+      concepts: concepts ?? [
         {conceptId: "finance:account", label: "Account", metaType: "ENTITY", definition: "A governed account.", evidenceRefs: ["source://account"], relationships: [{targetConceptId: "finance:audit", relationType: "REQUIRES", evidenceRefs: ["source://relation"]}]},
         {conceptId: "finance:audit", label: "Audit", metaType: "CAPABILITY", definition: "A governed audit capability.", evidenceRefs: ["source://audit"]}
       ]
@@ -119,6 +119,43 @@ test("v4.8 incremental and full semantic computation require identical authorita
   const failed = compareSemanticComputations({incremental: state.incremental, full: altered});
   assert.equal(failed.status, "FAILED");
   assert.equal(failed.authority.failureMayAdvanceLifecycle, false);
+});
+
+test("v4.8 computation enforces node, edge, and cache budgets in every reasoning mode", async (t) => {
+  const snapshot = semanticSnapshot(Array.from({length: 4}, (_, i) => ({
+    conceptId: `finance:item-${i}`, label: `Item ${i}`, metaType: "ENTITY", definition: `Governed item ${i}.`,
+    evidenceRefs: [`source://item-${i}`],
+    relationships: i < 2 ? [{targetConceptId: `finance:item-${i + 1}`, relationType: "REQUIRES", evidenceRefs: ["source://relation"]}] : []
+  })));
+  const cache = {id: "bounded-cache", digest: digest("bounded-cache"), policyDigest: digest("cache-policy"), entryCount: 4};
+  const index = buildSemanticIndex({snapshot, cache});
+  const limits = {maxNodes: 4, maxEdges: 2, maxCacheEntries: 4, maxIterations: 4, maxConcurrentTasks: 2, maxWallTimeMs: 1000};
+  const externalReasoner = {id: "qualified-reasoner", version: "1.2.3", digest: digest("reasoner"), qualificationDigest: digest("qualification"), supportedRules: ["owl:equivalentClass"]};
+  for (const mode of ["NONE", "RDFS", "OWL_RL", "SWRL_SAFE", "EXTERNAL_REASONER"]) {
+    await t.test(mode, () => {
+      const selected = profile(mode, {limits, ...(mode === "EXTERNAL_REASONER" ? {externalReasoner} : {})});
+      const reasonerInput = mode === "EXTERNAL_REASONER" ? {externalReasonerResult: {reasoner: externalReasoner, inputDigest: index.indexDigest, outputDigest: digest("output"), proofDigest: digest("proof"), status: "COMPLETED"}} : {};
+      const affected = calculateAffectedSubgraph({index, profile: selected, changedConceptIds: ["finance:item-0"], cacheDigest: cache.digest});
+      const args = {index, profile: selected, ...reasonerInput, execution: {concurrency: 2, elapsedMs: 1000}};
+      const before = JSON.stringify({index, profile: selected, affected});
+      const full = computeSemanticState({...args, mode: "FULL"});
+      const incremental = computeSemanticState({...args, mode: "INCREMENTAL", affectedSubgraph: affected});
+      assert.equal(compareSemanticComputations({incremental, full}).status, "PASSED");
+      assert.equal(full.status, "COMPLETED");
+      assert.equal(JSON.stringify({index, profile: selected, affected}), before);
+      for (const [field, code] of [["maxNodes", "REASONING_BUDGET_EXCEEDED"], ["maxEdges", "REASONING_BUDGET_EXCEEDED"], ["maxCacheEntries", "REASONING_CACHE_BUDGET_EXCEEDED"]]) {
+        const bounded = profile(mode, {limits: {...limits, [field]: limits[field] - 1}, ...(mode === "EXTERNAL_REASONER" ? {externalReasoner} : {})});
+        assert.throws(() => calculateAffectedSubgraph({index, profile: bounded, changedConceptIds: ["finance:item-0"], cacheDigest: cache.digest}), (error) => error.code === code);
+        assert.throws(() => computeSemanticState({...args, profile: bounded, mode: "FULL"}), (error) => error.code === code);
+        // A self-consistent digest on supplied subgraph metadata cannot waive resource limits.
+        const supplied = {...affected, profileDigest: bounded.profileDigest};
+        delete supplied.affectedSubgraphDigest;
+        supplied.affectedSubgraphDigest = digest(supplied);
+        assert.throws(() => computeSemanticState({...args, profile: bounded, mode: "INCREMENTAL", affectedSubgraph: supplied}), (error) => error.code === code);
+        assert.equal(JSON.stringify({index, profile: selected, affected}), before);
+      }
+    });
+  }
 });
 
 test("v4.8 qualified external reasoner results bind exact identity, version, qualification, and proof", () => {

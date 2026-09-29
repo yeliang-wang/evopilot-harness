@@ -125,12 +125,7 @@ export function calculateAffectedSubgraph({index, changedConceptIds = [], profil
   const nodeIds = new Set(index.nodes.map((node) => node.conceptId));
   const unknown = changed.filter((id) => !nodeIds.has(id));
   if (unknown.length) throw semanticError("AFFECTED_SUBGRAPH_UNKNOWN_CONCEPT", `Unknown changed concepts: ${unknown.join(", ")}.`);
-  if (index.nodes.length > profile.spec.limits.maxNodes || index.edges.length > profile.spec.limits.maxEdges) {
-    throw semanticError("REASONING_BUDGET_EXCEEDED", "Semantic Index exceeds the selected reasoning profile budget.");
-  }
-  if (index.cache && index.cache.entryCount > profile.spec.limits.maxCacheEntries) {
-    throw semanticError("REASONING_CACHE_BUDGET_EXCEEDED", "Semantic cache entry count exceeds the selected reasoning profile budget.");
-  }
+  validateIndexResourceBudgets(index, profile);
   if (index.cache && cacheDigest !== index.cache.digest) {
     throw semanticError("SEMANTIC_CACHE_DIGEST_MISMATCH", "The supplied cache digest does not bind the Semantic Index cache.");
   }
@@ -174,6 +169,7 @@ export function calculateAffectedSubgraph({index, changedConceptIds = [], profil
 export function computeSemanticState({index, profile, mode = "FULL", affectedSubgraph = null, externalReasonerResult = null, execution = {}} = {}) {
   validateSemanticIndex(index);
   validateOntologyReasoningProfile(profile);
+  validateIndexResourceBudgets(index, profile);
   const computationMode = requiredEnum(mode, ["FULL", "INCREMENTAL"], "mode", "SEMANTIC_COMPUTATION_MODE_INVALID");
   if (computationMode === "INCREMENTAL") validateAffectedSubgraph(affectedSubgraph, index.indexDigest, profile.profileDigest);
   if (profile.spec.mode === "EXTERNAL_REASONER") validateExternalReasonerResult(externalReasonerResult, profile, index.indexDigest);
@@ -470,6 +466,15 @@ function validateRoundTripReport(value) { return validateImmutable(value, SEMANT
 function validateTerminalSemanticClosure(value) { const result = validateImmutable(value, TERMINAL_SEMANTIC_CLOSURE_SCHEMA, "closureDigest", "TERMINAL_SEMANTIC_CLOSURE_INVALID"); if (result.authority?.consumerReadOnly !== true || result.authority?.grantsReleaseAuthority !== false) throw semanticError("TERMINAL_CLOSURE_AUTHORITY_INVALID", "Terminal semantic closure must remain read-only and cannot grant Release authority."); return value; }
 function validateTerminalSemanticSlice(value) { const result = validateImmutable(value, TERMINAL_SEMANTIC_SLICE_SCHEMA, "sliceDigest", "TERMINAL_SEMANTIC_SLICE_INVALID"); if (result.authority?.readOnly !== true || result.authority?.liveHarnessDependency !== false || result.authority?.mayMutate !== false) throw semanticError("TERMINAL_SLICE_AUTHORITY_INVALID", "Terminal semantic slice must remain offline and read-only."); return value; }
 function validateSnapshot(value) { return validateImmutable(value, "evopilot-harness-resolved-project-ontology-snapshot/v1", "snapshotDigest", "PROJECT_ONTOLOGY_SNAPSHOT_INVALID"); }
+
+function validateIndexResourceBudgets(index, profile) {
+  if (index.nodes.length > profile.spec.limits.maxNodes || index.edges.length > profile.spec.limits.maxEdges) {
+    throw semanticError("REASONING_BUDGET_EXCEEDED", "Semantic Index exceeds the selected reasoning profile budget.");
+  }
+  if (index.cache && index.cache.entryCount > profile.spec.limits.maxCacheEntries) {
+    throw semanticError("REASONING_CACHE_BUDGET_EXCEEDED", "Semantic cache entry count exceeds the selected reasoning profile budget.");
+  }
+}
 
 function normalizeLimits(value = {}) {
   const limits = {};
