@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { isProfessionalBoundaryEvidence } from "./reasoning.mjs";
 import path from "node:path";
 import { API_VERSION } from "./constants.mjs";
 import { discoverAssets, publishCatalog } from "./catalog.mjs";
@@ -304,7 +305,8 @@ function materializeDependencies(home, proposedAssets) {
 function evolvedProfile(base, graph, reasoning) {
   const asset = structuredClone(base);
   const evidenceKinds = unique(graph.nodes.map((node) => node.kind));
-  const evidencedConcepts = conceptFrequency(graph).map((item) => item.id);
+  const professionalGraph = { ...graph, nodes: graph.nodes.filter(isProfessionalBoundaryEvidence) };
+  const evidencedConcepts = conceptFrequency(professionalGraph).map((item) => item.id);
   const permittedConcepts = evidencedConcepts.filter((concept) => !asset.spec.match.negativeConcepts.includes(concept));
   const addedConcepts = permittedConcepts.filter((concept) => !asset.spec.match.positiveConcepts.includes(concept));
   asset.metadata.version = bumpPatch(base.metadata.version);

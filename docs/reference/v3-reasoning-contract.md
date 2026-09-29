@@ -139,3 +139,7 @@ The run stores provider, model, input/output/total tokens, prompt and response d
 ## Evaluation Claims
 
 `eval v3-run` covers schema, Advisor citation, adversarial response, unknown-domain stops, all supported Delta asset kinds, positive/negative Evaluation cases, and blocked impact closure. EvaluationPack v1, v2, and v3 remain readable. Generated packs report `INSUFFICIENT_EVAL_EVIDENCE` until enough independently reviewed cases exist. Contract tests are not represented as general matching accuracy or causal improvement.
+
+### Professional evidence in evolved Profile drafts
+
+An `EVOLVE_EXISTING` draft adds professional matching concepts and boundary capabilities only from the same Source-relative professional evidence view used for reasoning. Dependency, test, example, tooling and repository-governance nodes remain in the complete Evidence Graph for traceability, but cannot expand the product boundary. Existing Profile concepts are preserved. Genuine professional evidence and non-project attachments keep their existing behavior. Independent Review and the later Evaluation, approval and publication gates remain required.

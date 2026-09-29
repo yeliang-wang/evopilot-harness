@@ -326,7 +326,7 @@ function decide(eligibility, candidates, policy, graph, ontology, profiles) {
 // Dependency, test, example, and contributor instructions remain in the full
 // evidence graph, but cannot establish the Source's own professional boundary.
 // Use the Source-relative label, never its checkout's parent directory name.
-function isProfessionalBoundaryEvidence(node) {
+export function isProfessionalBoundaryEvidence(node) {
   if (!["source-project", "github-repository"].includes(node.sourceType)) return true;
   const relative = String(node.label ?? "").replaceAll("\\", "/");
   if (/(?:^|\/)(?:AGENTS|CLAUDE|CONTRIBUTING|CONTRIBUTORS|AUTHORS|MAINTAINERS|GOVERNANCE|CODE_OF_CONDUCT|SECURITY|SUPPORT|LICENSE|COPYING)(?:\.[^/]*)?$/i.test(relative)) return false;

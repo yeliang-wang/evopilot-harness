@@ -1,8 +1,8 @@
 {
   "schema": "evopilot-evolution-target/v1",
   "id": "evopilot-harness-v4.8.1-semantic-catalog-supply-repair",
-  "revision": 4,
-  "intent": "semantic catalog supply repair; source content boundary protection; blocked business decision guidance consistency; proposal Review lifecycle stage context",
+  "revision": 5,
+  "intent": "semantic catalog supply repair; source content boundary protection; blocked business decision guidance consistency; proposal Review lifecycle stage context; EVOLVE_EXISTING draft generation professional boundary consistency",
   "objective": "Complete separately authorized indexed semantic supply without changing existing producer/consumer boundaries or published asset formats.",
   "evidence": [
     {
@@ -29,7 +29,7 @@
       "matchedMilestone": "evopilot-harness-4.8.1-semantic-catalog-supply-repair",
       "targetVersion": "4.8.1",
       "classification": "ALIGNED",
-      "roadmapDigest": "sha256:594e9674bc5ded7c32112e6df529fce97eaa35f4216d4412254cb8b1a16f3840"
+      "roadmapDigest": "sha256:4953af6a496d497ce855984fbe35b18f204d08f989ad376d6dabbb8d27da0c35"
     }
   ],
   "scope": {
@@ -42,7 +42,8 @@
       "For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
       "Source content boundary excludes protected Host, model and credential paths before enumeration sampling, content read, hashing or extraction across v4 classification and v3 evidence ingestion. Explicit protected paths and symlink aliases fail with SOURCE_PROTECTED_PATH. Ordered members are all prevalidated; verified bounded input prevents unsafe reopen. Old cached private material is not reused; old evidence remains immutable. Exact approved detail: /Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/source-repair-review/repair-plan.md@sha256:0719738a57d7ccb0fc91621d60eb09f93ca52c2ff35667a460dfbc3d86f71507",
       "A BLOCKER_PRESENTATION declares only REVIEW_REMEDIATION and PRESERVE_FOR_LATER. REVIEW_REMEDIATION re-presents the same complete current Engine-owned blocker guidance read-only, with no new frame, state write, model call, retry, Proposal edit, cancellation, approval, publication or close authority. Previously persisted frames and receipts remain immutable; an old declared REVIEW_REMEDIATION may be read through this same validated path, while old CANCEL remains typed-rejected with unchanged bytes.",
-      "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority."
+      "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority.",
+      "During EVOLVE_EXISTING draft generation, only the same Source-relative professional evidence view used by reasoning may add positive matching concepts or in-scope professional capabilities to the evolved HarnessProfile. Dependency, test, example, tooling and repository-governance nodes remain in the complete immutable Evidence Graph but cannot establish the product professional boundary. Preserve genuine professional additions, original Source and oracle, independent Review, Evaluation and separate approval/publication gates; never rewrite an existing Proposal or historical receipt."
     ],
     "exclude": [
       "Preserve current unrelated checkout changes. Owning-product implementation and verification use the existing isolated source worktrees on this Mac. Acceptance uses separately bound isolated Candidate installations. Durable Targets and evidence stay outside /tmp.",
@@ -51,7 +52,8 @@
       "WorkBuddy and all other live Hosts are outside this release acceptance scope. Do not operate or collect WorkBuddy execution artifacts, request WorkBuddy declarations, or claim cross-Host acceptance. Retain generated-adapter contracts and generic transport tests.",
       "No weakened approval, mandatory signature, source-project command execution, arbitrary executable Pack, secret import, hidden provider fallback or transfer of producer/consumer ownership.",
       "Current user-authorized execution stops after step 1/2 completion. No soak, formal acceptance closure, release gate, merge, tag or publication. Existing later acceptance obligations remain pending, not waived.",
-      "No new remediation mutation, Proposal editing, retry or cancellation branch; no old receipt rewrite, forced Review verdict, PolicyPack edit or human Evaluation gate bypass. Authorized execution still stops at step 1/2; no acceptance or release authorization is added."
+      "No new remediation mutation, Proposal editing, retry or cancellation branch; no old receipt rewrite, forced Review verdict, PolicyPack edit or human Evaluation gate bypass. Authorized execution still stops at step 1/2; no acceptance or release authorization is added.",
+      "No persisted Proposal repair, Source reduction, post-result oracle change, forced model verdict, new retry/approval/publication branch, PolicyPack change or new actual Host. Execution still stops after step1/2."
     ]
   },
   "compatibilityPolicy": {
@@ -128,6 +130,12 @@
         "roadmapCriterionDigest": "sha256:5240798cc99f3d0de55cd77c798ac0beb9718345d4597b1ca98770aedd30899e",
         "acceptanceIds": [
           "H-F10"
+        ]
+      },
+      {
+        "roadmapCriterionDigest": "sha256:7ff844a7d851c643072a438a92dc2637a4a7862748f959ce12db56771f5500a1",
+        "acceptanceIds": [
+          "H-F11"
         ]
       }
     ],
@@ -275,6 +283,15 @@
       "critical": true,
       "criterion": "At semantic Proposal Review time, present the existing lifecycle stage and deterministic Evaluation sufficiency rationale together with the original complete Evaluation cases. Distinguish pending later human Evaluation acknowledgement from substantive insufficiency of case structure, positive/negative coverage, evidence or validators. Preserve every allowed independent Review verdict, raw blocker and Evaluation state; no forced READY, verdict rewriting, case approval, policy edit or publication authority.",
       "requiredEvidence": "Captured initial and contract-repair loopback-provider requests prove the same current review stage and existing Evaluation rationale plus complete unchanged cases; valid pending-human-review fixture can receive READY while approval without evaluationReviewed remains blocked; materially deficient case fixture retains REVISE or NEED_MORE_EVIDENCE. New installed actual Codex Review uses the same Source and independent oracle under the existing bounded budget; outcome is not forced. Source/digest and policy bytes remain unchanged.",
+      "status": "PENDING",
+      "evidenceRefs": []
+    },
+    {
+      "id": "H-F11",
+      "category": "FUNCTIONAL",
+      "critical": true,
+      "criterion": "During EVOLVE_EXISTING draft generation, only the same Source-relative professional evidence view used by reasoning may add positive matching concepts or in-scope professional capabilities to the evolved HarnessProfile. Dependency, test, example, tooling and repository-governance nodes remain in the complete immutable Evidence Graph but cannot establish the product professional boundary. Preserve genuine professional additions, original Source and oracle, independent Review, Evaluation and separate approval/publication gates; never rewrite an existing Proposal or historical receipt.",
+      "requiredEvidence": "Synthetic regression proves auxiliary-only concepts are absent from an evolved Profile while genuine primary-source concepts remain; same-file professional evidence, non-project attachments and primary-path lookalikes remain supported; complete graph/source digests and node counts stay unchanged. Reproduce the pinned full Valkey case, form one exact successor Candidate, rerun affected installed and actual Codex lifecycle plus required regression closure, and independently verify every proposed matching/boundary addition before controlled fixture publication. Preserve failed prior Candidates and raw model verdicts.",
       "status": "PENDING",
       "evidenceRefs": []
     }
@@ -4870,7 +4887,8 @@
         "H-C04",
         "H-F08",
         "H-F09",
-        "H-F10"
+        "H-F10",
+        "H-F11"
       ],
       "startingState": "Exact separately authorized fresh installed Harness4.8.1 with isolated fixture Catalog; isolated /tmp roots on this Mac; all needed model/Host/source/permission bindings preflighted; no active integration reused.",
       "terminalState": "Under the current Codex-only Host policy: All assigned independent assertions and inherited variants pass with immutable exact evidence; WorkBuddy leg requires a new final declaration; no Release or implicit asset publication. For this successor release only, execute real Host acceptance solely on exact-version qualified Codex. Other Host live execution, WorkBuddy human declarations and cross-Host equivalence are not claimed or required. Retain all non-Host behavior, security, generated-adapter contract, generic MCP/headless transport, installed-artifact, 5400-second active-soak, impact and NO_REGRESSION obligations. Historical published records remain immutable; no PASS transfer.",
@@ -4973,6 +4991,22 @@
           "requiredEvidence": "Captured initial and contract-repair loopback-provider requests prove the same current review stage and existing Evaluation rationale plus complete unchanged cases; valid pending-human-review fixture can receive READY while approval without evaluationReviewed remains blocked; materially deficient case fixture retains REVISE or NEED_MORE_EVIDENCE. New installed actual Codex Review uses the same Source and independent oracle under the existing bounded budget; outcome is not forced. Source/digest and policy bytes remain unchanged.",
           "status": "PENDING",
           "evidenceRefs": []
+        },
+        {
+          "id": "RC05-M6",
+          "scenario": "During EVOLVE_EXISTING draft generation, only the same Source-relative professional evidence view used by reasoning may add positive matching concepts or in-scope professional capabilities to the evolved HarnessProfile. Dependency, test, example, tooling and repository-governance nodes remain in the complete immutable Evidence Graph but cannot establish the product professional boundary. Preserve genuine professional additions, original Source and oracle, independent Review, Evaluation and separate approval/publication gates; never rewrite an existing Proposal or historical receipt.",
+          "coversAcceptanceIds": [
+            "H-F11"
+          ],
+          "hosts": [
+            "Codex"
+          ],
+          "prohibitedEffects": [
+            "No Source commands/writes, credential re-entry, old Proposal or receipt rewrite, false professional capability, forced Review verdict or public publication"
+          ],
+          "requiredEvidence": "Synthetic regression proves auxiliary-only concepts are absent from an evolved Profile while genuine primary-source concepts remain; same-file professional evidence, non-project attachments and primary-path lookalikes remain supported; complete graph/source digests and node counts stay unchanged. Reproduce the pinned full Valkey case, form one exact successor Candidate, rerun affected installed and actual Codex lifecycle plus required regression closure, and independently verify every proposed matching/boundary addition before controlled fixture publication. Preserve failed prior Candidates and raw model verdicts.",
+          "status": "PENDING",
+          "evidenceRefs": []
         }
       ]
     }
@@ -4988,8 +5022,8 @@
     "target": {
       "decision": "APPROVED",
       "by": "user",
-      "evidenceRef": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/approved-repairs/lifecycle-guidance-review/user-decision-20260929.json",
-      "authorizationDigest": "sha256:7494524b45e22300a09e3147a97f830ee002336770251bfdd9c11c62e00d2fd4"
+      "evidenceRef": "/Users/wangyejing/.codex/evolution-runs/evopilot/semantic-convergence-targets-r3/codex-only-execution/step12-closure-20260928-source-audit/approved-repairs/evolved-profile-boundary-review/user-decision-20260929-r5.json",
+      "authorizationDigest": "sha256:0b00040049a1ae1e408493d5de0ab6c7601c3d9fe57e1b6e4aa0397d4ce87967"
     },
     "release": {
       "decision": "PENDING"
