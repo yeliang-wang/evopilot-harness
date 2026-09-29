@@ -1045,6 +1045,50 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
       confirmation: `CLOSE_SESSION:${published.sessionId}:${published.sessionDigest}`
     }));
     assert.equal(closed.status, "CLOSED");
+    const sessionPath = path.join(home, "agent-sessions", closed.sessionId, "session.json");
+    const originalSessionBytes = fs.readFileSync(sessionPath);
+    const workspaceBeforeReplay = treeDigest(home);
+    const archivedResult = await client.tool("inspect_lifecycle_presentation_archive", { sessionId: closed.sessionId });
+    assert.equal(archivedResult.isError ?? false, false, JSON.stringify(structured(archivedResult)));
+    const archive = structured(archivedResult);
+    assert.equal(archive.reconstruction, "IMMUTABLE_FRAME_ARCHIVE");
+    assert.equal(archive.governedMutationCount, 0);
+    assert.deepEqual(archive.frames, closed.interaction.frameArchive);
+    assert.deepEqual(archive.manifest.stages, ["PLAN_PRESENTATION", "PROPOSAL_REVIEW_PRESENTATION", "PROPOSAL_APPROVAL_DECISION", "PUBLICATION_PRESENTATION", "CATALOG_VALIDATION_PRESENTATION", "CLOSE_PRESENTATION"]);
+    assert.equal(treeDigest(home), workspaceBeforeReplay);
+    assert.equal(archive.frames[0].frameDigest, planFrame.frameDigest);
+    assert.equal(archive.frames[1].frameDigest, reviewFrame.frameDigest);
+    // Publication changed the live Catalog. Historical frames remain exact; new reasoning must still stop.
+    const { createInteractionFrame } = await import("../src/v4/interaction/controller.mjs");
+    assert.throws(() => createInteractionFrame({ session: closed, stage: "PLAN_PRESENTATION", subject: planFrame.subject, renderModel: planFrame.renderModel }), { code: "EVOLUTION_CONTEXT_CHANGED_REEVALUATION_REQUIRED" });
+    for (let restart = 0; restart < 2; restart++) {
+      const reader = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
+      try {
+        await reader.initialize();
+        assert.deepEqual(await reader.tool("inspect_lifecycle_presentation_archive", { sessionId: closed.sessionId }), archivedResult);
+      } finally { await reader.close(); }
+    }
+    assert.equal(treeDigest(home), workspaceBeforeReplay);
+    const tampering = [
+      ["SESSION_INTEGRITY_FAILURE", session => { session.interaction.frameArchive[0].renderModel.goal = "changed"; }, false],
+      ["LIFECYCLE_FRAME_INTEGRITY_FAILURE", session => { session.interaction.frameArchive[0].renderModel.goal = "changed"; }],
+      ["LIFECYCLE_FRAME_INTEGRITY_FAILURE", session => { const frame = session.interaction.frameArchive[0]; frame.sessionId = "session-other"; delete frame.frameDigest; frame.frameDigest = digest(frame); }],
+      ["LIFECYCLE_FRAME_SET_INCOMPLETE", session => { session.interaction.frameArchive = session.interaction.frameArchive.filter(frame => frame.stage !== "PROPOSAL_APPROVAL_DECISION"); }],
+      ["LIFECYCLE_FRAME_CANONICAL_DIGEST_MISMATCH", session => { const frame = session.interaction.frameArchive[0]; frame.businessView.canonicalMarkdown += "changed"; delete frame.frameDigest; frame.frameDigest = digest(frame); }]
+    ];
+    try {
+      for (const [code, mutate, resign = true] of tampering) {
+        const damaged = JSON.parse(originalSessionBytes);
+        mutate(damaged);
+        if (resign) { delete damaged.sessionDigest; damaged.sessionDigest = digest(damaged); }
+        fs.writeFileSync(sessionPath, JSON.stringify(damaged));
+        const denied = await client.tool("inspect_lifecycle_presentation_archive", { sessionId: closed.sessionId });
+        assert.equal(denied.isError, true);
+        assert.equal(structured(denied).code, code);
+      }
+    } finally { fs.writeFileSync(sessionPath, originalSessionBytes); }
+    assert.deepEqual(await client.tool("inspect_lifecycle_presentation_archive", { sessionId: closed.sessionId }), archivedResult);
+    assert.equal(treeDigest(home), workspaceBeforeReplay);
     const cleaned = structured(await client.tool("cleanup_operation_session", {
       sessionId: closed.sessionId,
       expectedSessionDigest: closed.sessionDigest,

@@ -979,85 +979,20 @@ export function inspectLifecyclePresentationArchive(home, sessionId) {
   if (!reference?.proposalId || !reference.proposalDigest || !reference.approvedProposalDigest || !reference.publication) {
     throw sessionError("LIFECYCLE_REPLAY_PUBLICATION_REQUIRED", "Complete lifecycle replay requires an approved and Catalog-validated Proposal binding.", "complete-governed-lifecycle-before-replay");
   }
-  const proposal = inspectProposal(session.workspace.home, reference.proposalId);
-  const review = inspectProposalReview(session.workspace.home, reference.proposalId);
-  const replaySession = { ...persistedJson(session), compatibility: operationCompatibility() };
-  const now = reference.publication.publishedAt ?? session.updatedAt;
-  const stableFrame = (stage, options) => createInteractionFrame({
-    session: replaySession,
-    stage,
-    ...options,
-    now,
-    frameId: `frame-replay-${stage.toLowerCase().replaceAll("_", "-")}-${digest({ sessionId, stage, sessionDigest: session.sessionDigest }).slice(7, 19)}`
-  });
-  const frames = [
-    stableFrame("PLAN_PRESENTATION", {
-      subject: { type: "OPERATION_PLAN", id: session.sessionId, digest: session.planDigest, bindings: { sessionDigest: session.sessionDigest } },
-      renderModel: { ...session.plan, planDigest: session.planDigest },
-      decision: { kind: "PLAN_CONFIRMATION", question: "Do you approve this exact Operation Plan?" },
-      allowedNextOperations: []
-    }),
-    stableFrame("PROPOSAL_REVIEW_PRESENTATION", {
-      subject: { type: "PROPOSAL_REVIEW", id: reference.proposalId, digest: review.reportDigest, bindings: { proposalDigest: reference.proposalDigest, reviewDigest: review.reportDigest } },
-      renderModel: {
-        proposal,
-        proposalDigest: reference.proposalDigest,
-        review,
-        reviewDigest: review.reportDigest,
-        ...boundProfessionalReasoning(session.workspace.home, proposal),
-        sources: session.plan.sources ?? {},
-        evaluation: proposal.evaluationCoverage ?? proposal.evaluationPack ?? { status: "BOUND_IN_PROPOSAL", proposedAssets: proposal.proposedAssets ?? [] },
-        comparisonAssessment: review.comparisonAssessment ?? { status: "NOT_PROVIDED" },
-        authority: { engineAuthoritative: true, presentationIsApproval: false },
-        nextAction: "acknowledge-complete-review-before-proposal-approval"
-      },
-      decision: { kind: "PROPOSAL_REVIEW_COMPLETION", question: "Have you completed review of this exact Proposal, Review, Evaluation, and comparison binding?" },
-      allowedNextOperations: []
-    }),
-    stableFrame("PROPOSAL_APPROVAL_DECISION", {
-      subject: { type: "PROPOSAL", id: reference.proposalId, digest: reference.proposalDigest, bindings: { proposalDigest: reference.proposalDigest, reviewDigest: review.reportDigest } },
-      renderModel: {
-        proposalId: reference.proposalId,
-        proposalDigest: reference.proposalDigest,
-        reviewDigest: review.reportDigest,
-        evaluationReviewed: true,
-        question: "Do you approve this exact Harness Proposal?"
-      },
-      decision: { kind: "PROPOSAL_APPROVAL", question: "Do you approve this exact Harness Proposal?" },
-      allowedNextOperations: []
-    }),
-    stableFrame("PUBLICATION_PRESENTATION", {
-      subject: { type: "APPROVED_PROPOSAL_PUBLICATION", id: reference.proposalId, digest: reference.approvedProposalDigest, bindings: { approvalDigest: reference.approval?.approvalDigest ?? reference.approval?.approvedContentDigest ?? null } },
-      renderModel: {
-        proposalId: reference.proposalId,
-        approvedProposalDigest: reference.approvedProposalDigest,
-        assets: proposal.proposedAssets ?? proposal.assetDelta?.assets ?? [],
-        catalog: { destination: "organization-catalog", validationRequired: true },
-        impact: "Publishing writes immutable approved Harness assets and Evaluation assets to the Organization Catalog.",
-        nonPublicationOutcome: "The approved Proposal remains in the external Workspace review area and may be preserved or closed without publication.",
-        authority: { approvalIsPublication: false, separateHumanAuthorizationRequired: true }
-      },
-      decision: { kind: "PUBLICATION_AUTHORIZATION", question: "Do you authorize publication of this exact approved Proposal to the Organization Catalog?" },
-      allowedNextOperations: []
-    }),
-    stableFrame("CATALOG_VALIDATION_PRESENTATION", {
-      subject: { type: "CATALOG_VALIDATION", id: reference.proposalId, digest: reference.publication.catalogDigest ?? reference.publication.resultDigest, bindings: { proposalId: reference.proposalId, publicationResultDigest: reference.publication.resultDigest } },
-      renderModel: { proposalId: reference.proposalId, publication: reference.publication, catalogStatus: reference.publication.catalogStatus, catalogDigest: reference.publication.catalogDigest ?? reference.publication.resultDigest, nextAction: "close-session" },
-      decision: null,
-      allowedNextOperations: []
-    }),
-    stableFrame("CLOSE_PRESENTATION", {
-      subject: { type: "AGENT_OPERATION_SESSION", id: sessionId, digest: session.sessionDigest, bindings: { action: "CLOSE", status: session.status } },
-      renderModel: { sessionId, sessionDigest: session.sessionDigest, status: session.status, preserved: ["Session audit state", "Harness assets", "Engine artifacts", "Evidence Sources"], question: "Do you want to close this exact Session while preserving its state?" },
-      decision: { kind: "CLOSE_DECISION", question: "Do you want to close this exact Session while preserving its state?" },
-      allowedNextOperations: []
-    })
-  ];
+  const archived = session.interaction?.frameArchive;
+  const frames = archived?.length ? persistedJson(archived) : reconstructLifecycleFrames(session, reference);
+  for (const { frameDigest, ...frame } of frames) {
+    if (frame.sessionId !== sessionId || digest(frame) !== frameDigest) {
+      throw sessionError("LIFECYCLE_FRAME_INTEGRITY_FAILURE", "Archived Frame identity or digest mismatch.", "preserve-session-and-inspect-archive");
+    }
+  }
   const manifest = createLifecycleFrameManifest(frames);
+  const reconstruction = archived?.length ? "IMMUTABLE_FRAME_ARCHIVE" : "ENGINE_OWNED_FROM_IMMUTABLE_BINDINGS";
+
   const canonicalMarkdown = [
     "# Complete Harness lifecycle business presentation replay",
     "",
-    "Read-only replay reconstructed by the deterministic Engine from immutable Session, Proposal, approval, publication, and Catalog bindings. It executes no governed mutation and grants no authority.",
+    `Read-only replay: ${reconstruction}. It executes no mutation and grants no authority.`,
     "",
     ...frames.flatMap((frame, index) => [
       `## Stage ${index + 1} of ${frames.length} — ${frame.stage}`,
@@ -1080,12 +1015,84 @@ export function inspectLifecyclePresentationArchive(home, sessionId) {
     status: "READY",
     sessionId,
     sessionDigest: session.sessionDigest,
-    reconstruction: "ENGINE_OWNED_FROM_IMMUTABLE_BINDINGS",
+    reconstruction,
     governedMutationCount: 0,
     frames,
     manifest,
     presentation
   };
+}
+
+function reconstructLifecycleFrames(session, reference) {
+  const { sessionId, sessionDigest, planDigest } = session;
+  const { proposalId, proposalDigest, approvedProposalDigest, publication } = reference;
+  const proposal = inspectProposal(session.workspace.home, proposalId);
+  const review = inspectProposalReview(session.workspace.home, proposalId);
+  const replaySession = { ...session, compatibility: operationCompatibility() };
+  const now = publication.publishedAt ?? session.updatedAt;
+  const stableFrame = (stage, options) => createInteractionFrame({
+    session: replaySession,
+    stage,
+    ...options,
+    now,
+    frameId: `frame-replay-${stage.toLowerCase().replaceAll("_", "-")}-${digest({ sessionId, stage, sessionDigest }).slice(7, 19)}`
+  });
+  return [
+    stableFrame("PLAN_PRESENTATION", {
+      subject: { type: "OPERATION_PLAN", id: sessionId, digest: planDigest, bindings: { sessionDigest } },
+      renderModel: { ...session.plan, planDigest },
+      decision: { kind: "PLAN_CONFIRMATION", question: "Do you approve this exact Operation Plan?" },
+    }),
+    stableFrame("PROPOSAL_REVIEW_PRESENTATION", {
+      subject: { type: "PROPOSAL_REVIEW", id: proposalId, digest: review.reportDigest, bindings: { proposalDigest, reviewDigest: review.reportDigest } },
+      renderModel: {
+        proposal,
+        proposalDigest,
+        review,
+        reviewDigest: review.reportDigest,
+        ...boundProfessionalReasoning(session.workspace.home, proposal),
+        sources: session.plan.sources ?? {},
+        evaluation: proposal.evaluationCoverage ?? proposal.evaluationPack ?? { status: "BOUND_IN_PROPOSAL", proposedAssets: proposal.proposedAssets ?? [] },
+        comparisonAssessment: review.comparisonAssessment ?? { status: "NOT_PROVIDED" },
+        authority: { engineAuthoritative: true, presentationIsApproval: false },
+        nextAction: "acknowledge-complete-review-before-proposal-approval"
+      },
+      decision: { kind: "PROPOSAL_REVIEW_COMPLETION", question: "Have you completed review of this exact Proposal, Review, Evaluation, and comparison binding?" },
+    }),
+    stableFrame("PROPOSAL_APPROVAL_DECISION", {
+      subject: { type: "PROPOSAL", id: proposalId, digest: proposalDigest, bindings: { proposalDigest, reviewDigest: review.reportDigest } },
+      renderModel: {
+        proposalId,
+        proposalDigest,
+        reviewDigest: review.reportDigest,
+        evaluationReviewed: true,
+        question: "Do you approve this exact Harness Proposal?"
+      },
+      decision: { kind: "PROPOSAL_APPROVAL", question: "Do you approve this exact Harness Proposal?" },
+    }),
+    stableFrame("PUBLICATION_PRESENTATION", {
+      subject: { type: "APPROVED_PROPOSAL_PUBLICATION", id: proposalId, digest: approvedProposalDigest, bindings: { approvalDigest: reference.approval?.approvalDigest ?? reference.approval?.approvedContentDigest ?? null } },
+      renderModel: {
+        proposalId,
+        approvedProposalDigest,
+        assets: proposal.proposedAssets ?? proposal.assetDelta?.assets ?? [],
+        catalog: { destination: "organization-catalog", validationRequired: true },
+        impact: "Publishing writes immutable approved Harness assets and Evaluation assets to the Organization Catalog.",
+        nonPublicationOutcome: "The approved Proposal remains in the external Workspace review area and may be preserved or closed without publication.",
+        authority: { approvalIsPublication: false, separateHumanAuthorizationRequired: true }
+      },
+      decision: { kind: "PUBLICATION_AUTHORIZATION", question: "Do you authorize publication of this exact approved Proposal to the Organization Catalog?" },
+    }),
+    stableFrame("CATALOG_VALIDATION_PRESENTATION", {
+      subject: { type: "CATALOG_VALIDATION", id: proposalId, digest: publication.catalogDigest ?? publication.resultDigest, bindings: { proposalId, publicationResultDigest: publication.resultDigest } },
+      renderModel: { proposalId, publication, catalogStatus: publication.catalogStatus, catalogDigest: publication.catalogDigest ?? publication.resultDigest, nextAction: "close-session" },
+    }),
+    stableFrame("CLOSE_PRESENTATION", {
+      subject: { type: "AGENT_OPERATION_SESSION", id: sessionId, digest: sessionDigest, bindings: { action: "CLOSE", status: session.status } },
+      renderModel: { sessionId, sessionDigest, status: session.status, preserved: ["Session audit state", "Harness assets", "Engine artifacts", "Evidence Sources"], question: "Do you want to close this exact Session while preserving its state?" },
+      decision: { kind: "CLOSE_DECISION", question: "Do you want to close this exact Session while preserving its state?" },
+    })
+  ];
 }
 
 export function listAgentSessions(home) {
