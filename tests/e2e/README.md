@@ -57,8 +57,8 @@ scenario profile and validator.
 ## 4.8.1 development case plan
 
 For maintainers with the exact approved external 4.8.1 Target file, one command
-checks its byte digest, the five RC definitions, ten machine-variant definitions,
-eleven current criterion mappings, historical projections and local source tests:
+checks its byte digest, the five RC definitions, every declared machine variant
+and current criterion mapping, historical projections and local source tests:
 
 ```bash
 node scripts/validate-semantic-supply-corpus.mjs \
@@ -66,7 +66,14 @@ node scripts/validate-semantic-supply-corpus.mjs \
 ```
 
 Replace the example Target path with the existing approved file; no Target or
-private evidence is copied into this repository. Omit `--run-local` to validate
+private evidence is copied into this repository. The checked-in development plan
+pins revision 3 with eleven machine variants and twelve current criteria. For a
+later approved revision, provide its separately frozen exact projection with
+`--case-plan /absolute/path/to/current-case-plan.json` before `--run-local`.
+The projection is produced by the exported `projectCasePlan(targetBytes)` helper
+and bound to those exact Target bytes in the external acceptance campaign. It
+does not approve the Target or replace the campaign's authorization checks.
+Omit `--run-local` to validate
 definitions only. The command reads the Target and historical records without
 modifying them. Local suites create disposable synthetic fixtures in the OS temp
 directory; the runner accepts no manifest-supplied commands. It rejects Target

@@ -23,7 +23,8 @@ function requireCorpus(condition, code) {
 export function projectCasePlan(targetBytes) {
   const target = JSON.parse(targetBytes);
   requireCorpus(target.schema === "evopilot-evolution-target/v1" &&
-    target.id === "evopilot-harness-v4.8.1-semantic-catalog-supply-repair" && target.revision === 3, "TARGET_IDENTITY_MISMATCH");
+    target.id === "evopilot-harness-v4.8.1-semantic-catalog-supply-repair" &&
+    Number.isSafeInteger(target.revision) && target.revision >= 3, "TARGET_IDENTITY_MISMATCH");
   requireCorpus(Array.isArray(target.acceptance) && Array.isArray(target.realCaseCoverage), "TARGET_CASES_INVALID");
   requireCorpus(isDeepStrictEqual(target.realCaseCoverage.map(item => item.id), ["RC01", "RC02", "RC03", "RC04", "RC05"]), "TARGET_CASES_INVALID");
   return {
@@ -71,14 +72,21 @@ export function validateCasePlan(plan, targetBytes, root = CORPUS_ROOT) {
 
 function run() {
   const args = process.argv.slice(2);
-  requireCorpus((args.length === 2 || (args.length === 3 && args[2] === "--run-local")) && args[0] === "--target" && args[1], "EXPLICIT_TARGET_REQUIRED");
+  const runLocal = args.at(-1) === "--run-local";
+  const inputs = runLocal ? args.slice(0, -1) : args;
+  requireCorpus((inputs.length === 2 || (inputs.length === 4 && inputs[2] === "--case-plan" && inputs[3])) &&
+    inputs[0] === "--target" && inputs[1], "EXPLICIT_TARGET_REQUIRED");
   // The explicit external Target is read-only input. Never copy private evidence
   // or mutate its status. It is not a command, source project or policy authority.
-  const targetFile = path.resolve(args[1]);
+  const targetFile = path.resolve(inputs[1]);
   requireCorpus(fs.statSync(targetFile).size <= 33554432, "TARGET_SIZE_LIMIT");
   const targetBytes = fs.readFileSync(targetFile);
-  const planFile = safeRepositoryFile(CORPUS_ROOT, PLAN_PATH);
-  requireCorpus(fs.statSync(planFile).size <= 1048576, "PLAN_SIZE_LIMIT");
+  // A later approved Target uses an externally frozen, exact projection. Keep
+  // the checked-in revision-3 development plan immutable; neither grants authority.
+  const planFile = inputs.length === 4 ? path.resolve(inputs[3]) : safeRepositoryFile(CORPUS_ROOT, PLAN_PATH);
+  const planStat = fs.lstatSync(planFile);
+  requireCorpus(planStat.isFile() && !planStat.isSymbolicLink(), "UNSAFE_REFERENCE");
+  requireCorpus(planStat.size <= 1048576, "PLAN_SIZE_LIMIT");
   const plan = JSON.parse(fs.readFileSync(planFile));
   const report = validateCasePlan(plan, targetBytes);
   const historicalScript = safeRepositoryFile(CORPUS_ROOT, "scripts/validate-repository-e2e.mjs");
@@ -86,7 +94,7 @@ function run() {
   requireCorpus(historical.status === 0, "HISTORICAL_PROJECTION_FAILED");
   const old = JSON.parse(historical.stdout);
   report.historicalProjection = {status: old.status, validationDigest: old.validationDigest};
-  if (args.includes("--run-local")) {
+  if (runLocal) {
     // Fixed reviewed local suites only; no manifest-supplied executable/arguments.
     const result = spawnSync(process.execPath, ["--test", "--test-reporter=tap", ...LOCAL_SUITES],
       {cwd: CORPUS_ROOT, encoding: "utf8", timeout: 120000, maxBuffer: 4194304});

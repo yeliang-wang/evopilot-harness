@@ -93,3 +93,55 @@ test("development command requires an explicit external Target before running an
   assert.equal(JSON.parse(result.stdout).code, "EXPLICIT_TARGET_REQUIRED");
   assert.equal(JSON.parse(result.stdout).targetCriteriaClosed, 0);
 });
+
+test("later Target revisions require their exact independently supplied case plan", t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "semantic-corpus-current-target-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  const target = JSON.parse(targetBytes);
+  target.revision = 6;
+  target.acceptance.push({id: "H-F12", status: "PENDING", evidenceRefs: []});
+  target.realCaseCoverage[0].coversAcceptanceIds.push("H-F12");
+  target.realCaseCoverage[0].machineVariants[0].coversAcceptanceIds.push("H-F12");
+  const bytes = Buffer.from(JSON.stringify(target));
+  const current = projectCasePlan(bytes);
+  assert.equal(current.target.revision, 6);
+  assert.ok(current.acceptanceIds.includes("H-F12"));
+  assert.throws(() => validateCasePlan(checkedIn, bytes), code("TARGET_DIGEST_MISMATCH"));
+  const targetFile = path.join(root, "target.json"), planFile = path.join(root, "plan.json");
+  fs.writeFileSync(targetFile, bytes);
+  fs.writeFileSync(planFile, JSON.stringify(current));
+  const invoke = (...extra) => spawnSync(process.execPath,
+    ["scripts/validate-semantic-supply-corpus.mjs", "--target", targetFile, ...extra],
+    {cwd: CORPUS_ROOT, encoding: "utf8"});
+  const valid = invoke("--case-plan", planFile);
+  assert.equal(valid.status, 0, valid.stdout);
+  const report = JSON.parse(valid.stdout);
+  assert.equal(report.currentCriterionCount, target.acceptance.length);
+  assert.equal(report.targetCriteriaClosed, 0);
+  assert.equal(report.formalAcceptance, "NOT_RUN");
+  assert.equal(report.authority.acceptanceAuthority, false);
+  assert.equal(invoke().status, 2);
+  current.cases[0].coversAcceptanceIds.pop();
+  fs.writeFileSync(planFile, JSON.stringify(current));
+  assert.equal(JSON.parse(invoke("--case-plan", planFile).stdout).code, "CASE_PLAN_MISMATCH");
+  fs.writeFileSync(planFile, JSON.stringify(projectCasePlan(bytes)));
+  fs.appendFileSync(targetFile, "\n");
+  assert.equal(JSON.parse(invoke("--case-plan", planFile).stdout).code, "TARGET_DIGEST_MISMATCH");
+});
+
+test("external case plans reject symlinks and revisions that cannot identify a Target", t => {
+  for (const revision of [2, 0, -1, 3.5, "6", null, Number.MAX_SAFE_INTEGER + 1]) {
+    const target = JSON.parse(targetBytes); target.revision = revision;
+    assert.throws(() => projectCasePlan(Buffer.from(JSON.stringify(target))), code("TARGET_IDENTITY_MISMATCH"));
+  }
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "semantic-corpus-plan-link-"));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  const targetFile = path.join(root, "target.json"), planFile = path.join(root, "plan.json"), link = path.join(root, "link.json");
+  fs.writeFileSync(targetFile, targetBytes); fs.writeFileSync(planFile, JSON.stringify(fixture()));
+  fs.symlinkSync(planFile, link);
+  const result = spawnSync(process.execPath,
+    ["scripts/validate-semantic-supply-corpus.mjs", "--target", targetFile, "--case-plan", link],
+    {cwd: CORPUS_ROOT, encoding: "utf8"});
+  assert.equal(result.status, 2);
+  assert.equal(JSON.parse(result.stdout).code, "UNSAFE_REFERENCE");
+});

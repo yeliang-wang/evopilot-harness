@@ -189,7 +189,9 @@ replay. These local matrices do not transfer evidence to installed-package or
 real-Host acceptance.
 
 The [4.8.1 repository case plan](../../tests/e2e/versions/4.8.1/case-plan.json)
-binds five RC definitions and ten machine variants to the exact approved Target.
+binds five RC definitions and eleven machine variants to the exact revision-3
+Target. Later approved revisions use a separately frozen external case plan,
+with their own complete variant and criterion projections and exact byte digest.
 See [repository E2E instructions](../../tests/e2e/README.md#481-development-case-plan)
 for its combined definition/historical-projection/local-test command. The
 historical 4.6/4.7/4.8 index and manifests remain unchanged. This is supporting
