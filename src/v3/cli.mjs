@@ -96,7 +96,7 @@ async function dispatch(args, group, action, id) {
     return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
   if (group === "learning" && action === "inspect") {
-    const result = inspectLearningDocument(requiredOption(args, "type"), id ?? requiredFileOption(args));
+    const result = inspectLearningDocument(requiredValueOption(args, "type"), id ?? requiredFileOption(args));
     return output(args, result, result.status === "INSPECTED" ? 0 : 2);
   }
   requireWorkspace(home);
@@ -148,7 +148,7 @@ async function dispatch(args, group, action, id) {
     return output(args, createTerminalSemanticClosure({...manifest, snapshot: readYaml(requiredOption(args, "snapshot")), profile: readYaml(requiredOption(args, "profile")), index: readYaml(requiredOption(args, "index")), projectionSet: readYaml(requiredOption(args, "projection-set")), roundTripReport: readYaml(requiredOption(args, "round-trip-report")), harnessAssets: listOption(args, "harness-asset").map((file) => readYaml(file))}));
   }
   if (group === "semantic" && action === "closure-publish") return output(args, publishTerminalSemanticClosure({closure: readYaml(requiredOption(args, "closure")), publication: readYaml(requiredOption(args, "publication"))}));
-  if (group === "semantic" && action === "closure-slice") return output(args, sliceTerminalSemanticClosure({closure: readYaml(requiredOption(args, "closure")), conceptIds: listOption(args, "concept-id"), expectedClosureDigest: requiredOption(args, "expected-closure-digest")}));
+  if (group === "semantic" && action === "closure-slice") return output(args, sliceTerminalSemanticClosure({closure: readYaml(requiredOption(args, "closure")), conceptIds: listOption(args, "concept-id"), expectedClosureDigest: requiredValueOption(args, "expected-closure-digest")}));
   if (group === "pack" && action === "scaffold") return output(args, createProfessionalPack(readYaml(requiredFileOption(args))));
   if (group === "pack" && action === "inspect") return output(args, inspectProfessionalPack(readYaml(requiredFileOption(args)), {availablePacks: listOption(args, "available-pack").map((file) => readYaml(file))}));
   if (group === "pack" && action === "resolve") {
@@ -158,7 +158,7 @@ async function dispatch(args, group, action, id) {
   }
   if (group === "pack" && action === "transition") {
     const record = option(args, "record") ? readYaml(requiredOption(args, "record")) : null;
-    return output(args, transitionPackLifecycle({record, action: requiredOption(args, "transition"), actor: requiredOption(args, "actor"), actorRole: option(args, "actor-role"), expectedRecordDigest: option(args, "expected-record-digest"), reason: option(args, "reason", ""), successor: option(args, "successor") ? readYaml(requiredOption(args, "successor")) : null, rollbackTarget: option(args, "rollback-target") ? readYaml(requiredOption(args, "rollback-target")) : null, migrationPlan: option(args, "migration-plan") ? readYaml(requiredOption(args, "migration-plan")) : null, now: option(args, "now", new Date().toISOString())}));
+    return output(args, transitionPackLifecycle({record, action: requiredValueOption(args, "transition"), actor: requiredValueOption(args, "actor"), actorRole: option(args, "actor-role"), expectedRecordDigest: option(args, "expected-record-digest"), reason: option(args, "reason", ""), successor: option(args, "successor") ? readYaml(requiredOption(args, "successor")) : null, rollbackTarget: option(args, "rollback-target") ? readYaml(requiredOption(args, "rollback-target")) : null, migrationPlan: option(args, "migration-plan") ? readYaml(requiredOption(args, "migration-plan")) : null, now: option(args, "now", new Date().toISOString())}));
   }
   if (group === "pack" && action === "lifecycle-init") {
     const input = readYaml(requiredFileOption(args));
@@ -181,11 +181,11 @@ async function dispatch(args, group, action, id) {
   }
   if (group === "project-ontology" && action === "transition") {
     const proposal = readYaml(requiredOption(args, "proposal"));
-    return output(args, transitionProjectOntologyProposal({proposal, action: requiredOption(args, "transition"), actor: requiredOption(args, "actor"), expectedProposalDigest: requiredOption(args, "expected-proposal-digest"), reason: option(args, "reason", ""), now: option(args, "now", new Date().toISOString())}));
+    return output(args, transitionProjectOntologyProposal({proposal, action: requiredValueOption(args, "transition"), actor: requiredValueOption(args, "actor"), expectedProposalDigest: requiredValueOption(args, "expected-proposal-digest"), reason: option(args, "reason", ""), now: option(args, "now", new Date().toISOString())}));
   }
   if (group === "project-ontology" && action === "resolve") {
     const proposal = readYaml(requiredOption(args, "proposal"));
-    return output(args, resolveProjectOntologySnapshot({proposal, expectedProposalDigest: requiredOption(args, "expected-proposal-digest"), foundationDigest: requiredOption(args, "foundation-digest"), priorSnapshot: option(args, "prior-snapshot") ? readYaml(requiredOption(args, "prior-snapshot")) : null, now: option(args, "now")}));
+    return output(args, resolveProjectOntologySnapshot({proposal, expectedProposalDigest: requiredValueOption(args, "expected-proposal-digest"), foundationDigest: requiredValueOption(args, "foundation-digest"), priorSnapshot: option(args, "prior-snapshot") ? readYaml(requiredOption(args, "prior-snapshot")) : null, now: option(args, "now")}));
   }
   if (group === "project-ontology" && action === "project") return output(args, createProjectionSet(readYaml(requiredOption(args, "snapshot"))));
   if (group === "project-ontology" && action === "skill") return output(args, compileProjectOntologySkill({snapshot: readYaml(requiredOption(args, "snapshot")), artifactSetManifestDigest: option(args, "artifact-set-manifest-digest")}));
@@ -195,14 +195,14 @@ async function dispatch(args, group, action, id) {
     return output(args, publishProjectOntologyArtifactSet({snapshot, publication, dependencyLock: option(args, "dependency-lock") ? readYaml(requiredOption(args, "dependency-lock")) : null}));
   }
   if (group === "project-ontology" && action === "artifact-transition") {
-    return output(args, createArtifactLifecycleRecord({artifactSet: readYaml(requiredOption(args, "artifact-set")), record: option(args, "record") ? readYaml(requiredOption(args, "record")) : null, action: requiredOption(args, "transition"), actor: requiredOption(args, "actor"), actorRole: option(args, "actor-role"), expectedRecordDigest: option(args, "expected-record-digest"), reason: option(args, "reason", ""), successor: option(args, "successor") ? readYaml(requiredOption(args, "successor")) : null, rollbackTarget: option(args, "rollback-target") ? readYaml(requiredOption(args, "rollback-target")) : null, migrationPlan: option(args, "migration-plan") ? readYaml(requiredOption(args, "migration-plan")) : null, now: option(args, "now", new Date().toISOString())}));
+    return output(args, createArtifactLifecycleRecord({artifactSet: readYaml(requiredOption(args, "artifact-set")), record: option(args, "record") ? readYaml(requiredOption(args, "record")) : null, action: requiredValueOption(args, "transition"), actor: requiredValueOption(args, "actor"), actorRole: option(args, "actor-role"), expectedRecordDigest: option(args, "expected-record-digest"), reason: option(args, "reason", ""), successor: option(args, "successor") ? readYaml(requiredOption(args, "successor")) : null, rollbackTarget: option(args, "rollback-target") ? readYaml(requiredOption(args, "rollback-target")) : null, migrationPlan: option(args, "migration-plan") ? readYaml(requiredOption(args, "migration-plan")) : null, now: option(args, "now", new Date().toISOString())}));
   }
   if (group === "learning" && action === "validate") {
-    const result = validateLearningFile(requiredOption(args, "type"), id ?? requiredFileOption(args));
+    const result = validateLearningFile(requiredValueOption(args, "type"), id ?? requiredFileOption(args));
     return output(args, result, result.status === "VALIDATED" ? 0 : 2);
   }
   if (group === "learning" && action === "ingest") {
-    const result = ingestLearningDocument({ type: requiredOption(args, "type"), file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
+    const result = ingestLearningDocument({ type: requiredValueOption(args, "type"), file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
     return output(args, result, ["ACCEPTED", "DUPLICATE"].includes(result.status) ? 0 : 2);
   }
   if (group === "learning" && action === "snapshot") {
@@ -214,13 +214,13 @@ async function dispatch(args, group, action, id) {
     return output(args, createEvidenceRunManifest({ home, ...input, runId: id ?? input.runId, now: option(args, "now", input.now ?? new Date().toISOString()) }));
   }
   if (group === "learning" && action === "score") {
-    const result = scoreProfessionalCompleteness({ home, reportId: id ?? requiredIdOption(args, "report-id"), runId: requiredOption(args, "run-id"), curriculumSnapshotId: requiredOption(args, "snapshot-id"), policyFile: requiredOption(args, "policy-file"), now: option(args, "now", new Date().toISOString()) });
+    const result = scoreProfessionalCompleteness({ home, reportId: id ?? requiredIdOption(args, "report-id"), runId: requiredValueOption(args, "run-id"), curriculumSnapshotId: requiredValueOption(args, "snapshot-id"), policyFile: requiredOption(args, "policy-file"), now: option(args, "now", new Date().toISOString()) });
     return output(args, result);
   }
   if (group === "learning" && action === "rescore") {
-    return output(args, rescoreProfessionalCompleteness({ home, reportId: id ?? requiredIdOption(args, "report-id"), policyFile: requiredOption(args, "policy-file"), reason: requiredOption(args, "reason"), now: option(args, "now", new Date().toISOString()) }));
+    return output(args, rescoreProfessionalCompleteness({ home, reportId: id ?? requiredIdOption(args, "report-id"), policyFile: requiredOption(args, "policy-file"), reason: requiredValueOption(args, "reason"), now: option(args, "now", new Date().toISOString()) }));
   }
-  if (group === "learning" && action === "artifact") return output(args, readLearningArtifact({ home, area: requiredOption(args, "area"), id: id ?? requiredIdOption(args, "id") }));
+  if (group === "learning" && action === "artifact") return output(args, readLearningArtifact({ home, area: requiredValueOption(args, "area"), id: id ?? requiredIdOption(args, "id") }));
   if (group === "asset" && action === "v3-validate") {
     const roots = assetRoots(args, home);
     const result = validateAssets(roots);
@@ -277,7 +277,7 @@ async function dispatch(args, group, action, id) {
     const result = booleanOption(args, "apply") ? applyV2Migration(source, home) : planV2Migration(source, home);
     return output(args, result, ["READY", "MIGRATED"].includes(result.status) ? 0 : 2);
   }
-  if (group === "migrate" && action === "rollback") return output(args, rollbackMigration(home, id ?? requiredOption(args, "migration-id")));
+  if (group === "migrate" && action === "rollback") return output(args, rollbackMigration(home, id ?? requiredValueOption(args, "migration-id")));
   if (group === "feedback" && action === "validate") {
     const result = validateFeedbackPackage({ file: id ?? requiredFileOption(args), home, now: option(args, "now", new Date().toISOString()) });
     return output(args, result, result.status === "VALIDATED" ? 0 : 2);
@@ -348,9 +348,9 @@ async function dispatch(args, group, action, id) {
     return output(args, result, result.status === "FOUND" ? 0 : 2);
   }
   if (group === "produce") return produce(args, home);
-  if (group === "proposal" && action === "inspect") return output(args, inspectProposal(home, id ?? requiredOption(args, "proposal-id")));
+  if (group === "proposal" && action === "inspect") return output(args, inspectProposal(home, id ?? requiredValueOption(args, "proposal-id")));
   if (group === "proposal" && action === "validate") {
-    const proposalId = id ?? requiredOption(args, "proposal-id");
+    const proposalId = id ?? requiredValueOption(args, "proposal-id");
     const proposal = inspectProposal(home, proposalId);
     const records = discoverAssets([path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")]);
     const evidenceContext = proposalEvidenceContext(home, proposalId);
@@ -358,16 +358,16 @@ async function dispatch(args, group, action, id) {
     return output(args, { schema: "evopilot-harness-proposal-validation/v3.4", status: closure.status, proposalId: proposal.proposalId, decision: proposal.decision, assetDelta: proposal.assetDeltaProposal, evaluationPack: proposal.evaluationPack, closure, nextAction: closure.status === "VALIDATED" ? proposal.nextAction : "repair-asset-delta" }, closure.status === "VALIDATED" ? 0 : 2);
   }
   if (group === "proposal" && action === "review") {
-    const result = await reviewProposal(home, id ?? requiredOption(args, "proposal-id"), args);
+    const result = await reviewProposal(home, id ?? requiredValueOption(args, "proposal-id"), args);
     return output(args, result, result.status === "BLOCKED" ? 2 : 0);
   }
-  if (group === "proposal" && action === "review-inspect") return output(args, inspectProposalReview(home, id ?? requiredOption(args, "proposal-id")));
+  if (group === "proposal" && action === "review-inspect") return output(args, inspectProposalReview(home, id ?? requiredValueOption(args, "proposal-id")));
   if (group === "proposal" && action === "approve") {
-    const result = approveProposal(home, id ?? requiredOption(args, "proposal-id"), { confirmedBy: option(args, "confirmed-by"), confirmation: option(args, "confirmation"), evaluationReviewed: booleanOption(args, "evaluation-reviewed") });
+    const result = approveProposal(home, id ?? requiredValueOption(args, "proposal-id"), { confirmedBy: option(args, "confirmed-by"), confirmation: option(args, "confirmation"), evaluationReviewed: booleanOption(args, "evaluation-reviewed") });
     return output(args, result, result.status === "APPROVED" ? 0 : 2);
   }
   if (group === "proposal" && action === "publish") {
-    const result = publishProposal(home, id ?? requiredOption(args, "proposal-id"));
+    const result = publishProposal(home, id ?? requiredValueOption(args, "proposal-id"));
     return output(args, result, result.status === "PUBLISHED" ? 0 : 2);
   }
   if (group === "llm" && action === "v3-models") {
@@ -686,10 +686,14 @@ function assetRoots(args, home) {
   return source ? [path.resolve(source)] : [path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")];
 }
 
-function requiredOption(args, name) {
+function requiredValueOption(args, name) {
   const value = option(args, name);
   if (!value) throw usage(`Missing required --${name}.`);
-  return path.resolve(value);
+  return value;
+}
+
+function requiredOption(args, name) {
+  return path.resolve(requiredValueOption(args, name));
 }
 
 function requiredFileOption(args) {

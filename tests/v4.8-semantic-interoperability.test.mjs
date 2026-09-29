@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { executeV3Operation } from "../src/v3/cli.mjs";
 import { digest } from "../src/v3/utils.mjs";
 import { validateDocument } from "../src/v3/schema.mjs";
 import { initializeWorkspace } from "../src/v3/workspace.mjs";
@@ -207,7 +208,7 @@ test("v4.8 semantic projections preserve mappings, multilingual terms, provenanc
   assert.deepEqual(report.unsupportedFormats, [{format: "OWL", reason: "OWL:unbounded-cardinality"}]);
 });
 
-test("v4.8 terminal closure is immutable, read-only, complete, and separately published", () => {
+test("v4.8 terminal closure is immutable, read-only, complete, and separately published", async () => {
   const state = indexed();
   const projections = createInteroperabilityProjectionSet({snapshot: state.snapshot, profile: state.profile, index: state.index});
   const report = verifySemanticRoundTrip({snapshot: state.snapshot, projectionSet: projections, index: state.index, incremental: state.incremental, full: state.full});
@@ -239,6 +240,40 @@ test("v4.8 terminal closure is immutable, read-only, complete, and separately pu
   assert.equal(validateDocument(slice).status, "VALIDATED");
   assert.equal(slice.authority.liveHarnessDependency, false);
   assert.throws(() => sliceTerminalSemanticClosure({closure: published, conceptIds: [], expectedClosureDigest: digest("stale")}), (error) => error.code === "TERMINAL_CLOSURE_STALE");
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-semantic-slice-cli-"));
+  initializeWorkspace(home);
+  const file = path.join(home, "published.json");
+  fs.writeFileSync(file, JSON.stringify(published));
+  const before = fs.readFileSync(file);
+  for (const expectedClosureDigest of [published.closureDigest, digest("stale")]) {
+    const result = await invokeEngineOperation({home, operation: "semantic.closure.slice", input: {closure: file, conceptIds: ["finance:account"], expectedClosureDigest}});
+    assert.equal(result.exitCode, expectedClosureDigest === published.closureDigest ? 0 : 1);
+    if (result.exitCode === 0) assert.deepEqual(result.result, slice);
+    else assert.match(result.result.error, /exact published closure digest/);
+  }
+  assert.deepEqual(fs.readFileSync(file), before);
+});
+
+test("semantic CLI preserves transition, actor, and exact digest values", async () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-semantic-values-cli-"));
+  const pack = createProfessionalPack({kind: "DomainOntologyPack", metadata: {id: "sample", version: "1.0.0", name: "Sample", namespace: "sample", root: "DOMAIN_TEAM", visibility: "DOMAIN", owner: "team", provenance: {author: "author", reviewers: ["reviewer"], approvers: ["approver"], publishers: ["publisher"], sourceRefs: ["source://sample"]}}, spec: {concepts: [{conceptId: "sample:item", label: "Item", metaType: "ENTITY", definition: "An item.", evidenceRefs: ["source://item"]}]}});
+  let proposal = createProjectOntologyProposal({project: {id: "project", workspaceId: "workspace", tenantId: "tenant", sourceSnapshotDigest: digest("source")}, packs: [pack], targetRoot: "DOMAIN_TEAM", createdBy: "author", now: "2026-09-17T00:00:00.000Z"});
+  const file = path.join(home, "proposal.json");
+  for (const [transition, actor] of [["APPLY", "author"], ["REQUEST_REVIEW", "author"], ["APPROVE", "approver"]]) {
+    fs.writeFileSync(file, JSON.stringify(proposal));
+    const expected = transitionProjectOntologyProposal({proposal, action: transition, actor, expectedProposalDigest: proposal.proposalDigest, now: "2026-09-17T00:00:00.000Z"});
+    const result = await executeV3Operation({positionals: ["project-ontology", "transition"], options: {proposal: file, transition, actor, "expected-proposal-digest": proposal.proposalDigest, now: "2026-09-17T00:00:00.000Z"}});
+    assert.equal(result.exitCode, 0, JSON.stringify(result.result));
+    assert.deepEqual(result.result, expected);
+    const stale = await executeV3Operation({positionals: ["project-ontology", "transition"], options: {proposal: file, transition, actor, "expected-proposal-digest": digest("stale")}});
+    assert.equal(stale.exitCode, 1);
+    proposal = result.result;
+  }
+  fs.writeFileSync(file, JSON.stringify(proposal));
+  const foundationDigest = resolveOntologyFoundation().foundationDigest;
+  const resolved = await executeV3Operation({positionals: ["project-ontology", "resolve"], options: {proposal: file, "expected-proposal-digest": proposal.proposalDigest, "foundation-digest": foundationDigest, now: "2026-09-17T00:00:00.000Z"}});
+  assert.equal(resolved.exitCode, 0, JSON.stringify(resolved.result));
+  assert.deepEqual(resolved.result, resolveProjectOntologySnapshot({proposal, expectedProposalDigest: proposal.proposalDigest, foundationDigest, now: "2026-09-17T00:00:00.000Z"}));
 });
 
 test("v4.8 Engine adapter exposes the bounded semantic interoperability operation family", async () => {
