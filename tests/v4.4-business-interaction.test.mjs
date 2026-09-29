@@ -14,6 +14,43 @@ import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 
+test("professional Review projection retains the canonical Source membership and evidence bindings", () => {
+  const members = [
+    { sourceId: "source-001", sourceType: "source-project", sourceRef: "/immutable/declared-project", sourceDigest: digest("source-one-bytes"), status: "IN_SCOPE", rationale: "Cited product responsibility supports the boundary.", evidenceIds: ["evidence-0004", "evidence-0028"] },
+    { sourceId: "source-002", sourceType: "operator-note", sourceRef: "operator-note:inline", sourceDigest: digest("note-bytes"), status: "IN_SCOPE", rationale: "The note constrains the requested analysis.", evidenceIds: ["evidence-0124"] }
+  ];
+  const model = {
+    proposal: { proposalId: "review-source-binding", decision: "EVOLVE_EXISTING" },
+    proposalDigest: digest("proposal"),
+    review: { verdict: "READY_FOR_HUMAN_APPROVAL", summary: "Review complete.", projectMembership: members },
+    reviewDigest: digest("review"),
+    sources: { sourceProjects: ["/immutable/declared-project"], attachments: ["/unreviewed/plan-input"] },
+    evaluation: { status: "REVIEW_REQUIRED" }, comparisonAssessment: { status: "NOT_PROVIDED" },
+    authority: { engineAuthoritative: true, presentationIsApproval: false },
+    nextAction: "present-complete-engine-review"
+  };
+  const before = structuredClone(model);
+  const frame = createInteractionFrame({ session: session("codex"), stage: "PROPOSAL_REVIEW_PRESENTATION", subject: subject(), renderModel: model, allowedNextOperations: [] });
+  assert.deepEqual(model, before);
+  assert.deepEqual(frame.auditEnvelope.authoritativeRenderModel, before);
+  assert.equal(frame.sourceReasoningMap.sourceCount, members.length);
+  for (const [index, member] of members.entries()) {
+    const entry = frame.sourceReasoningMap.entries[index];
+    assert.equal(entry.sourceId, member.sourceId);
+    assert.equal(entry.sourceType, member.sourceType);
+    assert.equal(entry.sourceRef, member.sourceRef);
+    assert.equal(entry.sourceDigest, member.sourceDigest);
+    assert.deepEqual(entry.evidenceIds, member.evidenceIds);
+    assert.equal(entry.rationale, member.rationale);
+    const citation = frame.businessView.professionalAnalysis.capabilities[index].sourceEvidence[0];
+    assert.equal(citation.sourceDigest, member.sourceDigest);
+    assert.deepEqual(citation.evidenceIds, member.evidenceIds);
+  }
+  assert.equal(frame.sourceReasoningMap.entries.some((entry) => entry.sourceRef === "/unreviewed/plan-input"), false);
+  assert.equal(frame.businessView.authority.businessViewIsApproval, false);
+  assert.equal(frame.businessView.professionalAnalysis.authority.advisorAdvisoryOnly, true);
+});
+
 test("all governed stages keep embedded technical details in audit rather than visible business text", () => {
   const vectors = [
     ["/Users/fixture/private-project", /\/Users\//],

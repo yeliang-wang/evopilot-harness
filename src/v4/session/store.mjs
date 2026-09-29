@@ -534,8 +534,10 @@ export async function reviewSessionProposals({ home, sessionId, expectedSessionD
     });
     reference.review = result.result ? persistedJson(result.result) : null;
     if (reference.review?.proposalDigest) reference.proposalDigest = reference.review.proposalDigest;
-    session.operations.push(operationRecord({ operation: "proposal.review", input: compact({ proposalId: reference.proposalId, operationJobId }) }, result, now));
-    persist(session, { event: "PROPOSAL_REVIEW_COMPLETED", actor: "deterministic-engine", details: { proposalId: reference.proposalId, reportDigest: reference.review?.reportDigest, verdict: reference.review?.verdict } });
+    // The Job is transport provenance. It must not change the authoritative
+    // Review input or business result compared with the synchronous path.
+    session.operations.push(operationRecord({ operation: "proposal.review", input: { proposalId: reference.proposalId } }, result, now));
+    persist(session, { event: "PROPOSAL_REVIEW_COMPLETED", actor: "deterministic-engine", details: compact({ proposalId: reference.proposalId, operationJobId, reportDigest: reference.review?.reportDigest, verdict: reference.review?.verdict }) });
   }
   const ready = session.proposals.every((item) => item.review?.status === "REVIEWED" && item.review?.verdict === "READY_FOR_HUMAN_APPROVAL");
   const noChange = session.proposals.every((item) => item.decision === "NO_CHANGE");

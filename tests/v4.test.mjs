@@ -8,6 +8,7 @@ import path from "node:path";
 import test from "node:test";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { initializeWorkspace } from "../src/v3/workspace.mjs";
+import { digest } from "../src/v3/utils.mjs";
 import { executeV3Operation } from "../src/v3/cli.mjs";
 import { discoverAssets } from "../src/v3/catalog.mjs";
 import { feedbackPackageDigest, feedbackPayloadDigest } from "../src/v3/feedback.mjs";
@@ -329,6 +330,10 @@ test("Engine-owned OperationJob returns quickly, deduplicates repeated starts, a
     const authoritativeSession = structured(await client.tool("inspect_operation_session", { sessionId: produced.sessionId }));
     assert.equal(authoritativeSession.sessionDigest, job.automaticPresentationDelivery.sessionDigest);
     assert.equal(authoritativeSession.status, "HUMAN_APPROVAL_REQUIRED");
+    const reviewOperation = authoritativeSession.operations.find((item) => item.operation === "proposal.review");
+    assert.equal(reviewOperation.inputDigest, digest({ proposalId: authoritativeSession.proposals[0].proposalId }), "async transport must preserve the synchronous governed Review input");
+    const reviewJournal = fs.readFileSync(path.join(home, "agent-sessions", produced.sessionId, "journal.jsonl"), "utf8").trim().split("\n").map((line) => JSON.parse(line)).find((item) => item.event === "PROPOSAL_REVIEW_COMPLETED");
+    assert.equal(reviewJournal.details.operationJobId, first.jobId, "Job provenance remains available in the audit journal");
     assert.equal(job.automaticPresentationDelivery.status, "RECORDED");
     assert.equal(job.automaticPresentationDelivery.authority.humanApproval, false);
     assert.equal(authoritativeSession.proposals[0].approval, undefined);

@@ -427,6 +427,18 @@ function blockerNextAction(value, chinese) {
 }
 
 function sourceEntries(model) {
+  // A completed Review already binds each Source to its immutable identity and
+  // cited evidence. Plan paths are discovery inputs, not replacement identities
+  // for these reviewed Sources. Keep the complete Review in the audit model.
+  if (Array.isArray(model.review?.projectMembership) && model.review.projectMembership.length) {
+    return model.review.projectMembership.map((source) => ({
+      ...source,
+      id: source.sourceId,
+      type: source.sourceType,
+      ref: source.sourceRef,
+      digest: source.sourceDigest
+    }));
+  }
   const values = [model.sources, model.proposal?.sources, model.proposal?.sourceReferences, model.review?.sourceMemberships, model.evaluation?.sources].flatMap((value) => Array.isArray(value) ? value : value && typeof value === "object" ? Object.entries(value).flatMap(([type, items]) => Array.isArray(items) ? items.map((item) => typeof item === "string" ? { type, ref: item } : item) : []) : []);
   return values.length ? values.map((item) => typeof item === "string" ? { ref: item } : item) : [];
 }
