@@ -220,8 +220,8 @@
     },
     {
       "path": "schemas/operation-plan-v1.schema.json",
-      "sha256": "sha256:eb9e0b969d66f4c00653ab6a5ea7bcb58b744d368fef83f5159941d6f4837280",
-      "bytes": 3202
+      "sha256": "sha256:e3225bfedb21a63700a94f4f808a028b06cd03a4720802a7149d1c21b0230d26",
+      "bytes": 3329
     },
     {
       "path": "schemas/pack-benchmark-v1.schema.json",

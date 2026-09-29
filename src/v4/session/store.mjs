@@ -29,6 +29,7 @@ const validateLegacySessionSchema = ajv.compile(legacySessionSchema);
 const validatePlanSchema = ajv.compile(planSchema);
 
 const TERMINAL = new Set(["COMPLETED", "BLOCKED", "CANCELLED", "CLOSED"]);
+const SEMANTIC_LIFECYCLE = new Set(["pack.lifecycle.create", "pack.lifecycle.transition", "project-ontology.proposal.transition", "project-ontology.artifact.transition"]);
 
 export function createAgentSession({ home, intent, adapterId, hostInteraction, compatibility = operationCompatibility(), reevaluation = null, classificationHandoff = null, now = new Date().toISOString() }) {
   const workspace = assertExternalWorkspace(home);
@@ -246,9 +247,13 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
 
   for (let index = nextPlanOperationIndex(session); index < session.plan.operations.length; index += 1) {
     const planned = session.plan.operations[index];
+    if (SEMANTIC_LIFECYCLE.has(planned.operation) && digest(planned.inputFileDigests) !== digest(semanticInputFileDigests(planned.input))) {
+      throw sessionError("SEMANTIC_LIFECYCLE_INPUT_CHANGED", "Semantic lifecycle input changed after Plan review.", "create-and-review-new-plan");
+    }
     const definition = engineOperationDefinition(planned.operation);
     const operationDigest = plannedOperationDigest(session.planDigest, index, planned);
-    if (definition?.access === "publication" && !hasOperationAuthorization(session, index, operationDigest)) {
+    const requiresAuthorization = definition?.access === "publication" || (SEMANTIC_LIFECYCLE.has(planned.operation) && planned.operation !== "pack.lifecycle.create" && !["APPLY", "REQUEST_REVIEW"].includes(planned.input.transition));
+    if (requiresAuthorization && !hasOperationAuthorization(session, index, operationDigest)) {
       session.pendingOperationAuthorization = { operationIndex: index, operation: planned.operation, operationDigest, inputDigest: digest(planned.input), planDigest: session.planDigest };
       session.status = "OPERATION_AUTHORIZATION_REQUIRED";
       session.nextAction = "present-publication-operation-and-request-explicit-authorization";
@@ -285,7 +290,7 @@ export async function executeSessionPlan({ home, sessionId, expectedSessionDiges
         home: session.workspace.home,
         operation: planned.operation,
         input: planned.input,
-        authority: definition?.access === "publication" ? "publication" : "planned",
+        authority: SEMANTIC_LIFECYCLE.has(planned.operation) ? "session" : definition?.access === "publication" ? "publication" : "planned",
         idempotencyKey
       });
     } catch (error) {
@@ -1255,11 +1260,15 @@ function normalizeMaintenanceOperations(home, operations) {
   return operations.map((item) => {
     const operation = String(item?.operation ?? "");
     const definition = engineOperationDefinition(operation);
-    if (!definition || !["planned", "publication"].includes(definition.access)) throw sessionError("OPERATION_NOT_PLAN_ELIGIBLE", `${operation} cannot run in a maintenance Plan.`, "select-plan-eligible-operation");
+    if (!definition || (!["planned", "publication"].includes(definition.access) && !SEMANTIC_LIFECYCLE.has(operation))) throw sessionError("OPERATION_NOT_PLAN_ELIGIBLE", `${operation} cannot run in a maintenance Plan.`, "select-plan-eligible-operation");
     const input = persistedJson(item.input ?? {});
     validateEngineOperationRequest({ home, operation, input });
-    return { operation, input };
+    return { operation, input, ...(SEMANTIC_LIFECYCLE.has(operation) ? { inputFileDigests: semanticInputFileDigests(input) } : {}) };
   });
+}
+
+function semanticInputFileDigests(input) {
+  return Object.fromEntries(["file", "pack", "record", "proposal", "artifactSet", "successor", "rollbackTarget", "migrationPlan"].filter(key => input[key]).map(key => [key, crypto.createHash("sha256").update(fs.readFileSync(input[key])).digest("hex")]));
 }
 
 function normalizeLearningOperations(home, operations) {

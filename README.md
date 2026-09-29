@@ -8,7 +8,7 @@
 
 > Build reusable, user-owned Harness assets from evidence through your Agent and the deterministic local Engine.
 
-`evopilot-harness` ingests project and operational evidence, determines whether it belongs in a Harness, proposes a new or evolved asset, enforces human review, and publishes immutable assets and executable Bundles through user-owned Catalogs. In v4, a human talks to a portable Digital Expert loaded by Codex or another compatible Agent; the Agent operates the deterministic Engine through a local stdio MCP process. It runs independently from EvoPilot and Dashboard.
+`evopilot-harness` turns evidence into reviewed, immutable Harness assets and Bundles in user-owned Catalogs. Its portable Digital Expert guides Codex or another compatible Agent through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
 
 Current published release: [`v4.8.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0), also available as [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0) with Registry signatures and SLSA provenance.
 
@@ -59,7 +59,7 @@ npm install --save-exact @evopilot/harness@4.3.0
   --json
 ```
 
-The `npm view` command is a publication gate, not an optional convenience. Until it returns the exact version, use a locally verified release tarball or a source checkout and do not claim public npm availability. Bootstrap identifies the packaged Adapter, exact version-pinned `npx` MCP command, supported protocols, and external Workspace without changing the Agent host. WorkBuddy initialization is a separate explicit, preview-bound step:
+`npm view` must confirm the exact public version; otherwise use a verified local tarball or source checkout. Bootstrap reports the packaged Adapter, pinned MCP command, protocols and external Workspace without changing the Host. WorkBuddy installation has its own preview-bound confirmation:
 
 ```bash
 evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --json
@@ -78,11 +78,9 @@ Then tell the Agent:
 
 The Digital Expert asks one missing question at a time and operates MCP. `AgentOperationSession` persists the Plan, full Review and separate decisions. Receipts protect interrupted operations; maintenance publication needs separate authorization. Comparison, calibration and Professional Completeness reports require separate review acknowledgement. The [MCP reference](docs/agent/mcp-reference.md) covers Sources, feedback, learning, maintenance, diagnostics and recovery. Static ingestion never runs Source build, test, deploy, business, adapter or network acquisition commands.
 
-See [Agent-native quickstart](docs/agent/quickstart.md), [npm distribution](docs/operations/npm-distribution.md), [Digital Expert](docs/agent/digital-expert.md), [MCP reference](docs/agent/mcp-reference.md), and [Session protocol](docs/agent/session-protocol.md).
-
 ## Atomic CLI Compatibility
 
-The v3 JSON CLI remains supported for CI, existing automation, compatibility, and emergency diagnosis. It is not the ordinary v4 human journey:
+The v3 JSON CLI supports CI, existing automation and emergency diagnosis:
 
 Process one approved structured execution-feedback package without creating a Proposal or mutating assets:
 
@@ -102,7 +100,7 @@ node src/index.mjs comparison process /path/to/comparison.yaml \
   --json
 ```
 
-The report is valid only for its exact task, source snapshot, environment, model, toolchain, Evaluation, scorer, metrics, and asset bindings. Rescoring appends a new report and preserves every accepted observation and prior report. Independently reviewed calibration cases replay explicit Baseline/Candidate policy versions without mutating the active policy. See [Controlled Comparative Evidence](docs/guides/controlled-comparative-evidence.md).
+Reports bind the exact task, Source, environment, model, toolchain, Evaluation, scorer, metrics and assets. Rescoring preserves prior reports; reviewed calibration replays explicit policies without activating them. See [Controlled Comparative Evidence](docs/guides/controlled-comparative-evidence.md).
 
 The v4.2 candidate adds append-only Asset Curriculum, reviewed static Research and Contribution evidence, immutable Evidence Run manifests, vector Professional Completeness reporting, and evidence-derived Domain/Role proposals. It does not add web crawling, executable adapters, model training, automatic approval, or automatic publication. See [Professional Asset Learning](docs/guides/professional-asset-learning.md).
 
@@ -134,9 +132,9 @@ The deterministic boundary emits:
 
 `NOT_HARNESS_ELIGIBLE` remains an earlier eligibility stop and creates no asset delta. The five Proposal decisions are mutually exclusive. `NO_CHANGE` and `NEED_MORE_EVIDENCE` retain an auditable Proposal but set `publicationAllowed=false`; approval and publication are blocked.
 
-GLM may explain ambiguity and recommend deltas, but it cannot approve, publish, execute source code, mutate `models.json`, invent evidence, or override schema, policy, evaluation, signature, and human-review gates. Every Advisor attempt, including failure and skip states, is persisted as a redacted Advisor Run. Large Evidence Graphs pass through a deterministic, Policy-budgeted projection that preserves reasoning citations and source/kind coverage while retaining the complete Graph for audit. Advisor Policy may also permit one structure/citation-only repair after a rejected response; both attempts remain validated, metered, and auditable. `llm v3-models` checks configuration only; `llm v3-doctor` proves live connectivity.
+GLM advice cannot approve, publish, execute Sources, change `models.json`, invent evidence or override gates. Redacted Advisor Runs retain failures and skips. Policy-budgeted Graph projections preserve citations and Source/kind coverage; the full Graph remains in audit. Policy may allow one structure/citation repair, with both attempts validated and metered. `llm v3-models` checks configuration; `llm v3-doctor` tests live connectivity.
 
-Every mutating Proposal contains exact before/after asset documents and digests, evidence-linked JSON-pointer changes, an `EvaluationPack v3`, and deterministic compatibility, dependency, blast-radius, expected-effect, regression, and rollback analysis. Closure validates embedded asset schemas and recomputes proposed-asset, Evaluation, Catalog-baseline, change, and impact bindings instead of trusting editable fields. Validate that closure independently before semantic review:
+Mutating Proposals contain exact before/after assets, cited changes, `EvaluationPack v3`, compatibility, dependencies, impact, expected effects, regression and rollback analysis. Closure validates schemas and recomputes asset, Evaluation, Catalog-baseline, change and impact bindings. Validate it before semantic review:
 
 ```bash
 node src/index.mjs proposal validate <proposal-id> \
@@ -164,7 +162,7 @@ node src/index.mjs proposal publish <proposal-id> \
   --json
 ```
 
-All three mutating decisions require reviewed positive/negative Evaluation cases and a `READY` EvaluationPack. When governed comparative evidence is bound, Review distinguishes expected effect from comparatively supported effect. Approval and publication recheck the exact comparison snapshot and fail closed on new evidence, conflict, tamper, or digest drift. Approval binds the current Review Report and approved Proposal content by digest; publication rechecks both and rebuilds Delta after-states from the exact immutable documents being written.
+All mutating decisions require reviewed positive/negative cases and a `READY` EvaluationPack. Review distinguishes expected effects from comparative evidence. Approval binds the Review and Proposal digests; publication rechecks both and derives Delta after-states from the written immutable assets. Changed comparison evidence, conflicts, tampering or digest drift block either decision.
 
 ## Ownership Boundary
 
