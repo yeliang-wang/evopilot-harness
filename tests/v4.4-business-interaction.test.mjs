@@ -6,13 +6,44 @@ import test from "node:test";
 import Ajv2020 from "ajv/dist/2020.js";
 import { digest } from "../src/v3/utils.mjs";
 import { createBusinessInteractionProjection, verifyBusinessViewDelivery } from "../src/v4/interaction/business-projection.mjs";
-import { createBusinessViewDeliveryReceipt, createInteractionFrame } from "../src/v4/interaction/controller.mjs";
+import { createBusinessViewDeliveryReceipt, createInteractionFrame, FRAME_FIELDS } from "../src/v4/interaction/controller.mjs";
 import { verifyCompleteLifecycleReplays } from "../src/v4/interaction/lifecycle-replay.mjs";
 import { REQUIRED_GOVERNED_HOST_CAPABILITIES } from "../src/v4/interaction/professional-reasoning.mjs";
 import { toolResult } from "../src/v4/operation-server/server.mjs";
 import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+
+test("all governed stages keep embedded technical details in audit rather than visible business text", () => {
+  const vectors = [
+    ["/Users/fixture/private-project", /\/Users\//],
+    ["C:\\Users\\fixture\\private-project", /C:\\/],
+    ["start_operation_session", /start_operation_session/],
+    ["MCP protocol 2025-06-18", /MCP|protocol 2025/],
+    ["PRESERVE_FOR_LATER", /PRESERVE_FOR_LATER/],
+    ['{"internalValue":{"nested":[1,"fixture-json"]}}', /internalValue|fixture-json/],
+    ["model=gpt-fixture prompt_tokens=123", /gpt-fixture|prompt_tokens/],
+    [`sha256:${"a".repeat(64)}`, /sha256:a/]
+  ];
+  for (const [stage, fields] of Object.entries(FRAME_FIELDS)) {
+    for (const [technical, forbidden] of vectors) {
+      const current = session("deterministic-contract-host");
+      current.interaction.host.locale = "zh-CN";
+      const renderModel = Object.fromEntries(fields.map((field) => [field, field === "destructive" ? true : `审阅当前资料 ${technical}`]));
+      const frame = createInteractionFrame({ session: current, stage, subject: subject(), renderModel, decision: { kind: "EXACT_STAGE_DECISION", question: "审阅当前结果" }, allowedNextOperations: [] });
+      const primary = frame.businessView.canonicalMarkdown.replace(/<!--[^]*?-->/g, "");
+      assert.doesNotMatch(primary, forbidden, stage);
+      assert.deepEqual(frame.auditEnvelope.authoritativeRenderModel, renderModel);
+      assert.equal(frame.businessView.template.locale, "zh-CN");
+      assert.equal(frame.businessView.authority.businessViewIsApproval, false);
+    }
+  }
+  const current = session(); current.interaction.host.locale = "zh-CN";
+  const renderModel = { ...plan(), goal: "保留业务说明、中文名称、[普通链接](https://example.test/guide) 和 {未结构化备注}" };
+  const frame = createInteractionFrame({ session: current, stage: "PLAN_PRESENTATION", subject: subject(), renderModel, allowedNextOperations: [] });
+  assert.match(frame.businessView.canonicalMarkdown, /保留业务说明、中文名称、\[普通链接\]\(https:\/\/example.test\/guide\) 和 \{未结构化备注\}/);
+  assert.match(frame.businessView.canonicalMarkdown, /<!-- evopilot-harness-decision-transport/);
+});
 
 test("managed WorkBuddy runtime identity is MCP-authoritative and forbids host CLI discovery", () => {
   const core = fs.readFileSync(path.join(root, "digital-expert/core/instructions.md"), "utf8");

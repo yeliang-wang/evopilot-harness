@@ -183,7 +183,54 @@ export function renderBusinessDecisionView(view) {
     });
     lines.push(chinese ? "## 需要你的决定" : "## Your decision", "", `**${view.decision.question}**`, "", view.decision.businessReason ? `${chinese ? "为什么需要决定" : "Why this decision is needed"}: ${view.decision.businessReason}` : "", view.decision.effect ? `${chinese ? "批准后" : "If approved"}: ${view.decision.effect}` : "", view.decision.nonEffect ? `${chinese ? "本次决定不会" : "This decision will not"}: ${view.decision.nonEffect}` : "", `${chinese ? "可选操作" : "Available choices"}:`, ...view.decision.options.map((item) => `- **${decisionOptionLabel(item, chinese)}**`), "", `<!-- evopilot-harness-decision-transport ${transport} -->`, "");
   }
-  return hostSafeCanonicalMarkdown(lines.filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n").trimEnd());
+  const markdown = lines.filter((line, index, all) => line !== "" || all[index - 1] !== "").join("\n").trimEnd();
+  return hostSafeCanonicalMarkdown(sanitizePrimaryBusinessMarkdown(markdown, chinese));
+}
+
+function sanitizePrimaryBusinessMarkdown(markdown, chinese) {
+  const detail = chinese ? "详细记录见审计信息" : "Details are available in the audit record";
+  // The hidden transport remains exact. Only the visible projection is cleaned;
+  // the authoritative render model and the audit envelope retain the full input.
+  return markdown.split(/(<!--[^]*?-->)/g).map((part) => {
+    if (part.startsWith("<!--")) return part;
+    return replaceEmbeddedJson(part, detail)
+      .replace(/```(?:json|jsonl)?\s*[^]*?```/gi, detail)
+      .replace(/\bsha256:[a-f0-9]{16,64}\b/gi, detail)
+      .replace(/\b[A-Za-z]:[\\/][^\s<>"`，；。]+/g, detail)
+      .replace(/(?<![\w:/])\/(?:[^\s<>"`，；。]+)/gu, detail)
+      .replace(/\b(?:MCP|JSON-RPC|protocol)(?:\s+(?:protocol\s+)?\d{4}-\d{2}-\d{2})?\b/gi, detail)
+      .replace(/\b(?:model|prompt_tokens|completion_tokens|total_tokens|input_tokens|output_tokens)\s*[=:]\s*[^\s,;，；]+/gi, detail)
+      .replace(/\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b/g, detail);
+  }).join("");
+}
+
+function replaceEmbeddedJson(text, replacement) {
+  let output = "";
+  for (let index = 0; index < text.length; index += 1) {
+    if (!["{", "["].includes(text[index])) { output += text[index]; continue; }
+    const stack = []; let quoted = false; let escaped = false; let end = index;
+    for (; end < text.length; end += 1) {
+      const char = text[end];
+      if (quoted) {
+        if (escaped) escaped = false;
+        else if (char === "\\") escaped = true;
+        else if (char === '"') quoted = false;
+      } else if (char === '"') quoted = true;
+      else if (char === "{" || char === "[") stack.push(char);
+      else if (char === "}" || char === "]") {
+        if (stack.pop() !== (char === "}" ? "{" : "[")) break;
+        if (stack.length === 0) {
+          try {
+            JSON.parse(text.slice(index, end + 1));
+            output += replacement; index = end;
+          } catch { /* Ordinary prose and Markdown are preserved. */ }
+          break;
+        }
+      }
+    }
+    if (index !== end) output += text[index];
+  }
+  return output;
 }
 
 function hostSafeCanonicalMarkdown(markdown) {
