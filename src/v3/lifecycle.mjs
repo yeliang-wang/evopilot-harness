@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import { isProfessionalBoundaryEvidence } from "./reasoning.mjs";
 import path from "node:path";
 import { API_VERSION } from "./constants.mjs";
 import { discoverAssets, publishCatalog } from "./catalog.mjs";
@@ -305,8 +304,11 @@ function materializeDependencies(home, proposedAssets) {
 function evolvedProfile(base, graph, reasoning) {
   const asset = structuredClone(base);
   const evidenceKinds = unique(graph.nodes.map((node) => node.kind));
-  const professionalGraph = { ...graph, nodes: graph.nodes.filter(isProfessionalBoundaryEvidence) };
-  const evidencedConcepts = conceptFrequency(professionalGraph).map((item) => item.id);
+  // Reuse the exact qualified additions computed by reasoning under its bound
+  // Ontology. Re-reading raw graph concepts or the current Workspace Ontology
+  // here could reintroduce rejected terms or disagree with an override.
+  const candidate = reasoning.candidates.find(item => item.id === base.metadata.id && item.version === base.metadata.version);
+  const evidencedConcepts = candidate?.novelConcepts ?? [];
   const permittedConcepts = evidencedConcepts.filter((concept) => !asset.spec.match.negativeConcepts.includes(concept));
   const addedConcepts = permittedConcepts.filter((concept) => !asset.spec.match.positiveConcepts.includes(concept));
   asset.metadata.version = bumpPatch(base.metadata.version);

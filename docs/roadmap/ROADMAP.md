@@ -217,6 +217,8 @@ This milestone includes the following bounded corrections:
 
 - During EVOLVE_EXISTING draft generation, only the same Source-relative professional evidence view used by reasoning may add positive matching concepts or in-scope professional capabilities to the evolved HarnessProfile. Dependency, test, example, tooling and repository-governance nodes remain in the complete immutable Evidence Graph but cannot establish the product professional boundary. Preserve genuine professional additions, original Source and oracle, independent Review, Evaluation and separate approval/publication gates; never rewrite an existing Proposal or historical receipt.
 
+- Primary Source lexical occurrences are candidate evidence, not proof of an independent professional product role. Professional reasoning and EVOLVE_EXISTING additions must reject identifier substrings and generic implementation or repository-discussion senses unless supported by explicit, attributable project responsibility or implemented public-capability evidence. Preserve raw lexical matches and complete Evidence Graph, genuine same-file or multi-file professional capabilities, base Profile concepts and negative boundaries. When professional support remains uncertain, use the existing evidence-insufficiency path; do not invent a role, broaden publication authority, change a frozen oracle or rewrite a persisted Proposal.
+
 These corrections preserve all original professional and authority gates. They add no new end-user journey, paid-provider authority, acceptance closure, or Release authorization.
 
 ## Project Ontology End-to-End Acceptance Policy

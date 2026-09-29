@@ -103,10 +103,11 @@ export function reasonEvidence(graph, home, overrides = {}) {
   const knowledge = loadKnowledge(home, overrides);
   const enriched = enrichEvidenceGraph(graph, knowledge.ontology);
   const eligibility = eligibilityGate(enriched, knowledge.policy);
+  const professional = professionalEvidenceGraph(enriched, knowledge.ontology);
   const assetRoots = [path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")];
   const profiles = discoverAssets(assetRoots).filter((record) => record.asset.kind === "HarnessProfile");
-  const candidates = retrieveAndScore(enriched, profiles, knowledge);
-  const decision = decide(eligibility, candidates, knowledge.policy, enriched, knowledge.ontology, profiles);
+  const candidates = retrieveAndScore(enriched, profiles, knowledge, professional);
+  const decision = decide(eligibility, candidates, knowledge.policy, professional, knowledge.ontology, profiles);
   const result = {
     schema: REASONING_SCHEMA,
     algorithmVersion: "eligibility-bm25-multifactor-delta/v4",
@@ -223,13 +224,13 @@ function eligibilityGate(graph, policy) {
   };
 }
 
-function retrieveAndScore(graph, profiles, knowledge) {
+function retrieveAndScore(graph, profiles, knowledge, professional) {
   if (!profiles.length) return [];
   const queryTokens = tokenize(graph.nodes.map((node) => `${node.excerpt} ${(node.concepts ?? []).join(" ")}`).join(" "));
   const docs = profiles.map((record) => profileDocument(record));
   const bm25Scores = bm25(queryTokens, docs.map((doc) => doc.tokens), knowledge.policy.spec.retrieval);
   const maxBm25 = Math.max(...bm25Scores, 0.0001);
-  const professionalNodes = graph.nodes.filter(isProfessionalBoundaryEvidence);
+  const professionalNodes = professional.nodes;
   const detectedConcepts = unique(professionalNodes.flatMap((node) => node.concepts ?? []));
   const evidenceKinds = unique(graph.nodes.map((node) => node.kind));
   const deltaEvidenceKinds = evidenceKinds.filter((kind) => !["operator-note"].includes(kind));
@@ -333,6 +334,67 @@ export function isProfessionalBoundaryEvidence(node) {
   return !/(?:^|\/)(?:\.github|\.svn|\.settings|deps|dependencies|vendor|vendors|third[-_]?party|opensource|fixture|fixtures|test|tests|example|examples|sample|samples|generated|gen)(?:\/|$)/i.test(relative);
 }
 
+// Raw lexical matches remain in the immutable graph. This derived view is used
+// only for professional responsibility, role and draft-boundary decisions.
+// Vocabulary comes from the bound Ontology, never a Source-specific exception.
+export function professionalEvidenceGraph(graph, ontology) {
+  return { ...graph, nodes: graph.nodes.filter(isProfessionalBoundaryEvidence).map(node => {
+    const units = responsibilityUnits(node.excerpt);
+    const concepts = ontology.spec.concepts.filter(concept => {
+      if (concept.id === "executable-engineering") return (node.concepts ?? []).includes(concept.id);
+      return units.some(unit => supportsProfessionalConcept(unit, concept));
+    }).map(concept => concept.id);
+    return { ...node, concepts };
+  }) };
+}
+
+function responsibilityUnits(excerpt) {
+  const units = [];
+  let repositorySection = false;
+  for (const block of String(excerpt ?? "").split(/\n\s*\n/)) {
+    const heading = block.match(/^\s*#{1,6}\s+([^\n]+)/);
+    if (heading) repositorySection = /\b(?:dependencies|contributing|contributors|bug reports?|security|license|maintainers)\b/i.test(heading[1]);
+    if (repositorySection) continue;
+    for (const sentence of block.split(/(?<=[.!?。！？])\s+/)) {
+      const text = sentence.replace(/^\s*(?:\/\/+|\/\*+|\*|#+)\s*/gm, "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (!text || text.length > 1200) continue;
+      // Explicit exclusions, borrowed examples and repository instructions are
+      // context, even inside an otherwise professional source file.
+      if (/\b(?:not|never|without|exclude[sd]?|unrelated|third.party|depends on|uses? (?:an? )?external|bug report|reporting a (?:security )?bug)\b|不是|仅作|只作为|不属于/.test(text)) continue;
+      units.push(text);
+    }
+  }
+  return units;
+}
+
+function supportsProfessionalConcept(text, concept) {
+  const terms = (concept.terms ?? []).map(term => String(term).toLowerCase());
+  const matched = terms.filter(term => termOccurrences(text, term) > 0);
+  const identity = concept.id.split(/[-_]+/).filter(word => !["product", "platform", "engineering"].includes(word));
+  const identityPresent = identity.length > 0 && identity.every(word => termOccurrences(text, word) > 0);
+  // Professional prose can express an Ontology phrase with punctuation or a
+  // different carrier noun (for example key/value workloads). Require at least
+  // two complete phrase words and an attributable public declaration below.
+  const relatedPhrase = terms.some(term => {
+    const words = unique(term.split(/[\s-]+/)).filter(word => word.length > 2);
+    return words.length >= 2 && words.filter(word => termOccurrences(text, word) > 0).length >= 2;
+  });
+  if (!matched.length && !identityPresent && !relatedPhrase) return false;
+  // Internal implementation machinery is not an independently offered role.
+  // A nearby public responsibility must be established in its own statement.
+  if (/\b(?:internal|inline|callback|deallocation|buffer|pointer|basic|caller|thread)\b/.test(text)) return false;
+  const owned = /\b(?:is an?|are an?|provides?|offers?|implements?|exposes?|supports?|responsible for|designed for|intended to)\b|提供|实现|负责|支持/.test(text);
+  const publicSurface = /\b(?:product|platform|server|service|system|application|framework|users?|clients?|public|api|protocol|endpoint|command|export)\b|产品|服务|用户|协议/.test(text);
+  if (owned && (identityPresent || (publicSurface && relatedPhrase))) return true;
+  // Compact professional descriptions enumerate related Ontology vocabulary.
+  // Count distinct words, not repeated single-word hits or identifier pieces.
+  const vocabulary = unique(terms.flatMap(term => term.split(/[\s-]+/))).filter(word => word.length > 2);
+  const distinctWords = vocabulary.filter(word => termOccurrences(text, word) > 0);
+  const prose = text.length <= 350 && !/[{};=]|\w+\s*\(/.test(text);
+  return prose && (matched.length >= 3 || (matched.length >= 2 && distinctWords.length >= 2 && (identityPresent || matched.some(term => /\s|[\u4e00-\u9fff]/.test(term)))))
+    || prose && matched.length >= 1 && distinctWords.length >= 2 && /\b(?:capabilities|capability|scheduling|tracing)\b/.test(text);
+}
+
 function independentCompositionEvidence(left, right, profiles, graph) {
   const concepts = (candidate) => profiles.find((record) => record.asset.metadata.id === candidate.id && record.asset.metadata.version === candidate.version)?.asset.spec.match.positiveConcepts.filter((concept) => concept !== "executable-engineering") ?? [];
   const leftConcepts = concepts(left), rightConcepts = concepts(right);
@@ -343,10 +405,10 @@ function independentCompositionEvidence(left, right, profiles, graph) {
 }
 
 function detectRole(graph, ontology) {
-  const corpus = graph.nodes.map((node) => String(node.excerpt ?? "").toLowerCase()).join("\n");
   const conceptCounts = new Map(ontology.spec.concepts.map((concept) => [
     concept.id,
-    (concept.terms ?? []).reduce((sum, term) => sum + termOccurrences(corpus, String(term).toLowerCase()), 0)
+    graph.nodes.filter(node => (node.concepts ?? []).includes(concept.id)).reduce((sum, node) => sum + Math.max(1,
+      (concept.terms ?? []).reduce((count, term) => count + termOccurrences(String(node.excerpt ?? "").toLowerCase(), String(term).toLowerCase()), 0)), 0)
   ]));
   const conceptSet = new Set([...conceptCounts].filter(([, count]) => count > 0).map(([concept]) => concept));
   const roles = ontology.spec.roles.map((item) => ({
@@ -377,13 +439,9 @@ function detectRole(graph, ontology) {
 
 function termOccurrences(text, term) {
   if (!term) return 0;
-  let count = 0;
-  let offset = 0;
-  while ((offset = text.indexOf(term, offset)) !== -1) {
-    count += 1;
-    offset += term.length;
-  }
-  return count;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const boundary = /[\u4e00-\u9fff]/.test(term) ? "" : "[\\p{L}\\p{N}_]";
+  return [...text.matchAll(new RegExp(boundary ? `(?<!${boundary})${escaped}(?!${boundary})` : escaped, "gu"))].length;
 }
 
 function proposedProfileIntent(role, domainConcepts, graph) {

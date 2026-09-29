@@ -51,6 +51,24 @@ For `PROPOSE_NEW_PROFILE`, the deterministic result also emits `proposedProfile`
 
 `executable-engineering` is a shared eligibility concept, not domain evidence. It contributes to execution readiness but is excluded from role detection. When no domain-specific concept is evidenced, the Proposal decision is `NEED_MORE_EVIDENCE`; the Engine does not generate a generic `unclassified` Profile.
 
+Raw lexical matches are candidate evidence, not proof of a professional role.
+The Engine derives a separate professional support view using the bound
+Ontology vocabulary, complete lexical boundaries and attributable responsibility
+context. Identifier substrings, repository discussion, negated claims and
+ordinary internal implementation descriptions do not establish a new product
+capability. Explicit product/public-capability statements and compact descriptions
+with corroborating professional vocabulary can supply support, including multiple
+real responsibilities in one file or a professional attachment. This deterministic
+screen is conservative evidence qualification; independent semantic Review is
+still required. Uncorroborated terms retain the existing evidence-insufficiency path.
+
+The complete original graph, excerpts, raw concept matches and source digests
+remain available. Role detection, candidate concept overlap, composition and
+novel-concept additions use the qualified view. An evolved Profile consumes the
+selected candidate's qualified `novelConcepts` from the same reasoning result,
+preserving base concepts and negative boundaries without re-reading raw matches
+or a potentially different Workspace Ontology.
+
 Contributor instructions, maintainer lists, vendored dependencies, tests, examples,
 and generated files remain in the complete Evidence Graph. Their concepts do not
 establish the source project's own role, matching boundary, or novel domain
