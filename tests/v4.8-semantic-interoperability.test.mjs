@@ -256,22 +256,23 @@ test("v4.8 terminal closure is immutable, read-only, complete, and separately pu
 
 test("semantic CLI preserves transition, actor, and exact digest values", async () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-semantic-values-cli-"));
+  initializeWorkspace(home);
   const pack = createProfessionalPack({kind: "DomainOntologyPack", metadata: {id: "sample", version: "1.0.0", name: "Sample", namespace: "sample", root: "DOMAIN_TEAM", visibility: "DOMAIN", owner: "team", provenance: {author: "author", reviewers: ["reviewer"], approvers: ["approver"], publishers: ["publisher"], sourceRefs: ["source://sample"]}}, spec: {concepts: [{conceptId: "sample:item", label: "Item", metaType: "ENTITY", definition: "An item.", evidenceRefs: ["source://item"]}]}});
   let proposal = createProjectOntologyProposal({project: {id: "project", workspaceId: "workspace", tenantId: "tenant", sourceSnapshotDigest: digest("source")}, packs: [pack], targetRoot: "DOMAIN_TEAM", createdBy: "author", now: "2026-09-17T00:00:00.000Z"});
   const file = path.join(home, "proposal.json");
   for (const [transition, actor] of [["APPLY", "author"], ["REQUEST_REVIEW", "author"], ["APPROVE", "approver"]]) {
     fs.writeFileSync(file, JSON.stringify(proposal));
     const expected = transitionProjectOntologyProposal({proposal, action: transition, actor, expectedProposalDigest: proposal.proposalDigest, now: "2026-09-17T00:00:00.000Z"});
-    const result = await executeV3Operation({positionals: ["project-ontology", "transition"], options: {proposal: file, transition, actor, "expected-proposal-digest": proposal.proposalDigest, now: "2026-09-17T00:00:00.000Z"}});
+    const result = await executeV3Operation({positionals: ["project-ontology", "transition"], options: {workspace: home, proposal: file, transition, actor, "expected-proposal-digest": proposal.proposalDigest, now: "2026-09-17T00:00:00.000Z"}});
     assert.equal(result.exitCode, 0, JSON.stringify(result.result));
     assert.deepEqual(result.result, expected);
-    const stale = await executeV3Operation({positionals: ["project-ontology", "transition"], options: {proposal: file, transition, actor, "expected-proposal-digest": digest("stale")}});
+    const stale = await executeV3Operation({positionals: ["project-ontology", "transition"], options: {workspace: home, proposal: file, transition, actor, "expected-proposal-digest": digest("stale")}});
     assert.equal(stale.exitCode, 1);
     proposal = result.result;
   }
   fs.writeFileSync(file, JSON.stringify(proposal));
   const foundationDigest = resolveOntologyFoundation().foundationDigest;
-  const resolved = await executeV3Operation({positionals: ["project-ontology", "resolve"], options: {proposal: file, "expected-proposal-digest": proposal.proposalDigest, "foundation-digest": foundationDigest, now: "2026-09-17T00:00:00.000Z"}});
+  const resolved = await executeV3Operation({positionals: ["project-ontology", "resolve"], options: {workspace: home, proposal: file, "expected-proposal-digest": proposal.proposalDigest, "foundation-digest": foundationDigest, now: "2026-09-17T00:00:00.000Z"}});
   assert.equal(resolved.exitCode, 0, JSON.stringify(resolved.result));
   assert.deepEqual(resolved.result, resolveProjectOntologySnapshot({proposal, expectedProposalDigest: proposal.proposalDigest, foundationDigest, now: "2026-09-17T00:00:00.000Z"}));
 });
