@@ -6,7 +6,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
-> Build reusable, user-owned Harness assets from evidence through your Agent and the deterministic local Engine.
+> Build user-owned Harness assets from evidence with your Agent and local Engine.
 
 `evopilot-harness` turns evidence into reviewed, immutable Harness assets and Bundles in user-owned Catalogs. Its portable Digital Expert guides Codex or another compatible Agent through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
 
@@ -22,7 +22,7 @@ schemas or published digests. Candidate installation and Release remain separate
 
 ## What A Harness Is
 
-A Harness is a versioned executable asset package for one class of repeatable engineering task. It defines what a model may act on, what it must not do, which evidence it must produce, and which validators decide whether the work is acceptable.
+A Harness is a versioned executable package for a repeatable engineering task. It defines model permissions, required evidence, constraints and acceptance validators.
 
 | Asset | Responsibility |
 |---|---|

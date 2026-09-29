@@ -64,6 +64,7 @@ test("MCP maintenance routes semantic lifecycle operations with separate authori
       await t.test(operation + " requires exact authorization, replays after restart and rejects duplicate choice", async () => {
         let s = await plan(operation, input);
         assert.equal(s.status, "OPERATION_AUTHORIZATION_REQUIRED");
+        assert.equal(s.interaction.currentFrame.businessView.risk.tier, "R3");
         assert.equal(s.operations.length, 0);
         const handle = s.interaction.currentFrame.decisionDefinition.decisionHandle;
         await decide(s, "AUTHORIZE");

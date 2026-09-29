@@ -515,7 +515,7 @@ function taskNavigation(stage, model, locale) {
 }
 function riskSummary(stage, locale) {
   const zh = locale === "zh-CN";
-  const r3 = ["PUBLICATION_PRESENTATION", "CLEANUP_PRESENTATION"];
+  const r3 = ["PUBLICATION_PRESENTATION", "OPERATION_AUTHORIZATION_PRESENTATION", "CLEANUP_PRESENTATION"];
   const r2 = ["PLAN_PRESENTATION", "PROPOSAL_APPROVAL_DECISION", "CANCELLATION_PRESENTATION", "CLOSE_PRESENTATION"];
   const tier = r3.includes(stage) ? "R3" : r2.includes(stage) ? "R2" : "R1";
   const label = zh ? ({ R1: "受计划约束", R2: "需要业务决定", R3: "影响外部或不可逆状态" })[tier] : ({ R1: "Plan-bound", R2: "Business decision", R3: "External or irreversible impact" })[tier];
