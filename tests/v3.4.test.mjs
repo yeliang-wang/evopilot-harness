@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -47,6 +48,7 @@ test("EvaluationPack v3 requires portable positive and negative cases with pinne
 test("v3.4 CLI produces every deterministic reasoning decision and terminal decisions cannot approve or publish", () => {
   const home = temporaryHome();
   runJson(["workspace", "init", "--workspace", home, "--json"]);
+  installProfessionalFixture(home);
   const cases = [
     {
       id: "evolve",

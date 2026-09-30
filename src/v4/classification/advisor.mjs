@@ -193,7 +193,6 @@ function advisorEvidenceRelevance(evidence, relevanceTerms) {
 
 function advisorSemanticTerms(value) {
   return String(value ?? "").normalize("NFKC").replace(/([a-z\d])([A-Z])/g, "$1 $2").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((term) => term.length >= 2).map((term) => {
-    if (/^(?:finance|financial|fund|funds|investment|investments|wealth)$/.test(term)) return "finance";
     if (/^(?:compare|compared|compares|comparison|comparisons)$/.test(term)) return "comparison";
     if (/^(?:research|researches|researching)$/.test(term)) return "research";
     if (/^(?:info|information)$/.test(term)) return "information";

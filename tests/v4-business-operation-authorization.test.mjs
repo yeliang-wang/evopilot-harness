@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -14,7 +15,8 @@ test("declared publication AUTHORIZE binds the current operation without executi
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "operation-choice-"));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
   initializeWorkspace(home);
-  const pack = readYaml(path.join(home, "ontology/builtin/software-engineering.yaml"));
+  installProfessionalFixture(home);
+  const pack = readYaml(path.join(home, "ontology/reviewed-professional-fixture.yaml"));
   Object.assign(pack.metadata, { id: "business-choice-ontology", version: "1.0.0", lifecycle: "approved" });
   const file = path.join(home, "reviewed-pack.yaml");
   writeYaml(file, pack);

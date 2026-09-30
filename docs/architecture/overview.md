@@ -104,7 +104,7 @@ EVOPILOT_HARNESS_HOME/
   agent-sessions/
 ```
 
-Built-in assets are copied from the Engine into the Workspace's Built-in Catalog during initialization. Evidence-driven production writes only to review run state and, after approval, the Organization Catalog. It must never overwrite Engine assets or the Built-in Catalog.
+Only generic Components are copied from the Engine into a fresh Workspace's Built-in Catalog. Professional Profiles, Bundles and business vocabulary must come from user-owned supply; historical Built-in catalogs are preserved without activating their professional contents in the producer. Evidence-driven production writes only to review run state and, after approval, the Organization Catalog. It must never overwrite Engine assets or the Built-in Catalog.
 
 Each evolution run persists the Evidence Graph, deterministic reasoning, Advisor Run, Proposal, `evaluation-pack.yaml`, `asset-delta-proposal.yaml`, and independent Review Report under the Workspace. v4 additionally persists digest-validated Session state and an append-only operation journal under `agent-sessions/`. v4.1 stores accepted/rejected comparison packages, immutable reports, rescore records, reviewed calibration case sets, and calibration reports under `comparisons/`. The Engine checkout stays read-only.
 

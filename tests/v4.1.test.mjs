@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
@@ -548,6 +549,7 @@ test("atomic JSON CLI covers comparison and calibration lifecycle with structure
 function comparisonFixture(id) {
   const home = temporaryHome(id);
   runJson(["workspace", "init", "--workspace", home, "--json"]);
+  installProfessionalFixture(home);
   const project = path.join(home, "project");
   fs.mkdirSync(path.join(project, "src"), { recursive: true });
   fs.writeFileSync(path.join(project, "package.json"), JSON.stringify({ name: id, scripts: { build: "node build.js", test: "node test.js" } }), "utf8");
@@ -556,7 +558,7 @@ function comparisonFixture(id) {
   const produced = runJson(["produce", "--workspace", home, "--source-project", project, "--goal", "Evolve the reusable distributed cache product Harness asset.", "--advisor", "off", "--json"], { allowFailure: true });
   assert.equal(produced.reasoning.decision, "EVOLVE_EXISTING");
   const proposal = readYaml(path.join(home, "evolution-runs", produced.runId, "proposal.yaml"));
-  const profiles = discoverAssets([path.join(home, "catalogs/builtin/assets")]).filter((item) => item.asset.kind === "HarnessProfile" && item.asset.metadata.lifecycle === "published");
+  const profiles = discoverAssets([path.join(home, "catalogs/organization/assets")]).filter((item) => item.asset.kind === "HarnessProfile" && item.asset.metadata.lifecycle === "published");
   const baseline = profiles.find((item) => item.asset.metadata.id === produced.reasoning.targetProfile?.id && item.asset.metadata.version === produced.reasoning.targetProfile?.version) ?? profiles[0];
   assert.ok(baseline);
   const catalogCandidate = profiles.find((item) => item.asset.metadata.id !== baseline.asset.metadata.id);

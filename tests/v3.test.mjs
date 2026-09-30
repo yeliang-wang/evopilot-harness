@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -77,8 +78,8 @@ test("v3 workspace keeps the Engine read-only and installs complete versioned bo
   const assets = runJson(["asset", "v3-validate", "--workspace", home, "--json"]);
   assert.equal(assets.status, "VALIDATED");
   assert.ok(assets.kindCounts.HarnessComponent >= 1);
-  assert.ok(assets.kindCounts.HarnessProfile >= 10);
-  assert.ok(assets.kindCounts.HarnessBundle >= 10);
+  assert.equal(assets.kindCounts.HarnessProfile ?? 0, 0);
+  assert.equal(assets.kindCounts.HarnessBundle ?? 0, 0);
   assert.ok(assets.referenceChecks.every((check) => check.status === "PASS"));
 
   const catalog = runJson(["catalog", "v3-validate", "--workspace", home, "--source", path.join(home, "catalogs/builtin"), "--json"]);
@@ -151,7 +152,7 @@ test("v3 formal schemas reject incomplete assets and validate governance packs",
 });
 
 test("v2 migration is non-mutating, validates 9 templates, and rolls back from its journal", () => {
-  const home = initializedHome();
+  const home = initializedHome({ professional: false });
   const sourceBefore = treeDigest(path.join(root, "harnesses"));
   const plan = runJson(["migrate", "v2-to-v3", "--workspace", home, "--source", path.join(root, "harnesses"), "--json"]);
   assert.equal(plan.status, "READY");
@@ -174,7 +175,7 @@ test("v2 migration is non-mutating, validates 9 templates, and rolls back from i
 });
 
 test("migration rollback rejects tampered journals and Workspace escapes", () => {
-  const integrityHome = initializedHome();
+  const integrityHome = initializedHome({ professional: false });
   const integrityRun = runJson(["migrate", "v2-to-v3", "--workspace", integrityHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
   const integrityJournal = JSON.parse(fs.readFileSync(integrityRun.journalFile, "utf8"));
   integrityJournal.records[0].created.push(path.join(integrityHome, "tampered.txt"));
@@ -182,7 +183,7 @@ test("migration rollback rejects tampered journals and Workspace escapes", () =>
   const integrityFailure = runJsonFailure(["migrate", "rollback", integrityRun.migrationId, "--workspace", integrityHome, "--json"]);
   assert.match(integrityFailure.error, /integrity check failed/i);
 
-  const boundaryHome = initializedHome();
+  const boundaryHome = initializedHome({ professional: false });
   const boundaryRun = runJson(["migrate", "v2-to-v3", "--workspace", boundaryHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
   const boundaryJournal = JSON.parse(fs.readFileSync(boundaryRun.journalFile, "utf8"));
   const outside = path.join(temporaryHome(), "must-not-delete.txt");
@@ -195,7 +196,7 @@ test("migration rollback rejects tampered journals and Workspace escapes", () =>
   assert.match(boundaryFailure.error, /created-file binding is invalid|cannot prove ownership/i);
   assert.equal(fs.readFileSync(outside, "utf8"), "preserve\n");
 
-  const unrelatedHome = initializedHome();
+  const unrelatedHome = initializedHome({ professional: false });
   const unrelatedRun = runJson(["migrate", "v2-to-v3", "--workspace", unrelatedHome, "--source", path.join(root, "harnesses"), "--apply", "--json"]);
   const unrelatedJournal = JSON.parse(fs.readFileSync(unrelatedRun.journalFile, "utf8"));
   const unrelatedAsset = path.join(unrelatedHome, "catalogs/organization/assets/profiles/unrelated/9.9.9/asset.yaml");
@@ -219,7 +220,7 @@ test("migration rollback rejects tampered journals and Workspace escapes", () =>
   assert.match(unrelatedFailure.error, /cannot prove migration ownership/i);
   assert.equal(readYaml(unrelatedAsset).metadata.owner, "organization");
 
-  const symlinkHome = initializedHome();
+  const symlinkHome = initializedHome({ professional: false });
   const organization = path.join(symlinkHome, "catalogs/organization");
   const assets = path.join(organization, "assets");
   const externalAssets = path.join(temporaryHome(), "assets");
@@ -1045,7 +1046,7 @@ test("Harness Hub exposes feedback as a read-only projection and rejects mutatio
 });
 
 function createFeedbackPackage(home, { packageId = "feedback-package", sourceId = "workspace-source", outcome = "SUCCEEDED", score = 0.9, safety = "SAFE", totalTokens = 150, currency = "USD" } = {}) {
-  const assets = discoverAssets([path.join(home, "catalogs/builtin/assets")]);
+  const assets = discoverAssets([path.join(home, "catalogs/organization/assets")]);
   const bundle = assets.find((record) => record.asset.kind === "HarnessBundle" && record.asset.metadata.id === "distributed-cache-product");
   assert.ok(bundle, "distributed-cache-product Bundle should be available");
   const profile = assets.find((record) => record.asset.kind === "HarnessProfile" && record.asset.metadata.id === bundle.asset.spec.profile.id && record.asset.metadata.version === bundle.asset.spec.profile.version);
@@ -1103,9 +1104,10 @@ function walkFilesForTest(directory) {
   return fs.readdirSync(directory).map((name) => path.join(directory, name)).filter((file) => fs.statSync(file).isFile());
 }
 
-function initializedHome() {
+function initializedHome({ professional = true } = {}) {
   const home = temporaryHome();
   runJson(["workspace", "init", "--workspace", home, "--json"]);
+  if (professional) installProfessionalFixture(home);
   return home;
 }
 

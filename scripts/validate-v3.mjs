@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "../tests/helpers/professional-supply.mjs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -14,6 +15,7 @@ const checks = [];
 try {
   run("workspace-init", ["workspace", "init", "--workspace", home, "--json"]);
   const builtinBefore = builtinAssetDigest();
+  installProfessionalFixture(home);
   run("asset-validation", ["asset", "v3-validate", "--workspace", home, "--json"]);
   run("asset-tests", ["asset", "v3-test", "--workspace", home, "--json"]);
   run("builtin-catalog", ["catalog", "v3-validate", "--workspace", home, "--source", path.join(home, "catalogs/builtin"), "--json"]);
@@ -40,7 +42,7 @@ try {
 }
 
 function feedbackFixture() {
-  const records = discoverAssets([path.join(home, "catalogs/builtin/assets")]);
+  const records = discoverAssets([path.join(home, "catalogs/organization/assets")]);
   const bundle = records.find((record) => record.asset.kind === "HarnessBundle" && record.asset.metadata.id === "distributed-cache-product");
   const profile = records.find((record) => record.asset.kind === "HarnessProfile" && record.asset.metadata.id === bundle.asset.spec.profile.id && record.asset.metadata.version === bundle.asset.spec.profile.version);
   const componentRefs = bundle.asset.spec.resolvedComponents.map((reference) => {

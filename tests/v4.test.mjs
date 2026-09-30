@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -103,6 +104,7 @@ test("Agent Workspace rejects internal Session and receipt symlinks before writi
 test("immutable GitHub Source snapshots may preserve repository symlinks without weakening writable Workspace boundaries", () => {
   const home = temporary("workspace-source-symlink");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const snapshot = path.join(home, "source-cache", "github", "snapshots", "a".repeat(64), "b".repeat(40));
   fs.mkdirSync(snapshot, { recursive: true });
   fs.symlinkSync("missing-source-owned-file.md", path.join(snapshot, "source-link.md"));
@@ -116,6 +118,7 @@ test("immutable GitHub Source snapshots may preserve repository symlinks without
 test("Session state rejects raw secrets in intent and every scenario goal", () => {
   const home = temporary("session-secrets");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   for (const secret of [
     "sk-1234567890abcdef",
     "ghp_1234567890abcdefghijkl",
@@ -180,6 +183,7 @@ test("real stdio MCP executes every Evidence Source through Digital Expert Sessi
     const manifest = await client.request("resources/read", { uri: "evopilot-harness://digital-expert/manifest" });
     assert.equal(JSON.parse(manifest.contents[0].text).schema, "evopilot-harness-digital-expert/v1");
     assert.equal(structured(await client.tool("prepare_workspace", { initialize: true })).status, "READY");
+  installProfessionalFixture(home);
     fs.writeFileSync(feedbackFile, `${JSON.stringify(createFeedbackPackage(home), null, 2)}\n`, "utf8");
     cases.push(["feedbackFile", "feedback", { feedbackFile, now: "2026-08-19T00:00:00.000Z" }]);
     const traces = {};
@@ -212,6 +216,7 @@ test("real stdio MCP surfaces every Engine terminal decision through persistent 
     const manifest = await client.request("resources/read", { uri: "evopilot-harness://digital-expert/manifest" });
     assert.equal(JSON.parse(manifest.contents[0].text).schema, "evopilot-harness-digital-expert/v1");
     structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     const cases = [
       ["EVOLVE_EXISTING", { "pom.xml": "<project><artifactId>cache-evolve</artifactId></project>", "README.md": "Distributed cache Redis compatible key-value store architecture. Build test validate release TTL eviction failover." }],
       ["COMPOSE_NEW_BUNDLE", {
@@ -274,6 +279,7 @@ test("real stdio MCP persists a REVISE Proposal Review as a blocked Session", as
   try {
     await client.initialize();
     structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     const produced = await executeEvolutionMcpSession(client, source, "Require a REVISE Proposal Review through the Engine");
     const reviewed = structured(await client.tool("review_session_proposals", { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
     assert.equal(reviewed.status, "BLOCKED");
@@ -297,6 +303,7 @@ test("Engine-owned OperationJob returns quickly, deduplicates repeated starts, a
   try {
     await client.initialize();
     structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     const workbuddy = { ...governedHostInteraction("workbuddy", "5.2.6"), supportsOperationJobs: true, maxSynchronousMcpRequestMs: 30000 };
     const produced = await executeEvolutionMcpSession(client, source, "Review this Proposal through one durable OperationJob", workbuddy);
     const request = { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, operation: "proposal.review", input: { modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 } };
@@ -382,6 +389,7 @@ test("MCP process loss preserves the detached OperationJob and reconnects withou
   const first = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
   await first.initialize();
   structured(await first.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
   const produced = await executeEvolutionMcpSession(first, source, "Interrupt but never duplicate this Proposal Review");
   const request = { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, operation: "proposal.review", input: { modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 } };
   const started = structured(await first.tool("start_operation_job", request));
@@ -419,6 +427,7 @@ test("real stdio MCP requires a presented, digest-bound authorization before ret
   try {
     await client.initialize();
     structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     const produced = await executeEvolutionMcpSession(client, source, "Require a REVISE Proposal Review through the Engine");
     assert.equal(produced.status, "PROPOSAL_REVIEW_REQUIRED");
     let reviewed = structured(await client.tool("review_session_proposals", { sessionId: produced.sessionId, expectedSessionDigest: produced.sessionDigest, modelsFile, model: "contract-reviewer", reviewTimeoutMs: 5000 }));
@@ -472,11 +481,12 @@ test("Engine Adapter executes the complete maintenance capability family with st
   };
 
   await invoke("workspace.prepare");
+  installProfessionalFixture(home);
   await invoke("workspace.inspect");
   const keys = await invoke("keys.generate");
   const privateKey = keys.result.privateKeyFile;
   const publicKey = keys.result.publicKeyFile;
-  const assetRoot = path.join(home, "catalogs/builtin/assets");
+  const assetRoot = path.join(home, "catalogs/organization/assets");
   const assetFile = path.join(assetRoot, "profiles/observability-apm/1.2.0/asset.yaml");
   await invoke("asset.validate", { source: assetRoot });
   await invoke("asset.test", { source: assetRoot });
@@ -499,7 +509,7 @@ test("Engine Adapter executes the complete maintenance capability family with st
   await invoke("registry.sign", { registry, privateKey, signature: registrySignature });
   await invoke("registry.verify", { registry, publicKey, signature: registrySignature });
 
-  const ontology = path.join(home, "ontology/builtin/software-engineering.yaml");
+  const ontology = path.join(home, "ontology/reviewed-professional-fixture.yaml");
   await invoke("ontology.inspect");
   await invoke("ontology.validate", { file: ontology });
   await invoke("ontology.diff", { left: ontology, right: ontology });
@@ -573,6 +583,7 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
   try {
     await client.initialize();
     assert.equal(structured(await client.tool("prepare_workspace", { initialize: true })).status, "READY");
+  installProfessionalFixture(home);
     plannedOperations.push("workspace.prepare");
     await diagnostic("workspace.inspect");
     await diagnostic("llm.inspect", { modelsFile, model: "glm-conformance" });
@@ -582,7 +593,7 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
     assert.equal(initializedModel.status, "CONFIGURED_AND_VERIFIED");
     assert.equal(initializedModel.connectionVerified, true);
 
-    const assetRoot = path.join(home, "catalogs/builtin/assets");
+    const assetRoot = path.join(home, "catalogs/organization/assets");
     const assetFile = path.join(assetRoot, "profiles/observability-apm/1.2.0/asset.yaml");
     const privateKey = path.join(home, "keys/catalog-signing-private.pem");
     const publicKey = path.join(home, "keys/catalog-signing-public.pem");
@@ -591,7 +602,7 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
     const catalogSignature = path.join(home, "signatures/catalog.sig.json");
     const registry = path.join(home, "harness-registry.yaml");
     const registrySignature = path.join(home, "signatures/registry.sig.json");
-    const ontology = path.join(home, "ontology/builtin/software-engineering.yaml");
+    const ontology = path.join(home, "ontology/reviewed-professional-fixture.yaml");
     const ontologyCandidate = path.join(home, "conformance-ontology.yaml");
     const ontologyDocument = parseYaml(fs.readFileSync(ontology, "utf8"));
     ontologyDocument.metadata.id = "conformance-ontology";
@@ -667,6 +678,7 @@ test("real stdio MCP routes every maintenance Engine operation through its autho
 test("planned Engine operation receipts replay an immutable result without duplicate mutation", async () => {
   const home = temporary("operation-receipt");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const source = createCacheSource(temporary("operation-receipt-source"));
   const idempotencyKey = crypto.createHash("sha256").update("operation-receipt-test").digest("hex");
   const request = { home, operation: "evidence.produce", input: { sourceProjects: [source], goal: "Evolve a distributed cache Harness", advisor: "off" }, authority: "planned", idempotencyKey };
@@ -681,6 +693,7 @@ test("planned Engine operation receipts replay an immutable result without dupli
 test("Agent Operation Session binds plan digests and resumes across adapters", () => {
   const home = temporary("session");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const created = createAgentSession({ home, intent: "Evolve a reusable distributed cache Harness", adapterId: "codex", hostInteraction: governedHostInteraction() });
   assert.equal(validateAgentSession(created).status, "VALIDATED");
   const source = createCacheSource(home);
@@ -768,6 +781,7 @@ test("real stdio MCP rejects incompatible versions and exposes no network transp
 test("incompatible MCP clients cannot recover or mutate persisted Sessions", async () => {
   const home = temporary("mcp-handshake-mutation");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const created = createAgentSession({ home, intent: "Preserve this running Session until a compatible host initializes", adapterId: "codex" });
   const file = path.join(home, "agent-sessions", created.sessionId, "session.json");
   const running = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -798,6 +812,7 @@ test("incompatible MCP clients cannot recover or mutate persisted Sessions", asy
 test("recovery preserves incompatible persisted Sessions byte-for-byte", () => {
   const home = temporary("persisted-session-compatibility");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const created = createAgentSession({ home, intent: "Preserve an incompatible running Session", adapterId: "codex" });
   const file = path.join(home, "agent-sessions", created.sessionId, "session.json");
   const running = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -817,6 +832,7 @@ test("recovery preserves incompatible persisted Sessions byte-for-byte", () => {
 test("every Session mutation rejects persisted Digital Expert Core drift without changing state", () => {
   const home = temporary("persisted-session-core-drift");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const created = createAgentSession({ home, intent: "Reject same-version Digital Expert Core drift", adapterId: "codex" });
   const file = path.join(home, "agent-sessions", created.sessionId, "session.json");
   const stale = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -844,6 +860,7 @@ test("every Session mutation rejects persisted Digital Expert Core drift without
 test("stopped Protocol v3 Sessions explicitly migrate across a same-boundary Core replacement without authority drift", () => {
   const home = temporary("session-core-compatible-migration");
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const created = createAgentSession({ home, intent: "Resume after compatible candidate Core replacement", adapterId: "workbuddy" });
   const file = path.join(home, "agent-sessions", created.sessionId, "session.json");
   const stale = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -877,6 +894,8 @@ test("stopped Protocol v3 Sessions explicitly migrate across a same-boundary Cor
 
 test("independent Generic Agent Host matches the Codex Adapter plan and stop semantics", async () => {
   const home = temporary("generic-host");
+  initializeWorkspace(home);
+  installProfessionalFixture(home);
   const sourceHome = temporary("generic-source");
   const source = createCacheSource(sourceHome);
   const sourceBefore = treeDigest(source);
@@ -911,6 +930,7 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
   try {
     await client.initialize();
     const prepared = structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     assert.equal(prepared.status, "READY");
     const started = structured(await client.tool("start_operation_session", { intent: "Evolve a reusable distributed cache product Harness from static evidence", adapterId: "codex" }));
     await assert.rejects(() => client.tool("plan_operation_session", {
@@ -1113,7 +1133,8 @@ test("Agent-to-MCP-to-Engine lifecycle keeps plan, approval, and publication sep
 test("maintenance publication requires a separate digest-bound operation authorization", async () => {
   const home = temporary("maintenance-publication");
   initializeWorkspace(home);
-  const sourcePack = path.join(home, "ontology/builtin/software-engineering.yaml");
+  installProfessionalFixture(home);
+  const sourcePack = path.join(home, "ontology/reviewed-professional-fixture.yaml");
   const document = parseYaml(fs.readFileSync(sourcePack, "utf8"));
   document.metadata.id = "acceptance-ontology";
   document.metadata.version = "1.0.0";
@@ -1192,6 +1213,7 @@ test("multiple Proposals remain publishable until every authorized Proposal is p
   try {
     await client.initialize();
     structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     let session = structured(await client.tool("start_operation_session", { intent: "Produce reusable Harnesses from two distinct product projects", adapterId: "codex" }));
     session = structured(await client.tool("plan_operation_session", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, scenario: "evolve", goal: session.intent.text, sources: { sourceRoot: corpus, advisor: "required", modelsFile, model: "contract-reviewer" } }));
     session = structured(await client.tool("confirm_operation_plan", { sessionId: session.sessionId, expectedSessionDigest: session.sessionDigest, expectedPlanDigest: session.planDigest, confirmedBy: "acceptance-operator", confirmation: `CONFIRM_OPERATION_PLAN:${session.planDigest}` }));
@@ -1245,6 +1267,7 @@ test("forced process stop is recovered as an interrupted digest-bound session", 
   const source = createCacheSource(home);
   for (let index = 0; index < 6000; index += 1) fs.writeFileSync(path.join(source, `evidence-${String(index).padStart(4, "0")}.md`), `Build test validate cache replica failover record ${index}.\n`);
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const first = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: root });
   await first.initialize();
   const started = structured(await first.tool("start_operation_session", { intent: "Exercise interruption recovery from static evidence", adapterId: "codex" }));
@@ -1338,7 +1361,7 @@ function createProductCorpus(rootDirectory) {
 }
 
 function createFeedbackPackage(home) {
-  const assets = discoverAssets([path.join(home, "catalogs/builtin/assets")]);
+  const assets = discoverAssets([path.join(home, "catalogs/organization/assets")]);
   const bundle = assets.find((record) => record.asset.kind === "HarnessBundle" && record.asset.metadata.id === "distributed-cache-product");
   assert.ok(bundle, "distributed-cache-product Bundle should be available");
   const profile = assets.find((record) => record.asset.kind === "HarnessProfile" && record.asset.metadata.id === bundle.asset.spec.profile.id && record.asset.metadata.version === bundle.asset.spec.profile.version);
@@ -1369,6 +1392,7 @@ async function runAdapterPlanTrace(home, source, adapterId) {
   try {
     await client.initialize();
     const prepared = structured(await client.tool("prepare_workspace", { initialize: true }));
+  installProfessionalFixture(home);
     const intent = "Evolve a reusable distributed cache Harness";
     const started = structured(await client.tool("start_operation_session", { intent, adapterId }));
     const planned = structured(await client.tool("plan_operation_session", { sessionId: started.sessionId, expectedSessionDigest: started.sessionDigest, scenario: "evolve", goal: intent, sources: { sourceProjects: [source], advisor: "off" } }));

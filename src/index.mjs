@@ -6,6 +6,7 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { loadKnowledge } from "./v3/reasoning.mjs";
 import { handleV3Command } from "./v3/cli.mjs";
 import { assertSourcePath, captureSourceFile, isProtectedSourcePath } from "./v4/source/path-policy.mjs";
 
@@ -1506,8 +1507,10 @@ function detectHarnessForSources(args, sources, goal, sourceRootOverride) {
   const source = path.resolve(sourceRootOverride ?? stringOption(args, "source") ?? "harnesses");
   const sourceCoverage = buildSourceCoverage(sources);
   const corpus = buildCorpus(sources);
-  const sourceProfile = buildSourceProfile(sources, corpus, goal);
   const packs = listHarnessPacks(source);
+  const workspace = stringOption(args, "workspace");
+  const ontology = workspace ? loadKnowledge(path.resolve(workspace)).ontology : undefined;
+  const sourceProfile = buildSourceProfile(sources, corpus, goal, packs, ontology);
   const autoMatch = autoMatchHarness(packs, sourceProfile, corpus, goal, args);
   return {
     schema: DETECT_SCHEMA,
@@ -1953,7 +1956,7 @@ function buildCorpus(sources) {
   };
 }
 
-function buildSourceProfile(sources, corpus, goal) {
+function buildSourceProfile(sources, corpus, goal, packs = [], ontology) {
   const allFiles = uniqueStrings(sources.flatMap((source) => source.scan?.files ?? source.scan?.selectedFiles ?? []));
   const selectedFiles = uniqueStrings(sources.flatMap((source) => source.scan?.selectedFiles ?? []));
   const dependencies = extractDependencies(corpus.text, allFiles);
@@ -1962,11 +1965,11 @@ function buildSourceProfile(sources, corpus, goal) {
   const languages = detectLanguages(sources, allFiles, corpus.text);
   const buildTools = detectBuildTools(allFiles, corpus.text);
   const frameworks = detectFrameworks(dependencies, imports, symbols, corpus.text);
-  const architectureSignals = inferArchitectureSignals({ dependencies, imports, symbols, selectedFiles, allFiles, text: corpus.text, goal });
-  const roles = inferSourceRoles({ dependencies, imports, symbols, selectedFiles, allFiles, architectureSignals, text: corpus.text, goal });
+  const architectureSignals = inferArchitectureSignals({ packs, ontology, dependencies, imports, symbols, selectedFiles, allFiles, text: corpus.text, goal });
+  const roles = inferSourceRoles({ packs, ontology, dependencies, imports, symbols, selectedFiles, allFiles, architectureSignals, text: corpus.text, goal });
   const primaryRole = roles[0]?.id ?? "unknown";
-  const recommendedHarness = recommendHarnessForRole(primaryRole, { dependencies, imports, symbols, architectureSignals, text: corpus.text, goal });
-  const negativeSignals = inferNegativeSignals({ roles, dependencies, imports, symbols, architectureSignals, text: corpus.text });
+  const recommendedHarness = recommendHarnessForRole(primaryRole, { roles, packs, dependencies, imports, symbols, architectureSignals, text: corpus.text, goal });
+  const negativeSignals = inferNegativeSignals({ packs, roles, dependencies, imports, symbols, architectureSignals, text: corpus.text });
   const scannerEvidence = buildScannerEvidence({ sources, allFiles, selectedFiles, dependencies, imports, symbols, languages, buildTools, frameworks, architectureSignals, roles, text: corpus.text, goal });
   const uncertainty = sourceProfileUncertainty({ roles, recommendedHarness, scannerEvidence, negativeSignals, sources });
   const positiveSignals = uniqueStrings([
@@ -2316,19 +2319,8 @@ function roleFitForHarness(pack, sourceProfile) {
   const recommendation = sourceProfile.recommendedHarness;
   if (recommendation?.id === pack.id) return "strong";
   if (Array.isArray(recommendation?.parentHarnessIds) && recommendation.parentHarnessIds.includes(pack.id)) return "partial";
-  const id = pack.id;
-  const role = sourceProfile.primaryRole;
-  if (role === "enterprise-admin-software" && id === "generic-management-software-harness") return "strong";
-  if (role === "java-service" && id === "java-ddd-service-harness") return "strong";
-  if (role === "node-saas-control-plane" && id === "node-saas-control-plane-harness") return "strong";
-  if (role === "distributed-cache-product" && id === "distributed-cache-harness") return "strong";
-  if (role === "database-product" && id === "database-product-harness") return "strong";
-  if (role === "api-gateway-product" && id === "api-gateway-harness") return "strong";
-  if (role === "redis-client-library" && ["api-gateway-harness", "database-product-harness"].includes(id)) return "mismatch";
-  if (role === "cache-proxy-monitor" && ["api-gateway-harness", "database-product-harness"].includes(id)) return "mismatch";
-  if (role === "logging-sdk" && ["api-gateway-harness", "database-product-harness", "distributed-cache-harness"].includes(id)) return "mismatch";
-  if (role === "rpc-framework" && ["api-gateway-harness", "database-product-harness", "distributed-cache-harness"].includes(id)) return "mismatch";
-  if (role === "frontend-admin-app" && ["api-gateway-harness", "database-product-harness", "distributed-cache-harness"].includes(id)) return "mismatch";
+  const declared = templateMatchPolicy(pack.template).positive.architectureSignals;
+  if (declared.includes(sourceProfile.primaryRole)) return "strong";
   return "none";
 }
 
@@ -2527,207 +2519,77 @@ function detectFrameworks(dependencies, imports, symbols, text) {
   return uniqueStrings(frameworks);
 }
 
+// The legacy CLI consumes the caller's declared templates. It does not carry
+// a universal role-to-product dictionary or turn framework usage into a role.
+function declaredRoleEvidence(context) {
+  const text = normalizeForMatch(context.text ?? "");
+  const declared = (context.ontology?.spec?.roles ?? []).flatMap(role => {
+    const concepts = context.ontology.spec.concepts.filter(item => role.concepts.includes(item.id) && !context.ontology.spec.roles.every(candidate => candidate.concepts.includes(item.id)));
+    const matches = uniqueStrings(concepts.flatMap(item => item.terms).filter(term => declaredTermPresent(text, term)));
+    const conflicts = context.ontology.spec.concepts.filter(item => role.negativeConcepts?.includes(item.id)).flatMap(item => item.terms).filter(term => declaredTermPresent(text, term));
+    if (matches.length < 2 || conflicts.length) return [];
+    const pack = (context.packs ?? []).find(item => (item.template.domain ?? item.template.runtimePatterns?.domain) === role.domain);
+    const parents = uniqueStrings(concepts.flatMap(item => item.parents ?? []));
+    return [{ id: role.id, domain: role.domain, harnessId: pack?.id ?? `${safeId(role.domain)}-harness`,
+      parentHarnessIds: (context.packs ?? []).filter(item => parents.includes(item.template.domain ?? item.template.runtimePatterns?.domain)).map(item => item.id),
+      confidence: 0.9, evidence: matches.slice(0, 8), boundary: pack?.template.productBoundary ?? {}, architectureSignals: [role.id] }];
+  });
+  if (declared.length) return declared.sort((a, b) => b.evidence.length - a.evidence.length || a.id.localeCompare(b.id));
+  return (context.packs ?? []).flatMap(pack => {
+    const template = pack.template;
+    const positive = normalizeStrings(template.matchSignals?.include);
+    const negative = uniqueStrings([
+      ...normalizeStrings(template.matchSignals?.exclude),
+      ...normalizeStrings(template.productBoundary?.excludes)
+    ]);
+    const matches = positive.filter(term => declaredTermPresent(text, term));
+    const conflicts = negative.filter(term => declaredTermPresent(text, term));
+    // A single generic keyword cannot establish a professional boundary.
+    if (matches.length < 2 || conflicts.length) return [];
+    const domain = template.domain ?? template.runtimePatterns?.domain;
+    if (typeof domain !== "string" || !domain.trim()) return [];
+    return [{ id: template.role ?? domain, domain, harnessId: pack.id,
+      confidence: Number(Math.min(0.9, matches.length / Math.max(3, positive.length)).toFixed(2)),
+      evidence: matches.slice(0, 8), boundary: template.productBoundary ?? {},
+      architectureSignals: templateMatchPolicy(template).positive.architectureSignals }];
+  }).sort((a, b) => b.confidence - a.confidence || a.harnessId.localeCompare(b.harnessId));
+}
+
+function declaredTermPresent(text, term) {
+  const normalized = normalizeForMatch(term);
+  if (!normalized) return false;
+  const escaped = escapeRegExp(normalized);
+  return new RegExp(`(?:^|[^\\p{L}\\p{N}_])${escaped}(?=$|[^\\p{L}\\p{N}_])`, "u").test(text);
+}
+
 function inferArchitectureSignals(context) {
-  const text = normalizeForMatch([context.text, context.goal, ...context.dependencies, ...context.imports, ...context.symbols, ...context.selectedFiles].join("\n"));
-  const signals = [];
-  if (/(代码生成|code generation|生成代码|提示词|prompt)/.test(text)
-    && /(java|ddd|facade|manager|domain service|domainservice|mybatis|plantuml|持久层|门面层|业务逻辑)/.test(text)) {
-    signals.push("java-code-generation", "language-service", "architecture-constrained-generation");
-  }
-  if (/spring data redis|jedis|redis template|redisserializer|jedisconnectionfactory/.test(text)) signals.push("redis-client-library", "cache-client-library", "connection-factory", "serializer");
-  if (/proxycheck|proxy check|redisops/.test(text)) signals.push("cache-proxy-monitor", "runtime-health-check", "service-discovery");
-  if (/replica|failover|slot migration|hash slot|eviction|storage engine|protocol engine|cluster membership|key value store|kv store/.test(text)) signals.push("distributed-cache-product");
-  if (/sql engine|query optimizer|transaction engine|storage engine|dbms|database kernel|数据库内核|查询优化器|事务引擎/.test(text)) signals.push("database-product");
-  if (/api gateway|ingress controller|upstream selection|route matching|filter chain|service mesh gateway|envoy|kong|apisix/.test(text)) signals.push("api-gateway-product");
-  if (/dubbo|rpccontext|remoting|registry zookeeper|hessian|protocol|consumer|provider/.test(text)) signals.push("rpc-framework", "middleware-framework");
-  if (/\bworkflow\b|\bflow\b|taskstatus|taskserialstatus|noodel|orchestration|调度/.test(text)) signals.push("workflow-engine", "orchestration-engine");
-  if (/logback|slf4j|loggerfactory|iloggingevent|classicconverter|mdc|traceid|requestid|logging filter/.test(text)) signals.push("logging-sdk", "observability-adapter");
-  if (/spring boot|starter web|mybatis|swagger|admin console|housekeeper|butler|rbac|permission system|audit report|management software/.test(text)) signals.push("enterprise-admin-software");
-  if (/vue|iview|vue router|vuex|webpack|wangeditor|echarts|admin frontend/.test(text)) signals.push("frontend-admin-app");
-  if (/facade|sdk|client api|resource api/.test(text)) signals.push("api-facade-library");
-  if (/jdbc|datasource|mysql connector|druiddatasource/.test(text)) signals.push("database-client");
-  return uniqueStrings(signals);
+  return uniqueStrings(declaredRoleEvidence(context).flatMap(item => item.architectureSignals));
 }
 
 function inferSourceRoles(context) {
-  const text = normalizeForMatch([context.text, context.goal, ...context.dependencies, ...context.imports, ...context.symbols, ...context.architectureSignals, ...context.allFiles].join("\n"));
-  const roles = [];
-  const add = (id, confidence, evidence) => roles.push({ id, confidence: Number(confidence.toFixed(2)), evidence: uniqueStrings(evidence).slice(0, 8) });
-  if (/(代码生成|code generation|生成代码|提示词|prompt)/.test(text)
-    && /(java|ddd|facade|manager|domain service|domainservice|mybatis|plantuml|持久层|门面层|业务逻辑)/.test(text)) {
-    add("java-code-generation", 0.99, ["java-code-generation-rules", "ddd-layering", "architecture-constrained-generation"]);
-  }
-  if (/spring data redis|jedis|redis template|jedisconnectionfactory|redisserializer/.test(text)) {
-    add("redis-client-library", 0.92, ["spring-data-redis-or-jedis", "redis-template-wrapper", "client-library-boundary"]);
-  }
-  if (/proxycheck|proxy check|redisops/.test(text)) {
-    add("cache-proxy-monitor", 0.94, ["proxy-check-runtime", "cache-health-probe", "service-discovery"]);
-  }
-  if (/replica|failover|slot migration|hash slot|eviction|storage engine|protocol engine|cluster membership/.test(text) && !/redis template|jedisconnectionfactory/.test(text)) {
-    add("distributed-cache-product", 0.84, ["cluster-or-replication-signals", "cache-product-kernel-signals"]);
-  }
-  if (/sql engine|query optimizer|transaction engine|database kernel|dbms|查询优化器|事务引擎/.test(text)) {
-    add("database-product", 0.84, ["database-kernel-signals"]);
-  }
-  if (/api gateway|ingress controller|upstream selection|route matching|filter chain|service mesh gateway|envoy|kong|apisix/.test(text)) {
-    add("api-gateway-product", 0.84, ["gateway-routing-policy-signals"]);
-  }
-  if (/dubbo|rpccontext|hessian|remoting|rpc protocol|registry zookeeper|consumer|provider/.test(text)) {
-    add("rpc-framework", 0.95, ["rpc-framework-modules", "registry-remoting-protocol"]);
-  }
-  if (/\bworkflow\b|\bflow\b|taskstatus|taskserialstatus|orchestration|noodel/.test(text)) {
-    const workflowConfidence = /noodel|taskstatus|taskserialstatus|workflow engine|orchestration engine/.test(text) ? 0.97 : 0.76;
-    add("workflow-engine", workflowConfidence, ["workflow-orchestration-signals", "task-state-signals"]);
-  }
-  if (/logback|slf4j|loggerfactory|iloggingevent|classicconverter|requestid|traceid/.test(text)) {
-    const logConfidence = /logunified|unified logger|unifiedlog|logger adapter|classicconverter/.test(text) ? 0.96 : 0.9;
-    add("logging-sdk", logConfidence, ["logging-framework-adapter", "correlation-context"]);
-  }
-  if (/spring boot|starter web|mybatis|swagger|housekeeper|butler|admin/.test(text)) {
-    add("enterprise-admin-software", 0.94, ["spring-web-admin", "database-backed-management"]);
-  }
-  if (/vue|iview|vue router|vuex|webpack|admin frontend/.test(text)) {
-    add("frontend-admin-app", 0.98, ["vue-admin-frontend"]);
-  }
-  if (/facade|resource api|client sdk|api wrapper/.test(text)) {
-    add("api-facade-library", 0.74, ["api-facade-or-sdk"]);
-  }
-  if (roles.length === 0 && /pom xml|spring|java/.test(text)) add("java-service", 0.55, ["java-maven-source"]);
-  if (roles.length === 0 && /package json|node|vue/.test(text)) add("node-saas-control-plane", 0.5, ["node-package-source"]);
-  return roles.sort((left, right) => right.confidence - left.confidence);
+  return declaredRoleEvidence(context);
 }
 
 function recommendHarnessForRole(role, context) {
-  const map = {
-    "redis-client-library": {
-      id: "redis-client-harness",
-      domain: "redis-client",
-      confidence: 0.92,
-      parentHarnessIds: ["distributed-cache-harness"],
-      evidence: ["redis-client-library", "narrower-than-distributed-cache-product"]
-    },
-    "cache-proxy-monitor": {
-      id: "cache-proxy-monitor-harness",
-      domain: "cache-proxy-monitor",
-      confidence: 0.94,
-      parentHarnessIds: ["distributed-cache-harness", "observability-apm-harness"],
-      evidence: ["cache-proxy-monitor", "runtime-health-check"]
-    },
-    "distributed-cache-product": {
-      id: "distributed-cache-harness",
-      domain: "distributed-cache",
-      confidence: 0.84,
-      parentHarnessIds: [],
-      evidence: ["cache-product-kernel"]
-    },
-    "database-product": {
-      id: "database-product-harness",
-      domain: "database-product",
-      confidence: 0.84,
-      parentHarnessIds: [],
-      evidence: ["database-product-kernel"]
-    },
-    "api-gateway-product": {
-      id: "api-gateway-harness",
-      domain: "api-gateway",
-      confidence: 0.84,
-      parentHarnessIds: [],
-      evidence: ["gateway-routing-policy"]
-    },
-    "rpc-framework": {
-      id: "rpc-framework-harness",
-      domain: "rpc-framework",
-      confidence: 0.95,
-      parentHarnessIds: ["go-middleware-harness", "java-ddd-service-harness"],
-      evidence: ["rpc-framework", "registry-remoting-protocol"]
-    },
-    "workflow-engine": {
-      id: "workflow-engine-harness",
-      domain: "workflow-engine",
-      confidence: 0.97,
-      parentHarnessIds: ["generic-management-software-harness"],
-      evidence: ["workflow-orchestration-engine"]
-    },
-    "logging-sdk": {
-      id: "logging-sdk-harness",
-      domain: "logging-sdk",
-      confidence: 0.9,
-      parentHarnessIds: ["observability-apm-harness"],
-      evidence: ["logging-sdk", "observability-adapter"]
-    },
-    "enterprise-admin-software": {
-      id: "generic-management-software-harness",
-      domain: "management-software",
-      confidence: 0.94,
-      parentHarnessIds: [],
-      evidence: ["management-admin-software"]
-    },
-    "frontend-admin-app": {
-      id: "frontend-admin-app-harness",
-      domain: "frontend-admin-app",
-      confidence: 0.98,
-      parentHarnessIds: ["node-saas-control-plane-harness"],
-      evidence: ["vue-admin-frontend"]
-    },
-    "api-facade-library": {
-      id: "api-facade-harness",
-      domain: "api-facade",
-      confidence: 0.74,
-      parentHarnessIds: ["java-ddd-service-harness"],
-      evidence: ["api-facade-library"]
-    },
-    "java-service": {
-      id: "java-ddd-service-harness",
-      domain: "java-service",
-      confidence: 0.55,
-      parentHarnessIds: [],
-      evidence: ["java-maven-source"]
-    },
-    "java-code-generation": {
-      id: "java-ddd-code-generation-harness",
-      domain: "language-service",
-      confidence: 0.99,
-      parentHarnessIds: ["java-ddd-service", "java-ddd-service-harness"],
-      evidence: ["java-code-generation-rules", "ddd-layering", "architecture-constrained-generation"]
-    },
-    "node-saas-control-plane": {
-      id: "node-saas-control-plane-harness",
-      domain: "node-saas-control-plane",
-      confidence: 0.5,
-      parentHarnessIds: [],
-      evidence: ["node-package-source"]
-    }
-  };
-  return map[role] ?? {
-    id: inferHarnessId(context.goal ?? "", { normalizedText: normalizeForMatch(context.text ?? ""), keywords: topKeywords(context.text ?? "") }),
-    domain: "domain",
-    confidence: 0.4,
-    parentHarnessIds: [],
-    evidence: ["fallback-keyword-inference"]
+  const matches = (context.roles ?? []).filter(item => item.id === role);
+  if (matches.length === 1) {
+    const selected = matches[0];
+    return { id: selected.harnessId, domain: selected.domain, confidence: selected.confidence,
+      parentHarnessIds: selected.parentHarnessIds ?? [], evidence: selected.evidence, boundary: selected.boundary };
+  }
+  return {
+    id: inferHarnessId(context.goal ?? "", { keywords: topKeywords(context.text ?? "") }),
+    domain: "unresolved", confidence: 0, parentHarnessIds: [],
+    evidence: ["no-unique-declared-professional-boundary"]
   };
 }
 
 function inferNegativeSignals(context) {
-  const text = normalizeForMatch([context.text, ...context.dependencies, ...context.imports, ...context.symbols, ...context.architectureSignals].join("\n"));
-  const roleIds = context.roles.map((role) => role.id);
-  const signals = [];
-  if (roleIds.includes("java-code-generation")) {
-    signals.push("code-generation-guidance-not-api-gateway-product", "prompt-specification-not-runtime-product");
-  }
-  if (roleIds.includes("redis-client-library") && !roleIds.includes("distributed-cache-product")) {
-    signals.push("no-cache-product-kernel", "client-library-not-cache-engine", "no-replication-or-failover-controller");
-  }
-  if (roleIds.includes("cache-proxy-monitor")) signals.push("operational-monitor-not-cache-kernel", "not-api-gateway-product");
-  if (roleIds.includes("logging-sdk")) signals.push("library-not-observability-platform", "not-api-gateway-product");
-  if (roleIds.includes("rpc-framework")) signals.push("rpc-framework-not-api-gateway-product");
-  if (roleIds.includes("frontend-admin-app")) signals.push("frontend-app-not-gateway-product");
-  if (/jdbc|mysql connector|datasource|druiddatasource/.test(text) && !roleIds.includes("database-product")) {
-    signals.push("database-client-not-database-product");
-  }
-  if (/proxy|client wrapper|sdk|adapter/.test(text) && !roleIds.includes("api-gateway-product")) {
-    signals.push("client-or-adapter-not-gateway-product");
-  }
-  return uniqueStrings(signals);
+  const text = normalizeForMatch(context.text ?? "");
+  return uniqueStrings((context.packs ?? []).filter(pack => context.roles?.some(role => role.harnessId === pack.id)).flatMap(pack => [
+    ...normalizeStrings(pack.template.matchSignals?.exclude),
+    ...normalizeStrings(pack.template.productBoundary?.excludes)
+  ]).filter(term => declaredTermPresent(text, term)));
 }
 
 function detectSensitiveMaterial(text) {
@@ -3801,32 +3663,13 @@ function ensureHarnessTemplateV2Metadata(template, match, sourceProfile) {
 }
 
 function defaultProductBoundary(id, domain, sourceProfile) {
-  const role = sourceProfile?.primaryRole ?? "domain";
-  const includesByRole = {
-    "redis-client-library": ["Redis client wrapper", "cache client SDK", "RedisTemplate/Jedis adapter", "serializer and connection factory", "read/write routing helper"],
-    "cache-proxy-monitor": ["cache proxy health check", "Redis operation probe", "service discovery monitor", "runtime diagnostic command"],
-    "distributed-cache-product": ["self-developed distributed cache runtime", "Redis-compatible or Memcached-compatible protocol", "replication/failover/slot migration", "eviction and TTL engine"],
-    "database-product": ["self-developed database product", "SQL or storage engine", "query optimizer", "transaction/recovery engine"],
-    "api-gateway-product": ["API gateway runtime", "listener/route/upstream/policy control", "plugin/filter lifecycle", "protocol and load evidence"],
-    "rpc-framework": ["RPC framework runtime", "registry/remoting/protocol modules", "consumer/provider compatibility", "transport failure handling"],
-    "workflow-engine": ["workflow/orchestration engine", "task state model", "agent/plugin execution", "metadata and runtime control"],
-    "logging-sdk": ["logging SDK", "logback/slf4j adapter", "correlation context propagation", "request/trace field enrichment"],
-    "enterprise-admin-software": ["enterprise admin product", "business workflow", "RBAC/audit/reporting", "database-backed service"],
-    "frontend-admin-app": ["admin frontend application", "Vue/route/state management", "browser build and smoke", "API integration surface"],
-    "api-facade-library": ["API facade or SDK", "typed contract wrapper", "client integration boundary"],
-    "java-service": ["Java service", "Maven/Gradle build", "service runtime and tests"]
-  };
-  const excludesByRole = {
-    "redis-client-library": ["distributed cache server kernel", "cluster membership", "failover controller", "eviction engine", "storage engine"],
-    "cache-proxy-monitor": ["API gateway product", "distributed cache server kernel", "database product"],
-    "logging-sdk": ["observability platform backend", "API gateway product", "distributed cache product"],
-    "rpc-framework": ["API gateway product", "business management app", "distributed cache product"],
-    "frontend-admin-app": ["backend control plane", "API gateway runtime", "database product"],
-    "enterprise-admin-software": ["database product kernel", "API gateway runtime", "distributed cache engine"]
-  };
+  const selected = sourceProfile?.recommendedHarness;
+  const boundary = selected?.domain === domain ? selected.boundary : null;
   return {
-    includes: uniqueStrings(includesByRole[role] ?? [`${domain} owned domain boundary`, `${id} reusable Harness target`, "source-driven execution evidence"]),
-    excludes: uniqueStrings(excludesByRole[role] ?? ["unrelated framework sample", "external product fork", "mock-only evidence"])
+    includes: uniqueStrings(normalizeStrings(boundary?.includes).length ? boundary.includes
+      : [`${domain} owned domain boundary`, `${id} reusable Harness target`, "source-driven execution evidence"]),
+    excludes: uniqueStrings(normalizeStrings(boundary?.excludes).length ? boundary.excludes
+      : ["unrelated framework sample", "external product fork", "mock-only evidence"])
   };
 }
 
@@ -4625,12 +4468,7 @@ function impactReport(run) {
 }
 
 function inferHarnessId(goal, corpus) {
-  const text = `${goal}\n${corpus.normalizedText}`;
-  if (/cache|redis|memcached|kv|ttl|eviction|缓存/.test(text)) return "distributed-cache-harness";
-  if (/gateway|ingress|route|traffic|proxy|网关/.test(text)) return "api-gateway-harness";
-  if (/database|sql|dbms|storage engine|optimizer|transaction|数据库/.test(text)) return "database-product-harness";
-  if (/schedule|scheduler|cron|workflow|调度/.test(text)) return "scheduling-system-harness";
-  return `${safeId(corpus.keywords.slice(0, 3).join("-") || "domain")}-harness`;
+  return `${safeId(corpus.keywords.slice(0, 3).join("-") || "unresolved")}-harness`;
 }
 
 function inferDomain(targetHarnessId, goal, corpus) {

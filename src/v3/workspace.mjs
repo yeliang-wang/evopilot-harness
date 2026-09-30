@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { CATALOG_SCHEMA, PACKAGE_ROOT, REGISTRY_SCHEMA, WORKSPACE_SCHEMA } from "./constants.mjs";
-import { publishCatalog } from "./catalog.mjs";
+import { discoverAssets, publishCatalog } from "./catalog.mjs";
 import { copyTree, digest, readYaml, writeYaml } from "./utils.mjs";
 import { inspectModelReadiness } from "./model-readiness.mjs";
 
@@ -114,13 +114,16 @@ export function resolveWorkspaceModelsFile(home, explicit) {
 export function syncBuiltin(home, force = false) {
   const builtinRoot = path.join(path.resolve(home), "catalogs/builtin");
   const assetsRoot = path.join(builtinRoot, "assets");
-  if (force && fs.existsSync(assetsRoot)) fs.rmSync(assetsRoot, { recursive: true, force: true });
-  copyTree(path.join(PACKAGE_ROOT, "assets/v3"), assetsRoot);
-  copyTree(path.join(PACKAGE_ROOT, "ontology/builtin"), path.join(home, "ontology/builtin"));
+  // Existing published catalogs are immutable. A legacy catalog is retained
+  // for explicit inspection/export, not refreshed from package examples.
+  const existing = discoverAssets([assetsRoot]);
+  const legacy = existing.some(record => record.asset.kind !== "HarnessComponent");
+  if (!legacy) copyTree(path.join(PACKAGE_ROOT, "assets/v3/components"), path.join(assetsRoot, "components"));
   copyTree(path.join(PACKAGE_ROOT, "policies/matcher"), path.join(home, "policies/matcher"));
   syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/advisor"), path.join(home, "policies/advisor"), force);
   syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/comparison"), path.join(home, "policies/comparison"), force);
   syncVersionedPacks(path.join(PACKAGE_ROOT, "policies/completeness"), path.join(home, "policies/completeness"), force);
+  if (legacy) return;
   const catalogFile = path.join(builtinRoot, "catalog.yaml");
   writeYaml(catalogFile, {
     schema: CATALOG_SCHEMA,

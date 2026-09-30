@@ -67,6 +67,7 @@ try {
     cli,
     packageRoot,
     sourceCheckoutUsed: false,
+    fixtureSupply: "explicit test-owned Organization Catalog; installed modules perform all product operations",
     bootstrap: { host: bootstrap.host.id, adapter: bootstrap.adapter.packageRelativePath },
     mcp: {
       protocolVersion: conformance.protocolVersion,
@@ -102,9 +103,16 @@ async function runInstalledMcpScenario({ app, cli, packageRoot, workspace }) {
   assert.equal(initialized.models.templateAvailable, true);
   assert.equal(fs.existsSync(path.join(workspace, "models.json")), false);
   assert.ok(fs.existsSync(path.join(workspace, "models.example.json")));
-  const profiles = catalog.discoverAssets([path.join(workspace, "catalogs/builtin/assets")])
+  const builtin = catalog.discoverAssets([path.join(workspace, "catalogs/builtin/assets")]);
+  assert.ok(builtin.every(item => item.asset.kind === "HarnessComponent"));
+  // Independent, explicit test input; all product operations use installed code.
+  const fixtureAssets = path.join(workspace, "catalogs/organization/assets");
+  fs.cpSync(path.join(root, "assets/v3"), fixtureAssets, { recursive: true });
+  const supplied = catalog.publishCatalog({ roots: [fixtureAssets], out: path.dirname(fixtureAssets), catalogId: "organization" });
+  assert.equal(supplied.status, "PUBLISHED");
+  const profiles = catalog.discoverAssets([fixtureAssets])
     .filter((item) => item.asset.kind === "HarnessProfile" && item.asset.metadata.lifecycle === "published");
-  assert.ok(profiles.length >= 2, "installed package must provide at least two immutable published profiles for the smoke comparison");
+  assert.ok(profiles.length >= 2, "explicit test Catalog must provide two immutable published profiles for comparison");
 
   const now = new Date();
   const generatedAt = new Date(now.getTime() - 120_000).toISOString();

@@ -5,6 +5,8 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { EVIDENCE_GRAPH_SCHEMA, REASONING_SCHEMA } from "./constants.mjs";
+import { validateDocument } from "./schema.mjs";
+import { PACKAGE_ROOT } from "./constants.mjs";
 import { discoverAssets } from "./catalog.mjs";
 import { digest, option, options, persistedJson, readYaml, redact, safeId, unique, walkFiles, writeJson } from "./utils.mjs";
 
@@ -13,10 +15,26 @@ const BUILD_FILES = new Set(["pom.xml", "build.gradle", "build.gradle.kts", "pac
 const EVIDENCE_EXTRACTION_COMMANDS = new Set(["pdftotext", "unzip", "curl"]);
 
 export function loadKnowledge(home, overrides = {}) {
-  const ontologyFile = overrides.ontologyFile ? path.resolve(overrides.ontologyFile) : latestYaml(path.join(home, "ontology"), "OntologyPack");
+  const ontologyRoot = path.join(home, "ontology");
+  const excludedRoots = [path.join(ontologyRoot, "builtin"), path.join(ontologyRoot, "examples"), PACKAGE_ROOT];
+  const ontologyFile = overrides.ontologyFile ? path.resolve(overrides.ontologyFile) : latestYaml(ontologyRoot, "OntologyPack", {
+    excludedRoots, lifecycles: ["published"]
+  });
+  if (ontologyFile && excludedRoots.some(root => withinPath(ontologyFile, root))) {
+    throw new Error("Packaged examples and Built-in knowledge are not user-owned producer authority.");
+  }
   const matcherFile = overrides.policyFile ? path.resolve(overrides.policyFile) : latestYaml(path.join(home, "policies/matcher"), "MatchPolicyPack");
-  if (!ontologyFile || !matcherFile) throw new Error("Workspace is missing a published OntologyPack or MatchPolicyPack.");
-  return { ontology: readYaml(ontologyFile), ontologyFile, policy: readYaml(matcherFile), policyFile: matcherFile };
+  if (!matcherFile) throw new Error("Workspace is missing a published MatchPolicyPack.");
+  // An empty professional vocabulary cannot establish a business role. It
+  // preserves Eligibility and returns the existing NEED_MORE_EVIDENCE outcome
+  // until user-owned knowledge has been separately published.
+  const ontology = ontologyFile ? readYaml(ontologyFile) : {
+    apiVersion: "harness.evopilot.io/v1", kind: "OntologyPack",
+    metadata: { id: "semantic-foundation", version: "1.0.0", lifecycle: "published" },
+    spec: { concepts: [], roles: [], evidenceKinds: ["source-code", "architecture-document", "build-manifest", "runtime-log", "attachment", "operator-note", "github-repository", "historical-harness", "research-evidence"] }
+  };
+  if (!validateDocument(ontology).valid || ontology.metadata.lifecycle !== "published") throw new Error("Producer knowledge must be a valid published OntologyPack.");
+  return { ontology, ontologyFile: ontologyFile ?? null, policy: readYaml(matcherFile), policyFile: matcherFile };
 }
 
 export function collectEvidence(args, home, { projectOverride } = {}) {
@@ -105,8 +123,8 @@ export function reasonEvidence(graph, home, overrides = {}) {
   const enriched = enrichEvidenceGraph(graph, knowledge.ontology);
   const eligibility = eligibilityGate(enriched, knowledge.policy);
   const professional = professionalEvidenceGraph(enriched, knowledge.ontology);
-  const assetRoots = [path.join(home, "catalogs/organization/assets"), path.join(home, "catalogs/builtin/assets")];
-  const profiles = discoverAssets(assetRoots).filter((record) => record.asset.kind === "HarnessProfile");
+  const assetRoots = [path.join(home, "catalogs/organization/assets")];
+  const profiles = discoverAssets(assetRoots).filter((record) => record.asset.kind === "HarnessProfile" && record.asset.metadata.lifecycle === "published");
   const candidates = retrieveAndScore(enriched, profiles, knowledge, professional);
   const decision = decide(eligibility, candidates, knowledge.policy, professional, knowledge.ontology, profiles);
   const result = {
@@ -550,11 +568,21 @@ function fetchResearch(value) {
   return content.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 24_000);
 }
 
-function latestYaml(root, kind) {
-  const files = walkFiles(root, (file) => /\.ya?ml$/i.test(file));
+function withinPath(file, root) {
+  const actual = fs.existsSync(file) ? fs.realpathSync(file) : path.resolve(file);
+  const boundary = fs.existsSync(root) ? fs.realpathSync(root) : path.resolve(root);
+  return actual === boundary || actual.startsWith(`${boundary}${path.sep}`);
+}
+
+function latestYaml(root, kind, { excludedRoots = [], lifecycles = ["published", "approved"] } = {}) {
+  const excluded = excludedRoots.map(item => fs.existsSync(item) ? fs.realpathSync(item) : path.resolve(item));
+  const files = walkFiles(root, (file) => /\.ya?ml$/i.test(file) && !excluded.some(directory => {
+    const actual = fs.realpathSync(file);
+    return actual === directory || actual.startsWith(`${directory}${path.sep}`);
+  }));
   return files.map((file) => {
     try { return { file, document: readYaml(file) }; } catch { return null; }
-  }).filter((item) => item?.document?.kind === kind && ["published", "approved"].includes(item.document.metadata?.lifecycle)).sort((a, b) => String(b.document.metadata.version).localeCompare(String(a.document.metadata.version), undefined, { numeric: true }))[0]?.file;
+  }).filter((item) => item?.document?.kind === kind && lifecycles.includes(item.document.metadata?.lifecycle)).sort((a, b) => String(b.document.metadata.version).localeCompare(String(a.document.metadata.version), undefined, { numeric: true }))[0]?.file;
 }
 
 function profileDocument(record) {

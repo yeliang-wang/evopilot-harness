@@ -30,8 +30,8 @@ Use a disposable Workspace for development. Do not point tests at a user's produ
 | `src/v4/` | Agent bootstrap, structured Engine adapter, local stdio MCP, protocol, security, and persistent Session runtime. |
 | `src/index.mjs` | CLI entry point and legacy v2 compatibility commands. |
 | `schemas/` | Formal Asset, Ontology, Policy, Advisor, Evaluation, comparison, calibration, and Agent Session schemas. |
-| `assets/v3/` | Built-in Component, Profile, Bundle, and export assets shipped with the Engine. |
-| `ontology/` | Built-in Ontology Packs. |
+| `assets/v3/` | Generic Components are packaged; legacy Profile/Bundle data is explicit test supply, excluded from the npm package and default initialization. |
+| `ontology/` | Declarative examples and historical test vocabulary; no default professional Built-in authority. |
 | `policies/` | Built-in Matcher, Advisor, and Comparison Policy Packs. |
 | `ui/harness-hub/` | Standalone Harness Hub frontend. |
 | `tests/` | v3 behavior, safety, lifecycle, and v2 compatibility tests. |

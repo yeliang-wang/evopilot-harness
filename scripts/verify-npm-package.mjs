@@ -96,16 +96,15 @@ const required = [
   "digital-expert/conformance/generic-host.mjs",
   ".agents/skills/evopilot-harness-digital-expert/SKILL.md",
   "assets/v3/components/engineering-validation/asset.yaml",
-  "ontology/builtin/software-engineering.yaml",
   "policies/matcher/default.yaml",
   "policies/advisor/default.yaml",
   "schemas/agent-operation-session-v1.schema.json",
-  "harnesses/database-product-harness/template.yaml",
   "ui/harness-hub/index.html"
 ];
 for (const expected of required) assert.ok(files.includes(expected), `${expected} must be packaged`);
 
 const forbiddenPrefixes = [
+  "ontology/builtin/", "assets/v3/profiles/", "assets/v3/bundles/", "harnesses/",
   ".codex-evidence/", ".git/", ".github/", "dist/", "docs/", "governance/",
   "node_modules/", "published/", "scripts/", "tests/"
 ];

@@ -29,7 +29,7 @@ A Harness is a versioned executable package for a repeatable engineering task. I
 | `HarnessComponent` | Atomic environment, action, constraint, evidence, and validator capability. |
 | `HarnessProfile` | Domain, role, and task composition built from Components. |
 | `HarnessBundle` | Immutable execution publication with pinned Profile and Component digests. |
-| `OntologyPack` | Versioned concepts and role relationships used for reasoning. |
+| `OntologyPack` | User-owned published concepts and role relationships used by the compatibility producer. |
 | `MatchPolicyPack` | Eligibility, retrieval, scoring, thresholds, and risk rules. |
 | `AdvisorPolicyPack` | Evidence-bound GLM output contract and authority limits. |
 | `EvaluationPack` | Portable positive/negative decision cases, validators, scorers, baselines, and regression boundaries. |
@@ -217,3 +217,9 @@ Evaluation reports `INSUFFICIENT_EVAL_EVIDENCE` until enough independently revie
 - [Contributing](CONTRIBUTING.md)
 
 Licensed under [Apache License 2.0](LICENSE).
+
+### Business-neutral initialization
+
+A fresh Workspace installs generic validation Components and policies. It does not install professional Profiles, Bundles, legacy templates, or business vocabulary as Built-in authority. Professional reasoning consumes published user-owned knowledge and Organization assets. Without applicable knowledge it preserves the independent Eligibility result and reports `NEED_MORE_EVIDENCE`; classification alone does not establish Eligibility or authorize publication.
+
+Historical Built-in Catalog bytes are preserved during reinitialization. Their professional assets and packaged examples do not silently become producer authority. The legacy `detect`/`evolve` compatibility path accepts an explicitly supplied `--workspace` for published user knowledge and an explicit `--source` Catalog; it contains no universal business-role mapping. Professional regression data is installed explicitly into disposable test Workspaces. `npm run eval:run` runs that isolated fixture workflow.

@@ -644,9 +644,9 @@ function evaluationFixtureAsset(kind, graph, reasoning) {
   }
   const fixtureFiles = {
     HarnessComponent: "assets/v3/components/engineering-validation/asset.yaml",
-    HarnessProfile: "assets/v3/profiles/observability-apm/1.2.0/asset.yaml",
-    HarnessBundle: "assets/v3/bundles/observability-apm/1.2.0/asset.yaml",
-    OntologyPack: "ontology/builtin/software-engineering.yaml",
+    HarnessProfile: "eval/v3/asset-fixtures/profile.yaml",
+    HarnessBundle: "eval/v3/asset-fixtures/bundle.yaml",
+    OntologyPack: "eval/v3/asset-fixtures/ontology.yaml",
     MatchPolicyPack: "policies/matcher/default.yaml",
     AdvisorPolicyPack: "policies/advisor/default.yaml"
   };

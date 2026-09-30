@@ -1,0 +1,48 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessBundle
+metadata:
+  id: observability-apm
+  version: 1.2.0
+  name: Observability APM Harness Bundle
+  description: Immutable resolved execution package migrated from observability-apm-harness.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: observability-apm-harness
+spec:
+  profile:
+    id: observability-apm
+    version: 1.2.0
+    digest: sha256:6e0c0c950beda9773d10c5eee131f751238996d80c6a17f997f38136bae9a50f
+  resolvedComponents:
+    - id: engineering-validation
+      version: 1.0.0
+      digest: sha256:aa84fa704cdc31dbf3c1fb8ebe84e26acd2ade7a5cc364ab5c71784f05d78638
+      required: true
+  executionPlan:
+    - discover-project-commands
+    - run-approved-validation
+  constraints:
+    - Execute only administrator-approved commands in an isolated workspace.
+    - Preserve source and credential boundaries from the source Harness contract.
+  evidence:
+    - target-evidence-package
+    - phase-package
+    - goal-completion-report
+    - incident-or-failure-report
+    - observability-snapshot
+    - command
+    - exit-code
+    - stdout-or-log
+    - changed-files
+  validators:
+    - approved-command-only
+    - validation-exit-code
+  exports:
+    - adapter: evopilot
+      path: exports/evopilot/template.yaml
+provenance:
+  sourceDigests:
+    - sha256:bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

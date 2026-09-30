@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { reasonEvidence } from "../src/v3/reasoning.mjs";
-import { initializeWorkspace } from "../src/v3/workspace.mjs";
+import { initializeProfessionalFixture } from "./helpers/professional-supply.mjs";
 
 const cache = "Distributed cache server Redis-compatible key-value store TTL eviction persistence replication sharding migration failover. Build test validate release.";
 const gateway = "API gateway reverse proxy route policy rate limit upstream ingress. Build test validate release.";
@@ -12,7 +12,7 @@ const gateway = "API gateway reverse proxy route policy rate limit upstream ingr
 function run(t, files, { emptyCatalog = false } = {}) {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "harness-boundary-"));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
-  initializeWorkspace(home);
+  initializeProfessionalFixture(home);
   if (emptyCatalog) {
     for (const catalog of ["builtin", "organization"])
       fs.rmSync(path.join(home, "catalogs", catalog, "assets"), { recursive: true, force: true });

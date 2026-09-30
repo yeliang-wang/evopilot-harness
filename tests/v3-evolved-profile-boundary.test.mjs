@@ -6,7 +6,7 @@ import test from "node:test";
 import { createProposal } from "../src/v3/lifecycle.mjs";
 import { reasonEvidence } from "../src/v3/reasoning.mjs";
 import { digest, readYaml } from "../src/v3/utils.mjs";
-import { initializeWorkspace } from "../src/v3/workspace.mjs";
+import { initializeProfessionalFixture } from "./helpers/professional-supply.mjs";
 
 const cache = "Distributed cache server Redis-compatible key-value store TTL eviction persistence replication sharding migration failover. Build test validate release.";
 const auxiliary = "API gateway reverse proxy; code generation Java service; cron scheduler; MySQL database; enterprise management reporting.";
@@ -14,7 +14,7 @@ const auxiliary = "API gateway reverse proxy; code generation Java service; cron
 function draft(t, extra) {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "harness-evolved-boundary-"));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
-  initializeWorkspace(home);
+  initializeProfessionalFixture(home);
   const files = [["README.md", cache, "architecture-document"], ["src/cache.js", cache], ...extra];
   const raw = {
     schema: "evopilot-harness-evidence-graph/v1", runId: "evolved-boundary-fixture", createdAt: "2026-09-29T00:00:00.000Z",

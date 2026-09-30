@@ -1,0 +1,55 @@
+apiVersion: harness.evopilot.io/v3
+kind: HarnessProfile
+metadata:
+  id: observability-apm
+  version: 1.2.0
+  name: Observability APM Harness
+  description: Enterprise baseline for observability platforms, APM systems, telemetry pipelines, and alerting/query surfaces.
+  lifecycle: published
+  owner: migrated-v2
+  labels:
+    migratedFrom: observability-apm-harness
+spec:
+  classification:
+    domain: observability-apm
+    role: observability-apm-engineering
+    taskClass: domain-task
+  boundary:
+    inScope:
+      - Declare product boundary, source ownership, runtime commands, and release evidence.
+      - Bind domain-specific checks to executable commands and evidence artifacts.
+      - Engineering work supported by the observability-apm-harness v2 contract.
+    outOfScope:
+      - Capabilities not supported by source evidence or declared validators.
+  match:
+    positiveConcepts:
+      - observability-apm
+      - executable-engineering
+    negativeConcepts: []
+    requiredEvidenceKinds:
+      - source-code
+      - build-manifest
+  components:
+    - id: engineering-validation
+      version: 1.0.0
+      required: true
+  acceptance:
+    requiredEvidence:
+      - target-evidence-package
+      - phase-package
+      - goal-completion-report
+      - incident-or-failure-report
+      - observability-snapshot
+      - command
+      - exit-code
+      - stdout-or-log
+      - changed-files
+    blockingValidators:
+      - approved-command-only
+      - validation-exit-code
+  evaluationPackRef: observability-apm@1.2.0
+provenance:
+  sourceDigests:
+    - sha256:bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e
+  ontologyVersion: software-engineering@1.0.0
+  policyVersion: default-matcher@1.0.0

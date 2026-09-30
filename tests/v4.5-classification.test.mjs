@@ -1,3 +1,4 @@
+import { installProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -1099,6 +1100,7 @@ test("real stdio MCP presents classification as the exact user turn and hands an
 test("real stdio MCP carries one matched classification through the complete retained Harness publication lifecycle", async () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-v45-complete-lifecycle-"));
   initializeWorkspace(home);
+  installProfessionalFixture(home);
   const source = path.join(home, "read-only-source");
   const commandSentinel = path.join(home, "source-command-must-not-run");
   fs.mkdirSync(source);

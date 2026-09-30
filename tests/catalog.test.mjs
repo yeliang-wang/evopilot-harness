@@ -1,3 +1,4 @@
+import { initializeLegacyProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import http from "node:http";
@@ -9,6 +10,13 @@ import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
 const cli = path.join(root, "src/index.mjs");
+// Explicit user-owned vocabulary for this legacy compatibility suite.
+const professionalHome = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-professional-fixture-"));
+initializeLegacyProfessionalFixture(professionalHome);
+function withProfessionalSupply(args) {
+  return ["detect", "evolve", "corpus", "eval", "llm"].includes(args[0]) && !args.includes("--workspace") ? [...args, "--workspace", professionalHome] : args;
+}
+
 
 test("publishes and validates a Harness Catalog", () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-"));
@@ -736,7 +744,7 @@ function runJson(args, options = {}) {
 }
 
 function runJsonWithRaw(args, options = {}) {
-  const run = spawnSync(process.execPath, [cli, ...args], { encoding: "utf8", env: withoutAdvisorEnv(), ...options });
+  const run = spawnSync(process.execPath, [cli, ...withProfessionalSupply(args)], { encoding: "utf8", env: withoutAdvisorEnv(), ...options });
   assert.equal(run.status, 0, run.stderr || run.stdout);
   assert.equal(run.stderr, "");
   try {
@@ -747,7 +755,7 @@ function runJsonWithRaw(args, options = {}) {
 }
 
 async function runJsonWithRawAsync(args, options = {}) {
-  const child = spawn(process.execPath, [cli, ...args], { env: withoutAdvisorEnv(), ...options });
+  const child = spawn(process.execPath, [cli, ...withProfessionalSupply(args)], { env: withoutAdvisorEnv(), ...options });
   let stdout = "";
   let stderr = "";
   child.stdout.setEncoding("utf8");

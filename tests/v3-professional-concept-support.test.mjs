@@ -6,7 +6,7 @@ import test from "node:test";
 import { createProposal } from "../src/v3/lifecycle.mjs";
 import { loadKnowledge, professionalEvidenceGraph, reasonEvidence } from "../src/v3/reasoning.mjs";
 import { digest, readYaml } from "../src/v3/utils.mjs";
-import { initializeWorkspace } from "../src/v3/workspace.mjs";
+import { initializeProfessionalFixture } from "./helpers/professional-supply.mjs";
 
 const cache = "Distributed cache server key-value store TTL eviction failover. Build test validate release.";
 const ambiguous = [
@@ -23,7 +23,7 @@ const ambiguous = [
 function run(t, texts, { generic = false, sourceType = "source-project" } = {}) {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), "harness-professional-support-"));
   t.after(() => fs.rmSync(home, { recursive: true, force: true }));
-  initializeWorkspace(home);
+  initializeProfessionalFixture(home);
   const entries = [generic ? "Build test validate a reusable engineering tool." : cache, "build test validate", ...texts];
   const raw = {
     schema: "evopilot-harness-evidence-graph/v1", runId: "professional-support",
