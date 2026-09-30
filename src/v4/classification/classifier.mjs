@@ -39,7 +39,7 @@ export const RETRIEVAL_CONFIG = Object.freeze({
       rejectDeclaredTaxonomyCoverage: true
     },
     mixedPurposeEvidence: {
-      algorithm: "primary-purpose-evidence/v3",
+      algorithm: "primary-purpose-evidence/v4",
       primarySemanticFamily: "content-purpose",
       minimumAssertions: 2,
       requireDistinctAssertionOrigins: true,
@@ -167,7 +167,10 @@ function decideAxis(axisName, hypothesis, taxonomy, candidates, advisor, config,
     .sort((left, right) => right.finalScore - left.finalScore || canonicalCompare(left.nodeId, right.nodeId));
   const ambiguityTop = evidenceEligible[0];
   const ambiguitySecond = evidenceEligible[1];
-  const mixedPurposeEvidence = explicitLearningResourcePurposeEvidence(hypothesis, policy.mixedPurposeEvidence);
+  const declaredPurposeEvidence = explicitCoequalCandidatePurposeEvidence(hypothesis, taxonomy.axes[axisName], candidates, policy.mixedPurposeEvidence);
+  const mixedPurposeEvidence = declaredPurposeEvidence.status === "PROVEN"
+    ? declaredPurposeEvidence
+    : explicitLearningResourcePurposeEvidence(hypothesis, policy.mixedPurposeEvidence);
   const primaryPurposeKinds = new Set((mixedPurposeEvidence.assertions ?? [])
     .map((item) => item.purpose)
     .filter((purpose) => purpose !== "COEQUAL_DECLARATION"));
@@ -178,7 +181,7 @@ function decideAxis(axisName, hypothesis, taxonomy, candidates, advisor, config,
     && governedFamilyCount(candidate.nonLlmEvidence) >= policy.minimumNonLlmFamilies
     && !candidate.rejectedByExclusion);
   const deterministicMixedPurposeTie = Boolean(mixedPurposeEvidence.status === "PROVEN"
-    && mixedPurposeCandidates.length >= 1);
+    && (declaredPurposeEvidence.status === "PROVEN" || mixedPurposeCandidates.length >= 1));
   const ambiguous = cardinality === "SINGLE" && (deterministicMixedPurposeTie || deterministicScoreTie);
   if (ambiguous) return axisResult("TAXONOMY_AMBIGUOUS", axisName, {
     candidates: withAdvisor.slice(0, 3),
@@ -433,6 +436,56 @@ function taxonomyRepresentsConcept(nodes, term) {
   });
 }
 function isGovernedFamily(family) { return GOVERNED_EVIDENCE_FAMILIES.has(family); }
+function explicitCoequalCandidatePurposeEvidence(hypothesis, axis, candidates, policy = {}) {
+  const algorithm = policy.algorithm ?? "primary-purpose-evidence/v4";
+  const absent = { schema: "evopilot-harness-primary-purpose-evidence/v1", algorithm, status: "NOT_PROVEN", assertions: [] };
+  if (!policy.explicitCoequalStatementAllowed) return absent;
+  const purpose = hypothesis.citations.filter((item) => item.family === "content-purpose" && item.trust !== "LOW");
+  if (!purpose.length) return absent;
+  const minimumDepth = Math.min(...purpose.map((item) => sourceDepth(item.sourceRef)));
+  const statements = purpose.filter((item) => sourceDepth(item.sourceRef) === minimumDepth).flatMap((citation) => purposeStatements(citation.excerpt).map((statement) => {
+    const normalizedStatement = normalizeTerm(statement);
+    return { citation, statement, normalizedStatement, terms: new Set(rawHintTokens(statement)), originGroup: digest({ algorithm, sourceRef: citation.sourceRef, sourceDigest: citation.sourceDigest, statement: normalizedStatement }) };
+  }));
+  const declaration = statements.find((item) => /\b(?:both|two|multiple)\s+(?:capability\s+families|capabilities|purposes|responsibilities)\b/i.test(item.statement)
+    && /\b(?:first[-\s]class|coequal|equal\s+primary|equally\s+primary)\b/i.test(item.statement)
+    && !/\b(?:not|never)\s+(?:first[-\s]class|coequal|equal|equally)\b/i.test(item.statement)
+    && !/\b(?:previously|formerly|historical|hypothetical|example|could|would|might)\b/i.test(item.statement));
+  if (!declaration) return absent;
+  const nodes = new Map(axis.nodes.map((node) => [node.id, node]));
+  const eligible = candidates.filter((candidate) => candidate.score > 0 && !candidate.rejectedByExclusion).map((candidate) => ({
+    candidate,
+    // Vocabulary comes only from the selected user's declared evidence hints.
+    terms: new Set(rawHintTokens((nodes.get(candidate.nodeId)?.positiveEvidenceHints ?? []).join(" ")))
+  }));
+  const support = statements.filter((item) => item.originGroup !== declaration.originGroup
+    && item.citation.sourceRef === declaration.citation.sourceRef
+    && /^(?:this|the|our|it)\b/i.test(item.statement)
+    && /\b(?:lets?|provides?|offers?|serves?|maintains?|accepts?|supports?|performs?|manages?|delivers?)\b/i.test(item.statement)
+    && !/\b(?:not|never|previously|formerly|historical|hypothetical|example|could|would|might|subordinate|supporting\s+appendix)\b/i.test(item.statement));
+  for (let index = 0; index < eligible.length; index++) for (let other = index + 1; other < eligible.length; other++) {
+    const left = eligible[index], right = eligible[other];
+    const leftTerms = [...left.terms].filter((term) => !right.terms.has(term));
+    const rightTerms = [...right.terms].filter((term) => !left.terms.has(term));
+    const leftSupport = support.filter((item) => leftTerms.filter((term) => item.terms.has(term)).length >= 2
+      && rightTerms.filter((term) => item.terms.has(term)).length < 2);
+    const rightSupport = support.filter((item) => rightTerms.filter((term) => item.terms.has(term)).length >= 2
+      && leftTerms.filter((term) => item.terms.has(term)).length < 2);
+    for (const first of leftSupport) for (const second of rightSupport) {
+      if (first.originGroup === second.originGroup || first.normalizedStatement === second.normalizedStatement) continue;
+      // Distinct assertions can establish uncertainty in one overview. They do
+      // not satisfy the two-family minimum for either positive decision below.
+      const assertions = [
+        primaryPurposeAssertion(left.candidate.nodeId, first.citation, first.originGroup, first.normalizedStatement, "EXPLICIT_COEQUAL_STATEMENT_WITH_SEPARATE_SUPPORT"),
+        primaryPurposeAssertion(right.candidate.nodeId, second.citation, second.originGroup, second.normalizedStatement, "EXPLICIT_COEQUAL_STATEMENT_WITH_SEPARATE_SUPPORT")
+      ];
+      if (assertions.length < (policy.minimumAssertions ?? 2)) continue;
+      return primaryPurposeEvidenceResult({ algorithm, minimumDepth, basis: "EXPLICIT_COOEQUAL_STATEMENT", assertions,
+        declarationAssertion: primaryPurposeAssertion("COEQUAL_DECLARATION", declaration.citation, declaration.originGroup, declaration.normalizedStatement, "EXPLICIT_COEQUAL_STATEMENT") });
+    }
+  }
+  return absent;
+}
 function explicitLearningResourcePurposeEvidence(hypothesis, policy = {}) {
   const algorithm = policy.algorithm ?? "primary-purpose-evidence/v2";
   const semanticEvidence = hypothesis.citations.filter((item) => ["content-purpose", "content-inventory", "content-workflow"].includes(item.family) && item.trust !== "LOW");
