@@ -1967,7 +1967,8 @@ function buildSourceProfile(sources, corpus, goal, packs = [], ontology) {
   const frameworks = detectFrameworks(dependencies, imports, symbols, corpus.text);
   const architectureSignals = inferArchitectureSignals({ packs, ontology, dependencies, imports, symbols, selectedFiles, allFiles, text: corpus.text, goal });
   const roles = inferSourceRoles({ packs, ontology, dependencies, imports, symbols, selectedFiles, allFiles, architectureSignals, text: corpus.text, goal });
-  const primaryRole = roles[0]?.id ?? "unknown";
+  const unambiguousRole = roles[0] && (!roles[1] || roles[0].confidence - roles[1].confidence >= AMBIGUOUS_MATCH_DELTA);
+  const primaryRole = unambiguousRole ? roles[0].id : "unknown";
   const recommendedHarness = recommendHarnessForRole(primaryRole, { roles, packs, dependencies, imports, symbols, architectureSignals, text: corpus.text, goal });
   const negativeSignals = inferNegativeSignals({ packs, roles, dependencies, imports, symbols, architectureSignals, text: corpus.text });
   const scannerEvidence = buildScannerEvidence({ sources, allFiles, selectedFiles, dependencies, imports, symbols, languages, buildTools, frameworks, architectureSignals, roles, text: corpus.text, goal });
@@ -2524,7 +2525,7 @@ function detectFrameworks(dependencies, imports, symbols, text) {
 function declaredRoleEvidence(context) {
   const text = normalizeForMatch(context.text ?? "");
   const declared = (context.ontology?.spec?.roles ?? []).flatMap(role => {
-    const concepts = context.ontology.spec.concepts.filter(item => role.concepts.includes(item.id) && !context.ontology.spec.roles.every(candidate => candidate.concepts.includes(item.id)));
+    const concepts = context.ontology.spec.concepts.filter(item => role.concepts.includes(item.id) && (context.ontology.spec.roles.length === 1 || !context.ontology.spec.roles.every(candidate => candidate.concepts.includes(item.id))));
     const matches = uniqueStrings(concepts.flatMap(item => item.terms).filter(term => declaredTermPresent(text, term)));
     const conflicts = context.ontology.spec.concepts.filter(item => role.negativeConcepts?.includes(item.id)).flatMap(item => item.terms).filter(term => declaredTermPresent(text, term));
     if (matches.length < 2 || conflicts.length) return [];
@@ -2532,7 +2533,7 @@ function declaredRoleEvidence(context) {
     const parents = uniqueStrings(concepts.flatMap(item => item.parents ?? []));
     return [{ id: role.id, domain: role.domain, harnessId: pack?.id ?? `${safeId(role.domain)}-harness`,
       parentHarnessIds: (context.packs ?? []).filter(item => parents.includes(item.template.domain ?? item.template.runtimePatterns?.domain)).map(item => item.id),
-      confidence: 0.9, evidence: matches.slice(0, 8), boundary: pack?.template.productBoundary ?? {}, architectureSignals: [role.id] }];
+      confidence: Number(Math.min(0.9, matches.length / 3).toFixed(2)), evidence: matches.slice(0, 8), boundary: pack?.template.productBoundary ?? {}, architectureSignals: [role.id] }];
   });
   if (declared.length) return declared.sort((a, b) => b.evidence.length - a.evidence.length || a.id.localeCompare(b.id));
   return (context.packs ?? []).flatMap(pack => {

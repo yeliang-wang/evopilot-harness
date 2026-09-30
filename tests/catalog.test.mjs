@@ -1,3 +1,4 @@
+import { readYaml, writeYaml } from "../src/v3/utils.mjs";
 import { initializeLegacyProfessionalFixture } from "./helpers/professional-supply.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -796,3 +797,39 @@ function withoutAdvisorEnv(overrides = {}) {
   ]) delete env[key];
   return { ...env, EVOPILOT_HARNESS_LLM_MODELS_FILE: path.join(os.tmpdir(), "evopilot-harness-test-missing-models.json"), ...overrides };
 }
+
+test("legacy CLI preserves equal-confidence role ambiguity independent of declaration order", t => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "legacy-role-ambiguity-"));
+  t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
+  const home = path.join(temp, "workspace");
+  initializeLegacyProfessionalFixture(home);
+  const file = path.join(home, "ontology/reviewed-professional-fixture.yaml");
+  const vocabulary = readYaml(file);
+  vocabulary.spec.concepts = [
+    { id: "lunar-widget", terms: ["lunar widget", "spectral assembly"] },
+    { id: "ocean-widget", terms: ["ocean widget", "tidal assembly"] }
+  ];
+  vocabulary.spec.roles = [
+    { id: "alpha-role", domain: "lunar-widget", taskClass: "engineering", concepts: ["lunar-widget"] },
+    { id: "omega-role", domain: "ocean-widget", taskClass: "engineering", concepts: ["ocean-widget"] }
+  ];
+  const project = path.join(temp, "project"), catalog = path.join(temp, "catalog");
+  fs.mkdirSync(project); fs.mkdirSync(catalog);
+  const evidence = path.join(project, "README.md");
+  const detect = () => runJson(["detect", "--source", catalog, "--source-project", project, "--workspace", home, "--goal", "Create a reusable Harness", "--json"]);
+  for (let order = 0; order < 2; order++) {
+    writeYaml(file, vocabulary);
+    fs.writeFileSync(evidence, "This product implements lunar widget spectral assembly and ocean widget tidal assembly. Build test validate.");
+    const ambiguous = detect();
+    assert.equal(ambiguous.sourceProfile.primaryRole, "unknown");
+    assert.equal(ambiguous.sourceProfile.recommendedHarness.confidence, 0);
+    assert.equal(ambiguous.sourceProfile.recommendedHarness.domain, "unresolved");
+    assert.equal(ambiguous.autoMatch.reviewGate.required, true);
+    fs.writeFileSync(evidence, "This product implements lunar widget spectral assembly. Build test validate.");
+    assert.equal(detect().sourceProfile.primaryRole, "alpha-role");
+    vocabulary.spec.roles.reverse();
+  }
+  vocabulary.spec.roles = vocabulary.spec.roles.filter(role => role.id === "alpha-role");
+  writeYaml(file, vocabulary);
+  assert.equal(detect().sourceProfile.primaryRole, "alpha-role");
+});
