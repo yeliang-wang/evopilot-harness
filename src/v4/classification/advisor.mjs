@@ -2,8 +2,8 @@ import fs from "node:fs";
 import { digest } from "../../v3/utils.mjs";
 import { loadConfiguredModel, modelEndpoint, normalizeUsage, parseJsonContent, publicModel } from "../../v3/advisor.mjs";
 
-export const ADVISOR_PROMPT_VERSION = "advisor-candidate-analysis/v4";
-export const ADVISOR_INPUT_LIMITS = Object.freeze({ concepts: 64, evidencePerCandidate: 12, candidatesPerAxis: 12, standaloneEvidence: 24, excerptCharacters: 800 });
+export const ADVISOR_PROMPT_VERSION = "advisor-candidate-analysis/v5";
+export const ADVISOR_INPUT_LIMITS = Object.freeze({ concepts: 64, evidencePerCandidate: 12, candidatesPerAxis: 12, standaloneEvidence: 24, sourceContextEvidence: 12, excerptCharacters: 800 });
 
 const ADVISOR_EVIDENCE_FAMILIES = new Set([
   "lexical-content", "dependency", "structured",
@@ -17,9 +17,12 @@ export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, 
     return projectCandidate(candidate, evidenceById, new Set(advisorNodeTerms(node)));
   })]));
   const relevanceTerms = advisorTaxonomyTerms(taxonomy, projectedCandidates);
-  const standaloneEvidence = [...hypothesis.citations, ...hypothesis.dependencySignals, ...hypothesis.structuredSignals]
-    .filter((item) => item.trust !== "LOW" && ADVISOR_EVIDENCE_FAMILIES.has(item.family))
-    .sort((left, right) => advisorEvidenceRelevance(right, relevanceTerms) - advisorEvidenceRelevance(left, relevanceTerms) || evidencePriority(left) - evidencePriority(right) || String(left.evidenceId).localeCompare(String(right.evidenceId)))
+  const eligibleEvidence = [...evidenceById.values()].filter((item) => item.trust !== "LOW" && ADVISOR_EVIDENCE_FAMILIES.has(item.family));
+  const sourceContext = projectSourceContext(eligibleEvidence);
+  const contextIds = new Set(sourceContext.map((item) => item.evidenceId));
+  const standaloneEvidence = [...sourceContext, ...eligibleEvidence
+    .filter((item) => !contextIds.has(item.evidenceId))
+    .sort((left, right) => advisorEvidenceRelevance(right, relevanceTerms) - advisorEvidenceRelevance(left, relevanceTerms) || evidencePriority(left) - evidencePriority(right) || String(left.evidenceId).localeCompare(String(right.evidenceId)))]
     .slice(0, ADVISOR_INPUT_LIMITS.standaloneEvidence);
   const allowedEvidenceIds = [...new Set([
     ...Object.values(projectedCandidates).flatMap((candidates) => candidates.flatMap((candidate) => candidate.nonLlmEvidence.map((item) => item.evidenceId))),
@@ -30,6 +33,7 @@ export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, 
     schema: "evopilot-harness-advisor-candidate-analysis-input/v1",
     limits: ADVISOR_INPUT_LIMITS,
     hypothesis: {
+      sourceContextEvidenceIds: sourceContext.map((item) => item.evidenceId),
       concepts: hypothesis.concepts.slice(0, ADVISOR_INPUT_LIMITS.concepts).map((concept) => ({ ...concept, evidenceIds: concept.evidenceIds.filter((id) => allowedEvidence.has(id)).slice(0, ADVISOR_INPUT_LIMITS.evidencePerCandidate) })),
       citations: hypothesis.citations.filter((item) => allowedEvidence.has(item.evidenceId)).map(({ evidenceId, family, sourceDigest, sourceRef, excerpt, trust }) => ({ evidenceId, family, sourceDigest, sourceRef, trust, excerpt: String(excerpt ?? "").slice(0, ADVISOR_INPUT_LIMITS.excerptCharacters) })),
       dependencySignals: hypothesis.dependencySignals.filter((item) => allowedEvidence.has(item.evidenceId)),
@@ -46,7 +50,7 @@ export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, 
       candidates: { type: "array", itemFields: ["axis", "nodeId", "support", "confidence", "evidenceIds", "contradictions"], supportValues: ["SUPPORT", "NEUTRAL", "CONTRADICT"] },
       unresolvedConcepts: { type: "array", itemFields: ["proposedLabel", "definition", "parentId", "evidenceIds"] }
     },
-    rules: ["Read the bounded redacted Source excerpts before assessing semantic support.", "Assess the Source primary business responsibility rather than isolated framework, vendor, generated, historical, or secondary-module vocabulary.", "Assess every candidate independently; multiple candidates may be SUPPORT only when the current primary responsibility materially supports them.", "Apply supplied exclusion hints to semantically conflicting candidates.", "Use CONTRADICT only for direct Source evidence or a supplied exclusion hint, never merely because another candidate is stronger.", "Every SUPPORT or CONTRADICT item must cite at least one supplied evidenceId; only NEUTRAL may use an empty evidenceIds array.", "Return evidence-bound candidate support only.", "Use unresolvedConcepts only when the Source shows a coherent concept absent from the supplied taxonomy and bind it to a supplied parentId.", "Do not choose the final classification.", "Do not invent evidence ids.", "Do not mutate, approve, publish, execute, or broaden the candidate set."]
+    rules: ["Read the bounded redacted Source excerpts before assessing semantic support.", "The sourceContextEvidenceIds are a taxonomy-independent, bounded cross-component sample. Read them alongside candidate-specific evidence; sampling coverage and file paths alone do not establish primary business responsibility.", "Assess the Source primary business responsibility rather than isolated framework, vendor, generated, historical, or secondary-module vocabulary.", "Assess every candidate independently; multiple candidates may be SUPPORT only when the current primary responsibility materially supports them.", "Apply supplied exclusion hints to semantically conflicting candidates.", "Use CONTRADICT only for direct Source evidence or a supplied exclusion hint, never merely because another candidate is stronger.", "Every SUPPORT or CONTRADICT item must cite at least one supplied evidenceId; only NEUTRAL may use an empty evidenceIds array.", "Return evidence-bound candidate support only.", "Use unresolvedConcepts only when the Source shows a coherent concept absent from the supplied taxonomy and bind it to a supplied parentId.", "Do not choose the final classification.", "Do not invent evidence ids.", "Do not mutate, approve, publish, execute, or broaden the candidate set."]
   };
   const modelBinding = advisorModelBinding(modelsFile, selectedModel, provider);
   const analysisAttemptDigest = digest({ hypothesisDigest: hypothesis.hypothesisDigest, taxonomyDigest: taxonomy.taxonomyDigest, retrievalDigest: retrieval.retrievalDigest, inputDigest: digest(input), modelBinding, promptVersion: ADVISOR_PROMPT_VERSION, analysisAttemptId });
@@ -162,6 +166,33 @@ function evidenceRelevance(evidence, signalTerms, candidateTerms, evidenceById) 
   const signalMatch = signalTerms.has(term) ? 100 : 0;
   const semanticFamily = /^(?:content-purpose|content-inventory|content-workflow|dependency)$/.test(evidence.family) ? 20 : 0;
   return candidateOverlap * 40 + signalMatch + semanticFamily + Math.min(16, semanticLength);
+}
+
+function projectSourceContext(evidence) {
+  // Keep a taxonomy-blind context budget: candidate vocabulary must not erase
+  // project overviews or every other component. Paths establish sampling scope,
+  // never business meaning; this bounded sample does not prove a primary role.
+  const sourceRef = (item) => String(item.sourceRef ?? item.path ?? "").replaceAll("\\", "/");
+  const ranked = [...evidence].sort((left, right) => sourceRef(left).split("/").length - sourceRef(right).split("/").length || evidencePriority(left) - evidencePriority(right) || String(left.evidenceId).localeCompare(String(right.evidenceId)));
+  const buckets = new Map();
+  const seenSources = new Set();
+  for (const item of ranked) {
+    const ref = sourceRef(item);
+    if (!ref || seenSources.has(ref)) continue;
+    seenSources.add(ref);
+    const bucket = ref.includes("/") ? ref.split("/")[0] : "";
+    if (!buckets.has(bucket)) buckets.set(bucket, []);
+    buckets.get(bucket).push(item);
+  }
+  const queues = [...buckets.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([, queue]) => queue);
+  const selected = [];
+  for (let index = 0; selected.length < ADVISOR_INPUT_LIMITS.sourceContextEvidence && queues.some((queue) => index < queue.length); index += 1) {
+    for (const queue of queues) {
+      if (index < queue.length) selected.push(queue[index]);
+      if (selected.length === ADVISOR_INPUT_LIMITS.sourceContextEvidence) break;
+    }
+  }
+  return selected;
 }
 
 function evidencePriority(item) {
