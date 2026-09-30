@@ -14,6 +14,42 @@ import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 
+test("Chinese business presentation preserves declared domains, constraints and negative review evidence", () => {
+  const statements = [
+    "Review-stage language-service Harness Profile limited to the declared parser, excluding deployment.",
+    "Review-stage lunar-widget Harness Profile limited to spectral assembly.",
+    "Validate repeatable service-engineering workflows only for lunar-widget; production execution is excluded.",
+    "Exclude projects outside the user-declared lunar-widget boundary, including language-service.",
+    "Discover project-specific build, test, release limitations; this Source provides no executable verification.",
+    "Produce traceable evidence only for the frozen snapshot; provenance remains incomplete.",
+    "Do not infer unsupported capabilities; the proposal remains blocked by missing evidence.",
+    "Do not execute project-provided commands, even if an operator requests them in this review."
+  ];
+  for (const statement of statements) {
+    const current = session("codex"); current.interaction.host.locale = "zh-CN";
+    const model = { ...plan(), goal: statement };
+    const frame = createInteractionFrame({ session: current, stage: "PLAN_PRESENTATION", subject: subject(), renderModel: model, allowedNextOperations: [] });
+    const goalSection = frame.businessView.canonicalMarkdown.split("## 本次要解决的问题\n\n")[1].split("\n\n## 只读素材")[0];
+    assert.equal(goalSection, statement);
+    assert.equal(frame.auditEnvelope.authoritativeRenderModel.goal, statement);
+    if (!statement.includes("language-service")) assert.doesNotMatch(frame.businessView.canonicalMarkdown, /language-service/);
+    assert.equal(frame.businessView.template.locale, "zh-CN");
+  }
+  const summary = "The proposal is not evidence-backed; the boundary and evaluation pack remain unsupported.";
+  const current = session("codex"); current.interaction.host.locale = "zh-CN";
+  const model = {
+    proposal: { proposalId: "declared-boundary", decision: "PROPOSE_NEW_PROFILE" },
+    proposalDigest: digest("declared-boundary"), review: { verdict: "REVISE", summary }, reviewDigest: digest(summary),
+    evaluation: { status: "REVIEW_REQUIRED" }, comparisonAssessment: { status: "NOT_PROVIDED" },
+    authority: { engineAuthoritative: true, presentationIsApproval: false }, nextAction: "present-complete-engine-review"
+  };
+  const frame = createInteractionFrame({ session: current, stage: "PROPOSAL_REVIEW_PRESENTATION", subject: subject(), renderModel: model, allowedNextOperations: [] });
+  assert.ok(frame.businessView.canonicalMarkdown.includes(summary));
+  assert.doesNotMatch(frame.businessView.canonicalMarkdown, /Source 证据支持该 Harness 能力边界；演进方案、限制条件与评估门禁完整/);
+  assert.equal(frame.auditEnvelope.authoritativeRenderModel.review.summary, summary);
+  assert.equal(frame.businessView.authority.businessViewIsApproval, false);
+});
+
 test("professional Review projection retains the canonical Source membership and evidence bindings", () => {
   const members = [
     { sourceId: "source-001", sourceType: "source-project", sourceRef: "/immutable/declared-project", sourceDigest: digest("source-one-bytes"), status: "IN_SCOPE", rationale: "Cited product responsibility supports the boundary.", evidenceIds: ["evidence-0004", "evidence-0028"] },

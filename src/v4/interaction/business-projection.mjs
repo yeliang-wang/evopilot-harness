@@ -703,22 +703,15 @@ function localizedBusinessText(value) {
     info: "提示",
     boundary: "能力边界",
     "Boundary is supported.": "Source 证据支持当前能力边界。",
+    "The proposal is evidence-backed.": "当前演进方案具有已引用证据支持。",
     "Cited Source evidence": "已引用的 Source 证据",
     "evaluation-review-required": "评估用例需要人工审阅"
   };
   if (exact[raw]) return exact[raw];
   if (/^run-\d/i.test(raw)) return "本次候选 Harness 能力";
-  if (/^Review-stage language-service Harness Profile/i.test(raw)) return "面向 language-service 领域的可重复工程工作流 Harness Profile。";
-  if (/^Validate repeatable service-engineering workflows/i.test(raw)) return "验证 language-service 领域中可重复执行的工程工作流。";
-  if (/^Discover project-specific build, test, release/i.test(raw)) return "仅从引用证据识别项目特定的构建、测试、发布与诊断约束，不执行其中命令。";
-  if (/^Produce traceable evidence/i.test(raw)) return "形成可追溯的素材索引、目标说明、受控操作清单与验证结果。";
-  if (/^Exclude projects outside/i.test(raw)) return "排除缺少 language-service 证据或超出演进边界的内容。";
-  if (/^Do not infer unsupported capabilities/i.test(raw)) return "不得从未引用素材推断能力或生产就绪结论。";
-  if (/^Do not execute project-provided commands/i.test(raw)) return "未经隔离环境与操作人明确授权，不得执行 Source 中的任何命令。";
-  const latinLetters = (raw.match(/[A-Za-z]/g) ?? []).length;
-  if (latinLetters / Math.max(1, raw.length) > 0.55 && /\bproposal\b|\bevidence-backed\b|\bboundary\b|\bevaluation pack\b/i.test(raw)) {
-    return "Source 证据支持该 Harness 能力边界；演进方案、限制条件与评估门禁完整，仍须由人工独立审阅。";
-  }
+  // Free-form statements carry user-owned domains, qualifications and negation.
+  // A display translation must not replace those semantics with an example's
+  // domain or manufacture a positive review conclusion from matching keywords.
   return raw;
 }
 function cleanBusinessValue(value) {
