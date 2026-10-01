@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import { PACKAGE_ROOT } from "../../v3/constants.mjs";
-import { digest, persistedJson, writeJson } from "../../v3/utils.mjs";
+import { digest, persistedJson } from "../../v3/utils.mjs";
 import { requireWorkspace } from "../../v3/workspace.mjs";
 import { assertExternalWorkspace, assertWorkspaceTreeConfined, resolveWorkspacePath } from "../constants.mjs";
 import { createAgentSession, inspectAgentSession, resumeAgentSession, updateAgentSessionClassification } from "../session/store.mjs";
@@ -24,56 +24,80 @@ export async function startClassificationSession({ home, sourceDescriptor, sourc
   const workspace = assertExternalWorkspace(home);
   requireWorkspace(workspace);
   assertWorkspaceTreeConfined(workspace);
-  const execution = await runClassificationAnalysis({ home: workspace, sourceDescriptor: sourceDescriptor ?? source, taxonomy, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now });
-  const result = execution.result;
-  const attempt = attemptRecord(result, now, execution);
   const sessionId = `classification-${Date.now().toString(36)}-${crypto.randomBytes(6).toString("hex")}`;
-  const createdOperationSession = createAgentSession({ home: workspace, intent, adapterId, hostInteraction, now });
-  const operationSession = updateAgentSessionClassification({ home: workspace, sessionId: createdOperationSession.sessionId, expectedSessionDigest: createdOperationSession.sessionDigest, classificationSessionId: sessionId, status: classificationStatus(result), resultDigest: result.analysisResultDigest ?? result.advisor.blockerDigest, classificationContextDigest: result.evolutionContext?.classificationContextDigest ?? null, analysisAttemptDigest: result.advisor.analysisAttemptDigest, analysisReceiptDigest: attempt.analysisReceipt.receiptDigest, now });
-  const session = {
-    schema: CLASSIFICATION_SESSION_SCHEMA,
-    sessionId,
-    status: classificationStatus(result),
-    createdAt: now,
-    updatedAt: now,
-    workspace: { home: workspace, mode: "external-read-write" },
-    agentOperationSessionId: operationSession.sessionId,
-    agentOperationSessionDigest: operationSession.sessionDigest,
+  let pending;
+  const execution = await runClassificationAnalysis({ home: workspace, sessionId, sourceDescriptor: sourceDescriptor ?? source, taxonomy, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now,
+    beforeInvocation: (execution) => { pending = createClassificationSession({ workspace, sessionId, taxonomy, intent, adapterId, hostInteraction, now, execution }); }
+  });
+  const completed = pending ? completeClassificationSession(inspectClassificationSession(workspace, sessionId), execution, now) : createClassificationSession({ workspace, sessionId, taxonomy, intent, adapterId, hostInteraction, now, execution });
+  execution.releaseClaim?.();
+  return completed;
+}
+
+function createClassificationSession({ workspace, sessionId, taxonomy, intent, adapterId, hostInteraction, now, execution }) {
+  const result = execution.result;
+  const attempt = execution.inFlightAnalysis ? null : attemptRecord(result, now, execution);
+  const created = createAgentSession({ home: workspace, intent, adapterId, hostInteraction, now });
+  const operation = updateAgentSessionClassification({ home: workspace, sessionId: created.sessionId, expectedSessionDigest: created.sessionDigest, classificationSessionId: sessionId, status: classificationStatus(result), resultDigest: result.analysisResultDigest ?? result.advisor.blockerDigest, classificationContextDigest: result.evolutionContext?.classificationContextDigest ?? null, analysisAttemptDigest: result.advisor.analysisAttemptDigest, analysisReceiptDigest: execution.inFlightAnalysis?.receiptDigest ?? attempt.analysisReceipt.receiptDigest, now });
+  return persist({
+    schema: CLASSIFICATION_SESSION_SCHEMA, sessionId, status: classificationStatus(result), createdAt: now, updatedAt: now,
+    workspace: { home: workspace, mode: "external-read-write" }, agentOperationSessionId: operation.sessionId, agentOperationSessionDigest: operation.sessionDigest,
     source: classificationSourceRecord(execution.resolvedSource, result),
-    taxonomy: { ref: typeof taxonomy === "string" ? path.resolve(taxonomy) : "inline", document: typeof taxonomy === "string" ? null : persistedJson(taxonomy), digest: result.taxonomyDigest ?? result.taxonomy.taxonomyDigest },
-    attempts: [attempt],
-    currentResult: persistedJson(result),
-    presentation: classificationPresentation(result, sessionId),
-    currentDecision: classificationDecision(result, sessionId),
-    presentationReceipts: [],
-    humanDecisions: [],
-    handoff: null,
-    operationSessionId: null,
-    nextOperations: result.nextOperations
-  };
-  return persist(session);
+    taxonomy: taxonomyRecord(taxonomy, result), attempts: attempt ? [attempt] : [],
+    ...(execution.inFlightAnalysis ? { inFlightAnalysis: execution.inFlightAnalysis } : {}),
+    currentResult: persistedJson(result), presentation: classificationPresentation(result, sessionId), currentDecision: classificationDecision(result, sessionId),
+    presentationReceipts: [], humanDecisions: [], handoff: null, operationSessionId: null, nextOperations: result.nextOperations
+  });
 }
 
 export async function reanalyzeClassificationSession({ home, sessionId, expectedSessionDigest, sourceDescriptor, source, taxonomy, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now = new Date().toISOString() }) {
-  const session = loadForMutation(home, sessionId, expectedSessionDigest);
+  let session = loadForMutation(home, sessionId, expectedSessionDigest);
   if (["HANDED_OFF", "CLOSED", "CANCELLED"].includes(session.status)) throw classificationError("CLASSIFICATION_SESSION_TERMINAL", "A handed-off, closed, or cancelled classification Session cannot be re-analyzed.", "start-new-classification-session");
+  if (session.inFlightAnalysis) throw classificationError("CLASSIFICATION_INVOCATION_UNCERTAIN", "The prior Advisor invocation has no reconciled outcome; inspect or resume it without repeating the call.", "resume-project-classification");
   const taxonomyInput = taxonomy ?? (session.taxonomy.ref === "inline" ? session.taxonomy.document : session.taxonomy.ref);
   const replacementSource = sourceDescriptor ?? source;
-  const execution = await runClassificationAnalysis({ home: session.workspace.home, sourceDescriptor: replacementSource, resolvedSource: replacementSource == null ? session.source.resolution : null, taxonomy: taxonomyInput, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now });
+  const execution = await runClassificationAnalysis({ home: session.workspace.home, sessionId, sourceDescriptor: replacementSource, resolvedSource: replacementSource == null ? session.source.resolution : null, taxonomy: taxonomyInput, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now,
+    beforeInvocation: (pending) => { session = applyClassificationExecution(session, pending, taxonomyInput, now); }
+  });
+  const completed = completeClassificationSession(inspectClassificationSession(home, sessionId), execution, now, taxonomyInput);
+  execution.releaseClaim?.();
+  return completed;
+}
+
+function taxonomyRecord(taxonomy, result) {
+  return { ref: typeof taxonomy === "string" ? path.resolve(taxonomy) : "inline", document: typeof taxonomy === "string" ? null : persistedJson(taxonomy), digest: result.taxonomyDigest ?? result.taxonomy.taxonomyDigest };
+}
+
+function completeClassificationSession(session, execution, now, taxonomy) {
+  // Closing/cancelling during an external call must never be undone by its reply.
+  if (["HANDED_OFF", "CLOSED", "CANCELLED"].includes(session.status)) return session;
+  return applyClassificationExecution(session, execution, taxonomy, now);
+}
+
+function applyClassificationExecution(session, execution, taxonomy, now) {
   const result = execution.result;
-  const attempt = attemptRecord(result, now, execution);
+  const attempt = execution.inFlightAnalysis ? null : attemptRecord(result, now, execution);
+  projectClassificationExecution(session, execution, taxonomy, now);
+  const operation = updateAgentSessionClassification({ home: session.workspace.home, sessionId: session.agentOperationSessionId, expectedSessionDigest: session.agentOperationSessionDigest, classificationSessionId: session.sessionId, status: session.status, resultDigest: result.analysisResultDigest ?? result.advisor.blockerDigest, classificationContextDigest: result.evolutionContext?.classificationContextDigest ?? null, analysisAttemptDigest: result.advisor.analysisAttemptDigest, analysisReceiptDigest: execution.inFlightAnalysis?.receiptDigest ?? attempt.analysisReceipt.receiptDigest, now });
+  session.agentOperationSessionDigest = operation.sessionDigest;
+  return persist(session);
+}
+
+function projectClassificationExecution(session, execution, taxonomy, now) {
+  const result = execution.result;
+  const attempt = execution.inFlightAnalysis ? null : attemptRecord(result, now, execution);
   session.status = classificationStatus(result);
   session.updatedAt = now;
   session.source = classificationSourceRecord(execution.resolvedSource, result);
-  session.taxonomy = { ref: typeof taxonomyInput === "string" ? path.resolve(taxonomyInput) : "inline", document: typeof taxonomyInput === "string" ? null : persistedJson(taxonomyInput), digest: result.taxonomyDigest ?? result.taxonomy.taxonomyDigest };
-  session.attempts.push(attempt);
+  if (taxonomy !== undefined) session.taxonomy = taxonomyRecord(taxonomy, result);
+  if (attempt) session.attempts.push(attempt);
+  if (execution.inFlightAnalysis) session.inFlightAnalysis = execution.inFlightAnalysis;
+  else delete session.inFlightAnalysis;
   session.currentResult = persistedJson(result);
   session.presentation = classificationPresentation(result, session.sessionId);
   session.currentDecision = classificationDecision(result, session.sessionId);
   session.nextOperations = result.nextOperations;
-  const operationSession = updateAgentSessionClassification({ home: session.workspace.home, sessionId: session.agentOperationSessionId, expectedSessionDigest: session.agentOperationSessionDigest, classificationSessionId: session.sessionId, status: classificationStatus(result), resultDigest: result.analysisResultDigest ?? result.advisor.blockerDigest, classificationContextDigest: result.evolutionContext?.classificationContextDigest ?? null, analysisAttemptDigest: result.advisor.analysisAttemptDigest, analysisReceiptDigest: attempt.analysisReceipt.receiptDigest, now });
-  session.agentOperationSessionDigest = operationSession.sessionDigest;
-  return persist(session);
+  return session;
 }
 
 export function continueClassificationToHarness({ home, sessionId, expectedSessionDigest, decidedBy, decisionToken, intent, adapterId, hostInteraction, now = new Date().toISOString() }) {
@@ -100,22 +124,47 @@ export function inspectClassificationSession(home, sessionId) {
   const expected = sessionDigest(session);
   if (session.sessionDigest !== expected) throw classificationError("CLASSIFICATION_SESSION_INTEGRITY_FAILED", "Classification Session digest does not match persisted content.", "preserve-and-inspect-workspace");
   validateSession(session);
+  if (session.inFlightAnalysis) validateInvocation(session);
   const operationSession = inspectAgentSession(home, session.agentOperationSessionId);
   if (operationSession.classificationLifecycle?.classificationSessionId !== session.sessionId) throw classificationError("CLASSIFICATION_AGENT_SESSION_BINDING_FAILED", "The generic AgentOperationSession does not bind this classification lifecycle.", "preserve-and-inspect-workspace");
-  if (session.status !== "HANDED_OFF" && operationSession.sessionDigest !== session.agentOperationSessionDigest) throw classificationError("CLASSIFICATION_AGENT_SESSION_DIGEST_MISMATCH", "The generic AgentOperationSession changed before the classification transition.", "resume-project-classification");
+  if (session.status !== "HANDED_OFF" && operationSession.sessionDigest !== session.agentOperationSessionDigest) {
+    // Recover the read projection if a crash split the two Session writes.
+    // Only the exact durable outcome and exact generic classification receipt
+    // may reconcile this gap; unrelated generic Session mutations still fail.
+    const execution = session.inFlightAnalysis ? readInvocationOutcome(session) : null;
+    const lifecycle = operationSession.classificationLifecycle;
+    if (!execution || operationSession.status !== "CREATED" || operationSession.classificationHandoff || lifecycle.status !== classificationStatus(execution.result) || lifecycle.analysisAttemptDigest !== session.inFlightAnalysis.analysisAttemptDigest || lifecycle.analysisReceiptDigest !== attemptRecord(execution.result, execution.completedAt, execution).analysisReceipt.receiptDigest || lifecycle.resultDigest !== (execution.result.analysisResultDigest ?? execution.result.advisor.blockerDigest) || lifecycle.classificationContextDigest !== (execution.result.evolutionContext?.classificationContextDigest ?? null)) throw classificationError("CLASSIFICATION_AGENT_SESSION_DIGEST_MISMATCH", "The generic AgentOperationSession changed before the classification transition.", "resume-project-classification");
+    projectClassificationExecution(session, execution, undefined, execution.completedAt);
+    session.agentOperationSessionDigest = operationSession.sessionDigest;
+    session.sessionDigest = sessionDigest(session);
+    validateSession(session);
+  }
   if (session.status === "HANDED_OFF" && operationSession.classificationHandoff?.handoffDigest !== session.handoff?.handoffDigest) throw classificationError("CLASSIFICATION_HANDOFF_BINDING_FAILED", "The generic AgentOperationSession no longer binds the exact classification handoff.", "preserve-and-inspect-workspace");
   return session;
 }
 
 export function resumeClassificationSession({ home, sessionId, expectedSessionDigest, adapterId, now = new Date().toISOString() }) {
   const session = loadForMutation(home, sessionId, expectedSessionDigest);
+  const retainedInvocation = JSON.parse(fs.readFileSync(sessionFile(home, sessionId), "utf8")).inFlightAnalysis;
   assertCurrentSourcePolicy(session.currentResult);
   if (["HANDED_OFF", "CLOSED", "CANCELLED"].includes(session.status)) throw classificationError("CLASSIFICATION_SESSION_TERMINAL", "A handed-off, closed, or cancelled classification lifecycle cannot be resumed through classification.", "inspect-operation-session");
+  if (session.inFlightAnalysis) {
+    const invocation = session.inFlightAnalysis;
+    const execution = readInvocationOutcome(session);
+    if (execution) {
+      const completed = completeClassificationSession(session, execution, now);
+      releaseInvocationClaim(session.workspace.home, invocation);
+      return completed;
+    }
+  }
+
   const operationSession = resumeAgentSession({ home: session.workspace.home, sessionId: session.agentOperationSessionId, expectedSessionDigest: session.agentOperationSessionDigest, adapterId, now });
   session.agentOperationSessionDigest = operationSession.sessionDigest;
   session.updatedAt = now;
   session.nextOperations = session.currentResult.nextOperations;
-  return persist(session);
+  const resumed = persist(session);
+  if (retainedInvocation && !resumed.inFlightAnalysis) releaseInvocationClaim(session.workspace.home, retainedInvocation);
+  return resumed;
 }
 
 export function listClassificationSessions(home) {
@@ -151,7 +200,7 @@ export function closeClassificationSession({ home, sessionId, expectedSessionDig
   session.nextOperations = ["INSPECT"];
   session.currentDecision = null;
   session.presentation = classificationTerminalPresentation(session.currentResult, session.sessionId, session.status);
-  const operationSession = updateAgentSessionClassification({ home: session.workspace.home, sessionId: session.agentOperationSessionId, expectedSessionDigest: session.agentOperationSessionDigest, classificationSessionId: session.sessionId, status: session.status, resultDigest: session.currentResult.analysisResultDigest ?? session.currentResult.advisor?.blockerDigest, classificationContextDigest: session.currentResult.evolutionContext?.classificationContextDigest ?? null, analysisAttemptDigest: session.currentResult.advisor.analysisAttemptDigest, analysisReceiptDigest: session.attempts.at(-1).analysisReceipt.receiptDigest, decidedBy, close: true, now });
+  const operationSession = updateAgentSessionClassification({ home: session.workspace.home, sessionId: session.agentOperationSessionId, expectedSessionDigest: session.agentOperationSessionDigest, classificationSessionId: session.sessionId, status: session.status, resultDigest: session.currentResult.analysisResultDigest ?? session.currentResult.advisor?.blockerDigest, classificationContextDigest: session.currentResult.evolutionContext?.classificationContextDigest ?? null, analysisAttemptDigest: session.currentResult.advisor.analysisAttemptDigest, analysisReceiptDigest: session.inFlightAnalysis?.receiptDigest ?? session.attempts.at(-1).analysisReceipt.receiptDigest, decidedBy, close: true, now });
   session.agentOperationSessionDigest = operationSession.sessionDigest;
   return persist(session);
 }
@@ -165,7 +214,7 @@ function loadForMutation(home, sessionId, expectedSessionDigest) {
 function persist(session) {
   session.sessionDigest = sessionDigest(session);
   validateSession(session);
-  writeJson(sessionFile(session.workspace.home, session.sessionId), session);
+  writeAtomicJson(sessionFile(session.workspace.home, session.sessionId), session);
   return persistedJson(session);
 }
 
@@ -176,7 +225,7 @@ function validateSession(session) {
 function sessionDigest(session) { const copy = persistedJson(session); delete copy.sessionDigest; return digest(copy); }
 function sessionFile(home, sessionId) { if (!/^classification-[a-z0-9-]{8,96}$/.test(sessionId)) throw classificationError("CLASSIFICATION_SESSION_ID_INVALID", "Invalid classification Session id.", "list-classification-sessions"); return resolveWorkspacePath(home, "classification-sessions", sessionId, "session.json"); }
 function classificationStatus(result) { return result.status === "ANALYSIS_BLOCKED_ADVISOR" ? result.status : result.aggregate; }
-async function runClassificationAnalysis({ home, sourceDescriptor, resolvedSource, taxonomy, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now }) {
+async function runClassificationAnalysis({ home, sessionId, beforeInvocation, sourceDescriptor, resolvedSource, taxonomy, intent, locale, modelsFile, model, advisorTimeoutMs, advisorProvider, now }) {
   const resolvedTaxonomy = resolveTaxonomy(taxonomy);
   const resolution = resolvedSource ?? resolveSourceDescriptor({ descriptor: sourceDescriptor, workspace: home, now });
   const prepared = prepareResolvedSourceTaxonomyAnalysis({ resolvedSource: resolution, resolvedTaxonomy });
@@ -204,9 +253,73 @@ async function runClassificationAnalysis({ home, sourceDescriptor, resolvedSourc
     if (result.advisor?.promptVersion !== ADVISOR_PROMPT_VERSION || result.sourceSnapshotDigest !== prepared.hypothesis.sourceSnapshotDigest || result.hypothesisDigest !== prepared.hypothesis.hypothesisDigest || result.taxonomyDigest !== prepared.taxonomy.taxonomyDigest || result.retrieval?.retrievalDigest !== prepared.retrieval.retrievalDigest || digest(result.sourceConceptHypothesis) !== digest(prepared.hypothesis)) throw classificationError("CLASSIFICATION_REPLAY_CONTEXT_MISMATCH", "The completed classification result does not bind the current Source analysis or Advisor prompt.", "preserve-and-inspect-workspace");
     return { result, executionMode: "REPLAY", physicalAdvisorInvocationCount: 0, requestDigest, resolvedSource: resolution };
   }
-  const result = await analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId: `attempt-${crypto.randomUUID()}`, intent, locale });
-  if (result.schema === "evopilot-harness-taxonomy-analysis-result/v1") writeJson(cacheFile, result);
-  return { result, executionMode: "NEW_ANALYSIS", physicalAdvisorInvocationCount: result.advisor.invocationCount, requestDigest, resolvedSource: resolution };
+  let invocation;
+  let claimFile;
+  const result = await analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId: `attempt-${crypto.randomUUID()}`, intent, locale,
+    beforeInvocation: ({ analysisAttemptDigest, inputDigest }) => {
+      invocation = { schema: "evopilot-harness-classification-invocation/v1", classificationSessionId: sessionId, analysisRequestDigest: requestDigest, analysisAttemptDigest, inputDigest, request: { ...Object.fromEntries(Object.entries(request).filter(([key]) => key !== "intent")), intentDigest: digest(request.intent) }, state: "OUTCOME_UNKNOWN", physicalAdvisorInvocationCount: null, maximumPhysicalAdvisorInvocations: 1, recordedAt: now, authority: { executionEvidenceOnly: true, humanDecision: false, mayApprove: false, mayPublish: false, automaticRetryAllowed: false } };
+      invocation.receiptDigest = digest(invocation);
+      claimFile = invocationClaimFile(home, requestDigest);
+      claimInvocation(claimFile, invocation);
+      // Another process may have completed after our initial cache read.
+      if (fs.existsSync(cacheFile)) {
+        releaseInvocationClaim(home, invocation);
+        throw classificationError("CLASSIFICATION_CONTEXT_COMPLETED", "This context completed concurrently; reload it through zero-call replay.", "start-project-classification");
+      }
+      writeAtomicJson(invocationFile(home, analysisAttemptDigest), invocation);
+      const advisor = { schema: "evopilot-harness-taxonomy-analysis-blocker/v1", status: "ANALYSIS_BLOCKED_ADVISOR", analysisAttemptDigest, code: "ADVISOR_OUTCOME_UNKNOWN", message: "模型调用尚无已保存的结果。恢复时将保留本次请求，不会自动重复调用。", invocationCount: null, retryPolicy: "RECONCILE_WITHOUT_RETRY", classificationResultCreated: false, authority: { fallbackAllowed: false, mayBroadenMatch: false } };
+      advisor.blockerDigest = digest(advisor);
+      beforeInvocation({ result: { status: advisor.status, hypothesis: prepared.hypothesis, taxonomy: prepared.taxonomy, retrieval: prepared.retrieval, advisor, nextOperations: ["INSPECT", "CANCEL", "CLOSE"] }, inFlightAnalysis: invocation, requestDigest, resolvedSource: resolution });
+    }
+  });
+  const execution = { result, executionMode: "NEW_ANALYSIS", physicalAdvisorInvocationCount: result.advisor.invocationCount, requestDigest, resolvedSource: resolution, completedAt: new Date().toISOString() };
+  // Keep an outcome beside the immutable invocation before updating either Session.
+  if (invocation) writeAtomicJson(invocationFile(home, invocation.analysisAttemptDigest, "outcome"), { invocationReceiptDigest: invocation.receiptDigest, execution, executionDigest: digest(execution) });
+  if (result.schema === "evopilot-harness-taxonomy-analysis-result/v1") writeAtomicJson(cacheFile, result);
+  return { ...execution, releaseClaim: () => { if (claimFile) releaseInvocationClaim(home, invocation); } };
+}
+
+function validateInvocation(session) {
+  const invocation = session.inFlightAnalysis;
+  const copy = persistedJson(invocation); delete copy.receiptDigest;
+  const file = invocationFile(session.workspace.home, invocation.analysisAttemptDigest);
+  if (invocation.receiptDigest !== digest(copy) || invocation.classificationSessionId !== session.sessionId || !fs.existsSync(file) || digest(JSON.parse(fs.readFileSync(file, "utf8"))) !== digest(invocation)) throw classificationError("CLASSIFICATION_INVOCATION_INTEGRITY_FAILED", "The retained invocation does not match its immutable request receipt.", "preserve-and-inspect-workspace");
+}
+function readInvocationOutcome(session) {
+  const invocation = session.inFlightAnalysis;
+  const file = invocationFile(session.workspace.home, invocation.analysisAttemptDigest, "outcome");
+  if (!fs.existsSync(file)) return null;
+  const outcome = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (outcome.invocationReceiptDigest !== invocation.receiptDigest || outcome.executionDigest !== digest(outcome.execution) || outcome.execution.requestDigest !== invocation.analysisRequestDigest || outcome.execution.result.advisor.analysisAttemptDigest !== invocation.analysisAttemptDigest) throw classificationError("CLASSIFICATION_INVOCATION_INTEGRITY_FAILED", "The retained invocation outcome does not match its immutable request.", "preserve-and-inspect-workspace");
+  return outcome.execution;
+}
+
+function invocationFile(home, attemptDigest, suffix = "request") {
+  return resolveWorkspacePath(home, "classification-invocations", `${attemptDigest.slice(7)}.${suffix}.json`);
+}
+function invocationClaimFile(home, requestDigest) {
+  return resolveWorkspacePath(home, "classification-invocations", `${requestDigest.slice(7)}.claim.json`);
+}
+function claimInvocation(file, invocation) {
+  const temporary = writeAtomicJson(`${file}.${crypto.randomUUID()}.prepared`, invocation);
+  try { fs.linkSync(temporary, file); }
+  catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    throw classificationError("CLASSIFICATION_INVOCATION_UNCERTAIN", "This immutable classification context already has a claimed Advisor invocation. Inspect its existing Session; do not repeat an uncertain call.", "list-classification-sessions");
+  } finally { fs.unlinkSync(temporary); }
+}
+function releaseInvocationClaim(home, invocation) {
+  const file = invocationClaimFile(home, invocation.analysisRequestDigest);
+  if (fs.existsSync(file) && JSON.parse(fs.readFileSync(file, "utf8")).receiptDigest === invocation.receiptDigest) fs.unlinkSync(file);
+}
+function writeAtomicJson(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const temporary = `${file}.tmp-${crypto.randomUUID()}`;
+  const fd = fs.openSync(temporary, "wx", 0o600);
+  try { fs.writeFileSync(fd, `${JSON.stringify(value, null, 2)}\n`, "utf8"); fs.fsyncSync(fd); }
+  finally { fs.closeSync(fd); }
+  fs.renameSync(temporary, file);
+  return file;
 }
 
 function classificationSourceRecord(resolution, result) {
@@ -232,12 +345,12 @@ function attemptRecord(result, now, execution) {
     executionMode: execution.executionMode,
     physicalAdvisorInvocationCount: execution.physicalAdvisorInvocationCount,
     advisorReceiptDigest: result.advisor.advisorReceiptDigest ?? result.advisor.blockerDigest,
-    completedAt: now,
+    completedAt: execution.completedAt ?? now,
     authority: { executionEvidenceOnly: true, humanDecision: false, mayApprove: false, mayPublish: false }
   };
   receipt.receiptDigest = digest(receipt);
   return {
-    attemptedAt: now,
+    attemptedAt: execution.completedAt ?? now,
     analysisAttemptDigest: result.advisor.analysisAttemptDigest,
     analysisRequestDigest: execution.requestDigest,
     executionMode: execution.executionMode,
@@ -259,7 +372,7 @@ function classificationDecision(result, sessionId) {
 function classificationPresentation(result, sessionId) {
   const lines = ["# 项目分类分析", ""];
   if (result.status === "ANALYSIS_BLOCKED_ADVISOR") {
-    lines.push("分类覆盖情况：分析暂时无法完成。", "", `原因：${result.advisor.message}`, "", "下一步：修复业务分类分析所需的模型配置或连接后，明确发起一次新的分析；也可以取消或关闭。" );
+    lines.push("分类覆盖情况：分析暂时无法完成。", "", `原因：${result.advisor.message}`, "", result.advisor.code === "ADVISOR_OUTCOME_UNKNOWN" ? "下一步：查看或恢复已保存的请求；结果未确认前不会重复调用。也可以取消或关闭。" : "下一步：修复业务分类分析所需的模型配置或连接后，明确发起一次新的分析；也可以取消或关闭。" );
   } else {
     lines.push(`分类覆盖情况：${ordinaryStatus(result.aggregate)}`, "");
     for (const [axis, title] of [["domain", "业务领域"], ["product", "产品或系统类型"]]) {

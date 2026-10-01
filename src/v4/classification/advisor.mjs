@@ -10,7 +10,7 @@ const ADVISOR_EVIDENCE_FAMILIES = new Set([
   "content-purpose", "content-inventory", "content-workflow"
 ]);
 
-export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, modelsFile, model: selectedModel, timeoutMs = 180_000, provider, analysisAttemptId }) {
+export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, modelsFile, model: selectedModel, timeoutMs = 180_000, provider, analysisAttemptId, beforeInvocation }) {
   const evidenceById = new Map([...hypothesis.citations, ...hypothesis.dependencySignals, ...hypothesis.structuredSignals].map((item) => [item.evidenceId, item]));
   const projectedCandidates = Object.fromEntries(Object.entries(retrieval.axes).map(([axis, candidates]) => [axis, candidates.slice(0, ADVISOR_INPUT_LIMITS.candidatesPerAxis).map((candidate) => {
     const node = taxonomy.axes[axis].nodes.find((item) => item.id === candidate.nodeId);
@@ -56,6 +56,8 @@ export async function requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, 
   const analysisAttemptDigest = digest({ hypothesisDigest: hypothesis.hypothesisDigest, taxonomyDigest: taxonomy.taxonomyDigest, retrievalDigest: retrieval.retrievalDigest, inputDigest: digest(input), modelBinding, promptVersion: ADVISOR_PROMPT_VERSION, analysisAttemptId });
   const call = provider ?? createConfiguredProvider({ modelsFile, selectedModel, timeoutMs });
   if (!call) return blocked(analysisAttemptDigest, "MODEL_NOT_CONFIGURED", "A verified user-owned Harness model profile is required for every new classification analysis.");
+  // Persistence errors must escape: a failed claim must never become a model call.
+  beforeInvocation?.({ analysisAttemptDigest, modelBinding, inputDigest: digest(input) });
   let raw;
   const startedAt = new Date().toISOString();
   try { raw = await call(input); } catch (error) { return blocked(analysisAttemptDigest, advisorErrorCode(error), error instanceof Error ? error.message : String(error), { startedAt }); }

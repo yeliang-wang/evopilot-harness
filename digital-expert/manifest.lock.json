@@ -140,8 +140,8 @@
     },
     {
       "path": "schemas/classification-session-v1.schema.json",
-      "sha256": "sha256:69c203d7fafbf21ef370e14f2b56128e9ef28ac41fcb95ff6681f68e23bd6272",
-      "bytes": 3054
+      "sha256": "sha256:6a4fee89c4d01f914c1463d0ec698e9f73e6b00b7c6003d82a3629fe6a598f3f",
+      "bytes": 4359
     },
     {
       "path": "schemas/compliance-audit-envelope-v1.schema.json",

@@ -27,9 +27,9 @@ export async function analyzeSourceTaxonomy({ source, taxonomy: taxonomyInput, m
   return analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId, intent, locale, presentationTemplateVersion });
 }
 
-export async function analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId, intent = "analyze-source-business-classification", locale = "zh-CN", presentationTemplateVersion = "evopilot-harness-taxonomy-presentation/v1" }) {
+export async function analyzePreparedSourceTaxonomy({ prepared, modelsFile, model, advisorTimeoutMs, advisorProvider, analysisAttemptId, beforeInvocation, intent = "analyze-source-business-classification", locale = "zh-CN", presentationTemplateVersion = "evopilot-harness-taxonomy-presentation/v1" }) {
   const { taxonomy, hypothesis, ontologyFoundation, semanticCandidateSet, retrieval, resolvedSource } = prepared;
-  const advisor = await requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, modelsFile, model, timeoutMs: advisorTimeoutMs, provider: advisorProvider, analysisAttemptId });
+  const advisor = await requestTaxonomyAdvisor({ hypothesis, taxonomy, retrieval, modelsFile, model, timeoutMs: advisorTimeoutMs, provider: advisorProvider, analysisAttemptId, beforeInvocation });
   if (advisor.status === "ANALYSIS_BLOCKED_ADVISOR") return { status: advisor.status, hypothesis, taxonomy, retrieval, advisor, nextOperations: ["RETRY_NEW_ANALYSIS", "CANCEL", "CLOSE"] };
   const decision = aggregateTaxonomyDecision({ hypothesis, taxonomy, retrieval, advisor, config: RETRIEVAL_CONFIG });
   const evolutionContext = classificationEvolutionContext({ hypothesis, taxonomy, ontologyFoundation, semanticCandidateSet, retrieval, advisor, decision, intent, locale, presentationTemplateVersion });

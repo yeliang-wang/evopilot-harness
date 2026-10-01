@@ -16,7 +16,7 @@
     "taxonomy": { "type": "object" },
     "attempts": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 0,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -34,6 +34,7 @@
         }
       }
     },
+    "inFlightAnalysis": {"type": "object", "additionalProperties": false, "required": ["schema", "classificationSessionId", "analysisRequestDigest", "analysisAttemptDigest", "inputDigest", "request", "state", "physicalAdvisorInvocationCount", "maximumPhysicalAdvisorInvocations", "recordedAt", "authority", "receiptDigest"], "properties": {"schema": {"const": "evopilot-harness-classification-invocation/v1"}, "classificationSessionId": {"type": "string"}, "analysisRequestDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "analysisAttemptDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "inputDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "receiptDigest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}, "request": {"type": "object"}, "state": {"const": "OUTCOME_UNKNOWN"}, "physicalAdvisorInvocationCount": {"type": "null"}, "maximumPhysicalAdvisorInvocations": {"const": 1}, "recordedAt": {"type": "string"}, "authority": {"const": {"executionEvidenceOnly": true, "humanDecision": false, "mayApprove": false, "mayPublish": false, "automaticRetryAllowed": false}}}},
     "currentResult": { "type": "object" },
     "presentation": { "type": "object" },
     "currentDecision": { "type": ["object", "null"] },
@@ -44,5 +45,6 @@
     "closedAt": { "type": "string" },
     "nextOperations": { "type": "array", "minItems": 1, "items": { "type": "string" } },
     "sessionDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
-  }
+  },
+  "allOf": [{"if": {"not": {"required": ["inFlightAnalysis"], "properties": {"inFlightAnalysis": {}}}}, "then": {"properties": {"attempts": {"type": "array", "minItems": 1}}}}]
 }
