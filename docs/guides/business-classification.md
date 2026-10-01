@@ -85,6 +85,8 @@ A positive match or extension suggestion needs at least two immutable Source cit
 
 The checked-in 48-case Gold evaluation is a bounded release-candidate gate. Its perfect expected-result threshold is not a claim of general production accuracy.
 
+A multi-word positive hint must have sufficient coverage within one eligible citation; unrelated words scattered across files cannot establish that hint. A neutral Advisor response adds no support. A lexical-only match also needs an exact term, a coherently supported hint, or a declared category name corroborated within semantic evidence. The independent evidence minimum, score thresholds, exclusions, and Advisor contradiction rules still apply. Retrieval records bind this evidence policy so completed results from an older policy are never reused as a new analysis.
+
 ## Static Source content boundary
 
 Source acquisition checks paths before opening contents, hashing, extracting text, or preparing Advisor evidence. This boundary also applies to retained v3 project discovery and Evidence Graph ingestion, and the v2 compatibility CLI's project discovery, scans, and attachments. Directory scans omit protected entries; an explicitly selected protected root, file, or ordered attachment member returns `SOURCE_PROTECTED_PATH`. An ordered set validates every member before reading the first one. Errors do not echo the rejected path or its contents.

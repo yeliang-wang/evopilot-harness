@@ -9,6 +9,7 @@ export const RETRIEVAL_CONFIG = Object.freeze({
   lexical: { algorithm: "boundary-aware-bm25/v1", fields: ["id", "label", "aliases", "definition", "evidenceHints"], weights: [2, 3, 2, 1, 2], k1: 1.2, b: 0.75 },
   embedding: { provider: "engine-local", model: "deterministic-hash-embedding", revision: "sha256:57cd8eea38a879e88e71a40f0b0ad7e9bb9f73f2b332d16e181d42f946319d29", algorithm: "deterministic-hash-embedding/v1", dimensions: 128, pooling: "sum", normalization: "cosine-l2", numericPrecision: 6 },
   structured: { algorithm: "dependency-and-source-structure/v2" },
+  positiveEvidence: { algorithm: "coherent-positive-evidence/v1", multiTermHintRequiresSingleCitation: true, neutralLexicalRequiresCoherentSupport: true },
   candidateLimitPerAxis: 12,
   tieBreak: "score-desc-node-id-asc",
   scorePrecision: 3,
@@ -95,7 +96,8 @@ function scoreNode(axisName, node, sourceTerms, conceptByTerm, hypothesis, confi
   const structuredAssessments = [...(node.positiveEvidenceHints ?? [])].map((hint) => assessHintEvidence(hint, hypothesis, {
     minimumFamilies: 1,
     minimumCoverage: 0.6,
-    minimumOriginGroups: rawHintTokens(hint).length > 1 ? 2 : 1
+    minimumOriginGroups: rawHintTokens(hint).length > 1 ? 2 : 1,
+    requireCoherentCitation: true
   }));
   const structuredMatches = structuredAssessments.filter((item) => item.supported).map((item) => item.hint);
   const structuredEvidenceTerms = [...new Set(structuredAssessments.filter((item) => item.supported).flatMap((item) => item.matches))];
@@ -204,7 +206,9 @@ function decideAxis(axisName, hypothesis, taxonomy, candidates, advisor, config,
       && bm25 >= policy.advisorSupportedMinimumBm25
       && candidate.finalScore >= policy.advisorSupportedMatchedThreshold;
     const corroboratedLexical = candidate.score >= policy.corroboratedLexicalMatchedThreshold
-      && bm25 >= policy.corroboratedLexicalMinimumBm25;
+      && bm25 >= policy.corroboratedLexicalMinimumBm25
+      && (candidate.signals.some((signal) => ["exact", "structured"].includes(signal.type) && signal.score > 0)
+        || hasCoherentLexicalEvidence(candidate));
     return (candidate.finalScore >= policy.matchedThreshold || advisorSupported || corroboratedLexical)
       && governedFamilyCount(candidate.nonLlmEvidence) >= policy.minimumNonLlmFamilies
       && !candidate.rejectedByExclusion
@@ -230,6 +234,13 @@ function advisorContradictionDisposition(candidates) {
     contradictionMayCreateExtension: false,
     contradictionMaySatisfyNonLlmEvidenceMinimum: false
   };
+}
+
+function hasCoherentLexicalEvidence(candidate) {
+  return candidate.nonLlmEvidence.some((item) => item.trust !== "LOW"
+    && (item.family.startsWith("content-") || item.kind === "declared-responsibility")
+    && [candidate.nodeId, candidate.label].some((name) => assessHint(name,
+      new Set(tokenize(item.excerpt ?? item.term ?? "")), { minimumCoverage: 0.6 }).supported));
 }
 
 function extensionSuggestion(axisName, hypothesis, taxonomy, candidates, concept, advisorGap) {
@@ -337,7 +348,7 @@ function assessHint(hint, sourceTerms, { minimumCoverage = 0.45 } = {}) {
   const required = tokens.length <= 1 ? tokens.length : Math.max(2, Math.ceil(tokens.length * minimumCoverage));
   return { hint: normalizeTerm(hint), tokens, matches, coverage: tokens.length ? matches.length / tokens.length : 0, supported: tokens.length > 0 && matches.length >= required };
 }
-function assessHintEvidence(hint, hypothesis, { minimumFamilies = 2, minimumCoverage = 0.45, minimumOriginGroups = 1, corroboratePurposeWithInventory = false, primarySemanticOnly = false } = {}) {
+function assessHintEvidence(hint, hypothesis, { minimumFamilies = 2, minimumCoverage = 0.45, minimumOriginGroups = 1, corroboratePurposeWithInventory = false, primarySemanticOnly = false, requireCoherentCitation = false } = {}) {
   let governedEvidence = [...hypothesis.citations, ...hypothesis.dependencySignals, ...hypothesis.structuredSignals].filter((item) => isGovernedFamily(item.family) && isHintBearingEvidence(item));
   if (primarySemanticOnly) {
     const semantic = governedEvidence.filter((item) => item.family.startsWith("content-") && item.trust !== "LOW");
@@ -348,7 +359,7 @@ function assessHintEvidence(hint, hypothesis, { minimumFamilies = 2, minimumCove
   }
   const assessed = governedEvidence.flatMap((item) => {
     const assessment = assessHint(hint, new Set(tokenize(item.excerpt ?? item.dependency ?? item.path ?? "")), { minimumCoverage });
-    return assessment.matches.length ? [{ evidenceId: item.evidenceId, family: item.family, sourceRef: item.sourceRef ?? item.path ?? item.dependency ?? item.evidenceId, matches: assessment.matches, coverage: assessment.coverage }] : [];
+    return assessment.matches.length ? [{ evidenceId: item.evidenceId, family: item.family, sourceRef: item.sourceRef ?? item.path ?? item.dependency ?? item.evidenceId, matches: assessment.matches, coverage: assessment.coverage, coherent: assessment.supported }] : [];
   });
   const aggregateMatches = [...new Set(assessed.flatMap((item) => item.matches))];
   const hintTokens = rawHintTokens(hint);
@@ -363,6 +374,7 @@ function assessHintEvidence(hint, hypothesis, { minimumFamilies = 2, minimumCove
   return {
     hint: normalizeTerm(hint),
     supported: aggregateCoverage >= minimumCoverage
+      && (!requireCoherentCitation || assessed.some((item) => item.coherent))
       && independentFamilyCount(families) >= minimumFamilies
       && originGroups.length >= minimumOriginGroups,
     evidenceIds: supported.map((item) => item.evidenceId),
