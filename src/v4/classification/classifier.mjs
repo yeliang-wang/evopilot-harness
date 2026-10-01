@@ -8,7 +8,7 @@ export const RETRIEVAL_CONFIG = Object.freeze({
   tokenizer: { algorithm: "unicode-nfkc-identifier-cjk-tokenizer/v1", locale: "und", stopwords: "structural-only/v1", stemming: "simple-plural/v1" },
   lexical: { algorithm: "boundary-aware-bm25/v1", fields: ["id", "label", "aliases", "definition", "evidenceHints"], weights: [2, 3, 2, 1, 2], k1: 1.2, b: 0.75 },
   embedding: { provider: "engine-local", model: "deterministic-hash-embedding", revision: "sha256:57cd8eea38a879e88e71a40f0b0ad7e9bb9f73f2b332d16e181d42f946319d29", algorithm: "deterministic-hash-embedding/v1", dimensions: 128, pooling: "sum", normalization: "cosine-l2", numericPrecision: 6 },
-  structured: { algorithm: "dependency-and-source-structure/v1" },
+  structured: { algorithm: "dependency-and-source-structure/v2" },
   candidateLimitPerAxis: 12,
   tieBreak: "score-desc-node-id-asc",
   scorePrecision: 3,
@@ -116,12 +116,16 @@ function scoreNode(axisName, node, sourceTerms, conceptByTerm, hypothesis, confi
   }));
   for (const citation of hypothesis.citations) if (matchedTerms.some((term) => normalizeTerm(citation.excerpt).split(" ").includes(term))) evidence.push({ evidenceId: citation.evidenceId, family: citation.family, term: matchedTerms.find((term) => normalizeTerm(citation.excerpt).split(" ").includes(term)) });
   for (const signal of hypothesis.dependencySignals) if (structuredEvidenceTerms.some((term) => tokenize(signal.dependency).includes(term))) evidence.push({ evidenceId: signal.evidenceId, family: signal.family, term: signal.dependency });
-  for (const signal of hypothesis.structuredSignals) if (matchedTerms.some((term) => normalizeTerm(signal.path).includes(term))) evidence.push({ evidenceId: signal.evidenceId, family: signal.family, term: signal.path });
+  for (const signal of hypothesis.structuredSignals) if (matchedTerms.some((term) => tokenize(signal.excerpt ?? signal.path).includes(term))) evidence.push({ evidenceId: signal.evidenceId, family: signal.family, term: signal.excerpt ?? signal.path });
   const semanticCitation = evidence.map((item) => hypothesis.citations.find((citation) => citation.evidenceId === item.evidenceId)).find((citation) => ["content-purpose", "content-inventory"].includes(citation?.family));
   const semanticCounterpartFamily = semanticCitation?.family === "content-purpose" ? "content-inventory" : semanticCitation?.family === "content-inventory" ? "content-purpose" : null;
   const semanticCorroboration = semanticCounterpartFamily ? hypothesis.citations.find((item) => item.family === semanticCounterpartFamily && item.sourceRef === semanticCitation.sourceRef && item.trust !== "LOW") : null;
   if (semanticCorroboration) evidence.push({ evidenceId: semanticCorroboration.evidenceId, family: semanticCorroboration.family, term: "bounded Source overview context" });
-  const nonLlmEvidence = uniqueEvidence(evidence);
+  const sourceEvidence = new Map([...hypothesis.citations, ...hypothesis.dependencySignals, ...hypothesis.structuredSignals].map((item) => [item.evidenceId, item]));
+  const nonLlmEvidence = uniqueEvidence(evidence.map((item) => {
+    const origin = sourceEvidence.get(item.evidenceId);
+    return { ...item, ...(origin ? { sourceRef: origin.sourceRef ?? origin.path, trust: origin.trust, ...(origin.excerpt ? { excerpt: origin.excerpt } : {}), ...(origin.kind === "declared-responsibility" ? { kind: origin.kind, jsonPointer: origin.jsonPointer, sourceDigest: origin.sourceDigest } : {}) } : {}) };
+  }));
   const evidenceIds = nonLlmEvidence.map((item) => item.evidenceId);
   return {
     axis: axisName,
@@ -589,7 +593,15 @@ function isHintBearingEvidence(item) {
 }
 function sourceDepth(sourceRef) { return String(sourceRef ?? "").split("/").filter(Boolean).length; }
 function governedFamilyCount(evidence) {
-  return independentFamilyCount(evidence.map((item) => item.family).filter(isGovernedFamily));
+  const eligible = evidence.filter((item) => item.trust !== "LOW" && isGovernedFamily(item.family));
+  const declarations = eligible.filter((item) => item.kind === "declared-responsibility");
+  const declarationRefs = new Set(declarations.map((item) => item.sourceRef));
+  const semantic = eligible.filter((item) => item.family.startsWith("content-"));
+  return independentFamilyCount(eligible.filter((item) => {
+    if (item.family === "lexical-content" && declarationRefs.has(item.sourceRef)) return false;
+    if (item.kind === "declared-responsibility" && semantic.some((other) => normalizeTerm(other.excerpt ?? "") === normalizeTerm(item.excerpt))) return false;
+    return true;
+  }).map((item) => item.family));
 }
 function governedOriginGroupCount(evidence) {
   return new Set(evidence.filter((item) => item.trust !== "LOW" && isGovernedFamily(item.family)).map((item) => {

@@ -29,6 +29,7 @@ export function buildSourceConceptHypothesis(sourceInput) {
   const characterBudgetPerFile = Math.max(MAX_CHARACTERS_PER_FILE, Math.floor(MAX_TOTAL_CHARACTERS / Math.max(1, files.length)));
   const orderedByPath = new Map((resolved.files ?? []).map((item) => [item.path, item]));
   const citations = [];
+  const contradictions = [];
   const structuredSignals = [];
   const dependencySignals = [];
   const sourceFiles = [];
@@ -56,7 +57,7 @@ export function buildSourceConceptHypothesis(sourceInput) {
       if (semanticOverview && isPlainTextOverview(file)) {
         const rawOverview = captured.bytes.subarray(0, MAX_FILE_BYTES).toString("utf8").slice(0, MAX_OVERVIEW_ANALYSIS_CHARACTERS);
         const analysisText = redact(rawOverview);
-        addSemanticOverviewEvidence({ citations, termWeights, text: analysisText, relative, fileDigest, lowTrust, redactionApplied: analysisText !== rawOverview });
+        addSemanticOverviewEvidence({ citations, contradictions, termWeights, text: analysisText, relative, fileDigest, lowTrust, redactionApplied: analysisText !== rawOverview });
       }
       continue;
     }
@@ -71,8 +72,9 @@ export function buildSourceConceptHypothesis(sourceInput) {
     addTerms(termWeights, tokenize(text), lowTrust ? 0.1 : 1, contentFamily, citation.evidenceId);
     if (semanticOverview) {
       const analysisText = redacted.slice(0, Math.min(MAX_OVERVIEW_ANALYSIS_CHARACTERS, redacted.length));
-      addSemanticOverviewEvidence({ citations, termWeights, text: analysisText, relative, fileDigest, lowTrust, redactionApplied: redacted !== extracted });
+      addSemanticOverviewEvidence({ citations, contradictions, termWeights, text: analysisText, relative, fileDigest, lowTrust, redactionApplied: redacted !== extracted });
     }
+    if (extension === ".json") addStructuredResponsibilityEvidence({ structuredSignals, citations, contradictions, termWeights, text, relative, fileDigest, lowTrust, redactionApplied: redacted !== extracted });
     for (const dependency of extractDependencies(file, text)) {
       const signal = { family: lowTrust ? "low-trust-dependency" : "dependency", trust: lowTrust ? "LOW" : "NORMAL", dependency, sourceRef: relative, evidenceId: evidenceId("dependency", `${relative}:${dependency}`, fileDigest) };
       dependencySignals.push(signal);
@@ -85,9 +87,9 @@ export function buildSourceConceptHypothesis(sourceInput) {
     schema: "evopilot-harness-static-source-snapshot/v1",
     sourceBinding: staticSourceBinding(resolved),
     files: resolved.files ? sourceFiles : sourceFiles.sort((left, right) => canonicalCompare(left.sourceRef, right.sourceRef)),
-    fileCount: structuredSignals.length,
+    fileCount: sourceFiles.length,
     characterCount: characters,
-    bounded: structuredSignals.length >= MAX_FILES || characters >= MAX_TOTAL_CHARACTERS,
+    bounded: sourceFiles.length >= MAX_FILES || characters >= MAX_TOTAL_CHARACTERS,
     redactionResult: { policy: "evopilot-harness-source-redaction/v1", applied: snapshotRedactions.length > 0, redactedFileCount: snapshotRedactions.length },
     sourceExecution: false,
     networkAcquisition: resolved.type === "GITHUB_REPOSITORY"
@@ -111,10 +113,10 @@ export function buildSourceConceptHypothesis(sourceInput) {
     structuredSignals,
     dependencySignals,
     citations,
-    contradictions: [],
+    contradictions,
     uncertainty: { status: concepts.length < 3 ? "HIGH" : "BOUNDED", reasons: concepts.length < 3 ? ["Too few supported concepts were extracted from the bounded static Source."] : [] },
     missingEvidence: concepts.length < 3 || new Set([...citations, ...dependencySignals, ...structuredSignals].map((item) => item.family)).size < 2 ? ["Provide more static Source files, dependency manifests, or design documentation."] : [],
-    provenance: { sourceContentBoundary: selection.boundary, algorithm: "taxonomy-blind-source-concepts/v2", sampling: resolved.files ? "exact-ordered-members/v1" : "top-level-round-robin-diversified/v1", termFrequency: "one-vote-per-file-family/v1", semanticProjection: "overview-purpose-and-inventory/v1", taxonomyExposed: false, advisorUsed: false, sourceExecution: false, networkAccess: resolved.type === "GITHUB_REPOSITORY", limits: { maxFiles: MAX_FILES, maxConcepts: MAX_CONCEPTS, maxFileBytes: MAX_FILE_BYTES, maxCharactersPerFile: MAX_CHARACTERS_PER_FILE, maxOverviewAnalysisCharacters: MAX_OVERVIEW_ANALYSIS_CHARACTERS, maxTotalCharacters: MAX_TOTAL_CHARACTERS } }
+    provenance: { sourceContentBoundary: selection.boundary, algorithm: "taxonomy-blind-source-concepts/v2", sampling: resolved.files ? "exact-ordered-members/v1" : "top-level-round-robin-diversified/v1", termFrequency: "one-vote-per-file-family/v1", semanticProjection: "overview-and-declared-responsibilities/v2", taxonomyExposed: false, advisorUsed: false, sourceExecution: false, networkAccess: resolved.type === "GITHUB_REPOSITORY", limits: { maxFiles: MAX_FILES, maxConcepts: MAX_CONCEPTS, maxFileBytes: MAX_FILE_BYTES, maxCharactersPerFile: MAX_CHARACTERS_PER_FILE, maxOverviewAnalysisCharacters: MAX_OVERVIEW_ANALYSIS_CHARACTERS, maxTotalCharacters: MAX_TOTAL_CHARACTERS } }
   };
   core.hypothesisDigest = digest(core);
   return core;
@@ -223,10 +225,12 @@ function boundedRepresentativeExcerpt(text, maximumCharacters) {
   return [value.slice(0, segmentLength), value.slice(middleStart, middleStart + segmentLength), value.slice(-segmentLength)].join(separator).slice(0, maximumCharacters);
 }
 
-function addSemanticOverviewEvidence({ citations, termWeights, text, relative, fileDigest, lowTrust, redactionApplied }) {
+function addSemanticOverviewEvidence({ citations, contradictions, termWeights, text, relative, fileDigest, lowTrust, redactionApplied }) {
   if (!text.trim()) return;
   const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const meaningful = lines.filter((line) => !isOverviewBoilerplate(line));
+  const historical = lines.filter(isNonCurrentStatement);
+  for (const [index, excerpt] of historical.entries()) addNonCurrentEvidence({ citations, contradictions, relative, fileDigest, lowTrust, redactionApplied, excerpt, locator: `historical-line-${index}` });
+  const meaningful = lines.filter((line) => !isOverviewBoilerplate(line) && !isNonCurrentStatement(line));
   const facets = [
     { family: "content-purpose", weight: 4, lines: meaningful.filter((line) => !isInventoryLine(line)).slice(0, 12) },
     { family: "content-inventory", weight: 3, lines: stratifiedOverviewLines(meaningful.filter(isInventoryLine), 12, 780) }
@@ -239,6 +243,49 @@ function addSemanticOverviewEvidence({ citations, termWeights, text, relative, f
     citations.push(evidence);
     addTerms(termWeights, tokenize(excerpt), lowTrust ? 0.1 : facet.weight, family, evidence.evidenceId);
   }
+}
+
+function addStructuredResponsibilityEvidence({ structuredSignals, citations, contradictions, termWeights, text, relative, fileDigest, lowTrust, redactionApplied }) {
+  let document;
+  try { document = JSON.parse(text); } catch { return; }
+  if (!document || typeof document !== "object" || Array.isArray(document)) return;
+  let count = 0;
+  for (const [key, values] of Object.entries(document).sort(([a], [b]) => canonicalCompare(a, b))) {
+    const normalizedKey = normalizeTerm(key.replace(/([a-z])([A-Z])/g, "$1 $2"));
+    const current = /^(?:(?:current|primary) )?(?:responsibilities|capabilities)$/.test(normalizedKey);
+    const historical = /^(?:removed|deprecated|historical|previous|legacy) (?:responsibilities|capabilities|experiments)$/.test(normalizedKey);
+    if ((!current && !historical) || !Array.isArray(values)) continue;
+    for (const [index, value] of values.slice(0, 32).entries()) {
+      if (count >= 32) return;
+      if (typeof value !== "string" || value.length > 800) continue;
+      const nonCurrent = historical || isNonCurrentStatement(value);
+      if (tokenize(value).length < (nonCurrent ? 1 : 3)) continue;
+      count += 1;
+      const jsonPointer = `/${key.replace(/~/g, "~0").replace(/\//g, "~1")}/${index}`;
+      if (nonCurrent) {
+        addNonCurrentEvidence({ citations, contradictions, relative, fileDigest, lowTrust, redactionApplied, excerpt: value, locator: jsonPointer, jsonPointer });
+        continue;
+      }
+      const family = lowTrust ? "low-trust-structured" : "structured";
+      const signal = { family, trust: lowTrust ? "LOW" : "NORMAL", kind: "declared-responsibility", path: relative, sourceRef: relative, sourceDigest: fileDigest, jsonPointer, excerpt: value, redactionApplied, evidenceId: evidenceId(family, `${relative}#${jsonPointer}`, fileDigest) };
+      structuredSignals.push(signal);
+      // The lexical projection already carries these words. This signal adds
+      // provenance, not another term-frequency vote for each array element.
+      addTerms(termWeights, tokenize(value), 0, family, signal.evidenceId);
+    }
+  }
+}
+
+function isNonCurrentStatement(value) {
+  const statement = String(value).replace(/^\s*#{1,6}\s+/, "");
+  return /^\s*(?:previously\b|formerly\b|(?:historical|legacy|migration)\s+(?:notes?|experiments?|responsibilities|capabilities)\b|(?:removed|deprecated)\s+(?:experiments?|features?|responsibilities|capabilities)\b|for example\b|no longer\b|not\s+(?!only\b))/i.test(statement)
+    || /\b(?:do(?:es)? not|did not|no longer)\s+(?:provide|support|perform|include|offer|describe)\b/i.test(statement);
+}
+
+function addNonCurrentEvidence({ citations, contradictions, relative, fileDigest, lowTrust, redactionApplied, excerpt, locator, jsonPointer }) {
+  const item = { evidenceId: evidenceId("historical-content", `${relative}#${locator}`, fileDigest), family: "historical-content", trust: lowTrust ? "LOW" : "NORMAL", sourceRef: relative, sourceDigest: fileDigest, excerpt: excerpt.slice(0, 800), redactionApplied, ...(jsonPointer ? { jsonPointer } : {}) };
+  citations.push(item);
+  contradictions.push({ ...item, kind: "NON_CURRENT_SOURCE_CONTEXT", reason: "The Source explicitly marks this material as historical, removed, example, or negated; it is not a current responsibility." });
 }
 
 function isOverviewBoilerplate(line) {
