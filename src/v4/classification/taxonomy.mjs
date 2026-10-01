@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
-import { parse as parseYaml } from "yaml";
+import { isAlias, parseDocument, visit } from "yaml";
 import { PACKAGE_ROOT } from "../../v3/constants.mjs";
 import { canonicalJson, digest, persistedJson } from "../../v3/utils.mjs";
 
@@ -48,7 +48,20 @@ export function loadTaxonomy(input) {
   const bytes = fs.readFileSync(file);
   assertDocumentBytes(bytes.length);
   const text = bytes.toString("utf8");
-  return /\.json$/i.test(file) ? JSON.parse(text) : parseYaml(text);
+  return /\.json$/i.test(file) ? JSON.parse(text) : parseDeclarativeTaxonomyYaml(text);
+}
+
+function parseDeclarativeTaxonomyYaml(text) {
+  const reject = () => {
+    throw taxonomyError("TAXONOMY_SERIALIZATION_UNSAFE", "Taxonomy YAML must be a single declarative document without anchors, aliases, merge keys, custom tags or duplicate keys.");
+  };
+  const document = parseDocument(text, { strict: true, uniqueKeys: true });
+  if (document.errors.length || document.warnings.length) reject();
+  visit(document, (_key, node) => {
+    if (isAlias(node) || node?.anchor || node?.key?.value === "<<") reject();
+    if (node?.tag && !node.tag.startsWith("tag:yaml.org,2002:")) reject();
+  });
+  return document.toJS({ maxAliasCount: 0 });
 }
 
 export function resolveTaxonomy(input) {
