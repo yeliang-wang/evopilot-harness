@@ -42,6 +42,33 @@ const onlySession = home => {
   return inspectClassificationSession(home, listed[0].sessionId);
 };
 
+test("rejected Advisor payload is absent from durable outcomes and resumed sessions", async t => {
+  const input = fixture(t);
+  let calls = 0;
+  const advisorProvider = async value => {
+    calls++;
+    return { ...supporting(value), unresolvedConcepts: [{ proposedLabel: "secret", definition: "api_key=must-not-persist", evidenceIds: value.hypothesis.citations.slice(0, 2).map(item => item.evidenceId) }] };
+  };
+  const result = await startClassificationSession({ ...input, advisorProvider });
+  assert.equal(result.status, "ANALYSIS_BLOCKED_ADVISOR");
+  assert.equal(result.currentResult.advisor.code, "ADVISOR_CONTRACT_REJECTED");
+  assert.ok(result.currentResult.advisor.validation.checks.some(item => item.id === "secret-free" && item.status === "FAIL"));
+  assert.match(result.currentResult.advisor.rawDigest, /^sha256:[a-f0-9]{64}$/);
+  const inspectFiles = directory => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name);
+      if (entry.isDirectory()) inspectFiles(file);
+      else assert.doesNotMatch(fs.readFileSync(file, "utf8"), /must-not-persist/, file);
+    }
+  };
+  inspectFiles(input.home);
+  const resumed = resumeClassificationSession({ home: input.home, sessionId: result.sessionId, expectedSessionDigest: result.sessionDigest, adapterId: "fresh-test-process" });
+  assert.equal(resumed.status, "ANALYSIS_BLOCKED_ADVISOR");
+  assert.equal(resumed.currentResult.advisor.rawDigest, result.currentResult.advisor.rawDigest);
+  assert.doesNotMatch(JSON.stringify(resumed), /must-not-persist/);
+  assert.equal(calls, 1);
+});
+
 test("classification persists an honest pending receipt before call and excludes concurrent duplicates", async t => {
   const input = fixture(t), provider = pendingAdvisor();
   const running = startClassificationSession({ ...input, advisorProvider: provider.controlled });

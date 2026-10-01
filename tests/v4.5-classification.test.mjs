@@ -718,6 +718,8 @@ test("malformed, secret-bearing, or out-of-candidate Advisor output is rejected 
     assert.equal(result.advisor.code, "ADVISOR_CONTRACT_REJECTED");
     assert.equal(result.advisor.invocationCount, 1);
     assert.equal(result.advisor.classificationResultCreated, false);
+    assert.equal(result.advisor.validation.normalized, undefined);
+    assert.doesNotMatch(JSON.stringify(result), /must-not-persist/);
   }
 });
 

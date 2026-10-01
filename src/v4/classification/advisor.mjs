@@ -122,11 +122,14 @@ function validateAdvisorOutput(value, candidatesByAxis, allowedEvidenceIds) {
     { id: "bounded-unresolved", status: unresolved.length <= 8 && unresolved.every((item) => item && typeof item === "object" && typeof item.proposedLabel === "string" && item.proposedLabel.length <= 256 && typeof item.definition === "string" && item.definition.length <= 4096 && Array.isArray(item.evidenceIds) && item.evidenceIds.length >= 2 && item.evidenceIds.every((id) => knownEvidence.has(id)) && !containsSecret(JSON.stringify(item))) ? "PASS" : "FAIL" },
     { id: "secret-free", status: !containsSecret(JSON.stringify({ candidates, unresolved })) ? "PASS" : "FAIL" }
   ];
+  // Failed payloads are untrusted, including fields that triggered secret checks.
+  // Persist only check results and the caller's raw digest, never rejected values.
+  if (checks.some((item) => item.status === "FAIL")) return { status: "FAILED", checks };
   const normalized = {
     candidates: candidates.map((item) => ({ axis: item.axis, nodeId: item.nodeId, support: item.support, confidence: Number(item.confidence), evidenceIds: [...new Set(item.evidenceIds)].sort(), contradictions: [...new Set(item.contradictions ?? [])].map(String).slice(0, 8) })),
     unresolvedConcepts: unresolved.map((item) => ({ proposedLabel: item.proposedLabel, definition: item.definition, parentId: item.parentId ?? null, evidenceIds: [...new Set(item.evidenceIds)].sort() }))
   };
-  return { status: checks.every((item) => item.status === "PASS") ? "VALIDATED" : "FAILED", checks, normalized };
+  return { status: "VALIDATED", checks, normalized };
 }
 
 function projectCandidate(candidate, evidenceById, candidateTerms) {

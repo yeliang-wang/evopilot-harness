@@ -22,6 +22,8 @@ The four classification results are:
 
 Mixed axes fold in this order: ambiguity, insufficient evidence, scheme extension, match. Each lower-priority axis remains visible. A failed or uncertain Advisor call returns `ANALYSIS_BLOCKED_ADVISOR` and never silently falls back to a broader result.
 
+Rejected Advisor output is not retained in validation or recovery records. A contract-rejection receipt keeps only validation check results and the raw payload digest, allowing diagnosis without storing rejected content.
+
 ## Taxonomy/v1
 
 The resource is data only. It cannot contain code, classifier weights, thresholds, prompts, provider settings, lifecycle decisions, or publication instructions.
