@@ -47,8 +47,18 @@ export function loadTaxonomy(input) {
   const file = path.resolve(String(input));
   const bytes = fs.readFileSync(file);
   assertDocumentBytes(bytes.length);
-  const text = bytes.toString("utf8");
-  return /\.json$/i.test(file) ? JSON.parse(text) : parseDeclarativeTaxonomyYaml(text);
+  let text;
+  try { text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes); }
+  catch { throw taxonomyError("TAXONOMY_SERIALIZATION_UNSAFE", "Taxonomy input must contain valid UTF-8 bytes."); }
+  if (!/\.json$/i.test(file)) return parseDeclarativeTaxonomyYaml(text);
+  try {
+    return JSON.parse(text, (_key, value) => {
+      if (typeof value === "number" && !Number.isFinite(value)) throw new Error("Non-finite JSON number");
+      return value;
+    });
+  } catch {
+    throw taxonomyError("TAXONOMY_SERIALIZATION_UNSAFE", "Taxonomy JSON must be valid RFC 8259 data with finite numbers.");
+  }
 }
 
 function parseDeclarativeTaxonomyYaml(text) {

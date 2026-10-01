@@ -64,3 +64,33 @@ test("unsafe YAML forms fail before Source processing and Advisor invocation", a
     } finally { fs.rmSync(root, { recursive: true, force: true }); }
   }
 });
+
+test("invalid UTF-8 in JSON or YAML is rejected before Source processing", async () => {
+  for (const extension of ["json", "yaml"]) {
+    const document = structuredClone(declaration);
+    document.spec.domains[0].label = "UTF8_SENTINEL";
+    const text = extension === "json" ? JSON.stringify(document) : stringify(document);
+    const [before, after] = text.split("UTF8_SENTINEL");
+    for (const invalidBytes of [[0xc0, 0xaf], [0xc3, 0x28], [0xe2, 0x82]]) {
+      const { root, file } = fixture(Buffer.concat([Buffer.from(before), Buffer.from(invalidBytes), Buffer.from(after)]), extension);
+      let calls = 0;
+      try {
+        assert.throws(() => resolveTaxonomy(file), { code: "TAXONOMY_SERIALIZATION_UNSAFE" });
+        await assert.rejects(analyzeSourceTaxonomy({
+          source: path.join(root, "SOURCE_MUST_NOT_BE_OPENED"), taxonomy: file,
+          advisorProvider: () => { calls++; throw new Error("ADVISOR_MUST_NOT_RUN"); }
+        }), { code: "TAXONOMY_SERIALIZATION_UNSAFE" });
+        assert.equal(calls, 0);
+      } finally { fs.rmSync(root, { recursive: true, force: true }); }
+    }
+  }
+});
+
+test("malformed JSON and non-finite JSON numbers produce typed serialization blockers", () => {
+  const json = JSON.stringify(declaration);
+  for (const text of [json + " trailing", json.replace('"label":"domain"', '"label":1e400'), json.replace('"label":"domain"', '"label":-1e400')]) {
+    const { root, file } = fixture(text, "json");
+    try { assert.throws(() => resolveTaxonomy(file), { code: "TAXONOMY_SERIALIZATION_UNSAFE" }); }
+    finally { fs.rmSync(root, { recursive: true, force: true }); }
+  }
+});
