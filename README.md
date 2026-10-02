@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases)
-[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0)
+[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.8.1)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -10,11 +10,12 @@
 
 `evopilot-harness` creates reviewed, immutable assets in user-owned Catalogs. Its Digital Expert guides compatible Agents through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
 
-Current published release: [`v4.8.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0), also available as [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0) with Registry signatures and SLSA provenance.
+Current published release: [`v4.8.1`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.1), also available as [`@evopilot/harness@4.8.1`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.1) with Registry signatures and SLSA provenance.
 
-This source tree targets **4.8.1 semantic Catalog supply**, not yet accepted or
-published. Engine version changes do not rewrite existing semantic asset versions,
-schemas or published digests. Candidate installation and Release remain separate.
+**4.8.1 semantic Catalog supply is accepted and published.** See the
+[current release and acceptance limits](docs/releases/current-release.md).
+Engine version changes do not rewrite existing semantic asset versions, schemas
+or published digests.
 
 ![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
 
@@ -48,11 +49,11 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.3.0 version
+npm view @evopilot/harness@4.8.1 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.3.0
+npm install --save-exact @evopilot/harness@4.8.1
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host workbuddy \
   --workspace "$HOME/.evopilot-harness" \
@@ -102,7 +103,7 @@ node src/index.mjs comparison process /path/to/comparison.yaml \
 
 Reports bind the exact task, Source, environment, model, toolchain, Evaluation, scorer, metrics and assets. Rescoring preserves prior reports; reviewed calibration replays explicit policies without activating them. See [Controlled Comparative Evidence](docs/guides/controlled-comparative-evidence.md).
 
-The v4.2 candidate adds append-only Asset Curriculum, reviewed static Research and Contribution evidence, immutable Evidence Run manifests, vector Professional Completeness reporting, and evidence-derived Domain/Role proposals. It does not add web crawling, executable adapters, model training, automatic approval, or automatic publication. See [Professional Asset Learning](docs/guides/professional-asset-learning.md).
+The retained v4.2 capabilities include append-only Asset Curriculum, reviewed static Research and Contribution evidence, immutable Evidence Run manifests, vector Professional Completeness reporting, and evidence-derived Domain/Role proposals. It does not add web crawling, executable adapters, model training, automatic approval, or automatic publication. See [Professional Asset Learning](docs/guides/professional-asset-learning.md).
 
 ## Reasoning And Review
 

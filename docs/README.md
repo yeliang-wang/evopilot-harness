@@ -2,9 +2,11 @@
 
 Use this index to choose the shortest path for your task. Generic architecture and lifecycle pages describe the current v3 product; legacy behavior is routed through explicit v2 compatibility pages.
 
-Current release: [`v4.8.0`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.0), published on GitHub and as [`@evopilot/harness@4.8.0`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.0). See [Release Notes](releases/4.8.0.md) for bounded semantic reasoning, incremental equivalence, federation, interoperable projections, and terminal immutable closure.
-
-The [v4.8.0 scalable semantic interoperability](releases/4.8.0.md) Target has completed acceptance and Release. The accepted Roadmap now includes a separately governed 4.8.1 semantic Catalog supply repair; its [internal implementation checkpoint](reference/semantic-catalog-implementation.md) is not acceptance or Release. The later cross-product convergence E2E remains an EvoPilot-series decision outside this repository.
+Current release: [v4.8.1](releases/4.8.1.md), published on GitHub and npm.
+See [current publication and acceptance](releases/current-release.md) for exact
+versions, public verification and the approved Codex-only acceptance limits.
+The [semantic Catalog reference](reference/semantic-catalog-implementation.md)
+describes the released producer implementation and independent asset versions.
 
 ## Learn The Product
 
@@ -57,7 +59,7 @@ The [v4.8.0 scalable semantic interoperability](releases/4.8.0.md) Target has co
 
 - [How Harness Works](guides/how-harness-works.md#6-how-a-control-plane-uses-a-published-harness) - current v3 immutable Bundle consumption boundary.
 - [Catalog Contract](reference/catalog-contract.md) - Catalog structure and validation.
-- [Semantic Catalog Implementation](reference/semantic-catalog-implementation.md) - unreleased 4.8.1 internal layers, local test scope, and remaining integration.
+- [Semantic Catalog Implementation](reference/semantic-catalog-implementation.md) - released 4.8.1 layers, operation contracts and separate source/installed evidence.
 - [Registry Contract](reference/registry-contract.md) - multi-Catalog discovery.
 - [Catalog Consumption Boundary](architecture/catalog-consumption-boundary.md) - legacy v2 producer/consumer contract.
 - [Selected Harness Binding](reference/selected-harness-binding.md) - legacy v2 selection evidence.
@@ -91,4 +93,4 @@ The [v4.8.0 scalable semantic interoperability](releases/4.8.0.md) Target has co
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), additively deepened for v4.6 by [ADR 0006](architecture/adr/0006-professional-reasoning-and-ontology-grounding.md), extended with the v4.7 declarative Semantic Asset Plane by [ADR 0007](architecture/adr/0007-governed-project-ontology-and-professional-packs.md), and scaled under bounded v4.8 interoperability by [ADR 0008](architecture/adr/0008-scalable-semantic-interoperability.md). Controlled comparative evidence is governed by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.8.0.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), additively deepened for v4.6 by [ADR 0006](architecture/adr/0006-professional-reasoning-and-ontology-grounding.md), extended with the v4.7 declarative Semantic Asset Plane by [ADR 0007](architecture/adr/0007-governed-project-ontology-and-professional-packs.md), and scaled under bounded v4.8 interoperability by [ADR 0008](architecture/adr/0008-scalable-semantic-interoperability.md). Controlled comparative evidence is governed by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.8.1.

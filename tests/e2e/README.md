@@ -1,5 +1,10 @@
 # Repository E2E corpus
 
+For completed 4.8.1 / 6.3.0 / 2.3.0 acceptance, public publication and explicit
+exclusions, see [the current release ledger](../../docs/releases/current-release.md).
+The sections below document individual runners and their evidence boundaries;
+a source or synthetic runner alone is not the release acceptance verdict.
+
 This directory is the discoverable, repository-local index for governed
 `evopilot-harness` end-to-end cases. It does not replace or revise an Evolution
 Target.

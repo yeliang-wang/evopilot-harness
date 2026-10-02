@@ -78,16 +78,17 @@ See [quickstart.md](quickstart.md), [automation.md](automation.md), [v3 Producti
 
 The v4.8 semantic commands are atomic diagnostic and CI surfaces. `semantic closure-publish` requires its own publication authorization, while `semantic closure-slice` accepts only an exact published closure digest and never grants mutation, approval, publication, or Release authority. See [Scalable Semantic Interoperability](../guides/semantic-interoperability.md).
 
-The **unreleased 4.8.1 implementation** adds `semantic catalog-preview`,
+The **released 4.8.1 package** provides `semantic catalog-preview`,
 `semantic catalog-inspect`, `semantic catalog-readback`, `semantic catalog-publish`,
 `semantic catalog-transition-preview`, `semantic catalog-rollback`,
 `semantic catalog-revoke`, `semantic catalog-recovery-inspect`,
 `semantic catalog-recovery-readback` and `semantic catalog-recover`
 for additive semantic supply and governed recovery. They require an explicitly configured, enabled
 Catalog and operator-owned scoped policy; publication remains separately
-authorized. Source-checkout contracts and known gaps are in the
-[Semantic Catalog implementation checkpoint](../reference/semantic-catalog-implementation.md).
-Their presence in source does not establish Candidate or Release readiness.
+authorized. Operation contracts and source-test boundaries are in the
+[Semantic Catalog reference](../reference/semantic-catalog-implementation.md).
+The [release ledger](../releases/current-release.md) records installed acceptance
+and public publication; these operations do not grant asset-publication authority.
 
 ## Feedback Evidence
 

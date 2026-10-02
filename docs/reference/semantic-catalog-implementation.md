@@ -1,11 +1,11 @@
-# Semantic Catalog implementation checkpoint
+# Semantic Catalog implementation reference
 
-Audience: Harness maintainers implementing the approved 4.8.1 semantic supply
-Target. Status: **internal implementation in progress**, not a released API,
-Candidate, acceptance result, or operator publication procedure.
+Audience: Harness maintainers and integration authors using released **4.8.1**
+semantic Catalog supply. See [current publication and acceptance](../releases/current-release.md)
+for installed-package evidence and its limits. Source tests described below
+remain supporting evidence, not substitutes for that acceptance record.
 
-The current package version remains 4.8.0 until the owning 4.8.1 implementation
-and distribution projections are complete. Existing semantic assets, including
+The Engine package version is 4.8.1. Existing semantic assets, including
 `TerminalSemanticClosure.version=4.8.0`, are not relabeled.
 
 ## Implemented internal layers
@@ -52,10 +52,10 @@ grants and an exact Catalog publication grant. Neither input files nor these
 operations may create or update that policy. Enabled Registry membership alone
 is not authority. See the [policy schema](../../schemas/semantic-catalog-policy-v1.schema.json).
 
-## Development operation surface
+## Operation surface
 
-These are source-checkout interfaces under implementation, not a released
-installation guide. Atomic CLI operations are `semantic catalog-preview`,
+Install the exact public package using [npm Distribution](../operations/npm-distribution.md).
+Atomic CLI operations are `semantic catalog-preview`,
 `semantic catalog-inspect`, `semantic catalog-readback` and
 `semantic catalog-publish`; each supports `--workspace` and `--json`.
 

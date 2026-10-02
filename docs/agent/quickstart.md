@@ -15,15 +15,15 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 For a publicly available version:
 
 ```bash
-npm view @evopilot/harness@4.4.0 version
+npm view @evopilot/harness@4.8.1 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.4.0
+npm install --save-exact @evopilot/harness@4.8.1
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
-The Registry command must return `4.4.0`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
+The Registry command must return `4.8.1`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
 On the first `prepare_workspace`, Harness writes only a provider-neutral empty `models.example.json` and points `config.yaml` at the external `models.json`. It never creates or overwrites `models.json`, imports a credential, or borrows the Agent host's conversation model. The operator creates the profile locally and may reference an explicitly named environment variable or use a `0600` file. The Expert calls `initialize_model_configuration`, which performs safe inspection and a minimal live doctor and stores only a secret-free receipt. `CONFIGURED_AND_VERIFIED` is the completed state and is reused by later Sessions. A failed reinitialization invalidates the earlier verification receipt for the same configuration and returns `CONFIGURED_UNVERIFIED`; it does not retry, choose a fallback, or modify `models.json`. After repairing connectivity or credentials, explicitly initialize again to establish fresh verification.
 

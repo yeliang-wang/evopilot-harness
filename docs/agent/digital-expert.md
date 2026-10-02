@@ -54,7 +54,7 @@ The Expert asks exactly one shortest missing question and does not repeat inform
 - Generic or custom Agent: load `digital-expert/adapters/generic/AGENT.md` and implement stdio MCP with structured tool results.
 - MCP-only client: use `digital-expert/adapters/mcp/MCP.md`; it provides transport guidance but not a conversational UI.
 
-Adapter packaging does not prove the host supports local instructions, subprocesses, stdio MCP, exact canonical rendering, fixed locale, complete-turn receipts, operation interception, recovery, or required timeout/OperationJob behavior. Unsupported hosts must return a capability blocker before lifecycle entry. v4.4 acceptance requires candidate-package conformance, an independent Host, and the real WorkBuddy Host; packaging or an Adapter file alone does not prove a Host version.
+Adapter packaging does not prove the host supports local instructions, subprocesses, stdio MCP, exact canonical rendering, fixed locale, complete-turn receipts, operation interception, recovery, or required timeout/OperationJob behavior. Unsupported hosts must return a capability blocker before lifecycle entry. The historical v4.4 campaign required candidate-package conformance, an independent Host and WorkBuddy. Current 4.8.1 real Host acceptance is Codex-only; see [the release scope](../releases/current-release.md). Packaging or an Adapter file alone does not prove a Host version.
 
 ## Legacy Skill
 

@@ -1,4 +1,8 @@
-# Deployment
+# Historical Hub deployment reference
+
+This page preserves the older Hub/container layout. It is not an installation
+path or release requirement for Harness 4.8.1. Use [local npm and stdio MCP](npm-distribution.md)
+for the current product; no current Harness container release is claimed.
 
 ## v3 Runtime Layout
 
@@ -63,7 +67,7 @@ Default image:
 ghcr.io/yeliang-wang/evopilot-harness:4.0.1
 ```
 
-This is the latest published image after the tag workflow and immutable digest are verified. Do not use the failed `4.0.0` source tag. v4 ordinary operation is local-first through stdio MCP; no remote production deployment is part of the default release contract.
+This is the historical Compose image reference, not a current release claim. Do not use the failed `4.0.0` source tag. v4 ordinary operation is local-first through stdio MCP; no remote production deployment is part of the default release contract.
 
 Override image and port:
 

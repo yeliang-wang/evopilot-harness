@@ -15,7 +15,18 @@ test("active documentation binds the current package and released version", () =
   const releaseIndex = read("docs/releases/README.md");
   const releaseNote = read(`docs/releases/${version}.md`);
   const roadmap = JSON.parse(read("governance/roadmap.yaml"));
-  const publishedVersion = roadmap.versionPolicy.publishedBaseline;
+  // The Roadmap baseline is frozen by approved Target digests. Completed
+  // publication has its own append-only evidence; it can advance before the
+  // next Roadmap revision without turning the released package into a candidate.
+  const publication = JSON.parse(read("governance/releases/semantic-convergence-20261002-publication.json"));
+  assert.equal(publication.status, "PUBLIC_DESTINATIONS_VERIFIED");
+  const published = publication.products.find((product) => product.product === "harness");
+  assert.equal(published?.status, "PUBLISHED_AND_VERIFIED");
+  assert.equal(published.tag, `v${published.version}`);
+  assert.match(published.sourceCommit, /^[a-f0-9]{40}$/);
+  assert.equal(published.releaseUrl, `https://github.com/yeliang-wang/evopilot-harness/releases/tag/${published.tag}`);
+  const publishedVersion = published.version;
+  assert.ok(roadmap.versionPolicy.publishedBaseline);
   const escapedPublishedVersion = publishedVersion.replaceAll(".", "\\.");
   const releaseManagement = read("docs/operations/release-management.md");
   const npmDistribution = read("docs/operations/npm-distribution.md");
