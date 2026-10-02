@@ -385,3 +385,8 @@ Source content boundary excludes protected Host, model and credential paths befo
 The approved finite path policy is `sourceContentBoundaryPolicy` in `governance/roadmap.yaml`. Entire Host state directories, including co-located `.codex/skills` and `.codebuddy/skills`, are excluded; public `.agents/skills` remains readable. Relative descendant matching permits an authorized repository beneath a managed checkout. Public-only Source snapshot digests remain stable; affected snapshots and policy-bound caches require fresh evidence. Content redaction remains additional protection, not a promise to identify arbitrary secrets without reading content.
 
 This repair retains the existing product versions and boundaries. Original acceptance and historical evidence remain intact. The current execution stops after steps 1 and 2; it does not authorize soak, formal acceptance closure, or publication.
+
+
+## 本轮发布的持续验证范围
+
+用户明确取消 Harness 4.8.1、Runtime 6.3.0、Expert 2.3.0 的新增 90 分钟（5400 秒）持续验证。机器规则以 `releaseDurationExceptionPolicy` 为准，优先于本轮 Host、继承及系列终验中的时长要求。省略项记录为 `SKIPPED_BY_USER_NOT_PASS`；保留旧结果及其原始构建绑定，不将旧结果迁移为新候选包的长时间稳定性证明。其余功能、安全、Codex Host、回归和三产品串联验收要求不变。发布仍需独立确认。

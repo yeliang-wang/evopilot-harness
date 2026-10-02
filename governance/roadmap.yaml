@@ -1293,5 +1293,21 @@
         "Application Support"
       ]
     ]
+  },
+  "releaseDurationExceptionPolicy": {
+    "schema": "evopilot-release-duration-exception/v1",
+    "versions": {
+      "evopilot-harness": "4.8.1",
+      "evopilot-runtime": "6.3.0",
+      "evopilot-evolution-expert": "2.3.0"
+    },
+    "newActiveSoakRequired": false,
+    "omittedDurationSeconds": 5400,
+    "omittedResult": "SKIPPED_BY_USER_NOT_PASS",
+    "existingEvidenceImmutable": true,
+    "historicalPassTransferAllowed": false,
+    "remainingFunctionalSecurityHostRegressionAndTerminalE2ERequired": true,
+    "releaseAuthorizationGranted": false,
+    "precedence": "For these exact releases only, this exception supersedes every requirement to execute a new 5400-second/90-minute soak, including inherited and series-terminal clauses. Original evidence remains bound to its original artifacts; no long-duration stability claim applies to untested successor bytes. All other required acceptance remains mandatory."
   }
 }

@@ -1,0 +1,105 @@
+{
+  "schema": "evopilot-series-public-release-authorization/v1",
+  "decision": "AUTHORIZED",
+  "by": "user",
+  "at": "2026-10-02T00:04:13.810016+00:00",
+  "decisionEvidenceDigest": "sha256:a9c1930cda57e687fec29744e98e30e807cf6284cd399e12ff6e728087a45590",
+  "approvedPacketDigest": "sha256:63458b8998af64d2cf014ff46f4a71c3ea5281993ec450bfef03dd93c3597a59",
+  "products": [
+    {
+      "product": "harness",
+      "targetId": "evopilot-harness-v4.8.1-semantic-catalog-supply-repair",
+      "targetRevision": 7,
+      "targetAuthorizationDigest": "sha256:99d40252251ae3fad3bdf9b9df94e6249fada2b8088b2c73db2eccc656ec0405",
+      "releaseAuthorizationDigest": "sha256:81e362c0b0e540f7eadf46a6e038d875f0f7344027aa4ca3d1632c698c02ece6",
+      "release": {
+        "actions": [
+          "commit",
+          "push",
+          "tag",
+          "github-release",
+          "npm",
+          "installer"
+        ],
+        "versions": {
+          "evopilot-harness": "4.8.1"
+        }
+      }
+    },
+    {
+      "product": "runtime",
+      "targetId": "evopilot-v6.3.0-semantic-convergence-successor",
+      "targetRevision": 6,
+      "targetAuthorizationDigest": "sha256:fdff08629f724375df2b304a27576646ce2395f35e90d01a7b67d6d7c31330f3",
+      "releaseAuthorizationDigest": "sha256:7298898a7e956f43f4d440975a5663d60089b10d129ccde95d3a204ac9a6eadb",
+      "release": {
+        "actions": [
+          "commit",
+          "push",
+          "tag",
+          "github-release",
+          "npm",
+          "installer",
+          "ghcr"
+        ],
+        "versions": {
+          "evopilot": "6.3.0"
+        }
+      }
+    },
+    {
+      "product": "expert",
+      "targetId": "evopilot-evolution-expert-v2.3.0-semantic-convergence-successor",
+      "targetRevision": 7,
+      "targetAuthorizationDigest": "sha256:192c8083c4c7de54f608f088a67256024a9a4df72ec07607c745f4a0af5825d7",
+      "releaseAuthorizationDigest": "sha256:71bfd20fb9c80574fce02b58c59bf86f8717cf1e019f1d6be14d7ce12664dab8",
+      "release": {
+        "product": "evopilot-evolution-expert",
+        "actions": [
+          "commit",
+          "push",
+          "tag",
+          "github-release",
+          "npm",
+          "installer"
+        ],
+        "versions": {
+          "evopilot": "2.3.0"
+        }
+      }
+    }
+  ],
+  "frozenTagCommits": {
+    "evopilot-harness/v4.8.1": "6afda3bc4f118b5f966eaa7e1a970387a97785a6",
+    "evopilot/v6.3.0": "896ba700fb232ccdc727beb287bdb4fa17be88ae",
+    "evopilot/evolution-expert-v2.3.0": "cf03ba312ef18ce9a2e7af96e2c5ca6f2f6307e1"
+  },
+  "acceptedReleaseSetDigests": {
+    "harness": "sha256:e24db3546d3d616c049df00abbcb448da4281c8b3db9a771430eae77590d9765",
+    "runtime": "sha256:7602bc0ee8bbe294639f03911bc3bf4618363db380d5e5fb406778cef1ce04e1",
+    "expert": "sha256:e151c9a5350f5bf6cb50cf5414db9507f4139809abd50a610ea7d148ad8fc700"
+  },
+  "acceptance": {
+    "harness": {
+      "passed": 303,
+      "total": 303
+    },
+    "runtime": {
+      "passed": 400,
+      "total": 400
+    },
+    "expert": {
+      "passed": 400,
+      "total": 400
+    },
+    "noRegression": "PASSED",
+    "terminalSeriesEvidenceDigest": "sha256:9f82c7e927dba0ac9f0ce8cfdc241c118091f2c3fb2819a304a54855d5133186",
+    "realHost": "Codex 0.155.0-alpha.16.4",
+    "nativeCredentialInteraction": "SKIPPED_BY_USER_NOT_PASS",
+    "new90MinuteSoak": "SKIPPED_BY_USER_NOT_PASS"
+  },
+  "boundedMetadataReconciliation": "Authorization and final evidence commits may mechanically change only recorded approval/status fields, release notes, governed evidence and terminal verification receipts; rerun temporary-index and Roadmap gates. No product-byte rebuild, version change, forced update, existing asset replacement, access expansion or authority invention.",
+  "publicationStatus": "AUTHORIZED_NOT_YET_PUBLISHED",
+  "remoteDeploymentAuthorized": false,
+  "rebuildAuthorized": false
+}
