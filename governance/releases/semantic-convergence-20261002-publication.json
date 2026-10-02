@@ -1,0 +1,105 @@
+{
+  "schema": "evopilot-series-publication-evidence/v1",
+  "status": "PUBLIC_DESTINATIONS_VERIFIED",
+  "recordedAt": "2026-10-02T01:23:15.332335+00:00",
+  "approvedPacketDigest": "sha256:63458b8998af64d2cf014ff46f4a71c3ea5281993ec450bfef03dd93c3597a59",
+  "acceptance": {
+    "harness": 303,
+    "runtime": 400,
+    "expert": 400,
+    "total": 1103,
+    "noRegression": "PASSED",
+    "terminalSeriesE2E": "PASSED",
+    "new90MinuteSoak": "SKIPPED_BY_USER_NOT_PASS",
+    "nativeCredentialInteraction": "SKIPPED_BY_USER_NOT_PASS",
+    "otherLiveHosts": "NOT_REQUIRED_NOT_CLAIMED",
+    "demonstrationWholeGoal": "PARTIAL_1_OF_4_NOT_COMPLETED"
+  },
+  "products": [
+    {
+      "product": "harness",
+      "version": "4.8.1",
+      "status": "PUBLISHED_AND_VERIFIED",
+      "tag": "v4.8.1",
+      "sourceCommit": "6afda3bc4f118b5f966eaa7e1a970387a97785a6",
+      "releaseUrl": "https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.1",
+      "releaseAuthorizationDigest": "sha256:81e362c0b0e540f7eadf46a6e038d875f0f7344027aa4ca3d1632c698c02ece6",
+      "immutableAssets": [
+        {
+          "name": "evopilot-harness-4.8.1-source.tar.gz",
+          "sha256": "sha256:5a01f0c536c656325fa4f050c3d73cee2bf11b25a10b96608e9e9de2206bdc06"
+        },
+        {
+          "name": "evopilot-harness-4.8.1-sbom.spdx.json",
+          "sha256": "sha256:71e61d7d310f363f71ffcf66d95a7eaf74ae886a89d2d89feac73ef7d5cb5d12"
+        },
+        {
+          "name": "SHA256SUMS",
+          "sha256": "sha256:5a688eacf4d4c5e69be04a8665e5fface4c961e5bfc8165d8c1248ca334ff72c"
+        },
+        {
+          "name": "evopilot-harness-4.8.1-provenance.json",
+          "sha256": "sha256:dc24a6d32a78a62035a7feaf61e343780ff8eec10b3390b6d34ff886fef7b76e"
+        },
+        {
+          "name": "evopilot-harness-4.8.1.tgz",
+          "sha256": "sha256:768a135ef15522b7c6968c9a17fb01abe7274c37bdb6e22a7a4f4c0b742fdd2c"
+        }
+      ],
+      "npmPackages": [
+        {
+          "name": "@evopilot/harness",
+          "version": "4.8.1",
+          "sha256": "sha256:768a135ef15522b7c6968c9a17fb01abe7274c37bdb6e22a7a4f4c0b742fdd2c",
+          "integrity": "sha512-TJG6Sl/REGBXgCmuE6Vb3UCd75g6Ej/3DWZQduplYILezmDoE2SzbeSxjN2Xgm+X0ZX5ej0s74kZyO7x8A654Q==",
+          "tarball": "https://registry.npmjs.org/@evopilot/harness/-/harness-4.8.1.tgz",
+          "provenance": {
+            "url": "https://registry.npmjs.org/-/npm/v1/attestations/@evopilot%2fharness@4.8.1",
+            "provenance": {
+              "predicateType": "https://slsa.dev/provenance/v1"
+            }
+          },
+          "signatures": [
+            {
+              "sig": "MEUCIQC6Al9ymHcSYIEUl1ZbqbfDtPVgTYL/EYu2TbwCBPU7HgIgDIQ/xfUICQTV0pfrrLjk84855z6DO+CdohTzTELV8oU=",
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+            },
+            {
+              "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+              "sig": "MEYCIQCVYV9yyZWP+fCSoDoWKkvRroaFOsZQO5qbqYfneTtIhwIhAODPd+1oHYUDuIXF5eNd4lmuvrdtInv0Ik8T2Af4ufiP"
+            }
+          ]
+        }
+      ],
+      "freshPublicInstall": true,
+      "registrySignaturesAndProvenanceVerified": true,
+      "acceptedBytesRebuilt": false,
+      "acceptedBytesRepacked": false,
+      "tagMoved": false,
+      "stdio": {
+        "protocolInitialization": "PASS",
+        "toolCount": 41,
+        "newLiveHostAcceptanceClaim": false
+      }
+    }
+  ],
+  "publicationRecovery": [
+    {
+      "workflow": "https://github.com/yeliang-wang/evopilot-harness/actions/runs/36945250848",
+      "cause": "Registry processing exceeded five-minute verifier window after successful publish",
+      "resolution": "Fresh read-only public metadata, exact tarball, signature/provenance, install and stdio verification passed; no republish"
+    },
+    {
+      "workflow": "https://github.com/yeliang-wang/evopilot/actions/runs/36945371375",
+      "cause": "GitHub contents API omits content for Target JSON over 1 MB; publication step never ran",
+      "repairCommit": "5369008ab88929ac52f8361040b58d34011fdae2",
+      "verifiedWorkflow": "https://github.com/yeliang-wang/evopilot/actions/runs/36945821823",
+      "productBytesChanged": false
+    }
+  ],
+  "terminalDeploymentReconciliation": "Separate verification-only record after this evidence commit",
+  "newProviderModelCalls": 0,
+  "sourceCommands": 0,
+  "remoteRuntimeDeployment": false,
+  "userInstalledSuiteModified": false
+}
