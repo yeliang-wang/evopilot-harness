@@ -8,7 +8,7 @@ description: Question-driven ordinary human entry for evopilot-harness v4. Uses 
 Adapter metadata:
 
 - Schema: `evopilot-harness-digital-expert-adapter/v1`
-- Expert version: `4.8.1`
+- Expert version: `4.8.2`
 - Core digest: `sha256:273f685987ac612b730dd303c564650a4dfce03734284828575ab9ffc1a363aa`
 - Agent protocol: `evopilot-harness-agent-operations/v3`
 - Engine API: `harness.evopilot.io/v3`

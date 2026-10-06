@@ -978,7 +978,7 @@ export function inspectAgentSession(home, sessionId) {
   const persistedDigest = calculateSessionDigest(session);
   if (session.sessionDigest !== persistedDigest) throw sessionError("SESSION_INTEGRITY_FAILURE", `Agent Operation Session digest mismatch at ${file}.`, "stop-and-inspect-session-integrity");
   if (session.schema !== AGENT_SESSION_SCHEMA) throw sessionError("PRE_V45_SESSION_UNSUPPORTED", `Session schema ${session.schema ?? "unknown"} is outside the fresh v4.5.0 representation baseline and will not be read or migrated.`, "start-fresh-v4.5-session");
-  if (!["4.5.0", "4.6.0", "4.7.0", "4.8.0", "4.8.1"].includes(session.compatibility?.productVersion)) throw sessionError("PRE_V45_SESSION_UNSUPPORTED", "The Agent Operation Session predates the fresh v4.5.0 representation baseline and will not be read or migrated.", "start-fresh-v4.5-session");
+  if (!["4.5.0", "4.6.0", "4.7.0", "4.8.0", "4.8.1", "4.8.2"].includes(session.compatibility?.productVersion)) throw sessionError("PRE_V45_SESSION_UNSUPPORTED", "The Agent Operation Session predates the fresh v4.5.0 representation baseline and will not be read or migrated.", "start-fresh-v4.5-session");
   validateSession(session, file);
   if (assertExternalWorkspace(session.workspace.home) !== workspace) {
     throw sessionError("SESSION_WORKSPACE_MISMATCH", "Agent Operation Session belongs to a different Workspace.", "use-the-session-owning-workspace");

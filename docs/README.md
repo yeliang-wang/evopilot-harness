@@ -1,8 +1,8 @@
 # EvoPilot Harness Documentation
 
-Use this index to choose the shortest path for your task. The current Engine is 4.8.1, with v3 asset contracts and Agent Operations Protocol v3. Historical versioned acceptance and compatibility pages preserve their original scope.
+Use this index to choose the shortest path for your task. This source targets Engine 4.8.2, with v3 asset contracts and Agent Operations Protocol v3. Historical versioned acceptance and compatibility pages preserve their original scope.
 
-Current release: [v4.8.1](releases/4.8.1.md), published on GitHub and npm.
+Package notes: [4.8.2](releases/4.8.2.md). The [publication ledger](releases/current-release.md) records independently verified public releases.
 See [current publication and acceptance](releases/current-release.md) for exact
 versions, public verification and the approved Codex-only acceptance limits.
 The [semantic Catalog reference](reference/semantic-catalog-implementation.md)
@@ -102,4 +102,4 @@ The Harness Digital Expert operates this producer. EvoPilot Evolution Expert gui
 - [Legacy Source-To-Harness](guides/source-to-harness.md) and [Harness Evolution](guides/harness-evolution.md) - detailed v2 behavior.
 - [Release Notes](releases/README.md) - versioned shipped behavior and validation.
 
-Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), additively deepened for v4.6 by [ADR 0006](architecture/adr/0006-professional-reasoning-and-ontology-grounding.md), extended with the v4.7 declarative Semantic Asset Plane by [ADR 0007](architecture/adr/0007-governed-project-ontology-and-professional-packs.md), and scaled under bounded v4.8 interoperability by [ADR 0008](architecture/adr/0008-scalable-semantic-interoperability.md). Controlled comparative evidence is governed by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). The current published Engine and npm version is v4.8.1.
+Normative Engine product and module ownership is defined by [ADR 0001](architecture/adr/0001-product-and-module-boundaries.md), with module 8 replaced for v4.5 by [ADR 0005](architecture/adr/0005-source-first-business-classification.md), additively deepened for v4.6 by [ADR 0006](architecture/adr/0006-professional-reasoning-and-ontology-grounding.md), extended with the v4.7 declarative Semantic Asset Plane by [ADR 0007](architecture/adr/0007-governed-project-ontology-and-professional-packs.md), and scaled under bounded v4.8 interoperability by [ADR 0008](architecture/adr/0008-scalable-semantic-interoperability.md). Controlled comparative evidence is governed by [ADR 0003](architecture/adr/0003-controlled-comparative-evidence.md). Agent-native operating boundaries are defined by [ADR 0002](architecture/adr/0002-agent-native-harness-operations.md), refined by [ADR 0004](architecture/adr/0004-deterministic-business-centric-interaction.md). Consult the [publication ledger](releases/current-release.md) for the verified Engine and npm versions.

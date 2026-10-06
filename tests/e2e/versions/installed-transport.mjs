@@ -34,7 +34,7 @@ function tree(root) {
 /** Mechanical installation identity check, NOT a Candidate/Host authorization.
  * The external campaign must independently prove that this complete inventory
  * came from the accepted artifacts, including every package dependency. */
-export function createInstalledProbeTransport({contextBytes,expectedContextDigest,sourceRoot}) {
+export function createInstalledProbeTransport({contextBytes,expectedContextDigest,sourceRoot,expectedVersion="4.8.1"}) {
   assert.ok(Buffer.isBuffer(contextBytes)&&contextBytes.length<=8388608,'CONTEXT_SIZE_LIMIT');
   assert.ok(isDigest(expectedContextDigest)&&bytesDigest(contextBytes)===expectedContextDigest,'CONTEXT_DIGEST_MISMATCH');
   const context=JSON.parse(contextBytes);
@@ -42,7 +42,10 @@ export function createInstalledProbeTransport({contextBytes,expectedContextDiges
   const extra=['workspace'];
   exactKeys(context,['schema','product','version','installationRoot','files','artifactSetDigest','acceptanceBindingDigest','probeInputDigest',...extra]);
   assert.equal(context.schema,'evopilot-installed-readonly-probe-context/v1');
-  const spec=packages[context.product];assert.equal(context.version,spec.version);
+  // The historical CLI stays pinned to 4.8.1. A current source integration test
+  // may supply an explicit supported version; the untrusted context never chooses it.
+  assert.ok(["4.8.1","4.8.2"].includes(expectedVersion),'PROBE_VERSION_UNSUPPORTED');
+  const spec={...packages[context.product],version:expectedVersion};assert.equal(context.version,spec.version);
   assert.ok([context.artifactSetDigest,context.acceptanceBindingDigest,context.probeInputDigest].every(isDigest),'EXTERNAL_BINDING_REFERENCE_REQUIRED');
   assert.ok(path.isAbsolute(context.installationRoot)&&path.isAbsolute(sourceRoot),'ABSOLUTE_ROOT_REQUIRED');
   const root=fs.realpathSync(context.installationRoot),source=fs.realpathSync(sourceRoot);outside(root,source);outside(source,root);
