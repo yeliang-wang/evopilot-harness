@@ -14,6 +14,8 @@ If the command does not return `4.8.1`, that public package is not available. A 
 
 The current Roadmap-published baseline is `4.8.1`. Verify npm Registry metadata, signatures, provenance, and the corresponding GitHub Release independently before relying on either distribution layer.
 
+For a new installation, follow [Agent Quickstart](../agent/quickstart.md). The default-branch documentation includes corrections made after 4.8.1 publication; the old README inside the immutable 4.8.1 tarball is not replaced. See [documentation and immutable artifacts](../releases/current-release.md#documentation-and-immutable-artifacts).
+
 ## Promote An Accepted Candidate
 
 The 4.8.1 publication workflows promote the frozen Release Candidate files.
@@ -105,6 +107,8 @@ The result is read-only. It reports:
 
 Bootstrap never edits Agent configuration or initializes the Workspace. The Agent loads the returned Adapter and starts the exact MCP command. Its first product call is `inspect_capabilities`; it compares the Engine result with the Adapter before calling `prepare_workspace`.
 
+`mcp.installedCommand.command` is a bare binary name, so it requires a `PATH` entry in the Host process. With the local npm installation above, use an absolute path to `node_modules/.bin/evopilot-harness`, or copy the exact command and arguments under `mcp.exactNpxCommand`. A relative `./node_modules/.bin` path only works while the process is in the installation directory. Bootstrap supports `codex`, `workbuddy`, `claude-code`, `generic`, and `mcp`; the managed `agent install/status/upgrade/repair/uninstall` commands currently implement WorkBuddy only.
+
 Bootstrap and `agent status` report Harness LLM initialization independently from package installation. An installed expert can therefore report `status=INSTALLED` with `initializationStatus=ACTION_REQUIRED`. After the human edits the external Workspace `models.json` locally, the Digital Expert calls `initialize_model_configuration`. A configuration-only inspection plus a successful minimal live doctor yields `CONFIGURED_AND_VERIFIED` and a secret-free mode-`0600` receipt in the external Workspace. Harness never imports the Agent host's model credential, and an upgrade or repair never overwrites the human-maintained configuration.
 
 ## WorkBuddy
@@ -112,12 +116,15 @@ Bootstrap and `agent status` report Harness LLM initialization independently fro
 The installed package initializes a visible WorkBuddy Digital Expert through WorkBuddy's supported `expert-manager` validation and registration interface. Installation is never implicit in `agent bootstrap`; first preview the exact owned paths and MCP entry, then repeat with the returned digest:
 
 ```bash
-evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --json
-evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --confirm 'sha256:<planDigest>' --json
-evopilot-harness agent status --host workbuddy --workspace "$HOME/.evopilot-harness" --json
+./node_modules/.bin/evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --json
+# After reviewing the preview, replace <returned-planDigest> with its exact value.
+./node_modules/.bin/evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --confirm '<returned-planDigest>' --json
+./node_modules/.bin/evopilot-harness agent status --host workbuddy --workspace "$HOME/.evopilot-harness" --json
 ```
 
 `upgrade`, `repair`, and `uninstall` use the same preview-bound confirmation. The installer backs up managed configuration, preserves unrelated MCP servers, refuses to replace an unowned conflicting expert, and never removes the external Workspace. WorkBuddy is the first host implementation; the public lifecycle contract is host-neutral so another host can add its own supported adapter without exposing private fields in the core contract.
+
+The detected WorkBuddy desktop app version and its CLI version are separate bindings. The installer checks a known desktop app version against `5.x`; historical CLI evidence such as `2.106.4` does not replace that check or prove current live compatibility. Current 4.8.1 real Host acceptance is [Codex-only](../releases/current-release.md#acceptance-and-explicit-limits).
 
 WorkBuddy must load the returned `workbuddy` Adapter and configure a project MCP server named `evopilot-harness` using the bootstrap command. Project MCP servers require explicit host approval. In headless mode use WorkBuddy's documented `enableAllProjectMcpServers` or `enabledMcpjsonServers` setting; do not modify user-global configuration during package acceptance.
 
@@ -129,7 +136,7 @@ The previously recorded WorkBuddy acceptance is bounded to the exact CLI path/ve
 
 The allowlist includes runtime code and definitions required by the Engine. It excludes:
 
-- `.git`, `.github`, tests, scripts, governance files, and development evidence;
+- `.git`, `.github`, tests, scripts, governance files, repository `docs/`, and development evidence;
 - user Organization Catalogs, published Workspace state, and Sessions;
 - source projects, attachments, logs, and feedback payloads;
 - `models.json`, API keys, tokens, credentials, private keys, and signatures;
@@ -143,6 +150,8 @@ npm run package:smoke
 ```
 
 `package:smoke` installs the tarball in a clean temporary directory and verifies CLI, bootstrap, Digital Expert, stdio MCP, tools/resources, external Workspace, shutdown, source-checkout exclusion, controlled Comparison processing, Calibration replay, and digest-bound evidence report acknowledgement.
+
+The package README links to maintained online documentation because repository `docs/` is excluded. `package:verify` checks local links and image targets in every packed Markdown file against the actual npm file inventory, including package-boundary escapes. A file that exists only in the source tree cannot satisfy this check. External URL availability and heading anchors are outside this local-file gate. Correct future package documentation through a new independently versioned publication; never change an existing tarball, tag or accepted digest.
 
 ## Trusted Publishing
 

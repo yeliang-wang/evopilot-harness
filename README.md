@@ -13,13 +13,13 @@
 Current published release: [`v4.8.1`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.1), also available as [`@evopilot/harness@4.8.1`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.1) with Registry signatures and SLSA provenance.
 
 **4.8.1 semantic Catalog supply is accepted and published.** See the
-[current release and acceptance limits](docs/releases/current-release.md).
+[current release and acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
 Engine version changes do not rewrite existing semantic asset versions, schemas
 or published digests.
 
-![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](docs/assets/harness-hub.png)
+![Harness Hub showing v3 assets, proposals, policy packs, and evaluation state](https://raw.githubusercontent.com/yeliang-wang/evopilot-harness/main/docs/assets/harness-hub.png)
 
-[Documentation](docs/README.md) | [Agent Quickstart](docs/agent/quickstart.md) | [Controlled Comparison](docs/guides/controlled-comparative-evidence.md) | [npm Distribution](docs/operations/npm-distribution.md) | [How It Works](docs/guides/how-harness-works.md) | [Architecture](docs/architecture/overview.md) | [MCP Reference](docs/agent/mcp-reference.md) | [Release Notes](docs/releases/README.md)
+[Documentation](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/README.md) | [Agent Quickstart](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/quickstart.md) | [Controlled Comparison](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/controlled-comparative-evidence.md) | [npm Distribution](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/operations/npm-distribution.md) | [How It Works](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/how-harness-works.md) | [Architecture](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/overview.md) | [MCP Reference](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/mcp-reference.md) | [Release Notes](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/README.md)
 
 ## What A Harness Is
 
@@ -46,7 +46,7 @@ This is intentionally narrower than general software classification. Unknown dom
 
 ## Quick Start
 
-Requires Node.js 22.14 or newer. For a version that is present in the public registry, install the exact immutable package in a dedicated runtime directory:
+Requires Node.js 22.14 or newer and an Agent that can load local instructions and launch stdio MCP. For the Runtime + Evolution Expert + Harness combination, start with the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md). Harness alone can be installed in a dedicated runtime directory:
 
 ```bash
 npm view @evopilot/harness@4.8.1 version
@@ -55,55 +55,51 @@ cd "$HOME/.evopilot-harness-runtime"
 npm init -y
 npm install --save-exact @evopilot/harness@4.8.1
 ./node_modules/.bin/evopilot-harness agent bootstrap \
-  --host workbuddy \
+  --host codex \
   --workspace "$HOME/.evopilot-harness" \
   --json
 ```
 
-`npm view` must confirm the exact public version; otherwise use a verified local tarball or source checkout. Bootstrap reports the packaged Adapter, pinned MCP command, protocols and external Workspace without changing the Host. WorkBuddy installation has its own preview-bound confirmation:
+`npm view` must confirm the exact public version; otherwise use a verified local tarball or source checkout. Bootstrap reports the packaged Adapter, pinned MCP command, protocols and external Workspace without changing the Host. Load its `adapter.path` and configure its `mcp.exactNpxCommand` in the Host. For a local installation, configure the **absolute** installed binary path; a bare `evopilot-harness` command requires an existing `PATH` entry.
 
-```bash
-evopilot-harness agent install --host workbuddy --workspace "$HOME/.evopilot-harness" --json
-# Review the plan, then repeat with --confirm <planDigest>.
-```
-
-Load the returned Adapter and local stdio MCP command in a compatible host. Source development may use `node /absolute/path/to/evopilot-harness/src/index.mjs`; installed operation needs no checkout.
+Follow the [Agent Quickstart](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/quickstart.md) to activate the Adapter, check the live MCP connection, reuse existing model configuration, and run a first classification task. WorkBuddy has a separate preview-bound installer; Codex uses bootstrap plus manual Adapter/MCP configuration. A packaged Adapter is not proof of compatibility with every Host version. The current release's live acceptance is Codex-only.
 
 Then tell the Agent:
 
 ```text
 使用 /absolute/path/to/project 作为只读 source project，
-引导我生成或进化一个可复用 Harness；先给我看 Operation Plan，
-自动展示 Engine Proposal Review，并分别停在批准和发布决策点。
+使用 /absolute/path/to/taxonomy.yaml 作为我的业务分类方案。
+复用当前已验证的模型配置，先完成分类分析并展示结果，
+停在是否继续 Harness 演进的选择处。
 ```
 
-The Digital Expert asks one missing question at a time and operates MCP. `AgentOperationSession` persists the Plan, full Review and separate decisions. Receipts protect interrupted operations; maintenance publication needs separate authorization. Comparison, calibration and Professional Completeness reports require separate review acknowledgement. The [MCP reference](docs/agent/mcp-reference.md) covers Sources, feedback, learning, maintenance, diagnostics and recovery. Static ingestion never runs Source build, test, deploy, business, adapter or network acquisition commands.
+Replace both paths with existing inputs. A fresh Workspace contains generic validation capabilities and policies, with no professional Profile, Bundle or business vocabulary. Missing knowledge can correctly produce `NEED_MORE_EVIDENCE`; installation does not supply business evidence or publication authority. The Digital Expert asks only for missing information and operates MCP. `AgentOperationSession` preserves the Plan, full Review and separate decisions. The [MCP reference](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/mcp-reference.md) covers the later production lifecycle and recovery. Source ingestion is static and never runs Source build, test, deploy, business or adapter commands; GitHub acquisition is a separate bounded read-only source resolver.
 
 ## Atomic CLI Compatibility
 
-The v3 JSON CLI supports CI, existing automation and emergency diagnosis:
+The v3 JSON CLI supports CI, existing automation and emergency diagnosis. Run these examples from the installation directory above; a source checkout can instead use `node src/index.mjs`.
 
 Process one approved structured execution-feedback package without creating a Proposal or mutating assets:
 
 ```bash
-node src/index.mjs feedback process /path/to/feedback.yaml \
+./node_modules/.bin/evopilot-harness feedback process /path/to/feedback.yaml \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
 
-`--production-log` remains unstructured, redacted source material for Proposal reasoning. A `HarnessExecutionFeedbackPackage` is a separate governed contract with approval, redaction, expiry, provenance, package/payload digests, and exact published Bundle/Profile/Component binding. See [Feedback Evidence](docs/guides/feedback-evidence.md).
+`--production-log` remains unstructured, redacted source material for Proposal reasoning. A `HarnessExecutionFeedbackPackage` is a separate governed contract with approval, redaction, expiry, provenance, package/payload digests, and exact published Bundle/Profile/Component binding. See [Feedback Evidence](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/feedback-evidence.md).
 
 Process one approved Baseline/Candidate package and return an immutable report without approving, publishing, rolling back, activating policy, or executing either asset:
 
 ```bash
-node src/index.mjs comparison process /path/to/comparison.yaml \
+./node_modules/.bin/evopilot-harness comparison process /path/to/comparison.yaml \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
 
-Reports bind the exact task, Source, environment, model, toolchain, Evaluation, scorer, metrics and assets. Rescoring preserves prior reports; reviewed calibration replays explicit policies without activating them. See [Controlled Comparative Evidence](docs/guides/controlled-comparative-evidence.md).
+Reports bind the exact task, Source, environment, model, toolchain, Evaluation, scorer, metrics and assets. Rescoring preserves prior reports; reviewed calibration replays explicit policies without activating them. See [Controlled Comparative Evidence](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/controlled-comparative-evidence.md).
 
-The retained v4.2 capabilities include append-only Asset Curriculum, reviewed static Research and Contribution evidence, immutable Evidence Run manifests, vector Professional Completeness reporting, and evidence-derived Domain/Role proposals. It does not add web crawling, executable adapters, model training, automatic approval, or automatic publication. See [Professional Asset Learning](docs/guides/professional-asset-learning.md).
+The retained v4.2 capabilities include append-only Asset Curriculum, reviewed static Research and Contribution evidence, immutable Evidence Run manifests, vector Professional Completeness reporting, and evidence-derived Domain/Role proposals. It does not add web crawling, executable adapters, model training, automatic approval, or automatic publication. See [Professional Asset Learning](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/professional-asset-learning.md).
 
 ## Reasoning And Review
 
@@ -138,7 +134,7 @@ GLM advice cannot approve, publish, execute Sources, change `models.json`, inven
 Mutating Proposals contain exact before/after assets, cited changes, `EvaluationPack v3`, compatibility, dependencies, impact, expected effects, regression and rollback analysis. Closure validates schemas and recomputes asset, Evaluation, Catalog-baseline, change and impact bindings. Validate it before semantic review:
 
 ```bash
-node src/index.mjs proposal validate <proposal-id> \
+./node_modules/.bin/evopilot-harness proposal validate <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
@@ -146,19 +142,19 @@ node src/index.mjs proposal validate <proposal-id> \
 Every `produce` run stops before review or returns a terminal/blocked decision. A required Advisor failure keeps the evidence and Proposal for diagnosis, returns a non-zero exit code, and cannot proceed. `proposal review` runs deterministic Delta/Evaluation gates plus an independent evidence-bound semantic reviewer and persists a structured report:
 
 ```bash
-node src/index.mjs proposal review <proposal-id> \
+./node_modules/.bin/evopilot-harness proposal review <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --models-file /path/to/models.json \
   --json
 
-node src/index.mjs proposal approve <proposal-id> \
+./node_modules/.bin/evopilot-harness proposal approve <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --confirmed-by admin@example.com \
   --confirmation "Reviewed evidence, reasoning, Advisor citations, asset boundary, and evaluation case." \
   --evaluation-reviewed \
   --json
 
-node src/index.mjs proposal publish <proposal-id> \
+./node_modules/.bin/evopilot-harness proposal publish <proposal-id> \
   --workspace "$EVOPILOT_HARNESS_HOME" \
   --json
 ```
@@ -183,11 +179,13 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The Engine `4.1.2` source line retains the v3 JSON CLI, v3 Harness assets and Workspace state, Proposal history, Catalog, Registry, feedback packages, v4 Agent Sessions, and EvaluationPack v1/v2 read compatibility. Legacy Sessions without `evidenceReports` remain readable. New approval automation must pass Asset Delta closure and the Proposal Review Engine first; existing v2 automation can follow the [v2 compatibility guide](docs/guides/v2-compatibility.md).
+The current Engine is `4.8.1`; the canonical asset namespace remains `harness.evopilot.io/v3`, and Agent operations use `evopilot-harness-agent-operations/v3`. These protocol versions do not identify the Engine release. The v4.5 baseline reset does not support direct reading or migration of pre-v4.5 Workspace and Session representations. Historical v2/v3 CLI and migration material is retained in the [v2 compatibility guide](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/v2-compatibility.md), not as a promise of direct upgrade to 4.8.1. See the [architecture compatibility section](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/overview.md#compatibility) and [current release limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
 
 GitHub Release and npm publication are separate release evidence layers and require explicit authorization. Container publication and deployment are outside this npm-and-MCP distribution scope and are not release prompts.
 
 ## Validate
+
+Contributors run these repository checks from a source checkout, not the npm installation directory:
 
 ```bash
 npm test
@@ -200,22 +198,22 @@ Evaluation reports `INSUFFICIENT_EVAL_EVIDENCE` until enough independently revie
 
 ## Documentation
 
-- [Documentation index](docs/README.md)
-- [CLI quickstart](docs/cli/quickstart.md)
-- [Agent-native quickstart](docs/agent/quickstart.md)
-- [Digital Expert and Adapter import](docs/agent/digital-expert.md)
-- [MCP reference](docs/agent/mcp-reference.md)
-- [npm distribution and installed Agent operation](docs/operations/npm-distribution.md)
-- [Agent Operation Session protocol](docs/agent/session-protocol.md)
-- [v3 production lifecycle](docs/guides/v3-production-lifecycle.md)
-- [v3 asset model](docs/architecture/v3-asset-model.md)
-- [v3 reasoning contract](docs/reference/v3-reasoning-contract.md)
-- [Asset Delta and Evaluation](docs/guides/asset-delta-and-evaluation.md)
-- [Controlled comparative evidence and calibration](docs/guides/controlled-comparative-evidence.md)
-- [Harness Hub integration](docs/guides/harness-hub-integration.md)
-- [Development](docs/development.md)
-- [Security](SECURITY.md)
-- [Contributing](CONTRIBUTING.md)
+- [Documentation index](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/README.md)
+- [CLI quickstart](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/cli/quickstart.md)
+- [Agent-native quickstart](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/quickstart.md)
+- [Digital Expert and Adapter import](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/digital-expert.md)
+- [MCP reference](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/mcp-reference.md)
+- [npm distribution and installed Agent operation](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/operations/npm-distribution.md)
+- [Agent Operation Session protocol](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/session-protocol.md)
+- [v3 production lifecycle](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/v3-production-lifecycle.md)
+- [v3 asset model](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/v3-asset-model.md)
+- [v3 reasoning contract](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/reference/v3-reasoning-contract.md)
+- [Asset Delta and Evaluation](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/asset-delta-and-evaluation.md)
+- [Controlled comparative evidence and calibration](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/controlled-comparative-evidence.md)
+- [Harness Hub integration](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/harness-hub-integration.md)
+- [Development](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/development.md)
+- [Security](https://github.com/yeliang-wang/evopilot-harness/blob/main/SECURITY.md)
+- [Contributing](https://github.com/yeliang-wang/evopilot-harness/blob/main/CONTRIBUTING.md)
 
 Licensed under [Apache License 2.0](LICENSE).
 

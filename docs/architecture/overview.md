@@ -24,15 +24,15 @@ flowchart LR
 flowchart TD
   Scheme["User-owned 业务分类方案"] --> Resolve["Semantic Foundation + Taxonomy Resolution"]
   Ingest["Static source ingestion"] --> Hypothesis["Taxonomy-blind Source concept hypothesis"]
-  Resolve --> Retrieval["Exact + BM25 + embedding + structured retrieval"]
-  Hypothesis --> Retrieval
-  Retrieval --> Classify["One Advisor signal + deterministic classification"]
+  Resolve --> TaxonomyRetrieval["Exact + BM25 + embedding + structured retrieval"]
+  Hypothesis --> TaxonomyRetrieval
+  TaxonomyRetrieval --> Classify["One Advisor signal + deterministic classification"]
   Classify --> Handoff["Complete match + explicit human handoff"]
   Handoff --> Snapshot["Redaction and immutable snapshots"]
   Snapshot --> Graph["Evidence Graph"]
   Graph --> Eligibility["Harness Eligibility Gate"]
-  Eligibility --> Retrieval["Ontology and BM25 retrieval"]
-  Retrieval --> Scoring["Seven-factor candidate scoring"]
+  Eligibility --> HarnessRetrieval["Ontology and BM25 retrieval"]
+  HarnessRetrieval --> Scoring["Seven-factor candidate scoring"]
   Scoring --> Decision["Versioned decision policy"]
   Decision --> Advisor["Policy-required GLM Advisor"]
   Advisor --> Proposal["Typed Asset Delta Proposal"]
@@ -61,7 +61,7 @@ The deterministic boundary decides eligibility and asset relationship. GLM recei
 | Assets | HarnessComponent, HarnessProfile, HarnessBundle/Export | Bundle is the immutable execution publication unit. |
 | Governance | EvaluationPack, AssetDeltaProposal, Proposal Lifecycle, Schema Validator | Positive/negative evaluation and Delta closure precede a current ready Review Report, human approval, and immutable publication. |
 | Distribution | Catalog Publisher/Signing, Registry | Catalog lists assets; Registry lists Catalog roots. |
-| Compatibility | Migration/Rollback | v2 inputs migrate into v3 without redefining the canonical asset. |
+| Compatibility | Migration/Rollback | Historical v2-to-v3 tooling is retained; the v4.5 representation reset excludes direct pre-v4.5 Workspace/Session migration. |
 
 ADR 0001 defines 24 core Engine modules. [ADR 0005](adr/0005-source-first-business-classification.md) replaces module 8 OntologyPack with Semantic Foundation/Taxonomy Resolution; [ADR 0006](adr/0006-professional-reasoning-and-ontology-grounding.md) deepens grounding; and [ADR 0007](adr/0007-governed-project-ontology-and-professional-packs.md) adds the declarative Semantic Asset Plane inside the same module without adding an authority plane or changing the module count. [ADR 0003](adr/0003-controlled-comparative-evidence.md) adds four controlled comparative-evidence modules, producing 28 enforced Engine module boundaries. [ADR 0002](adr/0002-agent-native-harness-operations.md) adds five operating boundaries, for 33 accepted product and operating boundaries. [ADR 0004](adr/0004-deterministic-business-centric-interaction.md) refines their interaction contract without adding or moving product ownership.
 
@@ -135,4 +135,6 @@ An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
 ## Compatibility
 
-The canonical asset API namespace remains `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`, controlled comparison uses `comparison.evopilot.io/v1`, classification uses the v4.5 `Taxonomy/v1` and `ClassificationSession/v1` contracts, and Agent operations use `evopilot-harness-agent-operations/v3`. Optional control-plane projections are exports, not source assets. The published Engine remains `4.4.0` until separate release authorization. v4.5 intentionally does not read or migrate pre-v4.5 Workspace, Session, configuration, package, or protocol representations. This representation reset does not remove product capability: after explicit classification handoff, the complete v4.4 Harness Eligibility, professional reasoning, Catalog comparison, Proposal, Review, approval, separate publication, validation, recovery, and close lifecycle remains required. See [ADR 0002](adr/0002-agent-native-harness-operations.md), [ADR 0003](adr/0003-controlled-comparative-evidence.md), [ADR 0004](adr/0004-deterministic-business-centric-interaction.md), and [ADR 0005](adr/0005-source-first-business-classification.md).
+The published Engine is [4.8.1](../releases/current-release.md). The canonical asset API namespace remains `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`, controlled comparison uses `comparison.evopilot.io/v1`, classification uses the v4.5 `Taxonomy/v1` and `ClassificationSession/v1` contracts, and Agent operations use `evopilot-harness-agent-operations/v3`. These are independent protocol baselines, not Engine versions. Optional control-plane projections are exports, not source assets.
+
+The v4.5 baseline intentionally does not read or migrate pre-v4.5 Workspace, Session, configuration, package, or protocol representations. This representation reset does not remove product capability: after explicit classification handoff, the complete retained Harness Eligibility, professional reasoning, Catalog comparison, Proposal, Review, approval, separate publication, validation, recovery, and close lifecycle remains required. See [ADR 0002](adr/0002-agent-native-harness-operations.md), [ADR 0003](adr/0003-controlled-comparative-evidence.md), [ADR 0004](adr/0004-deterministic-business-centric-interaction.md), and [ADR 0005](adr/0005-source-first-business-classification.md).

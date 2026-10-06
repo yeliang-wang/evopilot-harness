@@ -9,6 +9,7 @@ const root = path.resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const packed = JSON.parse(execFileSync("npm", ["pack", "--dry-run", "--json"], { cwd: root, encoding: "utf8" }))[0];
 const files = packed.files.map((entry) => entry.path).sort();
+const packagedDocumentation = verifyPackagedMarkdown(files);
 
 assert.equal(manifest.name, "@evopilot/harness");
 assert.match(manifest.version, /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/);
@@ -138,9 +139,38 @@ console.log(JSON.stringify({
   packedBytes: packed.size,
   unpackedBytes: packed.unpackedSize,
   expectedBin: "evopilot-harness",
-  forbiddenPathCount: 0
+  forbiddenPathCount: 0,
+  packagedDocumentation
 }, null, 2));
 
 function isText(file) {
   return /(?:^|\/)(?:[^/]+\.(?:js|mjs|json|md|txt|yaml|yml|html|css)|NOTICE|LICENSE|README)$/.test(file);
+}
+
+function verifyPackagedMarkdown(inventory) {
+  const markdownFiles = inventory.filter((file) => /\.md$/i.test(file));
+  const packagedPaths = new Set(inventory);
+  let localLinksChecked = 0;
+  for (const file of markdownFiles) {
+    const content = fs.readFileSync(path.join(root, file), "utf8").replace(/```[\s\S]*?```|~~~[\s\S]*?~~~/g, "");
+    // Inline links/images and reference definitions use package-relative paths.
+    // A source-tree file that npm omits cannot satisfy an installed README link.
+    const destinations = [
+      ...content.matchAll(/!?\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+["'][^"']*["'])?\)/g),
+      ...content.matchAll(/^\s{0,3}\[[^\]]+\]:\s*(<[^>]+>|[^\s]+)(?:\s+["'][^"']*["'])?\s*$/gm)
+    ];
+    for (const match of destinations) {
+      const destination = match[1].replace(/^<|>$/g, "");
+      if (!destination || destination.startsWith("#") || /^(?:https?:|mailto:|tel:|data:)/i.test(destination)) continue;
+      const target = decodeURIComponent(destination.split(/[?#]/, 1)[0]);
+      if (!target) continue;
+      assert.ok(!path.posix.isAbsolute(target) && !path.win32.isAbsolute(target), `Packaged Markdown link escapes package: ${file} -> ${destination}`);
+      const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), target));
+      assert.ok(resolved !== ".." && !resolved.startsWith("../"), `Packaged Markdown link escapes package: ${file} -> ${destination}`);
+      const directoryPresent = resolved === "." || inventory.some((entry) => entry.startsWith(`${resolved}/`));
+      assert.ok(packagedPaths.has(resolved) || directoryPresent, `Markdown link missing from npm package: ${file} -> ${destination}`);
+      localLinksChecked += 1;
+    }
+  }
+  return { markdownFiles: markdownFiles.length, localLinksChecked, missingTargets: 0 };
 }

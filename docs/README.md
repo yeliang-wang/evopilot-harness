@@ -1,12 +1,21 @@
 # EvoPilot Harness Documentation
 
-Use this index to choose the shortest path for your task. Generic architecture and lifecycle pages describe the current v3 product; legacy behavior is routed through explicit v2 compatibility pages.
+Use this index to choose the shortest path for your task. The current Engine is 4.8.1, with v3 asset contracts and Agent Operations Protocol v3. Historical versioned acceptance and compatibility pages preserve their original scope.
 
 Current release: [v4.8.1](releases/4.8.1.md), published on GitHub and npm.
 See [current publication and acceptance](releases/current-release.md) for exact
 versions, public verification and the approved Codex-only acceptance limits.
 The [semantic Catalog reference](reference/semantic-catalog-implementation.md)
 describes the released producer implementation and independent asset versions.
+
+## Start Here
+
+1. [Install and connect an Agent](agent/quickstart.md) — exact package, Adapter activation, live stdio check, existing model configuration, and first classification result.
+2. [Install the EvoPilot product combination](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md) — Runtime, Evolution Expert, and Harness ownership and connections.
+3. [Understand Host support](agent/quickstart.md#load-the-expert) — distinguish packaged Adapters, installer support, and real Host acceptance.
+4. [Troubleshoot by layer](operations/troubleshooting.md#start-with-the-failing-layer) — package, Host, MCP, Workspace, model, or Session.
+
+The Harness Digital Expert operates this producer. EvoPilot Evolution Expert guides Runtime projects and goals. A published `HarnessBundle` is an asset consumed by Runtime; it is not either Expert or the Agent host. Runtime lifecycle execution and Harness asset publication keep separate authority.
 
 ## Learn The Product
 
@@ -51,7 +60,7 @@ describes the released producer implementation and independent asset versions.
 - [Controlled Comparative Evidence](guides/controlled-comparative-evidence.md) - Baseline/Candidate contracts, exact-context comparison, immutable rescoring, policy calibration, Agent flow, and CLI.
 - [Professional Asset Learning](guides/professional-asset-learning.md) - v4.2 candidate contracts for static research, curriculum, run manifests, completeness vectors, contributions, domain/role evidence, Agent flow, and authority boundaries.
 - [Source-first Business Classification](guides/business-classification.md) - user-owned 业务分类方案, deterministic classification outcomes, missing-category guidance, and explicit Harness handoff.
-- [Ontology Grounding And Bundle Semantic Requirements](guides/ontology-grounding.md) - the v4.6 implementation surface for evidence-bound professional concepts and Eligibility-independent Bundle compatibility; formal acceptance and release remain pending.
+- [Ontology Grounding And Bundle Semantic Requirements](guides/ontology-grounding.md) - retained v4.6 contracts for evidence-bound professional concepts and Eligibility-independent Bundle compatibility; current release scope is recorded above.
 - [Governed Project Ontology And Professional Packs](guides/project-ontology.md) - the released v4.7 declarative Pack, immutable project ontology, projection, Skill, and independent lifecycle surface.
 - [Scalable Semantic Interoperability](guides/semantic-interoperability.md) - the released v4.8 bounded reasoning, index, affected-subgraph, projection, federation, and terminal closure surface.
 
