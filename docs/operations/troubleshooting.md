@@ -1,5 +1,22 @@
 # Troubleshooting
 
+## Start With The Failing Layer
+
+Use the exact installed package and external Workspace from [Agent Quickstart](../agent/quickstart.md). In shell examples below, `evopilot-harness` means an installed binary available on `PATH`; for the documented local npm installation, substitute `$HOME/.evopilot-harness-runtime/node_modules/.bin/evopilot-harness`. Source-only diagnostic examples are labeled by their `node src/index.mjs` prefix.
+
+| Symptom | Inspect first | Next action |
+|---|---|---|
+| `command not found` or Host cannot start the server | Absolute binary path, Node version, Host process `PATH` | Use the installed absolute path or exact pinned `npx` command from bootstrap. |
+| Bootstrap is `READY`, but the Host has no Expert or tools | Loaded Adapter and actual MCP registration | Activate both in the Host; bootstrap is read-only discovery, not installation. |
+| `agent install --host codex` fails | Error `UNSUPPORTED_HOST_INSTALLER` | Use Codex bootstrap and manual Adapter/MCP setup; only WorkBuddy has the managed installer. |
+| MCP initializes, then compatibility fails | `inspect_capabilities` and packaged manifest lock | Compare exact Engine, Expert, Core, Agent protocol and Engine API bindings; repair the mismatched installation. |
+| Workspace is absent or outside allowed paths | `workspace` and `nextAction` from capabilities | Select a writable external Workspace and prepare it; never store state inside package/source files. |
+| Model is unconfigured or unverified | `llm v3-readiness --workspace <path> --json` | Reuse a verified binding. For an actual fault, repair the external configuration and explicitly initialize once. |
+| Classification is incomplete or production needs evidence | Engine classification outcome or `NEED_MORE_EVIDENCE` | Add the missing Source evidence or user-owned knowledge; a fresh Workspace supplies no business vocabulary or professional Bundle. |
+| A call disconnected or timed out | Existing Session, in-flight operation, Job and receipt | Inspect the exact pending operation before retry. Follow [Session recovery](../agent/quickstart.md#decisions-and-interrupted-work). |
+
+Harness MCP uses local stdio and needs no Runtime URL or listening port. EvoPilot Runtime connectivity belongs to the separate [series connection guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md). Harness model configuration is also separate from the Host's conversation model and Runtime LLM profile; reuse each product's existing configured binding.
+
 ## Public npm Version Is Missing
 
 Check the exact Registry version:
