@@ -1,8 +1,8 @@
 # Release Notes
 
-- [4.8.2 package notes](4.8.2.md) — installed documentation and version projection maintenance; see the [publication ledger](current-release.md) for verified availability.
+- [4.8.2 package notes](4.8.2.md) — installed documentation and version projection maintenance, published on GitHub and npm; [verification and limits](current-release.md).
 
-- [4.8.1 current release](4.8.1.md) — accepted semantic Catalog supply, published on GitHub and npm; [verification and limits](current-release.md).
+- [4.8.1](4.8.1.md) — accepted semantic Catalog supply; [historical publication evidence](../../governance/releases/semantic-convergence-20261002-publication.json).
 
 Release notes document shipped behavior and validation for each Engine version. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
 

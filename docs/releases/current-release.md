@@ -1,37 +1,26 @@
-# Current published release: evopilot-harness 4.8.1
+# Current published release: evopilot-harness 4.8.2
 
-Verified publication date: **2026-10-02**. This page records the completed
-release and approved acceptance scope. The [publication evidence](../../governance/releases/semantic-convergence-20261002-publication.json)
-binds exact tags, immutable artifact digests, package integrity and acceptance.
+Verified publication date: **2026-10-06**. The [publication evidence](../../governance/releases/documentation-onboarding-20261006-publication.json) binds the exact accepted Candidate, tag, immutable public files, npm integrity, acceptance and independent readback.
 
 ## Public distribution
 
-- [GitHub Release v4.8.1](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.1): public stable release, five frozen assets verified.
-- [npm @evopilot/harness@4.8.1](https://www.npmjs.com/package/@evopilot/harness/v/4.8.1): exact-version fresh installation, Registry signatures/provenance and local stdio MCP verified.
-- Tag source: `6afda3bc4f118b5f966eaa7e1a970387a97785a6`.
+- [GitHub Release v4.8.2](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.2): stable release; all five downloaded files match the accepted Candidate byte-for-byte.
+- [npm @evopilot/harness@4.8.2](https://www.npmjs.com/package/@evopilot/harness/v/4.8.2): exact public tarball, Registry signatures and SLSA provenance verified; a fresh installation passed signature audit, version/bootstrap and local stdio inspection.
+- Tag source: `89c1bb8fadb4e8e5bd02f05231acb2f679b4c8b1`.
+- Accepted Candidate: [37404815729](https://github.com/yeliang-wang/evopilot-harness/actions/runs/37404815729). GitHub and npm promotion used these frozen bytes without rebuilding or repacking.
 
-Harness distribution is GitHub Release, npm and local stdio MCP. Container or
-remote-service deployment is outside this release scope. Semantic asset versions
-remain independent; `TerminalSemanticClosure.version=4.8.0` is unchanged.
+The patch ships installed documentation and onboarding corrections, generated version projections, and the explicit 4.8.2 Session-version recognition repair. Earlier Sessions remain inspectable; cross-version resume and Core-only migration still reject. Core, protocols, schemas, semantic assets and lifecycle authority remain unchanged. Harness distribution remains GitHub Release, npm and local stdio MCP; container or remote deployment is outside this scope.
 
 ## Acceptance and explicit limits
 
-The approved acceptance scope is **1103/1103 PASS with NO_REGRESSION**:
-Harness 303, Runtime 400, and Expert 400. The terminal series journey used real
-Codex execution, independent business/Harness validation, Target completion and
-exact receipt readback after Runtime restart. Its demonstration Goal was **one
-of four Targets complete**, not whole-Goal completion.
+The finite patch Target completed 10 current criteria, three current cases and individual current impact review for all 303 inherited definitions. The inheritance review distinguishes 232 unchanged-input equivalence rows, 49 historical transactions with current nonregression and 22 affected-behavior rows. It does not transfer historical PASS or claim 303 newly executed live journeys.
 
-Real Host acceptance is Codex-only. A new 90-minute soak and Runtime/Expert
-native credential entry, submission and cancellation were explicitly excluded
-and remain `SKIPPED_BY_USER_NOT_PASS`. Existing configuration was reused. Other
-live Hosts, cross-Host equivalence and long-duration stability are not claimed.
+Fresh macOS verification passed **610/610** tests. Linux Candidate verification passed 606 tests with four existing macOS-only installer fixtures skipped; those four passed on macOS. Exact public-package and complete installed-dependency comparisons, five installed Session controls and an external-configuration preservation control passed.
 
-## Documentation and immutable artifacts
+Actual **Codex 0.155.0-alpha.16.4** completed eight MCP calls covering stdio, a fresh isolated Session, process restart and same-Session recovery. Full human UI qualification, other live Hosts, historical model/business journeys, a new 90-minute soak and native credential interactions were not newly executed and are not counted as new PASS. No model was called. Source-only fixtures are not live Host proof.
 
-Current installation and operating guidance lives on the repository's default
-branch. This documentation correction follows publication; existing tags,
-source archives, npm tarballs and their embedded README copies remain immutable.
-It does not rebuild, republish or change product behavior. Historical release
-and Candidate notes preserve their original evidence and are not current
-installation instructions.
+The structural Target gates passed separately from independently reviewed execution evidence; their `evidenceExecutionVerified=false` field is retained. This release record does not claim a new three-product business E2E or a daily-installation cutover.
+
+## Historical evidence and immutable artifacts
+
+The [4.8.1 publication record](../../governance/releases/semantic-convergence-20261002-publication.json) retains its original semantic-convergence acceptance and limits. Historical Targets, release tags, source archives, npm tarballs, asset versions and receipts remain unchanged. Current operating instructions live on the default branch; publication records do not rewrite accepted package bytes or publish user Harness assets.

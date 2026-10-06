@@ -1,0 +1,151 @@
+{
+  "schema": "evopilot-harness-patch-publication-evidence/v1",
+  "status": "PUBLIC_DESTINATIONS_AND_INSTALLED_STDIO_VERIFIED",
+  "recordedAt": "2026-10-06T03:40:47.443812+00:00",
+  "product": "evopilot-harness",
+  "version": "4.8.2",
+  "tag": "v4.8.2",
+  "sourceCommit": "89c1bb8fadb4e8e5bd02f05231acb2f679b4c8b1",
+  "releaseUrl": "https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.2",
+  "candidate": {
+    "runId": "37404815729",
+    "url": "https://github.com/yeliang-wang/evopilot-harness/actions/runs/37404815729",
+    "archiveDigest": "sha256:90fd6b47476c977581a83ce7023e0fc1ca03b8b375ce82f5c1edb0d144d2577c",
+    "packageDigest": "sha256:c62c3ede30ab2081f652c5b518124308d1a60879da1849c3418875d06b7857fb",
+    "rebuilt": false,
+    "repacked": false
+  },
+  "authority": {
+    "userInstructionRef": "governance/releases/documentation-onboarding-20261006-authority.json",
+    "userInstructionDigest": "sha256:317f168b0b1864b60985914b1205f2eee61476ae3824d9a03cae38abac884b39",
+    "targetScopeDigest": "sha256:3b26e2fd3ad68ef8730ebb345caf4ad24f5e4ee6f442ff62583c1137fe5a87d8",
+    "releaseAuthorizationDigest": "sha256:a79473be0258c3461d60b8eb64ab81afffb9d5d5c66581ba6069581ca3c00635",
+    "individualHumanTechnicalDigestReview": false
+  },
+  "acceptance": {
+    "status": "CURRENT_SCOPED_ACCEPTANCE_COMPLETE",
+    "inheritedDefinitions": 303,
+    "currentCriteria": 10,
+    "currentCases": 3,
+    "inheritanceEvidenceModes": {
+      "EXACT_UNCHANGED_EXECUTION_INPUT_EQUIVALENCE": 232,
+      "HISTORICAL_ONE_TIME_TRANSACTION_WITH_CURRENT_NONREGRESSION": 49,
+      "CURRENT_AFFECTED_BEHAVIOR": 22
+    },
+    "historicalPassTransferred": false,
+    "macOSRegression": {
+      "total": 610,
+      "passed": 610,
+      "failed": 0,
+      "skipped": 0
+    },
+    "linuxCandidateRegression": {
+      "total": 610,
+      "passed": 606,
+      "failed": 0,
+      "skipped": 4,
+      "skipReason": "Existing macOS-specific WorkBuddy installer fixtures; all four passed macOS full verification."
+    },
+    "installedSessionControls": 5,
+    "installedConfigurationPreservationControl": 1,
+    "actualCodex": {
+      "version": "0.155.0-alpha.16.4",
+      "scope": "stdio MCP, fresh Session create/inspect, owned-process restart and same-Session resume",
+      "calls": 8,
+      "fullHumanUiQualificationNewlyExecuted": false
+    },
+    "noRegression": "PASSED_FOR_APPROVED_MAINTENANCE_SCOPE",
+    "newModelCalls": 0,
+    "new90MinuteSoak": "NOT_EXECUTED_NOT_PASS",
+    "nativeCredentialInteraction": "NOT_EXECUTED_NOT_PASS",
+    "freshHistoricalBusinessJourneys": "NOT_REEXECUTED",
+    "otherLiveHosts": "NOT_NEWLY_CLAIMED"
+  },
+  "immutableAssets": [
+    {
+      "name": "SHA256SUMS",
+      "digest": "sha256:9a2a989877b60ff034e1721ec791413418c9189f87b176b2b9715f8716883bb7",
+      "bytes": 405
+    },
+    {
+      "name": "evopilot-harness-4.8.2-provenance.json",
+      "digest": "sha256:00e7f507b5921a69bf373d46510122edb6aaf5fdad3c359bbcb68028408bf30a",
+      "bytes": 1457
+    },
+    {
+      "name": "evopilot-harness-4.8.2-sbom.spdx.json",
+      "digest": "sha256:3eb2cd7ca84920c4c7bd1847e95c1bd900378f5057852f914b28310b0cc2bae0",
+      "bytes": 3768
+    },
+    {
+      "name": "evopilot-harness-4.8.2-source.tar.gz",
+      "digest": "sha256:bc89516cfbfb4144b332041d9ddebfcdc5d64771fcac4e95138c96d18b5a4fe6",
+      "bytes": 3926410
+    },
+    {
+      "name": "evopilot-harness-4.8.2.tgz",
+      "digest": "sha256:c62c3ede30ab2081f652c5b518124308d1a60879da1849c3418875d06b7857fb",
+      "bytes": 504173
+    }
+  ],
+  "npm": {
+    "name": "@evopilot/harness",
+    "version": "4.8.2",
+    "integrity": "sha512-49lrVpc99EyO0nr6X3QlYkVWQGJYV/1qlN6Rm74A6hUlPPER/rHKYiNPm7w7h+1Qmi1U8JSW1RBTYQecYO9YIA==",
+    "sha256": "sha256:c62c3ede30ab2081f652c5b518124308d1a60879da1849c3418875d06b7857fb",
+    "tarball": "https://registry.npmjs.org/@evopilot/harness/-/harness-4.8.2.tgz",
+    "signatures": [
+      {
+        "sig": "MEQCIBNGTXiQ8IBQpquSn7dUJK0TaaSxPKpinTn1lMunl3YBAiBJCXoQ4o+2hpXL/rrj+62sqNHFsO9kWYMDZqs1s3+vWA==",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      },
+      {
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+        "sig": "MEQCIGrTUqTi1UWgbgQ9Lm51sgbj4/zguUwOPGabx/wkjCeWAiBowODXd6oYCheTAe35jLwyPtgt8Cw/3gdKnaIJmfGXPA=="
+      }
+    ],
+    "attestations": {
+      "url": "https://registry.npmjs.org/-/npm/v1/attestations/@evopilot%2fharness@4.8.2",
+      "provenance": {
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    },
+    "distTags": {
+      "latest": "4.8.2"
+    }
+  },
+  "promotionWorkflows": [
+    {
+      "runId": 37409629639,
+      "url": "https://github.com/yeliang-wang/evopilot-harness/actions/runs/37409629639",
+      "conclusion": "success"
+    },
+    {
+      "runId": 37409632345,
+      "url": "https://github.com/yeliang-wang/evopilot-harness/actions/runs/37409632345",
+      "conclusion": "success"
+    }
+  ],
+  "freshPublicInstall": {
+    "packageFilesCompared": 262,
+    "registrySignaturesAndProvenanceVerified": true,
+    "stdioInitializeAndCapabilities": "PASSED",
+    "networkSocketObservation": "NONE_FOR_ACTUAL_STDIO_PROCESS",
+    "newLiveHostQualificationClaim": false
+  },
+  "evidence": {
+    "atomicClosure": "urn:sha256:7ed5cf00b03ff5d4a6ae79eadca2bfc444f9ea83949250e2d0387d0d666a449f",
+    "validatedTarget": "urn:sha256:a0caf74792c148c6a2e12df4df1beda7c5aa60a5e41bceb6b85ce13f314995cf",
+    "acceptance": "urn:sha256:b657734f7a63e43fa6a383d022425b42bbdc13dad51b451c13a47675e8de07ab",
+    "structuralGates": "urn:sha256:d86f685d414a8264dfe97dd8c5c3b938908d992adec7ab3b5085f1e28aaefc00",
+    "impactMatrix": "urn:sha256:f027b9496dbe62a129426d3b2e64420a5831c8812518c5d185cbc2a2dda7e37d",
+    "independentPublicReadback": "urn:sha256:3923bbd6e565acafc7923966ef5c3d06dd7b1f227e1d78ac0451b514b32c7337"
+  },
+  "structuralGateLimit": "The installed Target validator checks structure and bindings and returns evidenceExecutionVerified=false. Current execution evidence was separately pinned and independently reviewed.",
+  "dailyInstallationChanged": false,
+  "credentialsCollected": false,
+  "userHarnessAssetsPublished": false,
+  "tagMoved": false,
+  "remoteDeployment": false,
+  "previousPublication": "semantic-convergence-20261002-publication.json"
+}
