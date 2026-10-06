@@ -12,7 +12,9 @@ The Roadmap governs the Engine, not the contents of a user's Organization Catalo
 
 ## Current maintenance release: 4.8.2
 
-The published baseline is 4.8.1; the current working patch is 4.8.2. This finite
+The 4.8.2 patch is [published and independently verified](../releases/current-release.md).
+Its frozen maintenance Target retains 4.8.1 as the capability baseline; the machine
+Roadmap binding and accepted Candidate remain unchanged. This finite
 maintenance milestone ships corrected installed documentation and onboarding,
 package and generated version projections, and the existing Session supported
 version projection. Core workflows, protocols, schemas, semantic assets,
