@@ -63,7 +63,7 @@ function validateRoadmap(value) {
   required(Array.isArray(value?.ownership?.mustNotOwn) && value.ownership.mustNotOwn.length > 0, "ownership.mustNotOwn is required");
   required(semver(value?.versionPolicy?.publishedBaseline), "publishedBaseline must be SemVer");
   required(semver(value?.versionPolicy?.currentWorkingVersion), "currentWorkingVersion must be SemVer");
-  required(value?.versionPolicy?.publishedBaseline === "4.8.0" && value?.versionPolicy?.currentWorkingVersion === "4.8.1", "Harness Roadmap must preserve public 4.8.0 and bind current 4.8.1");
+  required(value?.versionPolicy?.publishedBaseline === "4.8.1" && value?.versionPolicy?.currentWorkingVersion === "4.8.2", "Harness Roadmap must preserve public 4.8.1 and bind current 4.8.2");
   required(Array.isArray(value?.milestones) && value.milestones.length > 0, "milestones are required");
   const ids = new Set();
   for (const milestone of value?.milestones ?? []) {

@@ -2,6 +2,14 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.8.2 — 2026-10-06 — Installed Documentation
+
+- Corrected installed README links and local npm commands, added a safe onboarding path and explicit Host support boundaries, and synchronized maintained documentation.
+- Added packaged Markdown link validation against the actual npm inventory.
+- Synchronized package and generated Digital Expert version projections; retained the unchanged Core, protocol, API and semantic asset contracts.
+- Kept the Session supported-version projection current for 4.8.2 while preserving exact cross-version resume and migration rejection.
+- Release availability and completed acceptance are recorded separately in the [publication ledger](docs/releases/current-release.md).
+
 ## 4.8.1 — 2026-10-02 — Semantic Catalog Supply
 
 Published on GitHub and npm after 303/303 applicable criteria passed. See

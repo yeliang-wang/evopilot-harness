@@ -8,14 +8,14 @@ import {runHarnessDiscoveryProbe} from './4.8.1/discovery-probe.mjs';
 import {readHarnessSupplyEvidence} from './4.8.1/supply-materials.mjs';
 const root=path.resolve(import.meta.dirname,'../../..');
 const read=(file,limit)=>{assert.ok(path.isAbsolute(file));const stat=fs.lstatSync(file);assert.ok(stat.isFile()&&!stat.isSymbolicLink()&&stat.size<=limit);return fs.readFileSync(file);};
-export async function runInstalledProbe(args){
+export async function runInstalledProbe(args,{expectedVersion="4.8.1"}={}){
   assert.equal(args.length,6,'EXPLICIT_CONTEXT_AND_INPUT_REQUIRED');
   assert.equal(args[0],'--context');assert.equal(args[2],'--context-digest');assert.equal(args[4],'--input');
   const contextBytes=read(args[1],8388608),context=JSON.parse(contextBytes);assert.equal(context.product,'harness','OWNING_PRODUCT_REQUIRED');
   const input=JSON.parse(read(args[5],8388608));assert.equal(probeDigest(input),context.probeInputDigest,'PROBE_INPUT_DIGEST_MISMATCH');
   exactKeys(input,['expected',...(Object.hasOwn(input,'generation')?['generation']:[]),...(Object.hasOwn(input,'supply')?['supply']:[])]);
   if(Object.hasOwn(input,'supply')){exactKeys(input.supply,['catalogRoot','publication']);assert.ok(input.generation,'EXPECTED_GENERATION_REQUIRED');}
-  const transport=createInstalledProbeTransport({contextBytes,expectedContextDigest:args[3],sourceRoot:root});
+  const transport=createInstalledProbeTransport({contextBytes,expectedContextDigest:args[3],sourceRoot:root,expectedVersion});
   const report=await runHarnessDiscoveryProbe({invoke:transport.invoke,expected:input.expected,generation:input.generation});
   let supplyEvidence=null;
   if(input.supply) {

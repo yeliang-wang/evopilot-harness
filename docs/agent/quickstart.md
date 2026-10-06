@@ -2,7 +2,7 @@
 
 This is the ordinary v4 human journey. A human talks to a compatible external Agent. The Agent loads the Digital Expert and uses local stdio MCP; the human does not enter Harness lifecycle CLI commands.
 
-This guide installs Harness 4.8.1, checks the Host connection, and reaches a first classification result without publishing an asset. For all three products together, use the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md) and [Runtime first task](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/first-task.md).
+This guide installs Harness 4.8.2, checks the Host connection, and reaches a first classification result without publishing an asset. For all three products together, use the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md) and [Runtime first task](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/first-task.md).
 
 ## Prerequisites
 
@@ -17,15 +17,15 @@ This guide installs Harness 4.8.1, checks the Host connection, and reaches a fir
 For a publicly available version:
 
 ```bash
-npm view @evopilot/harness@4.8.1 version
+npm view @evopilot/harness@4.8.2 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.8.1
+npm install --save-exact @evopilot/harness@4.8.2
 ./node_modules/.bin/evopilot-harness --version --json
 ```
 
-The Registry command must return `4.8.1`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
+The Registry command must return `4.8.2`; otherwise use a locally verified tarball. A development checkout uses `npm ci`, `npm run digital-expert:check`, and `node src/index.mjs --version --json`, but it is not installed-package evidence. Do not put the Workspace inside the installed package or checkout. See [npm Distribution](../operations/npm-distribution.md).
 
 ## Load The Expert
 
@@ -33,8 +33,8 @@ Choose one Adapter under `digital-expert/adapters/`:
 
 | Adapter | Activation path | Evidence and limits |
 |---|---|---|
-| Codex | Bootstrap `--host codex`; load `codex/SKILL.md` and configure the returned stdio command. | Current 4.8.1 real Host acceptance is Codex-only and bounded to its recorded environment. No `agent install --host codex` installer exists. |
-| WorkBuddy | Bootstrap `--host workbuddy`; manual import of `workbuddy/WORKBUDDY.md`, or the separate `agent install --host workbuddy` flow. | Installer exists; prior WorkBuddy runs are historical evidence, not fresh 4.8.1 live acceptance. |
+| Codex | Bootstrap `--host codex`; load `codex/SKILL.md` and configure the returned stdio command. | Live acceptance is release-specific; consult the [publication ledger](../releases/current-release.md). The patch Target requires exact Codex evidence. No `agent install --host codex` installer exists. |
+| WorkBuddy | Bootstrap `--host workbuddy`; manual import of `workbuddy/WORKBUDDY.md`, or the separate `agent install --host workbuddy` flow. | Installer exists; prior WorkBuddy runs are historical evidence, not fresh 4.8.2 live acceptance. |
 | Claude Code | Bootstrap `--host claude-code`; load `claude-code/CLAUDE.md` through project instructions and configure stdio. | Adapter packaged; the actual Host must prove the required interaction capabilities. |
 | Generic Agent | Bootstrap `--host generic`; load `generic/AGENT.md` and configure stdio. | Independent executable conformance fixtures do not qualify every custom Host. |
 | MCP client | Bootstrap `--host mcp`; load `mcp/MCP.md` as transport guidance. | Protocol support only; no conversational UI or human-gate rendering is supplied. |

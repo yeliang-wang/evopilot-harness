@@ -8,14 +8,10 @@ Engine releases and user Harness publications are different lifecycles.
 | Harness publication | Component, Profile, Bundle, Packs, Evaluation, or Catalog membership in a user Workspace | No. |
 | EvoPilot or Dashboard release | Separate project behavior | No, unless that project also changed. |
 
-Current published Engine release: [v4.8.1](../releases/4.8.1.md).
-The [current publication ledger](../releases/current-release.md) records the
-exact tag, five verified assets, public npm package and approved acceptance limits.
-The npm publish succeeded; its initial post-publication check timed out during
-Registry propagation. Independent readback, signatures/provenance, fresh public
-installation and stdio MCP verification subsequently passed. Publication was not replayed.
-Container publication and remote deployment are outside this product's scope.
-Historical release notes retain their original evidence.
+The [publication ledger](../releases/current-release.md) records independently
+verified public versions, exact tags, immutable artifacts and acceptance limits.
+Historical release notes retain their original evidence. Container publication
+and remote deployment are outside the Harness release scope.
 
 ## Version Policy
 
@@ -27,23 +23,30 @@ Asset, Ontology, Policy, Evaluation, and Catalog versions remain independent fro
 
 ## Prepare A Release
 
-1. Confirm the intended version and release scope.
-2. Update `package.json`, `package-lock.json`, `CHANGELOG.md`, and `docs/releases/<version>.md` together when a new version is authorized.
-3. Run the complete source and documentation gates.
-4. Build and verify source, npm, SBOM, provenance, and checksum artifacts.
-5. Commit and push the exact validated source.
-6. Create tag `v<package-version>` at that commit.
-7. Let the release workflow publish immutable artifacts and the GitHub Release.
+1. Run the Roadmap intent gate and bind an explicitly approved Evolution Target to the current Roadmap digest, finite scope, exact version and acceptance. Implementation approval does not grant release authority.
+2. Synchronize package/lock metadata, Digital Expert version projections through `npm run digital-expert:generate`, changelog and versioned release notes. Keep immutable historical evidence unchanged.
+3. Run the required checks and commit/push the exact source with its APPROVED Target. Current publication pointers remain tied to verified public state.
+4. Dispatch `release-candidate.yml` with the full `commit_sha` and `target_id`. It checks the exact source in a separate worktree and builds the five-file Candidate once from a clean checkout.
+5. Download the frozen Candidate, record its run ID, artifact ZIP digest and npm tarball digest, and complete the Target's current installed-artifact acceptance. Passing source tests alone is insufficient.
+6. Pass the Target release gate with separate release authorization. Tag `v<package-version>` at the exact accepted Candidate commit.
+7. Dispatch GitHub and npm promotion with that tag, `candidate_run_id`, `candidate_artifact_digest` and `candidate_package_digest`. Verify both public results independently before updating the publication ledger.
 
-Local gates:
+Required local gates:
 
 ```bash
+npm run roadmap:check
+npm run digital-expert:check
+npm run verify:architecture
 npm run check
-npm run package:workbuddy
+npm run roadmap:release -- 4.8.2
 git diff --check
-npm run release:artifact
-npm run verify:release-artifact
 ```
+
+Use the authorized version in the last command. WorkBuddy packaging or live Host
+checks follow the exact Target scope; generated adapters alone do not establish
+live Host acceptance. `npm run release:artifact` and `npm run verify:release-artifact`
+are the clean-source builders/verifiers used by Candidate CI, not a permission to
+rebuild accepted promotion bytes.
 
 ## Artifacts
 
@@ -68,18 +71,20 @@ The Git tag must exactly match `package.json`:
 tag v4.1.2 -> package.json version 4.1.2
 ```
 
-`.github/workflows/release-artifacts.yml`:
+The Candidate workflow retains `evopilot-harness-<version>-candidate-release-set`.
+Both promotion workflows verify that the successful Candidate run belongs to the
+same repository and source commit, and that its unexpired artifact has the exact
+five filenames, ZIP/tarball digests, checksums and clean-source provenance.
 
-1. checks out the requested tag;
-2. installs Node.js 22 dependencies;
-3. rejects a tag/package version mismatch;
-4. runs `npm run check`;
-5. builds and verifies source, npm tarball, SBOM, provenance, and checksum artifacts;
-6. optionally builds and pushes immutable GHCR image tags only for a separately authorized manual dispatch with `publish_ghcr=true`;
-7. creates or updates the GitHub Release from `docs/releases/<version>.md`;
-8. uploads the verified artifacts.
+`.github/workflows/release-artifacts.yml` promotes the accepted files to a stable
+GitHub Release using `docs/releases/<version>.md`. It does not rebuild or repack.
+An existing asset with different bytes fails; successful publication is followed
+by independent downloads and byte comparisons. `.github/workflows/npm-packages.yml`
+independently promotes the same accepted npm tarball.
 
-GitHub Release, npm publication, optional GHCR publication, and local artifact verification are separate evidence layers. Verify each one before claiming the complete release chain succeeded.
+GitHub Release, npm publication and installed-artifact acceptance are separate
+evidence layers. An accepted Candidate or one successful publication destination
+does not establish the others. Container publication is not part of these workflows.
 
 ## npm Trusted Publishing
 
@@ -97,4 +102,4 @@ The default product and release contract is local-first. Docker and Compose are 
 
 No release action is implied by documentation edits. Commit, push, tag, GitHub Release, registry publication, or deployment requires separate explicit authorization.
 
-Every future Engine release still requires its own exact release authorization. npm, GHCR, and remote deployment are separate actions; none is inferred from implementation acceptance or a GitHub Release.
+Every future Engine release requires its own exact release authorization. npm and any remote deployment are separate actions; neither is inferred from implementation acceptance or a GitHub Release.

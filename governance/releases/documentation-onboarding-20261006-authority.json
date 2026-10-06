@@ -1,0 +1,18 @@
+{
+  "schema": "evopilot-user-release-instruction/v1",
+  "recordedAt": "2026-10-06T02:10:42.367059+00:00",
+  "implementationInstruction": "确认，请按照你给出的方式执行落地。",
+  "releaseInstruction": "这一轮修改是否要升级evopilot系列产品最新版本号？如果需要，请在完成本方案落地执行之后，升级release版本发布流程+github推送。",
+  "authority": "Actual user authorization for necessary patch releases after the approved OpenHands-inspired documentation and onboarding plan is implemented and verified.",
+  "assistantResolvedVersions": {
+    "evopilot": "6.3.3",
+    "evopilot-evolution-expert": "2.3.1",
+    "evopilot-harness": "4.8.2"
+  },
+  "independentExtensionsUnchanged": "1.0.1",
+  "technicalDigestIndividuallyReviewedByUser": false,
+  "publicationConditionalOnCurrentAcceptance": true,
+  "noHistoricalPassTransfer": true,
+  "preserveDailyDataCredentialsAndDeletedSuiteState": true,
+  "remoteProductionDeploymentAuthorized": false
+}

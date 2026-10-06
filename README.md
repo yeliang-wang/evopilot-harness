@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases)
-[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.8.1)
+[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.8.2)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -10,10 +10,11 @@
 
 `evopilot-harness` creates reviewed, immutable assets in user-owned Catalogs. Its Digital Expert guides compatible Agents through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
 
-Current published release: [`v4.8.1`](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v4.8.1), also available as [`@evopilot/harness@4.8.1`](https://www.npmjs.com/package/@evopilot/harness/v/4.8.1) with Registry signatures and SLSA provenance.
+This package is **4.8.2**: installation and onboarding documentation corrections,
+with unchanged semantic Catalog supply contracts. See the
+[current publication ledger and acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md)
+for independently verified GitHub/npm publication status.
 
-**4.8.1 semantic Catalog supply is accepted and published.** See the
-[current release and acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
 Engine version changes do not rewrite existing semantic asset versions, schemas
 or published digests.
 
@@ -49,11 +50,11 @@ This is intentionally narrower than general software classification. Unknown dom
 Requires Node.js 22.14 or newer and an Agent that can load local instructions and launch stdio MCP. For the Runtime + Evolution Expert + Harness combination, start with the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md). Harness alone can be installed in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.8.1 version
+npm view @evopilot/harness@4.8.2 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.8.1
+npm install --save-exact @evopilot/harness@4.8.2
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host codex \
   --workspace "$HOME/.evopilot-harness" \
@@ -179,7 +180,7 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The current Engine is `4.8.1`; the canonical asset namespace remains `harness.evopilot.io/v3`, and Agent operations use `evopilot-harness-agent-operations/v3`. These protocol versions do not identify the Engine release. The v4.5 baseline reset does not support direct reading or migration of pre-v4.5 Workspace and Session representations. Historical v2/v3 CLI and migration material is retained in the [v2 compatibility guide](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/v2-compatibility.md), not as a promise of direct upgrade to 4.8.1. See the [architecture compatibility section](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/overview.md#compatibility) and [current release limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
+The current Engine is `4.8.2`; the canonical asset namespace remains `harness.evopilot.io/v3`, and Agent operations use `evopilot-harness-agent-operations/v3`. These protocol versions do not identify the Engine release. The v4.5 baseline reset does not support direct reading or migration of pre-v4.5 Workspace and Session representations. Historical v2/v3 CLI and migration material is retained in the [v2 compatibility guide](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/v2-compatibility.md), not as a promise of direct upgrade to 4.8.2. See the [architecture compatibility section](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/overview.md#compatibility) and [current release limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
 
 GitHub Release and npm publication are separate release evidence layers and require explicit authorization. Container publication and deployment are outside this npm-and-MCP distribution scope and are not release prompts.
 

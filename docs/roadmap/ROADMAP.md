@@ -10,6 +10,27 @@ In Codex, `$evopilot-evolution-orchestrator` is the conversational entry for use
 
 The Roadmap governs the Engine, not the contents of a user's Organization Catalog. A reviewed Harness Asset, Ontology, Policy, Evaluation, or Catalog version can evolve independently without an Engine release.
 
+## Current maintenance release: 4.8.2
+
+The published baseline is 4.8.1; the current working patch is 4.8.2. This finite
+maintenance milestone ships corrected installed documentation and onboarding,
+package and generated version projections, and the existing Session supported
+version projection. Core workflows, protocols, schemas, semantic assets,
+authority boundaries and exact cross-version resume restrictions remain unchanged.
+
+The [current user instruction](../../governance/releases/documentation-onboarding-20261006-authority.json)
+authorizes the necessary patch release after current acceptance. The
+[4.8.2 Target](../../governance/targets/evopilot-harness-v4.8.2-installed-documentation.json)
+requires fresh full regression, all 303 prior criterion definitions mapped to
+current evidence, exact qualified Codex installed stdio acceptance and build-once
+Candidate promotion. Historical PASS does not transfer. This maintenance scope
+requires no new model call, 90-minute soak or native credential interaction;
+omitted interactions remain untested, not PASS. Other live Hosts are not newly
+claimed; generated adapters and generic transport tests remain. The historical
+semantic-convergence milestones and exact-version Host/duration policies below
+retain their original meaning. Release and user Harness publication remain
+separately governed.
+
 ## Product Direction
 
 `evopilot-harness` is the governed semantic and professional execution asset producer for the EvoPilot ecosystem. It contains two independently versioned asset planes over shared Evidence, Proposal, Review, Approval, Publication, Catalog, Registry, provenance, dependency, evaluation, and rollback infrastructure:

@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-09-29",
+  "updatedAt": "2026-10-06",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -24,8 +24,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.8.0",
-    "currentWorkingVersion": "4.8.1",
+    "publishedBaseline": "4.8.1",
+    "currentWorkingVersion": "4.8.2",
     "versionsEvolveIndependently": true,
     "productCapabilitiesEvolveCumulatively": true,
     "artifactCompatibilityMayResetWithEvidence": true,
@@ -1005,6 +1005,27 @@
         "Dashboard evolution",
         "automatic approval, publication or acceptance transfer",
         "No new remediation mutation or cancel/retry authority, no forced semantic verdict, no automatic human Evaluation approval, and no PolicyPack revision."
+      ]
+    },
+    {
+      "id": "evopilot-harness-4.8.2-installed-documentation",
+      "title": "Installed documentation maintenance",
+      "targetVersion": "4.8.2",
+      "releaseLine": "4.8.x",
+      "status": "IN_PROGRESS",
+      "signals": [
+        "documentation synchronization",
+        "installed documentation",
+        "4.8.2 maintenance"
+      ],
+      "acceptance": [
+        "Ship corrected installed README and onboarding with packaged-link validation, without product capability or authority changes.",
+        "Preserve Core, protocol, API, schemas, policy and semantic assets; synchronize only package/generated version metadata and the explicit supported Session version projection.",
+        "Verify new 4.8.2 Session inspection and same-version resume, preserve prior recognized versions and fail closed on cross-version resume or Core migration.",
+        "Run fresh full regression and current per-criterion evidence for all 303 preceding acceptance definitions; historical PASS never transfers.",
+        "Bind actual qualified Codex and exact isolated Candidate stdio acceptance. Other generated adapters and generic transport tests remain, without new live Host claims.",
+        "No new 90-minute soak, native credential interaction or model call is required for this finite documentation/version-projection maintenance scope. Omitted interactions remain untested, not PASS; original version-specific evidence and exceptions remain unchanged.",
+        "Require separate current release authority and exact build-once Candidate promotion to GitHub/npm; preserve published artifacts and daily Workspace/configuration."
       ]
     }
   ],

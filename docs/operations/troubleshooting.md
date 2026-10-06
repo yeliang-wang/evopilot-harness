@@ -22,7 +22,7 @@ Harness MCP uses local stdio and needs no Runtime URL or listening port. EvoPilo
 Check the exact Registry version:
 
 ```bash
-npm view @evopilot/harness@4.8.1 version
+npm view @evopilot/harness@4.8.2 version
 ```
 
 If it is missing, stop. Use a locally verified release tarball or a source checkout. Do not silently install `latest`, another version, or an unreviewed package name.
@@ -32,7 +32,7 @@ If it is missing, stop. Use a locally verified release tarball or a source check
 npm package metadata can become visible before the attestations endpoint has propagated. First confirm whether the immutable package was already published:
 
 ```bash
-npm view @evopilot/harness@4.8.1 name version dist-tags dist.integrity dist.signatures dist.attestations --json
+npm view @evopilot/harness@4.8.2 name version dist-tags dist.integrity dist.signatures dist.attestations --json
 ```
 
 If the exact version, integrity, signatures, and provenance are present, do not rerun `npm publish`. Wait for Registry propagation, install the exact package in a clean directory, and repeat the read-only audit:
@@ -41,7 +41,7 @@ If the exact version, integrity, signatures, and provenance are present, do not 
 mkdir -p /tmp/evopilot-harness-signature-check
 cd /tmp/evopilot-harness-signature-check
 npm init -y
-npm install --ignore-scripts --no-audit --no-fund @evopilot/harness@4.8.1
+npm install --ignore-scripts --no-audit --no-fund @evopilot/harness@4.8.2
 npm audit signatures
 ```
 

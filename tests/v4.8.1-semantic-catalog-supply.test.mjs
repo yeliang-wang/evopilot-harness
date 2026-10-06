@@ -73,14 +73,17 @@ test('independent supply byte evidence verifies actual materials, embedded Skill
   await t.test('isolated real Harness CLI verifies supply and receipts without changing the published pointer',async()=>{
     const staged=stageSourceHarness(setup.home),request={expected:input.expected,generation,supply:{catalogRoot:setup.organization,publication}};
     const before=fs.readFileSync(path.join(setup.organization,'SEMANTIC-CATALOG.json'));
-    const context={schema:'evopilot-installed-readonly-probe-context/v1',product:'harness',version:'4.8.1',...staged,workspace:setup.home,
+    const expectedVersion=JSON.parse(fs.readFileSync(path.resolve('package.json'),'utf8')).version;
+    const context={schema:'evopilot-installed-readonly-probe-context/v1',product:'harness',version:expectedVersion,...staged,workspace:setup.home,
       artifactSetDigest:probeDigest(staged.files),acceptanceBindingDigest:probeDigest('source-integration-not-candidate'),probeInputDigest:probeDigest(request)};
     const contextFile=path.join(setup.home,'source-context.json'),inputFile=path.join(setup.home,'source-probe-input.json');writeJson(contextFile,context);writeJson(inputFile,request);
     const args=['--context',contextFile,'--context-digest',digest(fs.readFileSync(contextFile)),'--input',inputFile];
-    const connected=await runInstalledProbe(args);assert.equal(connected.status,'PROBE_ASSERTIONS_PASSED');assert.equal(connected.supplyEvidence.status,'SUPPLY_BYTES_AND_RECEIPT_ASSERTIONS_PASSED');assert.equal(connected.targetCriteriaClosed,0);
+    await assert.rejects(runInstalledProbe(args),/Expected values/);
+    await assert.rejects(runInstalledProbe(args,{expectedVersion:'99.0.0'}),/PROBE_VERSION_UNSUPPORTED/);
+    const connected=await runInstalledProbe(args,{expectedVersion});assert.equal(connected.status,'PROBE_ASSERTIONS_PASSED');assert.equal(connected.supplyEvidence.status,'SUPPLY_BYTES_AND_RECEIPT_ASSERTIONS_PASSED');assert.equal(connected.targetCriteriaClosed,0);
     assert.deepEqual(fs.readFileSync(path.join(setup.organization,'SEMANTIC-CATALOG.json')),before);
     fs.appendFileSync(path.join(staged.installationRoot,'node_modules/@evopilot/harness/src/index.mjs'),'\n// drift\n');
-    await assert.rejects(runInstalledProbe(args),/INSTALLED_INVENTORY_DRIFT/);
+    await assert.rejects(runInstalledProbe(args,{expectedVersion}),/INSTALLED_INVENTORY_DRIFT/);
     assert.deepEqual(fs.readFileSync(path.join(setup.organization,'SEMANTIC-CATALOG.json')),before);
   });
   for(const [name,change] of [
