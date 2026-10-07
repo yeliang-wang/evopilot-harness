@@ -1,0 +1,26 @@
+{
+  "schema": "evopilot-user-implementation-instruction/v1",
+  "id": "harness-readiness-profile-483-20261007",
+  "recordedDate": "2026-10-07",
+  "source": "current user conversation and approved Codex-only plan",
+  "implementationInstruction": "确认无误，请开始执行",
+  "scopeRevisionInstruction": "方案中可以去除WorkBuddy，只留codex",
+  "seriesAuthorityRecordDigest": "sha256:090d3c149fbda94fa3c22dcc96d3f2ecb98001ac9fa0458f38f4028fef8567ad",
+  "approvalInterpretation": "The user authorized autonomous completion of the reviewed plan and routine issue repair. This finite, reproduced existing model-selection correctness defect is covered by the owning Roadmap maintenance class. The assistant resolves technical scope and binds a separate Harness implementation Target; this does not claim that the user individually reviewed generated technical hashes.",
+  "technicalDigestIndividuallyReviewedByUser": false,
+  "product": "evopilot-harness",
+  "targetVersion": "4.8.3",
+  "nativeSourceWritablePaths": [
+    "src/v3/model-readiness.mjs",
+    "src/v3/cli.mjs",
+    "tests/v4.2.3-llm-initialization.test.mjs"
+  ],
+  "runtimeOwnedQualifiedSourceExecutionRequired": true,
+  "implementationMechanismScope": "Native qualified source work is separately prepared by the root task; this governance materialization executes no source change.",
+  "managedEngineeringModeImplementationAuthorized": false,
+  "managedModeM0Granted": false,
+  "existingPublicContractsAndManualConfigurationPreserved": true,
+  "releaseAuthorization": "NOT_AUTHORIZED",
+  "assetPublicationAuthorized": false,
+  "dailyConfigurationMutationAuthorized": false
+}

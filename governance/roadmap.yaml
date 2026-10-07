@@ -3,7 +3,7 @@
   "roadmapFamily": "evopilot-series-agentic-evolution",
   "contractVersion": "1.0.0",
   "project": "evopilot-harness",
-  "updatedAt": "2026-10-06",
+  "updatedAt": "2026-10-07",
   "ownership": {
     "owns": [
       "Harness Evidence Source ingestion and redaction",
@@ -24,8 +24,8 @@
     ]
   },
   "versionPolicy": {
-    "publishedBaseline": "4.8.1",
-    "currentWorkingVersion": "4.8.2",
+    "publishedBaseline": "4.8.2",
+    "currentWorkingVersion": "4.8.3",
     "versionsEvolveIndependently": true,
     "productCapabilitiesEvolveCumulatively": true,
     "artifactCompatibilityMayResetWithEvidence": true,
@@ -1027,6 +1027,31 @@
         "No new 90-minute soak, native credential interaction or model call is required for this finite documentation/version-projection maintenance scope. Omitted interactions remain untested, not PASS; original version-specific evidence and exceptions remain unchanged.",
         "Require separate current release authority and exact build-once Candidate promotion to GitHub/npm; preserve published artifacts and daily Workspace/configuration."
       ]
+    },
+    {
+      "id": "evopilot-harness-4.8.3-model-readiness-profile-binding",
+      "status": "IN_PROGRESS",
+      "targetVersion": "4.8.3",
+      "releaseLine": "4.8.x",
+      "objective": "Repair existing multi-profile readiness identity binding without new capability, provider defaults, source execution or authority transfer.",
+      "signals": [
+        "4.8.3正确性修复",
+        "model-readiness profile binding",
+        "4.8.3 readiness correctness repair"
+      ],
+      "acceptance": [
+        "A successful verification receipt for explicitly selected B must not make default A ready. Inspect, doctor, receipt and selected/default use bind the same existing profile identity: id, provider, model and endpoint.",
+        "An explicit missing, empty or unusable selector must not fall back; changed profile identity or a failed recheck cannot report an unrelated profile verified.",
+        "Preserve valid existing single-profile reuse, human-maintained external model files, read-only inspection and secret-free receipts without introducing provider defaults or automatic calls.",
+        "Preserve all313 previous acceptance definitions and existing producer, Session, Core, asset, Catalog and authority contracts with current item-level impact and non-regression.",
+        "Verify the exact installed patch through current qualified Codex stdio for the finite selected-profile correction, with separate Harness readiness and preserved standalone client contracts.",
+        "Prepare and accept a build-once exact patch Candidate with synchronized version/docs metadata and a separate release decision; no acceptance result authorizes publication."
+      ],
+      "exclusions": [
+        "Managed engineering enforcement or M0 qualification",
+        "New secure-input or cross-product handoff protocol",
+        "Automatic asset or product publication"
+      ]
     }
   ],
   "resolvedDiscussions": [
@@ -1330,5 +1355,56 @@
     "remainingFunctionalSecurityHostRegressionAndTerminalE2ERequired": true,
     "releaseAuthorizationGranted": false,
     "precedence": "For these exact releases only, this exception supersedes every requirement to execute a new 5400-second/90-minute soak, including inherited and series-terminal clauses. Original evidence remains bound to its original artifacts; no long-duration stability claim applies to untested successor bytes. All other required acceptance remains mandatory."
+  },
+  "readinessProfileBindingRepairPolicy": {
+    "schema": "evopilot-harness-readiness-profile-repair/v1",
+    "id": "harness-readiness-profile-483-20261007",
+    "targetVersion": "4.8.3",
+    "baselineVersion": "4.8.2",
+    "previousRoadmapDigest": "sha256:a91ae654beade4db544fcec6142fa17f2f7d956ded67efc8dff2f4b0bf3230a3",
+    "previousVersionPolicy": {
+      "publishedBaseline": "4.8.1",
+      "currentWorkingVersion": "4.8.2",
+      "versionsEvolveIndependently": true,
+      "productCapabilitiesEvolveCumulatively": true,
+      "artifactCompatibilityMayResetWithEvidence": true,
+      "compatibilityResetDoesNotRemoveCapabilities": true,
+      "capabilityRemovalRequiresExplicitRoadmapRevision": true,
+      "currentTargetMustMapPreviousReleasedCapabilities": true,
+      "noRegressionRequired": true,
+      "majorRequiredFor": [
+        "incompatible Harness Asset schema",
+        "incompatible cross-project feedback contract",
+        "replacement of an accepted product boundary",
+        "replacement of the supported primary human operation model"
+      ]
+    },
+    "authorityRecord": "governance/decisions/harness-readiness-profile-483-20261007-authority.json",
+    "authorityRecordDigest": "sha256:ff52e4a4edd4b25acd36b6364d19e3dc86e09660c091d6ffb723cc2265372ee6",
+    "defectEvidence": "governance/evidence/harness-readiness-profile-483-20261007.json",
+    "defectEvidenceDigest": "sha256:5155a83f376d3ba6081f160392474ab594f1bf572fe194fa3b7e587a219d7c73",
+    "baselinePublication": "governance/releases/documentation-onboarding-20261006-publication.json",
+    "baselinePublicationDigest": "sha256:04d19518feda04822d3a14170245f6c5f5bb5485c65385a1df87e512a045a35c",
+    "nativeSourceWritablePaths": [
+      "src/v3/model-readiness.mjs",
+      "src/v3/cli.mjs",
+      "tests/v4.2.3-llm-initialization.test.mjs"
+    ],
+    "selectedProfileIdentityRequired": true,
+    "defaultSelectionSemanticsPreserved": true,
+    "unknownSelectorFallbackAllowed": false,
+    "manualConfigurationReadOnly": true,
+    "secretSafeReceiptsRequired": true,
+    "requiredCurrentHosts": [
+      "Codex"
+    ],
+    "all313DefinitionsPreserved": true,
+    "historicalPassTransferAllowed": false,
+    "managedModeM0Granted": false,
+    "managedModeProductImplementationIncluded": false,
+    "publicOwnerContractsPreserved": true,
+    "newActiveSoakRequired": false,
+    "releaseAuthorization": "NOT_AUTHORIZED",
+    "separateExactCandidateReleaseDecisionRequired": true
   }
 }

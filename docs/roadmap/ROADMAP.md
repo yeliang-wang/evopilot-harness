@@ -413,3 +413,16 @@ This repair retains the existing product versions and boundaries. Original accep
 ## 本轮发布的持续验证范围
 
 用户明确取消 Harness 4.8.1、Runtime 6.3.0、Expert 2.3.0 的新增 90 分钟（5400 秒）持续验证。机器规则以 `releaseDurationExceptionPolicy` 为准，优先于本轮 Host、继承及系列终验中的时长要求。省略项记录为 `SKIPPED_BY_USER_NOT_PASS`；保留旧结果及其原始构建绑定，不将旧结果迁移为新候选包的长时间稳定性证明。其余功能、安全、Codex Host、回归和三产品串联验收要求不变。发布仍需独立确认。
+
+
+## Harness 4.8.3: existing model-readiness profile binding repair
+
+This finite correctness work is covered by `evopilot-harness-maintenance` and the user's existing autonomous repair instruction. The public baseline is 4.8.2, bound to its retained publication record; the working patch is 4.8.3. All original milestones, semantic convergence history, previous release Host/duration policies and accepted release records remain immutable. No 4.9.0 capability is declared.
+
+The reproduced failure accepts a successful synthetic doctor receipt for profile B as readiness for the default profile A when both occupy the same unchanged models file. The repair binds inspection, doctor, receipt and use to the same explicitly selected or existing default profile. Missing or unusable selectors do not fall back. Preserve external human-maintained model configuration, read-only inspection, no provider defaults, existing public contracts and secret-free receipts.
+
+Only `src/v3/model-readiness.mjs`, necessary selector plumbing in `src/v3/cli.mjs`, and the existing multi-profile regressions in `tests/v4.2.3-llm-initialization.test.mjs` are qualified native source scope. Version/generated identity, Session recognized-version metadata, documentation and governance projections are separately enumerated in the Target; they do not authorize broader product changes.
+
+The Target preserves the 4.8.2 baseline's 10 new and 303 inherited definitions. Current item-level impact, exact installed Candidate tests and finite current Codex stdio evidence are required; no historical PASS transfers. All generated adapters and existing WorkBuddy support remain compatible, with no new WorkBuddy live acceptance requirement. No new 90-minute soak or native secure-input UI claim is added to this existing binding correction. The broader series first-input and current desktop obligations remain pending in their own matrix.
+
+This is an independently scoped existing bug repair, not implementation or qualification of managed engineering mode. A synthetic receipt counterexample, a passing Target structure or patch acceptance cannot satisfy actual Codex M0. Product Release and Harness asset publication remain unauthorized; promotion needs a separate decision after exact Candidate acceptance.

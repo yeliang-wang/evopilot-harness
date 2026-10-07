@@ -18,7 +18,7 @@ import { validateDocument, validateFile, validateTree } from "./schema.mjs";
 import { booleanOption, digest, option, parseCli, persistedJson, print, readYaml, safeId, usage, walkFiles, writeJson, writeYaml } from "./utils.mjs";
 import { defaultHarnessHome } from "./constants.mjs";
 import { initializeWorkspace, requireWorkspace, resolveWorkspaceModelsFile, workspaceStatus } from "./workspace.mjs";
-import { inspectModelReadiness, recordModelVerification, invalidateModelVerification } from "./model-readiness.mjs";
+import { inspectModelReadiness, recordModelVerification, invalidateModelVerification, modelVerificationDrift } from "./model-readiness.mjs";
 import { createSemanticCandidateSet, resolveOntologyFoundation, resolveOntologyGrounding } from "../v4/semantics/ontology-grounding.mjs";
 import { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from "../v4/semantics/semantic-compatibility.mjs";
 import { createExternalSemanticEvidenceAdapter, createPackBenchmarkPackage, createPackCertificationRecord, createPackGoldCasePackage, createPackLifecycleRecord, createProfessionalPack, importExternalSemanticEvidence, inspectProfessionalPack, resolveProfessionalPackSet, transitionPackLifecycle } from "../v4/semantics/professional-packs.mjs";
@@ -381,21 +381,28 @@ async function dispatch(args, group, action, id) {
   }
   if (group === "llm" && action === "v3-readiness") {
     const file = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
-    return output(args, inspectModelReadiness(home, file));
+    const selectedId = readinessModelOption(args);
+    const readiness = inspectModelReadiness(home, file, selectedId);
+    return output(args, readiness, selectedId !== undefined && !readiness.configured ? 2 : 0);
   }
   if (group === "llm" && action === "v3-initialize") {
     requireWorkspace(home);
     const file = resolveWorkspaceModelsFile(home, option(args, "models-file", process.env.EVOPILOT_HARNESS_LLM_MODELS_FILE));
-    const readiness = inspectModelReadiness(home, file);
-    if (readiness.status === "INVALID_CONFIGURATION_BOUNDARY") return output(args, readiness, 2);
-    const inspected = inspectModels(file, option(args, "model"));
-    if (inspected.status !== "READY") return output(args, { ...inspectModelReadiness(home, file), inspection: inspected }, 2);
-    const doctor = await diagnoseModel(file, option(args, "model"), Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
+    const selectedId = readinessModelOption(args);
+    const readiness = inspectModelReadiness(home, file, selectedId);
+    if (readiness.status === "INVALID_CONFIGURATION_BOUNDARY" || selectedId === "") return output(args, readiness, 2);
+    if (readiness.status === "CREDENTIAL_REQUIRED") return output(args, readiness, 2);
+    const inspected = inspectModels(file, selectedId);
+    if (inspected.status !== "READY") return output(args, { ...inspectModelReadiness(home, file, selectedId), inspection: inspected }, 2);
+    const doctor = await diagnoseModel(file, selectedId, Number(option(args, "timeout-ms", DEFAULT_DOCTOR_TIMEOUT_MS)));
+    const drift = modelVerificationDrift(home, file, selectedId, readiness.configurationDigest);
+    if (drift) return output(args, { ...drift, doctor }, 2);
     if (doctor.status !== "READY") {
-      invalidateModelVerification(home, file, readiness.configurationDigest);
-      return output(args, { ...inspectModelReadiness(home, file), doctor, nextAction: "repair-model-configuration-or-connectivity" }, 2);
+      invalidateModelVerification(home, file, readiness.configurationDigest, readiness.model);
+      return output(args, { ...inspectModelReadiness(home, file, selectedId), doctor, nextAction: "repair-model-configuration-or-connectivity" }, 2);
     }
-    return output(args, { ...recordModelVerification(home, file, doctor), inspection: inspected, doctor });
+    const verified = recordModelVerification(home, file, doctor, selectedId, readiness.configurationDigest);
+    return output(args, { ...verified, inspection: inspected, doctor }, verified.connectionVerified ? 0 : 2);
   }
   if (group === "hub" && action === "v3-snapshot") return output(args, writeHubSnapshot(home, option(args, "out", path.join(home, "cache/hub-snapshot.json"))));
   if (group === "hub" && action === "v3-serve") {
@@ -407,6 +414,13 @@ async function dispatch(args, group, action, id) {
     return output(args, result, result.status === "PASSED" ? 0 : 2);
   }
   throw usage("Unknown v3 command. Use workspace, produce, proposal inspect|validate|review|review-inspect|approve|publish, feedback inspect|validate|ingest|aggregate|report|process, comparison inspect|validate|ingest|score|report|rescore|process, calibration validate|ingest|run|report, learning inspect|validate|ingest|snapshot|run-manifest|score|rescore|artifact, asset v3-*, catalog v3-*, registry v3-*, ontology, policy, migrate, llm v3-models|v3-doctor|v3-readiness|v3-initialize, or eval v3-run.");
+}
+
+function readinessModelOption(args) {
+  if (!Object.hasOwn(args.options, "model")) return undefined;
+  const value = args.options.model;
+  // An invalid explicit selector must never select the default profile.
+  return typeof value === "string" && value.trim().length > 0 ? value : "";
 }
 
 function listOption(args, name) {

@@ -63,7 +63,7 @@ function validateRoadmap(value) {
   required(Array.isArray(value?.ownership?.mustNotOwn) && value.ownership.mustNotOwn.length > 0, "ownership.mustNotOwn is required");
   required(semver(value?.versionPolicy?.publishedBaseline), "publishedBaseline must be SemVer");
   required(semver(value?.versionPolicy?.currentWorkingVersion), "currentWorkingVersion must be SemVer");
-  required(value?.versionPolicy?.publishedBaseline === "4.8.1" && value?.versionPolicy?.currentWorkingVersion === "4.8.2", "Harness Roadmap must preserve public 4.8.1 and bind current 4.8.2");
+  required(value?.versionPolicy?.publishedBaseline === "4.8.2" && value?.versionPolicy?.currentWorkingVersion === "4.8.3", "Harness Roadmap must preserve public 4.8.2 and bind current 4.8.3");
   required(Array.isArray(value?.milestones) && value.milestones.length > 0, "milestones are required");
   const ids = new Set();
   for (const milestone of value?.milestones ?? []) {
@@ -118,6 +118,29 @@ function validateRoadmap(value) {
   required(supply?.automaticApprovalOrPassTransfer === false, "semantic Catalog supply invariant: automaticApprovalOrPassTransfer");
   required(supply?.perVersionE2ERequired === true, "semantic Catalog supply invariant: perVersionE2ERequired");
   required(supply?.terminalE2ERequired === true, "semantic Catalog supply invariant: terminalE2ERequired");
+  const repair = value?.readinessProfileBindingRepairPolicy;
+  for (const [key, expected] of Object.entries({
+    schema: "evopilot-harness-readiness-profile-repair/v1", id: "harness-readiness-profile-483-20261007",
+    targetVersion: "4.8.3", baselineVersion: "4.8.2", selectedProfileIdentityRequired: true,
+    defaultSelectionSemanticsPreserved: true, unknownSelectorFallbackAllowed: false,
+    manualConfigurationReadOnly: true, secretSafeReceiptsRequired: true,
+    all313DefinitionsPreserved: true, historicalPassTransferAllowed: false,
+    managedModeM0Granted: false, managedModeProductImplementationIncluded: false,
+    publicOwnerContractsPreserved: true, newActiveSoakRequired: false,
+    releaseAuthorization: "NOT_AUTHORIZED", separateExactCandidateReleaseDecisionRequired: true
+  })) required(repair?.[key] === expected, `readiness profile repair invariant: ${key}`);
+  required(arrayEquals(repair?.requiredCurrentHosts, ["Codex"]), "readiness profile repair invariant: current Codex-only Host scope");
+  required(arrayEquals(repair?.nativeSourceWritablePaths, ["src/v3/model-readiness.mjs", "src/v3/cli.mjs", "tests/v4.2.3-llm-initialization.test.mjs"]), "readiness profile repair invariant: finite native source scope");
+  for (const [pathKey, digestKey] of [["authorityRecord", "authorityRecordDigest"], ["defectEvidence", "defectEvidenceDigest"], ["baselinePublication", "baselinePublicationDigest"]]) {
+    const relative = repair?.[pathKey];
+    const safe = typeof relative === "string" && !path.isAbsolute(relative) && !relative.split(/[\\/]/).includes("..");
+    const file = safe ? path.join(root, relative) : null;
+    let actual = null;
+    try { if (file) actual = `sha256:${crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex")}`; } catch { /* missing evidence is not a valid binding */ }
+    required(actual !== null && actual === repair?.[digestKey], `readiness profile repair invariant: ${pathKey} digest`);
+  }
+  const repairMilestone = value?.milestones?.find(item => item.id === "evopilot-harness-4.8.3-model-readiness-profile-binding");
+  required(repairMilestone?.targetVersion === "4.8.3" && repairMilestone?.acceptance?.length === 6, "readiness profile repair invariant: finite milestone");
   const packageVersion = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
   const knownVersions = new Set([value?.versionPolicy?.publishedBaseline, value?.versionPolicy?.currentWorkingVersion, ...(value?.milestones ?? []).map((item) => item.targetVersion)]);
   const declaredReleaseVersion = (value?.milestones ?? []).some((item) => inReleaseLine(packageVersion, item.releaseLine));

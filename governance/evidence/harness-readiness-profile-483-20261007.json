@@ -1,0 +1,32 @@
+{
+  "schema": "evopilot-harness-readiness-defect-evidence/v1",
+  "status": "PROFILE_SELECTION_BINDING_DEFECT_REPRODUCED",
+  "evidenceKind": "SYNTHETIC_PURE_FUNCTION_COUNTEREXAMPLE",
+  "realLiveConnectivityQualified": false,
+  "realProviderCalls": 0,
+  "hostCalls": 0,
+  "sourceModified": false,
+  "inputSourceCommit": "89c1bb8fadb4e8e5bd02f05231acb2f679b4c8b1",
+  "currentBaseCommit": "372733fd7b67ec3bee9efe6322f0229db77b160d",
+  "currentSourceDigests": {
+    "src/v3/model-readiness.mjs": "sha256:93e9589b5f1b69133f077701837b9c8230a8c79e20064374bb1a5d88df092acf",
+    "src/v3/cli.mjs": "sha256:1cce632ce2ee7b8fee44b67d4aad82ebcac3afa33137b210de808f8366cc4f57",
+    "tests/v4.2.3-llm-initialization.test.mjs": "sha256:7f7733a5fb9d61d2182b9769972baaf452ff744b8cf0836682300bc34bb36711"
+  },
+  "originalReproductionDigest": "sha256:e7a66ed8edccfed8a916b7ac686e878ee79e76bf22c2e0fe59ec94206b09c978",
+  "scriptDigest": "sha256:1300305d8e004e5a1a63a0bb96c54b45cad391f41004a71a19aac1eb6cdee924",
+  "logDigest": "sha256:ca89266578bc02d72c2dff41c8a7a1c43c4e37098715b04eaa77ba1cc4850a30",
+  "observedCounterexample": {
+    "defaultProfile": "synthetic-A",
+    "syntheticVerifiedProfile": "synthetic-B",
+    "actualDefaultStatus": "CONFIGURED_AND_VERIFIED",
+    "expectedDefaultStatus": "CONFIGURED_UNVERIFIED",
+    "receiptModel": "synthetic-B"
+  },
+  "controls": [
+    "Same-model A receipt is accepted for default A.",
+    "No explicit selector resolves first eligible A.",
+    "Changed configuration file returns CONFIGURED_UNVERIFIED."
+  ],
+  "scope": "Matches file and successful receipt without binding selected model identity; no real provider call or managed-mode qualification is claimed."
+}

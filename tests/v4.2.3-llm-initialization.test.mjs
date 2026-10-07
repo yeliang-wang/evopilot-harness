@@ -9,8 +9,9 @@ import { inspectModels, loadConfiguredModel } from "../src/v3/advisor.mjs";
 import { TestMcpClient, structured } from "./helpers/mcp-client.mjs";
 import { agentBootstrap } from "../src/v4/bootstrap.mjs";
 import { executeV3Operation } from "../src/v3/cli.mjs";
-import { inspectModelReadiness, invalidateModelVerification } from "../src/v3/model-readiness.mjs";
+import { inspectModelReadiness, invalidateModelVerification, recordModelVerification } from "../src/v3/model-readiness.mjs";
 import { initializeWorkspace } from "../src/v3/workspace.mjs";
+import { parseCli } from "../src/v3/utils.mjs";
 
 test("LLM readiness is separate from product installation and starts actionable", () => {
   const home = temporaryHome();
@@ -65,6 +66,41 @@ test("missing or unusable configuration fails closed without creating a receipt"
   assert.equal(fs.existsSync(path.join(home, "models.example.json")), true);
 });
 
+test("initially missing direct or environment credentials preserve configuration and receipts without model requests", async (t) => {
+  let requests = 0;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { requests += 1; throw new Error("unexpected model request"); };
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const envName = `HARNESS_MISSING_CREDENTIAL_${crypto.randomUUID().replaceAll("-", "_")}`;
+  assert.equal(Object.hasOwn(process.env, envName), false);
+  for (const credential of [{}, { apiKeyEnv: envName }]) {
+    for (const preexisting of [false, true]) {
+      const home = temporaryHome();
+      initializeWorkspace(home);
+      const modelsFile = path.join(home, "models.json");
+      const receiptFile = path.join(home, "model-readiness.json");
+      const profile = { id: "a", vendor: "fixture", url: "https://fixture.invalid/v1", ...credential };
+      if (preexisting) {
+        fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ ...profile, apiKey: "synthetic-fixture-key" }] }));
+        const configured = inspectModelReadiness(home, modelsFile);
+        recordModelVerification(home, modelsFile, { status: "READY", connectionVerified: true, model: configured.model, responseDigest: "fixture", completedAt: new Date().toISOString() });
+      }
+      fs.writeFileSync(modelsFile, JSON.stringify({ models: [profile] }));
+      const configuration = fs.readFileSync(modelsFile);
+      const receipt = preexisting ? fs.readFileSync(receiptFile) : null;
+      const readiness = inspectModelReadiness(home, modelsFile);
+      assert.equal(readiness.status, "CREDENTIAL_REQUIRED");
+      const initialized = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home } });
+      assert.equal(initialized.exitCode, 2);
+      assert.deepEqual(initialized.result, JSON.parse(JSON.stringify(readiness)));
+      assert.deepEqual(fs.readFileSync(modelsFile), configuration);
+      if (preexisting) assert.deepEqual(fs.readFileSync(receiptFile), receipt);
+      else assert.equal(fs.existsSync(receiptFile), false);
+      assert.equal(requests, 0);
+    }
+  }
+});
+
 test("shared readiness implementation stays host-neutral", () => {
   const source = fs.readFileSync(new URL("../src/v3/model-readiness.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(source, /WorkBuddy|CodeBuddy|\.workbuddy/i);
@@ -78,6 +114,90 @@ test("model initialization rejects configuration inside the immutable Release", 
   assert.equal(result.nextAction, "move-model-configuration-outside-release");
 });
 
+test("parsed bare and invalid model options cannot reuse verified default A", async (t) => {
+  const service = await modelService(t);
+  const home = temporaryHome();
+  initializeWorkspace(home);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [
+    { id: "a", vendor: "fixture", apiKey: "private-a", url: service.url },
+    { id: "b", vendor: "fixture", apiKey: "private-b", url: service.url }
+  ] }));
+  const invoke = (action, flags = []) => executeV3Operation(parseCli(["llm", action, "--workspace", home, ...flags]));
+  assert.equal((await invoke("v3-initialize")).result.initializationStatus, "READY");
+  const receiptFile = path.join(home, "model-readiness.json");
+  const receipt = fs.readFileSync(receiptFile);
+  assert.equal(parseCli(["llm", "v3-initialize", "--model"]).options.model, true);
+  for (const action of ["v3-readiness", "v3-initialize"]) {
+    for (const flags of [["--model"], ["--model", ""], ["--model", "unknown"]]) {
+      const rejected = await invoke(action, flags);
+      assert.equal(rejected.exitCode, 2);
+      assert.equal(rejected.result.connectionVerified, false);
+      assert.equal(rejected.result.initializationStatus, "ACTION_REQUIRED");
+      assert.ok(rejected.result.nextAction);
+      assert.deepEqual(fs.readFileSync(receiptFile), receipt);
+    }
+  }
+  assert.equal(service.requests.length, 1, "invalid selectors must make zero additional calls");
+  const b = await invoke("v3-initialize", ["--model", "b"]);
+  assert.equal(b.result.initializationStatus, "READY");
+  assert.equal(b.result.model.id, "b");
+  assert.deepEqual(service.requests.map(request => request.model), ["a", "b"]);
+});
+
+for (const change of ["credential", "invalid-json", "missing", "directory"]) {
+  for (const preexisting of [false, true]) {
+    test(`in-flight ${change} change preserves receipt (existing: ${preexisting})`, async (t) => {
+      const home = temporaryHome();
+      initializeWorkspace(home);
+      const modelsFile = path.join(home, "models.json");
+      const profile = { id: "a", vendor: "fixture", apiKey: "old-private-key", url: "https://fixture.invalid/v1" };
+      fs.writeFileSync(modelsFile, JSON.stringify({ models: [profile] }));
+      const initial = inspectModelReadiness(home, modelsFile);
+      const doctor = { status: "READY", connectionVerified: true, model: initial.model, responseDigest: "fixture", completedAt: new Date().toISOString() };
+      if (preexisting) recordModelVerification(home, modelsFile, doctor);
+      const receiptFile = path.join(home, "model-readiness.json");
+      const receipt = preexisting ? fs.readFileSync(receiptFile) : null;
+      let releaseResponse;
+      let requestStarted;
+      const started = new Promise(resolve => { requestStarted = resolve; });
+      const response = new Promise(resolve => { releaseResponse = resolve; });
+      let calls = 0;
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = async () => {
+        calls += 1;
+        requestStarted();
+        await response;
+        return new Response(JSON.stringify({ choices: [{ message: { content: '{"status":"ok"}' } }] }), {
+          status: 200, headers: { "content-type": "application/json" }
+        });
+      };
+      t.after(() => { globalThis.fetch = originalFetch; releaseResponse(); });
+      const pending = executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home, "timeout-ms": 1000 } });
+      await started;
+      if (change === "credential") fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ ...profile, apiKey: "new-private-key" }] }));
+      if (change === "invalid-json") fs.writeFileSync(modelsFile, "{");
+      if (change === "missing" || change === "directory") fs.unlinkSync(modelsFile);
+      if (change === "directory") fs.mkdirSync(modelsFile);
+      releaseResponse();
+      const rejected = await pending;
+      assert.equal(rejected.exitCode, 2);
+      assert.equal(rejected.result.status, "CONFIGURATION_CHANGED");
+      assert.equal(rejected.result.connectionVerified, false);
+      assert.equal(rejected.result.initializationStatus, "ACTION_REQUIRED");
+      assert.equal(inspectModelReadiness(home, modelsFile).connectionVerified, false);
+      assert.equal(calls, 1, "must not retry or select another profile");
+      assert.doesNotMatch(JSON.stringify(rejected), /old-private-key|new-private-key/);
+      // The persistence API must enforce the binding itself, before any write.
+      assert.equal(recordModelVerification(home, modelsFile, doctor, undefined, initial.configurationDigest).status, "CONFIGURATION_CHANGED");
+      if (preexisting) {
+        assert.deepEqual(fs.readFileSync(receiptFile), receipt);
+        assert.equal(fs.statSync(receiptFile).mode & 0o777, 0o600);
+      } else assert.equal(fs.existsSync(receiptFile), false);
+    });
+  }
+}
+
 function temporaryHome() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "evopilot-harness-llm-init-"));
 }
@@ -86,13 +206,18 @@ function digestFile(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
-async function modelService(t) {
+async function modelService(t, fail = () => false) {
   const requests = [];
   const server = http.createServer((request, response) => {
     let body = "";
     request.on("data", (chunk) => { body += chunk; });
     request.on("end", () => {
       requests.push(JSON.parse(body));
+      if (fail(JSON.parse(body))) {
+        response.writeHead(401);
+        response.end("fixture denied");
+        return;
+      }
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ status: "ok" }) } }], usage: { prompt_tokens: 2, completion_tokens: 1, total_tokens: 3 } }));
     });
@@ -192,4 +317,104 @@ test("explicit model selection never falls back through inspection, loading, CLI
   assert.deepEqual(service.requests.map((request) => request.model), ["second"]);
   assert.equal(digestFile(modelsFile), before);
   assert.doesNotMatch(JSON.stringify([rejected, accepted]), /synthetic-(first|second)-key/);
+});
+
+
+test("selected readiness binds A/B identities and failed B preserves a verified A", async (t) => {
+  let failB = false;
+  const service = await modelService(t, (body) => failB && body.model === "effective-b");
+  const home = temporaryHome();
+  initializeWorkspace(home);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [
+    { id: "ineligible", vendor: "fixture" },
+    { id: "a", modelName: "effective-a", vendor: "fixture-a", apiKey: "private-a", url: service.url },
+    { id: "b", modelName: "effective-b", vendor: "fixture-b", apiKey: "private-b", url: service.url }
+  ] }, null, 2) + "\n");
+  const before = fs.readFileSync(modelsFile);
+  const invoke = (action, model) => executeV3Operation({ positionals: ["llm", action], options: { workspace: home, ...(model === undefined ? {} : { model }), "timeout-ms": 1000 } });
+  const b = await invoke("v3-initialize", "b");
+  assert.equal(b.result.initializationStatus, "READY");
+  assert.equal(b.result.verification.model.id, "b");
+  assert.equal((await invoke("v3-readiness", "b")).result.connectionVerified, true);
+  assert.equal((await invoke("v3-readiness")).result.connectionVerified, false);
+  assert.equal(inspectModelReadiness(home, modelsFile).model.id, "a");
+  failB = true;
+  const failedB = await invoke("v3-initialize", "b");
+  assert.equal(failedB.exitCode, 2);
+  assert.equal(failedB.result.connectionVerified, false);
+  assert.equal(failedB.result.model.id, "b");
+  const receiptFile = path.join(home, "model-readiness.json");
+  assert.equal(JSON.parse(fs.readFileSync(receiptFile)).connectionVerified, false);
+  assert.equal((await invoke("v3-initialize")).result.initializationStatus, "READY");
+  assert.equal((await invoke("v3-readiness", "a")).result.connectionVerified, true);
+  const receiptA = fs.readFileSync(receiptFile);
+  const unrelatedFailure = await invoke("v3-initialize", "b");
+  assert.equal(unrelatedFailure.result.connectionVerified, false);
+  assert.equal(unrelatedFailure.result.initializationStatus, "ACTION_REQUIRED");
+  assert.deepEqual(fs.readFileSync(receiptFile), receiptA);
+  assert.equal(inspectModelReadiness(home, modelsFile).connectionVerified, true);
+  const calls = service.requests.length;
+  for (const selector of ["", "unknown"]) {
+    for (const action of ["v3-initialize", "v3-readiness"]) {
+      const rejected = await invoke(action, selector);
+      assert.equal(rejected.result.status, "NOT_CONFIGURED");
+      assert.equal(rejected.result.connectionVerified, false);
+    }
+  }
+  assert.equal(service.requests.length, calls);
+  assert.deepEqual(fs.readFileSync(receiptFile), receiptA);
+  assert.deepEqual(fs.readFileSync(modelsFile), before);
+  assert.equal(fs.statSync(receiptFile).mode & 0o777, 0o600);
+  assert.doesNotMatch(receiptA.toString(), /private-[ab]/);
+  assert.deepEqual(service.requests.map((request) => request.model), ["effective-b", "effective-b", "effective-a", "effective-b"]);
+});
+
+test("receipt and doctor identities must be complete and match the selected profile", async (t) => {
+  const service = await modelService(t);
+  const home = temporaryHome();
+  initializeWorkspace(home);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [{ id: "a", vendor: "fixture", modelName: "effective-a", apiKey: "private-key", url: service.url }] }));
+  const initialized = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home } });
+  const receiptFile = path.join(home, "model-readiness.json");
+  const original = JSON.parse(fs.readFileSync(receiptFile));
+  const identities = [undefined, null, [], {}, "a"];
+  for (const key of ["id", "provider", "model", "url"]) {
+    const missing = { ...original.model }; delete missing[key];
+    identities.push(missing, { ...original.model, [key]: "different" }, { ...original.model, [key]: {} });
+  }
+  for (const model of identities) {
+    fs.writeFileSync(receiptFile, JSON.stringify({ ...original, model }));
+    assert.equal(inspectModelReadiness(home, modelsFile).status, "CONFIGURED_UNVERIFIED");
+    const before = fs.readFileSync(receiptFile);
+    assert.throws(() => recordModelVerification(home, modelsFile, { ...initialized.result.doctor, model }), /identity/);
+    assert.deepEqual(fs.readFileSync(receiptFile), before);
+  }
+  fs.writeFileSync(receiptFile, JSON.stringify(original));
+  assert.equal(inspectModelReadiness(home, modelsFile).connectionVerified, true);
+  assert.equal(service.requests.length, 1, "receipt checks must remain offline");
+});
+
+test("absent profile id uses modelName and credentials follow loader semantics", async (t) => {
+  const service = await modelService(t);
+  const home = temporaryHome();
+  initializeWorkspace(home);
+  const modelsFile = path.join(home, "models.json");
+  const envName = "HARNESS_INITIALIZATION_FIXTURE_KEY";
+  const previous = process.env[envName];
+  process.env[envName] = "synthetic-env-secret";
+  t.after(() => { if (previous === undefined) delete process.env[envName]; else process.env[envName] = previous; });
+  const profile = { vendor: "fixture", modelName: "name-only", apiKeyEnv: envName, url: service.url };
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [profile] }));
+  const initialized = await executeV3Operation({ positionals: ["llm", "v3-initialize"], options: { workspace: home } });
+  assert.equal(initialized.result.initializationStatus, "READY");
+  assert.equal(inspectModelReadiness(home, modelsFile).verification.model.model, "name-only");
+  assert.equal(inspectModelReadiness(home, modelsFile, "name-only").status, "NOT_CONFIGURED");
+  assert.doesNotMatch(fs.readFileSync(path.join(home, "model-readiness.json"), "utf8"), /synthetic-env-secret/);
+  profile.apiKeyEnv = " " + envName + " ";
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [profile] }));
+  assert.equal(loadConfiguredModel(modelsFile), null);
+  assert.equal(inspectModelReadiness(home, modelsFile).status, "CREDENTIAL_REQUIRED");
+  assert.equal(service.requests.length, 1);
 });

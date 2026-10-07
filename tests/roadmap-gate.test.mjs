@@ -16,8 +16,8 @@ test("Roadmap Gate validates the contract and declared package version", () => {
 
 test("Roadmap Gate binds the cumulative Harness convergence sequence and independent authority", () => {
   const roadmap = JSON.parse(fs.readFileSync(path.join(root, "governance/roadmap.yaml"), "utf8"));
-  assert.equal(roadmap.versionPolicy.publishedBaseline, "4.8.1");
-  assert.equal(roadmap.versionPolicy.currentWorkingVersion, "4.8.2");
+  assert.equal(roadmap.versionPolicy.publishedBaseline, "4.8.2");
+  assert.equal(roadmap.versionPolicy.currentWorkingVersion, "4.8.3");
   assert.deepEqual(roadmap.seriesConvergenceParticipation.requiredVersionSequence, ["4.6.0", "4.7.0", "4.8.0", "4.8.1"]);
   assert.equal(roadmap.seriesConvergenceParticipation.terminalVersion, "4.8.1");
   assert.equal(roadmap.seriesConvergenceParticipation.terminalE2EGrantsHarnessApprovalPublicationOrReleaseAuthority, false);
@@ -174,5 +174,53 @@ test("Roadmap binds semantic Catalog supply repair without weakening authority",
     const result = runWithRoadmap((roadmap) => { delete roadmap.semanticCatalogSupplyPolicy[key]; });
     assert.equal(result.body.classification, "INVALID", key);
     assert.match(result.body.errors.join(" "), /semantic Catalog supply invariant/);
+  }
+});
+
+test("Readiness profile repair retains finite maintenance, historical boundaries and separate release", () => {
+  const roadmap = JSON.parse(fs.readFileSync(path.join(root, "governance/roadmap.yaml"), "utf8"));
+  assert.equal(roadmap.readinessProfileBindingRepairPolicy.managedModeM0Granted, false);
+  assert.equal(roadmap.readinessProfileBindingRepairPolicy.releaseAuthorization, "NOT_AUTHORIZED");
+  assert.deepEqual(roadmap.releaseHostCoveragePolicy.versions, {"evopilot-harness":"4.8.1","evopilot-runtime":"6.3.0","evopilot-evolution-expert":"2.3.0"});
+  const result = run(["--intent", "修复已有多profile模型就绪误匹配：doctor验证B不能让默认A被报告READY，保留manual configured provider/secret-safe receipts/现有公开合同，有限4.8.3正确性修复"]);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(result.body.classification, "ALIGNED");
+  assert.ok(result.body.matchedStandingWork.includes("evopilot-harness-maintenance"));
+});
+
+test("Readiness repair rejects weakened selection, secret, historical, M0 and release commitments", () => {
+  const changes = {
+    selectedProfileIdentityRequired: false, defaultSelectionSemanticsPreserved: false,
+    unknownSelectorFallbackAllowed: true, manualConfigurationReadOnly: false,
+    secretSafeReceiptsRequired: false, all313DefinitionsPreserved: false,
+    historicalPassTransferAllowed: true, managedModeM0Granted: true,
+    managedModeProductImplementationIncluded: true, publicOwnerContractsPreserved: false,
+    newActiveSoakRequired: true, releaseAuthorization: "AUTHORIZED",
+    separateExactCandidateReleaseDecisionRequired: false
+  };
+  for (const [key, bad] of Object.entries(changes)) for (const variant of ["wrong", "missing", "string"]) {
+    const result = runWithRoadmap(r => {
+      if (variant === "missing") delete r.readinessProfileBindingRepairPolicy[key];
+      else r.readinessProfileBindingRepairPolicy[key] = variant === "string" ? String(bad) : bad;
+    });
+    assert.equal(result.status, 1, `${key}:${variant}`);
+    assert.equal(result.body.classification, "INVALID");
+    assert.ok(result.body.errors.includes(`readiness profile repair invariant: ${key}`));
+  }
+});
+
+test("Readiness repair rejects expanded files, wrong Host, unpinned evidence and missing milestone", () => {
+  for (const mutate of [
+    r => { r.readinessProfileBindingRepairPolicy.nativeSourceWritablePaths.push("src/v3/lifecycle.mjs"); },
+    r => { r.readinessProfileBindingRepairPolicy.requiredCurrentHosts.push("WorkBuddy"); },
+    r => { r.readinessProfileBindingRepairPolicy.authorityRecordDigest = "sha256:" + "0".repeat(64); },
+    r => { r.readinessProfileBindingRepairPolicy.defectEvidence = "../outside.json"; },
+    r => { r.readinessProfileBindingRepairPolicy.baselinePublicationDigest = "sha256:" + "0".repeat(64); },
+    r => { r.milestones = r.milestones.filter(m => m.id !== "evopilot-harness-4.8.3-model-readiness-profile-binding"); }
+  ]) {
+    const result = runWithRoadmap(mutate);
+    assert.equal(result.status, 1);
+    assert.equal(result.body.classification, "INVALID");
+    assert.match(result.body.errors.join(" "), /readiness profile repair invariant/);
   }
 });
