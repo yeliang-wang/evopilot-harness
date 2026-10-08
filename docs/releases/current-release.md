@@ -24,3 +24,7 @@ The structural Target gates passed separately from independently reviewed execut
 ## Historical evidence and immutable artifacts
 
 The [4.8.1 publication record](../../governance/releases/semantic-convergence-20261002-publication.json) retains its original semantic-convergence acceptance and limits. Historical Targets, release tags, source archives, npm tarballs, asset versions and receipts remain unchanged. Current operating instructions live on the default branch; publication records do not rewrite accepted package bytes or publish user Harness assets.
+
+## Separate source candidate: 4.8.3
+
+[4.8.3](4.8.3.md) is **UNPUBLISHED; acceptance pending**. This selected-model readiness maintenance candidate does not change the 4.8.2 publication facts or public install commands above. The prior bounded source check passed 627 macOS tests (26 focused), not Candidate or whole-Target acceptance. Its Target requires current item-level impact review of 313 unchanged inherited definitions, six new criteria and three cases; historical PASS is not transferred. Publication requires separate authorization and verification.

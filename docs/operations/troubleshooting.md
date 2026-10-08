@@ -17,6 +17,20 @@ Use the exact installed package and external Workspace from [Agent Quickstart](.
 
 Harness MCP uses local stdio and needs no Runtime URL or listening port. EvoPilot Runtime connectivity belongs to the separate [series connection guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md). Harness model configuration is also separate from the Host's conversation model and Runtime LLM profile; reuse each product's existing configured binding.
 
+## Selected-Model Readiness In The 4.8.3 Candidate
+
+The [4.8.3 source candidate](../releases/4.8.3.md) is **UNPUBLISHED; acceptance pending**. If B was verified while A is the default, A remains unverified unless it has its own current verification. Inspect readiness for the model the task selects. Only a truly omitted selector uses the default; bare `--model`, empty values and unknown models refuse rather than selecting another model.
+
+Credential/configuration changes invalidate stale readiness. Reuse preserves human configuration; inspect the reported fault and repair only the intended external configuration before explicitly reinitializing. A prior receipt does not verify a changed binding, and local source checks do not establish live model validation.
+
+To diagnose npm availability of the exact 4.8.3 candidate version:
+
+```bash
+npm view @evopilot/harness@4.8.3 version
+```
+
+A missing version means 4.8.3 is not publicly available. This candidate-specific diagnostic does not establish acceptance or advance the published release. The [publication ledger](../releases/current-release.md) records verified public availability at 4.8.2; use the public-version guidance below for that release.
+
 ## Public npm Version Is Missing
 
 Check the exact Registry version:

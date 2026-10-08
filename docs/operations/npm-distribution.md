@@ -12,9 +12,19 @@ npm view @evopilot/harness@4.8.2 version
 
 If the command does not return `4.8.2`, that public package is not available. A local `npm pack`, passing test, Git tag, or GitHub Release does not prove npm publication.
 
-The package version documented here is `4.8.2`; the [publication ledger](../releases/current-release.md) records verified public availability. Verify npm Registry metadata, signatures, provenance, and the corresponding GitHub Release independently before relying on either distribution layer.
+The public installation version documented here is `4.8.2`; the [publication ledger](../releases/current-release.md) records verified public availability. Verify npm Registry metadata, signatures, provenance, and the corresponding GitHub Release independently before relying on either distribution layer.
 
 For a new installation, follow [Agent Quickstart](../agent/quickstart.md). The default-branch documentation includes corrections made after 4.8.1 publication; the old README inside the immutable 4.8.1 tarball is not replaced. See [documentation and immutable artifacts](../releases/current-release.md#documentation-and-immutable-artifacts).
+
+The [4.8.3 source candidate](../releases/4.8.3.md) is **UNPUBLISHED; acceptance pending**. Source metadata does not advance the public release pointer or authorize publication. Keep public installation at 4.8.2 until 4.8.3 publication is separately authorized and verified.
+
+To diagnose availability of this exact source candidate version:
+
+```bash
+npm view @evopilot/harness@4.8.3 version
+```
+
+A missing version means 4.8.3 is not publicly available. This candidate-specific diagnostic does not replace the verified 4.8.2 publication facts in the publication ledger or establish candidate acceptance.
 
 ## Promote An Accepted Candidate
 

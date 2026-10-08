@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/yeliang-wang/evopilot-harness/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/yeliang-wang/evopilot-harness)](https://github.com/yeliang-wang/evopilot-harness/releases)
-[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.8.2)
+[![npm](https://img.shields.io/npm/v/%40evopilot%2Fharness?logo=npm)](https://www.npmjs.com/package/@evopilot/harness/v/4.8.3)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14-339933?logo=nodedotjs&logoColor=white)](package.json)
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 
@@ -10,10 +10,13 @@
 
 `evopilot-harness` creates reviewed, immutable assets in user-owned Catalogs. Its Digital Expert guides compatible Agents through local stdio MCP to the deterministic Engine, independently of EvoPilot and Dashboard.
 
-This package is **4.8.2**: installation and onboarding documentation corrections,
-with unchanged semantic Catalog supply contracts. See the
-[current publication ledger and acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md)
-for independently verified GitHub/npm publication status.
+This package is **4.8.3**, with selected-model readiness fixes and unchanged
+public contracts. See the
+[4.8.3 notes](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/4.8.3.md)
+and the current [publication ledger and acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
+A local source checkout or candidate does not prove public availability or
+complete acceptance. Before installation, verify that exact version **4.8.3** is
+publicly available in both the npm Registry and GitHub Releases.
 
 Engine version changes do not rewrite existing semantic asset versions, schemas
 or published digests.
@@ -47,23 +50,23 @@ This is intentionally narrower than general software classification. Unknown dom
 
 ## Quick Start
 
-Requires Node.js 22.14 or newer and an Agent that can load local instructions and launch stdio MCP. For the Runtime + Evolution Expert + Harness combination, start with the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md). Harness alone can be installed in a dedicated runtime directory:
+Requires Node.js 22.14 or newer and an Agent that can load local instructions and launch stdio MCP. For the Runtime + Evolution Expert + Harness combination, start with the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md). Check the [publication ledger and acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md), confirm the exact 4.8.3 release in [GitHub Releases](https://github.com/yeliang-wang/evopilot-harness/releases), and use the Registry verification command below. Only once 4.8.3 is verified publicly available in both locations, use the installation commands to install Harness alone in a dedicated runtime directory:
 
 ```bash
-npm view @evopilot/harness@4.8.2 version
+npm view @evopilot/harness@4.8.3 version
 mkdir -p "$HOME/.evopilot-harness-runtime"
 cd "$HOME/.evopilot-harness-runtime"
 npm init -y
-npm install --save-exact @evopilot/harness@4.8.2
+npm install --save-exact @evopilot/harness@4.8.3
 ./node_modules/.bin/evopilot-harness agent bootstrap \
   --host codex \
   --workspace "$HOME/.evopilot-harness" \
   --json
 ```
 
-`npm view` must confirm the exact public version; otherwise use a verified local tarball or source checkout. Bootstrap reports the packaged Adapter, pinned MCP command, protocols and external Workspace without changing the Host. Load its `adapter.path` and configure its `mcp.exactNpxCommand` in the Host. For a local installation, configure the **absolute** installed binary path; a bare `evopilot-harness` command requires an existing `PATH` entry.
+`npm view` must confirm the exact version `4.8.3` from the public npm Registry; if either publication check fails, stop before the installation commands. A local tarball or source checkout does not establish public availability. Bootstrap reports the packaged Adapter, pinned MCP command, protocols and external Workspace without changing the Host. Load its `adapter.path` and configure its `mcp.exactNpxCommand` in the Host. For a local installation, configure the **absolute** installed binary path; a bare `evopilot-harness` command requires an existing `PATH` entry.
 
-Follow the [Agent Quickstart](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/quickstart.md) to activate the Adapter, check the live MCP connection, reuse existing model configuration, and run a first classification task. WorkBuddy has a separate preview-bound installer; Codex uses bootstrap plus manual Adapter/MCP configuration. A packaged Adapter is not proof of compatibility with every Host version. The current release's live acceptance is Codex-only.
+Follow the [Agent Quickstart](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/agent/quickstart.md) to activate the Adapter, check the live MCP connection, reuse existing model configuration, and run a first classification task. WorkBuddy has a separate preview-bound installer; Codex uses bootstrap plus manual Adapter/MCP configuration. A packaged Adapter is not proof of compatibility with every Host version. Consult the [current acceptance limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md) for the verified Host scope.
 
 Then tell the Agent:
 
@@ -180,7 +183,7 @@ The Engine checkout is read-only during production. User assets, evidence, polic
 
 ## Compatibility
 
-The current Engine is `4.8.2`; the canonical asset namespace remains `harness.evopilot.io/v3`, and Agent operations use `evopilot-harness-agent-operations/v3`. These protocol versions do not identify the Engine release. The v4.5 baseline reset does not support direct reading or migration of pre-v4.5 Workspace and Session representations. Historical v2/v3 CLI and migration material is retained in the [v2 compatibility guide](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/v2-compatibility.md), not as a promise of direct upgrade to 4.8.2. See the [architecture compatibility section](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/overview.md#compatibility) and [current release limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
+The Engine version in this package is `4.8.3`. The canonical asset namespace remains `harness.evopilot.io/v3`, and Agent operations use `evopilot-harness-agent-operations/v3`. These protocol versions do not identify the Engine release. The v4.5 baseline reset does not support direct reading or migration of pre-v4.5 Workspace and Session representations. Historical v2/v3 CLI and migration material is retained in the [v2 compatibility guide](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/guides/v2-compatibility.md), not as a promise of direct upgrade to this Engine version. See the [architecture compatibility section](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/architecture/overview.md#compatibility) and [current release limits](https://github.com/yeliang-wang/evopilot-harness/blob/main/docs/releases/current-release.md).
 
 GitHub Release and npm publication are separate release evidence layers and require explicit authorization. Container publication and deployment are outside this npm-and-MCP distribution scope and are not release prompts.
 

@@ -133,8 +133,12 @@ Matching can expose Profile metadata. Execution must bind a published Bundle so 
 
 An asset publication does not require an Engine, EvoPilot, or Dashboard release.
 
+## Selected-Model Readiness Maintenance
+
+The [4.8.3 candidate](../releases/4.8.3.md) preserves the existing readiness contract for the selected model: verification of B does not make default A ready. Only a truly omitted selector resolves to the default; bare, empty and unknown selectors refuse. Credential/configuration changes invalidate stale readiness, and reuse does not overwrite human configuration. This maintenance does not change Core, semantic assets, schemas, protocols or authority, or add capabilities.
+
 ## Compatibility
 
-This package targets Engine 4.8.2; verified public availability is recorded in the [publication ledger](../releases/current-release.md). The canonical asset API namespace remains `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`, controlled comparison uses `comparison.evopilot.io/v1`, classification uses the v4.5 `Taxonomy/v1` and `ClassificationSession/v1` contracts, and Agent operations use `evopilot-harness-agent-operations/v3`. These are independent protocol baselines, not Engine versions. Optional control-plane projections are exports, not source assets.
+This source targets Engine 4.8.3 (UNPUBLISHED; acceptance pending); the current published release remains 4.8.2, as recorded in the [publication ledger](../releases/current-release.md). The canonical asset API namespace remains `harness.evopilot.io/v3`; structured feedback uses `feedback.evopilot.io/v1`, controlled comparison uses `comparison.evopilot.io/v1`, classification uses the v4.5 `Taxonomy/v1` and `ClassificationSession/v1` contracts, and Agent operations use `evopilot-harness-agent-operations/v3`. These are independent protocol baselines, not Engine versions. Optional control-plane projections are exports, not source assets.
 
 The v4.5 baseline intentionally does not read or migrate pre-v4.5 Workspace, Session, configuration, package, or protocol representations. This representation reset does not remove product capability: after explicit classification handoff, the complete retained Harness Eligibility, professional reasoning, Catalog comparison, Proposal, Review, approval, separate publication, validation, recovery, and close lifecycle remains required. See [ADR 0002](adr/0002-agent-native-harness-operations.md), [ADR 0003](adr/0003-controlled-comparative-evidence.md), [ADR 0004](adr/0004-deterministic-business-centric-interaction.md), and [ADR 0005](adr/0005-source-first-business-classification.md).

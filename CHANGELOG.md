@@ -2,6 +2,14 @@
 
 All notable changes to `evopilot-harness` are documented here.
 
+## 4.8.3 — UNPUBLISHED — Selected-Model Readiness
+
+- Preserve selected-model readiness: verifying B does not mark default A ready. Only a truly omitted model uses the default; bare, empty or unknown selectors refuse.
+- Credential/configuration changes invalidate stale readiness; reuse preserves human configuration.
+- Advance source metadata and append 4.8.3 to Session and installed-probe version recognition, preserving existing versions and rejection behavior. Core and public contracts remain unchanged.
+- Acceptance pending: the prior bounded source check passed 627 macOS tests (26 focused); this is not Candidate or whole-Target acceptance. The Target requires current item-level impact review of 313 unchanged inherited definitions, six new criteria and three cases; prior PASS is not transferred.
+- Public installation and the publication ledger remain at 4.8.2. See [candidate scope and limits](docs/releases/4.8.3.md).
+
 ## 4.8.2 — 2026-10-06 — Installed Documentation
 
 - Corrected installed README links and local npm commands, added a safe onboarding path and explicit Host support boundaries, and synchronized maintained documentation.

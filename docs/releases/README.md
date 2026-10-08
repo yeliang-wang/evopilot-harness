@@ -1,10 +1,12 @@
 # Release Notes
 
+- [4.8.3 package notes](4.8.3.md) — **UNPUBLISHED; acceptance pending**; selected-model readiness maintenance. Public installation remains at 4.8.2.
+
 - [4.8.2 package notes](4.8.2.md) — installed documentation and version projection maintenance, published on GitHub and npm; [verification and limits](current-release.md).
 
 - [4.8.1](4.8.1.md) — accepted semantic Catalog supply; [historical publication evidence](../../governance/releases/semantic-convergence-20261002-publication.json).
 
-Release notes document shipped behavior and validation for each Engine version. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
+Release notes distinguish unpublished candidates from shipped behavior and version-specific validation. Harness Asset, Ontology, Policy, Evaluation, and Catalog versions evolve independently from the Engine release line.
 
 - [4.8.0](4.8.0.md) - bounded reasoning profiles, content-addressed semantic indexes, incremental/full equivalence, read-only federation, interoperable projections, and terminal immutable closure.
 

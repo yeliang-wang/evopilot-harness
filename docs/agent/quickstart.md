@@ -4,6 +4,8 @@ This is the ordinary v4 human journey. A human talks to a compatible external Ag
 
 This guide installs Harness 4.8.2, checks the Host connection, and reaches a first classification result without publishing an asset. For all three products together, use the [series installation guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/agent-host-installation.md) and [Runtime first task](https://github.com/yeliang-wang/evopilot/blob/main/docs/guides/first-task.md).
 
+The [4.8.3 source candidate](../releases/4.8.3.md) is **UNPUBLISHED; acceptance pending**. Public install commands below remain pinned to 4.8.2.
+
 ## Prerequisites
 
 - Node.js 22.14 or newer.
@@ -82,6 +84,8 @@ After MCP initialization, the Adapter calls read-only `inspect_capabilities`. In
 For a new Workspace, `prepare_workspace` initializes generic Components and policies plus a provider-neutral empty `models.example.json`, and points `config.yaml` at external `models.json`. It installs no professional Profiles, Bundles or business vocabulary. It never creates or overwrites `models.json`, imports a credential, or borrows the Host's conversation model.
 
 Reuse an existing `CONFIGURED_AND_VERIFIED` model binding. For a new or changed configuration, the operator supplies the profile locally, using an explicitly named environment variable or a `0600` file. `initialize_model_configuration` performs inspection and a minimal live model call, storing only a secret-free receipt. Failed reinitialization returns `CONFIGURED_UNVERIFIED`; it does not retry, select a fallback, or edit the file. Repair the reported fault before explicitly initializing again.
+
+For the **4.8.3 source candidate**, readiness belongs to the selected model: verifying B does not mark default A ready. A truly omitted model selector uses the default; a bare `--model`, an empty value or an unknown model refuses instead of falling back. Credential/configuration changes invalidate stale readiness, and reuse does not overwrite human configuration. These candidate corrections do not establish new live model or Host validation.
 
 An administrator can inspect readiness from the same installation directory without making a model call:
 

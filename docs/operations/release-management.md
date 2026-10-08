@@ -21,6 +21,12 @@ and remote deployment are outside the Harness release scope.
 
 Asset, Ontology, Policy, Evaluation, and Catalog versions remain independent from this Engine SemVer.
 
+## 4.8.3 Candidate Boundary
+
+The [4.8.3 source candidate](../releases/4.8.3.md) is **UNPUBLISHED; acceptance pending**. Keep public installation commands and the publication pointer at 4.8.2 until separately authorized publication is verified. The prior bounded source check passed 627 macOS tests (26 focused); it does not close Candidate or whole-Target acceptance.
+
+The 4.8.3 Target inherits 313 unchanged definitions requiring current item-level impact review, plus six new criteria and three cases. Historical PASS is not transferred. Generated projections from unchanged Core and their verification are separate controlled work; source metadata alone does not establish their completion. No new live Host, model validation, managed enforcement, WorkBuddy qualification or UI acceptance is claimed.
+
 ## Prepare A Release
 
 1. Run the Roadmap intent gate and bind an explicitly approved Evolution Target to the current Roadmap digest, finite scope, exact version and acceptance. Implementation approval does not grant release authority.

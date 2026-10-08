@@ -1,8 +1,8 @@
 # EvoPilot Harness Documentation
 
-Use this index to choose the shortest path for your task. This source targets Engine 4.8.2, with v3 asset contracts and Agent Operations Protocol v3. Historical versioned acceptance and compatibility pages preserve their original scope.
+Use this index to choose the shortest path for your task. This source targets Engine 4.8.3 (UNPUBLISHED; acceptance pending), with v3 asset contracts and Agent Operations Protocol v3. Historical versioned acceptance and compatibility pages preserve their original scope.
 
-Package notes: [4.8.2](releases/4.8.2.md). The [publication ledger](releases/current-release.md) records independently verified public releases.
+Candidate notes: [4.8.3 — UNPUBLISHED; acceptance pending](releases/4.8.3.md). Public installation remains at [4.8.2](releases/4.8.2.md). The [publication ledger](releases/current-release.md) records independently verified public releases.
 See [current publication and acceptance](releases/current-release.md) for exact
 versions, public verification and the approved Codex-only acceptance limits.
 The [semantic Catalog reference](reference/semantic-catalog-implementation.md)

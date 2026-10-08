@@ -44,7 +44,7 @@ export function createInstalledProbeTransport({contextBytes,expectedContextDiges
   assert.equal(context.schema,'evopilot-installed-readonly-probe-context/v1');
   // The historical CLI stays pinned to 4.8.1. A current source integration test
   // may supply an explicit supported version; the untrusted context never chooses it.
-  assert.ok(["4.8.1","4.8.2"].includes(expectedVersion),'PROBE_VERSION_UNSUPPORTED');
+  assert.ok(["4.8.1","4.8.2","4.8.3"].includes(expectedVersion),'PROBE_VERSION_UNSUPPORTED');
   const spec={...packages[context.product],version:expectedVersion};assert.equal(context.version,spec.version);
   assert.ok([context.artifactSetDigest,context.acceptanceBindingDigest,context.probeInputDigest].every(isDigest),'EXTERNAL_BINDING_REFERENCE_REQUIRED');
   assert.ok(path.isAbsolute(context.installationRoot)&&path.isAbsolute(sourceRoot),'ABSOLUTE_ROOT_REQUIRED');
