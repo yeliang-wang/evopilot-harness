@@ -419,6 +419,7 @@ async function dispatch(args, group, action, id) {
 function readinessModelOption(args) {
   if (!Object.hasOwn(args.options, "model")) return undefined;
   const value = args.options.model;
+  if (value === undefined) return undefined;
   // An invalid explicit selector must never select the default profile.
   return typeof value === "string" && value.trim().length > 0 ? value : "";
 }

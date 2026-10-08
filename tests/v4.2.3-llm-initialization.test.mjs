@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
 import os from "node:os";
@@ -129,7 +130,7 @@ test("parsed bare and invalid model options cannot reuse verified default A", as
   const receipt = fs.readFileSync(receiptFile);
   assert.equal(parseCli(["llm", "v3-initialize", "--model"]).options.model, true);
   for (const action of ["v3-readiness", "v3-initialize"]) {
-    for (const flags of [["--model"], ["--model", ""], ["--model", "unknown"]]) {
+    for (const flags of [["--model"], ["--model", ""], ["--model", "   "], ["--model", "unknown"]]) {
       const rejected = await invoke(action, flags);
       assert.equal(rejected.exitCode, 2);
       assert.equal(rejected.result.connectionVerified, false);
@@ -319,6 +320,65 @@ test("explicit model selection never falls back through inspection, loading, CLI
   assert.doesNotMatch(JSON.stringify([rejected, accepted]), /synthetic-(first|second)-key/);
 });
 
+
+test("stdio MCP omitted model initializes default A and its receipt survives a fresh process", async (t) => {
+  const service = await modelService(t);
+  const home = temporaryHome();
+  initializeWorkspace(home);
+  const modelsFile = path.join(home, "models.json");
+  fs.writeFileSync(modelsFile, JSON.stringify({ models: [
+    { id: "a", modelName: "effective-a", vendor: "fixture", apiKey: "synthetic-a-key", url: service.url },
+    { id: "b", modelName: "effective-b", vendor: "fixture", apiKey: "synthetic-b-key", url: service.url }
+  ] }));
+  const configuration = fs.readFileSync(modelsFile);
+  const client = new TestMcpClient({ command: process.execPath, args: ["src/index.mjs", "mcp", "serve", "--workspace", home], cwd: path.resolve(import.meta.dirname, "..") });
+  t.after(() => client.close());
+  await client.initialize();
+  const initialize = async (options = {}) => structured(await client.tool("initialize_model_configuration", { modelsFile, timeoutMs: 5000, ...options }));
+  const b = await initialize({ model: "b" });
+  assert.equal(b.status, "CONFIGURED_AND_VERIFIED");
+  assert.equal(b.verification.model.id, "b");
+  assert.equal(inspectModelReadiness(home, modelsFile, "b").connectionVerified, true);
+  const defaultBefore = inspectModelReadiness(home, modelsFile);
+  assert.equal(defaultBefore.model.id, "a");
+  assert.equal(defaultBefore.connectionVerified, false);
+
+  const a = await initialize();
+  assert.equal(a.status, "CONFIGURED_AND_VERIFIED");
+  assert.equal(a.initializationStatus, "READY");
+  assert.equal(a.verification.model.id, "a");
+  assert.deepEqual(service.requests.map(request => request.model), ["effective-b", "effective-a"]);
+  const receiptFile = path.join(home, "model-readiness.json");
+  const receipt = fs.readFileSync(receiptFile);
+  for (const model of ["", "   ", "unknown"]) {
+    const rejected = await initialize({ model });
+    assert.equal(rejected.connectionVerified, false);
+    assert.equal(rejected.initializationStatus, "ACTION_REQUIRED");
+    assert.deepEqual(fs.readFileSync(modelsFile), configuration);
+    assert.deepEqual(fs.readFileSync(receiptFile), receipt);
+  }
+  for (const model of [true, false, null, 0, [], {}]) {
+    for (const action of ["v3-readiness", "v3-initialize"]) {
+      const rejected = await executeV3Operation({ positionals: ["llm", action], options: { workspace: home, "models-file": modelsFile, model } });
+      assert.equal(rejected.exitCode, 2);
+      assert.equal(rejected.result.connectionVerified, false);
+    }
+  }
+  const later = JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", `
+    import { executeV3Operation } from ${JSON.stringify(new URL("../src/v3/cli.mjs", import.meta.url).href)};
+    const result = await executeV3Operation({ positionals: ["llm", "v3-readiness"], options: {
+      workspace: ${JSON.stringify(home)}, "models-file": ${JSON.stringify(modelsFile)}, model: undefined
+    } });
+    process.stdout.write(JSON.stringify(result));
+  `], { encoding: "utf8" }));
+  assert.equal(later.exitCode, 0);
+  assert.equal(later.result.status, "CONFIGURED_AND_VERIFIED");
+  assert.equal(later.result.verification.model.id, "a");
+  assert.equal(later.result.connectionVerified, true);
+  assert.deepEqual(service.requests.map(request => request.model), ["effective-b", "effective-a"]);
+  assert.deepEqual(fs.readFileSync(modelsFile), configuration);
+  assert.deepEqual(fs.readFileSync(receiptFile), receipt);
+});
 
 test("selected readiness binds A/B identities and failed B preserves a verified A", async (t) => {
   let failB = false;
