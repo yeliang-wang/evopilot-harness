@@ -2,7 +2,7 @@
 
 `evopilot-next-harness` is the package bin for `src/cli.mjs` (also runnable as `node src/cli.mjs` in this checkout). Its owned relative modules and packaged assets work without a developer or parent repository. Node **24.14.0** is the supported baseline; `node:sqlite` is experimental and may print a runtime warning to stderr. stdout contains exactly one JSON envelope.
 
-`capabilities`, `help`/`--help`, and `version`/`--version` require no workspace and create no filesystem state. Capabilities lists the exact owned service operations and limits. Full plugin/MCP, unified Expert/Host delivery and M3 parent provider wiring remain pending. Discovery and successful requests confer no acceptance or release authority.
+`capabilities`, `help`/`--help`, and `version`/`--version` require no workspace and create no filesystem state. Capabilities lists the exact owned service operations and limits. The parent EvoPilot Preview implements MCP, Expert and connection support with a native Ontology resolver. This standalone CLI supplies no resolver; its static pending labels do not describe the current parent composition. Expert is off by default and requires explicit Preview selection and task activation of the current stdio connection; installed MCP is passive. Desktop/Host acceptance status is supplied separately in a local report bound to the exact candidate; without that report, no acceptance claim is made. M0 and technical tests do not establish Host acceptance. Discovery and successful requests confer no acceptance or release authority.
 
 ```sh
 evopilot-next-harness capabilities
@@ -54,7 +54,7 @@ Inspect the receipt in a fresh process using:
 
 Use `workspace.inspect` to obtain the revision for a *new* intent. Retrying the same scoped request ID and identical operation/input returns the retained receipt even with a stale expected revision; it creates no duplicate write. Reusing the ID with changed intent yields `REQUEST_CONFLICT`. A new ID with a stale revision yields `REVISION_CONFLICT`. The CLI never refreshes CAS, retries, approves, publishes or runs another request automatically. After an uncertain response, inspect the exact receipt before choosing any next action.
 
-The standalone CLI configures no external Ontology resolver. Operations needing one return `UNAVAILABLE_DEPENDENCY`; missing published Harness dependencies use that same service code. No request can inject a resolver, shell command, network action or executable evaluation JavaScript. Sources remain inert data. The CLI does not collect LLM credentials or use a retired Suite fallback.
+The standalone CLI deliberately configures no external Ontology resolver. The embedding service API accepts a trusted `resolveOntology` callback, and the parent composition supplies a product-test-validated native published Ontology resolver; see [service prerequisites](service.md). Operations needing one return `UNAVAILABLE_DEPENDENCY`; missing published Harness dependencies use that same service code. No request can inject a resolver, shell command, network action or executable evaluation JavaScript. Sources remain inert data. The CLI does not collect LLM credentials or use a retired Suite fallback.
 
 ## Output and exit status
 
@@ -72,4 +72,4 @@ Unknown/duplicate flags, missing values, extra positional arguments and extra fl
 
 ## Local verification
 
-`node scripts/check.mjs` preserves the owned-import and frozen-v1 guards and verifies silent CLI import under read-only filesystem permissions. `node --test tests/e2e/cli.test.mjs` exercises actual CLI processes; `npm test` includes the existing suite. Operator tests require temporary filesystem workspace access. The bounded source sandbox cannot grant that access; those test cases must run in the operator environment. Neither tests nor CLI output establish acceptance.
+`node scripts/check.mjs` preserves the owned-import and frozen-v1 guards and verifies silent CLI import under read-only filesystem permissions. CLI tests (SOURCE-CHECKOUT: `tests/e2e/cli.test.mjs`) exercise discovery, bounded input, persistence across processes, CAS, receipt replay and unavailable external dependencies. Run them from a source checkout with `node --test tests/e2e/cli.test.mjs`; they are included in the verified suite described in the [README](../README.md). Process tests need permission to create isolated temporary workspaces. Neither tests nor CLI output establish acceptance.

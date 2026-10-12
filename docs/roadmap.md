@@ -1,20 +1,21 @@
-# harness local roadmap
+# Harness 0.1.x roadmap
 
-Version 0.1.0 is under construction within the approved local v0.1 scope. This document records implementation status; it does not alter the parent governance roadmap, approve additional work or assert M1 completion.
+Harness 0.1.0 implements the approved local scope. This roadmap records current capabilities and remaining boundaries; it does not authorize additional features or assert product acceptance.
 
-Implemented: native v1 declarative validation, evidence evaluation, deterministic delivery construction and verification, exact Ontology reference inspection, and read-only access to 101 preserved public source documents.
+## Available capabilities
 
-Independent source check/build commands validate this product without a parent generator. Tests and local packed-artifact rehearsal are technical checks, not product acceptance. Retained legacy libraries do not imply completed operational migration.
+- Native v1 validation, supplied-evidence evaluation, deterministic delivery construction and verification for Component/Profile/Bundle/EvaluationPack assets.
+- [Owned service](service.md) with scoped lifecycle, exact published dependencies, composed evaluation, durable receipts, CAS, restart recovery and inert historical source retention.
+- [Independent CLI](cli.md) with read-only discovery and one explicit service request per invocation. It supplies no external Ontology resolver; the parent composition supplies the native published Ontology resolver through the service API.
+- [Read-only semantic compatibility](semantic-consumer.md), preserving legacy concept comparison and exact canonical hashes. Unevaluated required relations are explicit `NOT_EVALUATED` constraints and yield `INDETERMINATE` unless concept checks already establish incompatibility.
+- A hash-verified archive of 101 public sources. Historical imports reside only in an isolated acceptance workspace and do not become approved or published native assets automatically.
 
-Local M2 source includes the [Harness-owned service](service.md): durable scoped lifecycle, exact dependency resolution, published Component/Profile/Bundle/EvaluationPack evaluation, receipt/audit persistence and lossless source-only imports. Composed reports bind exact root and unique runnable closure members. Historical configured formats are recognized without semantic validation or inherited authority. The source checker includes the service export and read-only discovery smoke test. Source checks and in-memory composition checks pass; the expanded operator filesystem suite has not been executed in the native sandbox.
+The parent EvoPilot Preview implements the Runtime/Harness/Ontology composition, MCP, Expert and connection support. Installed MCP is passive. Expert is off by default and requires explicit Preview selection and task activation of the current stdio connection, in a namespace separate from the old product. Operator verification covers two adapters sharing one verified daemon, session isolation, CAS, restart receipts and program uninstall preserving workspace data.
 
-The [independent CLI](cli.md) now exposes pure discovery and one explicitly initialized owned service request per process, bounded stdin/regular-file JSON, sanitized output, scoped receipts and unchanged CAS/idempotency semantics. It has no external Ontology resolver; required external dependencies remain unavailable. CLI imports are checked under read-only filesystem permissions. Process-level operator tests cover persistence, input files, scope and provider boundaries; temporary workspace creation remains blocked in the bounded source sandbox.
+The [README](../README.md) records the current passing technical baseline. Service tests (SOURCE-CHECKOUT: `tests/e2e/service.test.mjs`), composition tests (SOURCE-CHECKOUT: `tests/e2e/composed-service.test.mjs`), CLI tests (SOURCE-CHECKOUT: `tests/e2e/cli.test.mjs`) and semantic tests (SOURCE-CHECKOUT: `tests/e2e/semantic-consumer.test.mjs`) cover implemented behavior. Run these tests from a source checkout; installed tarballs omit development scripts/tests. Machine checks, human decisions, evaluation, Runtime business completion and software Release are separate evidence and authority boundaries.
 
-Pending within the existing plan: operator verification and the later import of 45 configured documents, M3 parent provider wiring, full plugin/MCP transport, unified Expert/Host experience, operational migration and the applicable E01–E19 evidence. GitHub publication is a later separately authorized stage. Stable 1.0, production readiness and full acceptance are not claimed.
+## Remaining scope
 
-See the [product entry and API links](../README.md).
+Desktop/Host acceptance status is supplied separately in a local report bound to the exact candidate; without that report, no acceptance claim is made. M0 and technical tests do not establish Host acceptance. GitHub execution, stable 1.0, production readiness and software Release are not claimed complete. Retained legacy sources do not demonstrate that all advanced feedback, calibration or matching algorithms have been ported.
 
-
-M2 now includes the [read-only semantic consumer](semantic-consumer.md), preserving concept comparison and canonical object hashes while correcting silently ignored relation constraints in the new 0.1.0 API. Capabilities reflect implemented M2 operations; full E03 transport/Expert/Host audit remains pending. Focused pure tests pass. Operator filesystem tests remain pending. The source checker still asserts the old false businessOperationsReady value; updating scripts/check.mjs is outside this bounded eleven-file edit, so check/build currently fail at that stale assertion.
-
-Validation limitation: tests/e2e/specification.test.mjs also retains the obsolete false readiness assertion outside the allowed edit scope. Its pure run passes 16 of 17 tests; the focused reference/consumer run passes all 9. Both that assertion and scripts/check.mjs require a separately scoped update.
+Future development is limited to approved 0.1.x real-project feedback. No additional feature scope is proposed here. Existing audit records remain retained externally.
