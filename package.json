@@ -2,6 +2,7 @@
   "name": "@evopilot-next/harness",
   "version": "0.1.0",
   "private": true,
+  "bin": { "evopilot-next-harness": "src/cli.mjs" },
   "type": "module",
   "engines": {
     "node": ">=24.14.0"

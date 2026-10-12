@@ -61,7 +61,11 @@ export async function checkSource() {
   const pkg = JSON.parse(await readFile(resolve(ROOT, 'package.json'), 'utf8'));
   for (const [key, value] of Object.entries(expected)) assert.deepEqual(pkg[key], value, key);
   for (const key of ['devDependencies', 'peerDependencies', 'optionalDependencies']) assert.deepEqual(pkg[key] ?? {}, {});
-  assert.equal(pkg.bin, undefined);
+  assert.deepEqual(pkg.bin, { 'evopilot-next-harness': 'src/cli.mjs' });
+  const lock = JSON.parse(await readFile(resolve(ROOT, 'package-lock.json'), 'utf8'));
+  assert.deepEqual(lock.packages[''].bin, pkg.bin);
+  assert((await lstat(resolve(ROOT, 'src/cli.mjs'))).mode & 0o111);
+  assert((await readFile(resolve(ROOT, 'src/cli.mjs'), 'utf8')).startsWith('#!/usr/bin/env node\n'));
   const vendor = resolve(ROOT, 'vendor/compatibility/v1');
   const manifest = JSON.parse(await readFile(resolve(vendor, 'manifest.json'), 'utf8'));
   assert.deepEqual(manifest, {
@@ -100,11 +104,14 @@ export async function checkSource() {
     'assert.equal(service.capabilities().composedEvaluation, true);',
     'assert(service.capabilities().operations.includes("asset.evaluate"));',
     'service.close();',
+    'const cli = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'src/cli.mjs')).href) + ');',
+    'assert.equal(typeof cli.main, "function");',
   ].join('\n');
   const result = spawnSync(process.execPath, ['--permission', '--allow-fs-read=' + ROOT, '--input-type=module', '-e', code], {
     cwd: ROOT, encoding: 'utf8', env: { ...process.env, NODE_OPTIONS: '', OPENSSL_CONF: '/dev/null' },
   });
   assert.ifError(result.error); assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout, '', 'Read-only import must not execute CLI');
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
