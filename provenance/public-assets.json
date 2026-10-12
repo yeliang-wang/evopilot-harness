@@ -1,0 +1,517 @@
+{
+  "schema": "evopilot-public-source-provenance/v1",
+  "sourceCommit": "372733fd7b67ec3bee9efe6322f0229db77b160d",
+  "sourceURL": "https://github.com/yeliang-wang/evopilot-harness/tree/372733fd7b67ec3bee9efe6322f0229db77b160d",
+  "license": "Apache-2.0",
+  "requestDigest": "sha256:37913cec99db4e29a0f8d8e96c6ad96a2451dd7d7792ac3cd0afa8f5cb318754",
+  "owner": "harness",
+  "destination": "assets/legacy-sources.json",
+  "destinationSha256": "feb8df8a9588e043dc8c3e4b398b82626b57c55b8448592a9c477dbf4b6cefd4",
+  "sources": {
+    "assets/v3/bundles/api-gateway/2.3.0/asset.yaml": {
+      "sha256": "ad6349ab7512e83050c3a26460a99ad7fa05d5f70959fa2ff5082953d0da64d0",
+      "bytes": 1397,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/api-gateway/2.3.0/exports/evopilot/template.yaml": {
+      "sha256": "637e55ca3683a7e9eb0522ac7e9322575a0b05dad3d8330969f8b332fe205e95",
+      "bytes": 14913,
+      "classification": "template"
+    },
+    "assets/v3/bundles/database-product/2.3.0/asset.yaml": {
+      "sha256": "53f17919896b3ad0ec41d56962f693b33832d7f2e2cd2194fd5edcce37e81514",
+      "bytes": 1458,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/database-product/2.3.0/exports/evopilot/template.yaml": {
+      "sha256": "0a9c1424c884b75cb9f4460961b395ab699cc45dfb430e7a34ed109df6ca9963",
+      "bytes": 16699,
+      "classification": "template"
+    },
+    "assets/v3/bundles/distributed-cache-product/asset.yaml": {
+      "sha256": "eee205e5f7c23c50587354421d30f8e72e782855ab95161846e2a570a5e385bc",
+      "bytes": 1229,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/distributed-cache-product/exports/evopilot/template.yaml": {
+      "sha256": "0b7fa64b302a18218595c918c575b7ec89918e0966d56575c386b066820cc88f",
+      "bytes": 250,
+      "classification": "export-mapping"
+    },
+    "assets/v3/bundles/distributed-cache/0.2.0/asset.yaml": {
+      "sha256": "12dcda195d56576830ff40e5431015c6d99511050331d725a6ee22cfe0f52e54",
+      "bytes": 1439,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/distributed-cache/0.2.0/exports/evopilot/template.yaml": {
+      "sha256": "9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc",
+      "bytes": 11466,
+      "classification": "template"
+    },
+    "assets/v3/bundles/generic-management-software/1.2.0/asset.yaml": {
+      "sha256": "251dc6b1d8fb802116537ea928f720014869c9190936f28c32e6b7088667243d",
+      "bytes": 1532,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/generic-management-software/1.2.0/exports/evopilot/template.yaml": {
+      "sha256": "b59902bad09f9f2fd542fccb1477ed4a33ba98c2dbc95a165088439fa992c096",
+      "bytes": 14531,
+      "classification": "template"
+    },
+    "assets/v3/bundles/go-middleware/1.2.0/asset.yaml": {
+      "sha256": "6fcba37e8f4147df8a8fd9d182f4ef13a9bf121b22f668ef4538bc42f35e91e5",
+      "bytes": 1462,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/go-middleware/1.2.0/exports/evopilot/template.yaml": {
+      "sha256": "26de1113e842846c4ca491a8293f4327cd361b6451c8b0e9ce96a5f3d072069e",
+      "bytes": 12391,
+      "classification": "template"
+    },
+    "assets/v3/bundles/java-ddd-service/1.2.0/asset.yaml": {
+      "sha256": "29b2b018ac6cd1b4d9e3fe71bf453f30f5d4a44821079bca587e3bc8728c6ecb",
+      "bytes": 1477,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/java-ddd-service/1.2.0/exports/evopilot/template.yaml": {
+      "sha256": "2714f53e7de70f574ab2075344df37aa49bdf246ca8ac6042cc8afca963678e2",
+      "bytes": 12291,
+      "classification": "template"
+    },
+    "assets/v3/bundles/node-saas-control-plane/1.2.0/asset.yaml": {
+      "sha256": "4f0a7fcefa6743a98a3602a9e13d08c3764b998f6241298a15058db54d09c3f0",
+      "bytes": 1512,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/node-saas-control-plane/1.2.0/exports/evopilot/template.yaml": {
+      "sha256": "0450e4113c45f469ef6434314df0159ba43f20ee076cba2d488662d722c28103",
+      "bytes": 12243,
+      "classification": "template"
+    },
+    "assets/v3/bundles/observability-apm/1.2.0/asset.yaml": {
+      "sha256": "7768b784434a24bbe8d549aabbc63372c062cdf6c351077fae0c613c3952ab7d",
+      "bytes": 1482,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/observability-apm/1.2.0/exports/evopilot/template.yaml": {
+      "sha256": "bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e",
+      "bytes": 14028,
+      "classification": "template"
+    },
+    "assets/v3/bundles/python-enterprise/1.2.0/asset.yaml": {
+      "sha256": "0622534abaaed2e22d2d03d9ca946a561175d433cc6bf626adbc5087d8afd2b5",
+      "bytes": 1482,
+      "classification": "definition"
+    },
+    "assets/v3/bundles/python-enterprise/1.2.0/exports/evopilot/template.yaml": {
+      "sha256": "99e4e6612dd492941cd6540e779fcf20492e6bfd8bbe17790dd568ffa4ab60c0",
+      "bytes": 13024,
+      "classification": "template"
+    },
+    "assets/v3/components/engineering-validation/asset.yaml": {
+      "sha256": "6e329cca3928b2d08a6df001bcbef9ec3db00ade96d2627c3fe9a553ccbbba5d",
+      "bytes": 1889,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/api-gateway/2.3.0/asset.yaml": {
+      "sha256": "8095b7381910293dfd9b77646c81809834af48b8820e2f8583a64df809963450",
+      "bytes": 1852,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/database-product/2.3.0/asset.yaml": {
+      "sha256": "708fd05134033f6f909fd335a34237a92d3eef7d0e6960eb46aee6a74c6ce41c",
+      "bytes": 2026,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/distributed-cache-product/asset.yaml": {
+      "sha256": "2d4cdc32b46f2a471abd33cef0f8f33d73a1356ee7cebe12e041ffe8667b10f2",
+      "bytes": 1471,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/distributed-cache/0.2.0/asset.yaml": {
+      "sha256": "d600da4f88f3d679f0160df1428ea966f240d0756c19ef500fddda16ef871aca",
+      "bytes": 2201,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/generic-management-software/1.2.0/asset.yaml": {
+      "sha256": "d2814e37147bf26eb4ed89612408db9c3a53e75d5eed01e75e8d2cbe99d3c9da",
+      "bytes": 1791,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/go-middleware/1.2.0/asset.yaml": {
+      "sha256": "7117ef5364be9ff5a26025bfe4c6b4a25c7c0273d9979dc03ff920ae67633504",
+      "bytes": 1474,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/java-ddd-service/1.2.0/asset.yaml": {
+      "sha256": "4e24db9424a24cc22109f750f0b4da3e62e490300e543f49f17fb35e1b879101",
+      "bytes": 1493,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/node-saas-control-plane/1.2.0/asset.yaml": {
+      "sha256": "81667d4c5e11138eea15d7d2156b2f936d7aff0bbe502ae0d9637b7e7b4b7a43",
+      "bytes": 1541,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/observability-apm/1.2.0/asset.yaml": {
+      "sha256": "4a67defdd098a7486546f240cdae4648acd92750c4788b3654ab75ea360b9e2c",
+      "bytes": 1719,
+      "classification": "definition"
+    },
+    "assets/v3/profiles/python-enterprise/1.2.0/asset.yaml": {
+      "sha256": "0ffcec296c9ce1df8c367e45161f0c37bec247590334c87a37a6bd9076437dd0",
+      "bytes": 1483,
+      "classification": "definition"
+    },
+    "harnesses/api-gateway-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "2adb0456048599abfee3001df6b97b90104cf591ebd692c2b9274cd27dba85bb",
+      "bytes": 300,
+      "classification": "binding-example"
+    },
+    "harnesses/api-gateway-harness/template.yaml": {
+      "sha256": "637e55ca3683a7e9eb0522ac7e9322575a0b05dad3d8330969f8b332fe205e95",
+      "bytes": 14913,
+      "classification": "template"
+    },
+    "harnesses/database-product-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "63d6168628c93109e21eafa16691e80437451712d9d36b1e72b722ebee350813",
+      "bytes": 310,
+      "classification": "binding-example"
+    },
+    "harnesses/database-product-harness/template.yaml": {
+      "sha256": "0a9c1424c884b75cb9f4460961b395ab699cc45dfb430e7a34ed109df6ca9963",
+      "bytes": 16699,
+      "classification": "template"
+    },
+    "harnesses/distributed-cache-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "1da8ec493a4f9b7a94cf3f7a5bf5e0647538d32348506106049628c4c686565a",
+      "bytes": 312,
+      "classification": "binding-example"
+    },
+    "harnesses/distributed-cache-harness/template.yaml": {
+      "sha256": "9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc",
+      "bytes": 11466,
+      "classification": "template"
+    },
+    "harnesses/generic-management-software-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "aa8fd9698c9ed5c59a6fdf3aada3492a7bf8b7675ba74aa203a832258dce10bf",
+      "bytes": 294,
+      "classification": "binding-example"
+    },
+    "harnesses/generic-management-software-harness/template.yaml": {
+      "sha256": "b59902bad09f9f2fd542fccb1477ed4a33ba98c2dbc95a165088439fa992c096",
+      "bytes": 14531,
+      "classification": "template"
+    },
+    "harnesses/go-middleware-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "f879bd427a816cc964a4a5d3f2c74396ca4eadadb196cdd16109740ce6199783",
+      "bytes": 280,
+      "classification": "binding-example"
+    },
+    "harnesses/go-middleware-harness/template.yaml": {
+      "sha256": "26de1113e842846c4ca491a8293f4327cd361b6451c8b0e9ce96a5f3d072069e",
+      "bytes": 12391,
+      "classification": "template"
+    },
+    "harnesses/java-ddd-service-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "445b681f05930e7d6bfa12fa5177d82fe65e80977065cbbfb0c8b987fb1956b1",
+      "bytes": 283,
+      "classification": "binding-example"
+    },
+    "harnesses/java-ddd-service-harness/template.yaml": {
+      "sha256": "2714f53e7de70f574ab2075344df37aa49bdf246ca8ac6042cc8afca963678e2",
+      "bytes": 12291,
+      "classification": "template"
+    },
+    "harnesses/node-saas-control-plane-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "a63e62c1858fed84198f61f596868c7680d1dcf167e52f6b129cb4c71ee9c43c",
+      "bytes": 290,
+      "classification": "binding-example"
+    },
+    "harnesses/node-saas-control-plane-harness/template.yaml": {
+      "sha256": "0450e4113c45f469ef6434314df0159ba43f20ee076cba2d488662d722c28103",
+      "bytes": 12243,
+      "classification": "template"
+    },
+    "harnesses/observability-apm-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "98f4d8ea04fc20fa78e4979cf721e3498a051122e91466ef52a29f2c18f1932a",
+      "bytes": 284,
+      "classification": "binding-example"
+    },
+    "harnesses/observability-apm-harness/template.yaml": {
+      "sha256": "bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e",
+      "bytes": 14028,
+      "classification": "template"
+    },
+    "harnesses/python-enterprise-harness/examples/selected-harness-binding.yaml": {
+      "sha256": "2b032e37d6f211912140afddcd5b6b6016a69a3c83a1a75024545962eb6a155a",
+      "bytes": 284,
+      "classification": "binding-example"
+    },
+    "harnesses/python-enterprise-harness/template.yaml": {
+      "sha256": "99e4e6612dd492941cd6540e779fcf20492e6bfd8bbe17790dd568ffa4ab60c0",
+      "bytes": 13024,
+      "classification": "template"
+    },
+    "ontology/examples/example-finance-harness-guidance.yaml": {
+      "sha256": "ea1f58d151c9e7249f0f82acecabc469370c17d18e2cbb57172e4476be103fce",
+      "bytes": 1138,
+      "classification": "guidance"
+    },
+    "policies/advisor/default.yaml": {
+      "sha256": "a7a321994a8fb702004260cbd7b4ce36bc0ad81a91a53c602f87ac0a36990243",
+      "bytes": 1406,
+      "classification": "policy"
+    },
+    "policies/advisor/proposal-review@1.2.0.yaml": {
+      "sha256": "34754294b03793f771092193180f6483c168c7017e846f3e3058259efef553ed",
+      "bytes": 2500,
+      "classification": "policy"
+    },
+    "policies/advisor/proposal-review@1.2.1.yaml": {
+      "sha256": "28e25048c0059421cdb1eb98ae154c14b0b134d28b2791c68e10b95c852f50bf",
+      "bytes": 3106,
+      "classification": "policy"
+    },
+    "policies/comparison/default.yaml": {
+      "sha256": "44abc80440d079c7622ff32797df9ac88b654b1d9a5374939ce20cf5ff7bdc7a",
+      "bytes": 875,
+      "classification": "policy"
+    },
+    "policies/completeness/default.yaml": {
+      "sha256": "71bad848098d72cd4df01565bec9763b31fa6139e2680e7f0a6a15ca4d2c14e4",
+      "bytes": 550,
+      "classification": "policy"
+    },
+    "policies/matcher/default.yaml": {
+      "sha256": "e1775cd08e2185d37cd988a1d2eed05863413561d7b22573e096cc802f55652e",
+      "bytes": 1056,
+      "classification": "policy"
+    },
+    "published/api-gateway-harness/2.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "2adb0456048599abfee3001df6b97b90104cf591ebd692c2b9274cd27dba85bb",
+      "bytes": 300,
+      "classification": "binding-example"
+    },
+    "published/api-gateway-harness/2.2.0/template.yaml": {
+      "sha256": "ed1b776b195c430e2ea4475fb850ddafb86a20323fb67369cae826ff18668b3a",
+      "bytes": 11223,
+      "classification": "template"
+    },
+    "published/api-gateway-harness/2.3.0/asset.yaml": {
+      "sha256": "7d6c4282d4834a48cf36272d9ddabe475a297388b62ac06ce82ed9ccee170422",
+      "bytes": 19804,
+      "classification": "definition"
+    },
+    "published/api-gateway-harness/2.3.0/examples/selected-harness-binding.yaml": {
+      "sha256": "2adb0456048599abfee3001df6b97b90104cf591ebd692c2b9274cd27dba85bb",
+      "bytes": 300,
+      "classification": "binding-example"
+    },
+    "published/api-gateway-harness/2.3.0/template.yaml": {
+      "sha256": "637e55ca3683a7e9eb0522ac7e9322575a0b05dad3d8330969f8b332fe205e95",
+      "bytes": 14913,
+      "classification": "template"
+    },
+    "published/database-product-harness/2.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "63d6168628c93109e21eafa16691e80437451712d9d36b1e72b722ebee350813",
+      "bytes": 310,
+      "classification": "binding-example"
+    },
+    "published/database-product-harness/2.2.0/template.yaml": {
+      "sha256": "8f63149373a7e3339cf19fa52e9a9a9795bef0568b58c4bd233a231115845c6b",
+      "bytes": 12779,
+      "classification": "template"
+    },
+    "published/database-product-harness/2.3.0/asset.yaml": {
+      "sha256": "9a8304227bf7b6a849f1b4774127f9038db68f75022683c8a35acc2ffe0275f8",
+      "bytes": 21833,
+      "classification": "definition"
+    },
+    "published/database-product-harness/2.3.0/examples/selected-harness-binding.yaml": {
+      "sha256": "63d6168628c93109e21eafa16691e80437451712d9d36b1e72b722ebee350813",
+      "bytes": 310,
+      "classification": "binding-example"
+    },
+    "published/database-product-harness/2.3.0/template.yaml": {
+      "sha256": "0a9c1424c884b75cb9f4460961b395ab699cc45dfb430e7a34ed109df6ca9963",
+      "bytes": 16699,
+      "classification": "template"
+    },
+    "published/distributed-cache-harness/0.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "1da8ec493a4f9b7a94cf3f7a5bf5e0647538d32348506106049628c4c686565a",
+      "bytes": 312,
+      "classification": "binding-example"
+    },
+    "published/distributed-cache-harness/0.1.0/template.yaml": {
+      "sha256": "88e728596bc395b592d7fbcbefb81ba15d38a62415168e8d3ec6ccd99a6d4cf0",
+      "bytes": 8359,
+      "classification": "template"
+    },
+    "published/distributed-cache-harness/0.2.0/asset.yaml": {
+      "sha256": "4a550f4d16fe8cccb6b76ccbf8f360e6469e4751a48152363e9f636b59ccec2c",
+      "bytes": 15655,
+      "classification": "definition"
+    },
+    "published/distributed-cache-harness/0.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "1da8ec493a4f9b7a94cf3f7a5bf5e0647538d32348506106049628c4c686565a",
+      "bytes": 312,
+      "classification": "binding-example"
+    },
+    "published/distributed-cache-harness/0.2.0/template.yaml": {
+      "sha256": "9daea6b5e967187f0e1502cb53595bd748491ce533ffd3ad3167233cf31ad9cc",
+      "bytes": 11466,
+      "classification": "template"
+    },
+    "published/generic-management-software-harness/1.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "aa8fd9698c9ed5c59a6fdf3aada3492a7bf8b7675ba74aa203a832258dce10bf",
+      "bytes": 294,
+      "classification": "binding-example"
+    },
+    "published/generic-management-software-harness/1.1.0/template.yaml": {
+      "sha256": "567f6fcb97ae4c6b62ea54bae81ef4451c46dbaeeb5e959f7e12cbefece5910f",
+      "bytes": 9468,
+      "classification": "template"
+    },
+    "published/generic-management-software-harness/1.2.0/asset.yaml": {
+      "sha256": "c36d2506a30add81d53c3705dfafaf533eb74dc7394e6a9547b4f1dbb0acde36",
+      "bytes": 19667,
+      "classification": "definition"
+    },
+    "published/generic-management-software-harness/1.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "aa8fd9698c9ed5c59a6fdf3aada3492a7bf8b7675ba74aa203a832258dce10bf",
+      "bytes": 294,
+      "classification": "binding-example"
+    },
+    "published/generic-management-software-harness/1.2.0/template.yaml": {
+      "sha256": "b59902bad09f9f2fd542fccb1477ed4a33ba98c2dbc95a165088439fa992c096",
+      "bytes": 14531,
+      "classification": "template"
+    },
+    "published/go-middleware-harness/1.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "f879bd427a816cc964a4a5d3f2c74396ca4eadadb196cdd16109740ce6199783",
+      "bytes": 280,
+      "classification": "binding-example"
+    },
+    "published/go-middleware-harness/1.1.0/template.yaml": {
+      "sha256": "a1bce5550b01f337c10d3d53c5c0236c1b380ae672c7372153d5cfa4bf8c0ab2",
+      "bytes": 8766,
+      "classification": "template"
+    },
+    "published/go-middleware-harness/1.2.0/asset.yaml": {
+      "sha256": "d6a97b798f140d7cb0f9730bafab337a24efca0d2b3df51142276ca1ef7bdbe6",
+      "bytes": 17124,
+      "classification": "definition"
+    },
+    "published/go-middleware-harness/1.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "f879bd427a816cc964a4a5d3f2c74396ca4eadadb196cdd16109740ce6199783",
+      "bytes": 280,
+      "classification": "binding-example"
+    },
+    "published/go-middleware-harness/1.2.0/template.yaml": {
+      "sha256": "26de1113e842846c4ca491a8293f4327cd361b6451c8b0e9ce96a5f3d072069e",
+      "bytes": 12391,
+      "classification": "template"
+    },
+    "published/java-ddd-service-harness/1.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "445b681f05930e7d6bfa12fa5177d82fe65e80977065cbbfb0c8b987fb1956b1",
+      "bytes": 283,
+      "classification": "binding-example"
+    },
+    "published/java-ddd-service-harness/1.1.0/template.yaml": {
+      "sha256": "2ce7d785fa646f6ca491c2354689c06148e071c11b76d0cf4e0206872f995edd",
+      "bytes": 8589,
+      "classification": "template"
+    },
+    "published/java-ddd-service-harness/1.2.0/asset.yaml": {
+      "sha256": "05e9f3f274f39382ad49a18795d8a5acf4c6121ee5878893af75027cc4fd35c1",
+      "bytes": 17142,
+      "classification": "definition"
+    },
+    "published/java-ddd-service-harness/1.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "445b681f05930e7d6bfa12fa5177d82fe65e80977065cbbfb0c8b987fb1956b1",
+      "bytes": 283,
+      "classification": "binding-example"
+    },
+    "published/java-ddd-service-harness/1.2.0/template.yaml": {
+      "sha256": "2714f53e7de70f574ab2075344df37aa49bdf246ca8ac6042cc8afca963678e2",
+      "bytes": 12291,
+      "classification": "template"
+    },
+    "published/node-saas-control-plane-harness/1.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "a63e62c1858fed84198f61f596868c7680d1dcf167e52f6b129cb4c71ee9c43c",
+      "bytes": 290,
+      "classification": "binding-example"
+    },
+    "published/node-saas-control-plane-harness/1.1.0/template.yaml": {
+      "sha256": "899643201676228935c423146cc20413392280ff201ccfc275fd5e4ad895bbfe",
+      "bytes": 8663,
+      "classification": "template"
+    },
+    "published/node-saas-control-plane-harness/1.2.0/asset.yaml": {
+      "sha256": "3a786b0339162a9b9d7171a50dc5daf10dc7c4601f9d91e843e284b2533afccc",
+      "bytes": 17004,
+      "classification": "definition"
+    },
+    "published/node-saas-control-plane-harness/1.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "a63e62c1858fed84198f61f596868c7680d1dcf167e52f6b129cb4c71ee9c43c",
+      "bytes": 290,
+      "classification": "binding-example"
+    },
+    "published/node-saas-control-plane-harness/1.2.0/template.yaml": {
+      "sha256": "0450e4113c45f469ef6434314df0159ba43f20ee076cba2d488662d722c28103",
+      "bytes": 12243,
+      "classification": "template"
+    },
+    "published/observability-apm-harness/1.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "98f4d8ea04fc20fa78e4979cf721e3498a051122e91466ef52a29f2c18f1932a",
+      "bytes": 284,
+      "classification": "binding-example"
+    },
+    "published/observability-apm-harness/1.1.0/template.yaml": {
+      "sha256": "2051efbb3096dda596810c48d53b5a949114436c4aac7e0b4f8a1a821df2a91c",
+      "bytes": 9018,
+      "classification": "template"
+    },
+    "published/observability-apm-harness/1.2.0/asset.yaml": {
+      "sha256": "8569ac13e9240480724773709c8f407f4621714e35f0f73bfbb334fc196935e8",
+      "bytes": 19025,
+      "classification": "definition"
+    },
+    "published/observability-apm-harness/1.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "98f4d8ea04fc20fa78e4979cf721e3498a051122e91466ef52a29f2c18f1932a",
+      "bytes": 284,
+      "classification": "binding-example"
+    },
+    "published/observability-apm-harness/1.2.0/template.yaml": {
+      "sha256": "bc0887efe01b1cc7e902ffa6696b089a7486cfa62432068ecb85fdf1ed198f8e",
+      "bytes": 14028,
+      "classification": "template"
+    },
+    "published/python-enterprise-harness/1.1.0/examples/selected-harness-binding.yaml": {
+      "sha256": "2b032e37d6f211912140afddcd5b6b6016a69a3c83a1a75024545962eb6a155a",
+      "bytes": 284,
+      "classification": "binding-example"
+    },
+    "published/python-enterprise-harness/1.1.0/template.yaml": {
+      "sha256": "9cdf453a0fd3e5069a7cd1e8ebda78ace03a6142b5263e024cf6770b3c01ebc6",
+      "bytes": 9392,
+      "classification": "template"
+    },
+    "published/python-enterprise-harness/1.2.0/asset.yaml": {
+      "sha256": "fbab78b58a4980ab1dc92c42d1ab3af7a8e680ff6c372e70a393e2c669e7b5bb",
+      "bytes": 17744,
+      "classification": "definition"
+    },
+    "published/python-enterprise-harness/1.2.0/examples/selected-harness-binding.yaml": {
+      "sha256": "2b032e37d6f211912140afddcd5b6b6016a69a3c83a1a75024545962eb6a155a",
+      "bytes": 284,
+      "classification": "binding-example"
+    },
+    "published/python-enterprise-harness/1.2.0/template.yaml": {
+      "sha256": "99e4e6612dd492941cd6540e779fcf20492e6bfd8bbe17790dd568ffa4ab60c0",
+      "bytes": 13024,
+      "classification": "template"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "format": "evopilot-harness-source-adoption/v1",
+  "standard": "EvoPilot native JSON; not an industry-certified Harness format",
+  "sources": [
+    {
+      "id": "opa-policy-testing",
+      "repository": "https://github.com/open-policy-agent/opa",
+      "commit": "89ed3cf26b7b8f8b758edc6b26d55efa022c1c85",
+      "path": "docs/docs/policy-testing.md",
+      "clauses": [
+        {
+          "selector": "Policy test boolean success/failure and evaluation errors",
+          "adoption": "Keep PASS, FAIL and ERROR separate. INDETERMINATE for missing observations and N/A for explicitly disabled applicability are EvoPilot additions.",
+          "cases": [
+            "boolean outcomes and execution errors remain distinct",
+            "missing observations and explicit applicability"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "swe-bench-evaluation",
+      "repository": "https://github.com/SWE-bench/SWE-bench",
+      "commit": "02e7a74ffd0b707aab73d203fe87bdc7c76afc8e",
+      "path": "docs/guides/evaluation.md",
+      "clauses": [
+        {
+          "selector": "Evaluation inputs, instance selection and evaluation results",
+          "adoption": "Pin case identity, source revision/digest, configuration and evaluated definitions for reproducible evidence. No benchmark execution or SWE-bench compatibility claim.",
+          "cases": [
+            "evidence bindings and deterministic package integrity",
+            "all kinds retain honest unresolved dependency pins"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "otel-log-data-model",
+      "repository": "https://github.com/open-telemetry/opentelemetry-specification",
+      "commit": "ef25ddb7d2ab36a194412c1c3bf71ae5900afdec",
+      "path": "specification/logs/data-model.md",
+      "clauses": [
+        {
+          "selector": "Field: SeverityNumber; Field: SeverityText",
+          "adoption": "Severity describes an observation independently of blocking and project consequences. Native info/warning/error/critical are not an OTel numeric encoding.",
+          "cases": [
+            "nonblocking warning never grants authority or mutates version"
+          ]
+        }
+      ]
+    }
+  ],
+  "provenance": {
+    "basis": "Shared PROV-inspired source records and exact source mappings",
+    "claim": "No W3C PROV conformance or external source authentication"
+  }
+}

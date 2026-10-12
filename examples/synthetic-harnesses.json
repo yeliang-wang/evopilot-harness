@@ -1,0 +1,1210 @@
+[
+  {
+    "name": "orchard-forward-public",
+    "asset": {
+      "id": "orchard-forward-public",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "public",
+      "provenance": {
+        "direction": "forward",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:orchard-forward-public/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:fd24036c254195897b2c232c810abf264f33204de969747c97b2a284ea7f13c1",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "orchard"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic fruit quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "orchard-forward-public-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:orchard-forward-public/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:9e9b897629e7abb59e819608d7c1173670273ceda2f2c078bdf2fa8410038d62"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "orchard-forward-private",
+    "asset": {
+      "id": "orchard-forward-private",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "private",
+      "provenance": {
+        "direction": "forward",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:orchard-forward-private/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:768097501c1d2f48d647ea7626d07ad63e988f25cdef86fc701c02c3e4e8a48c",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "orchard"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic fruit quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "orchard-forward-private-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:orchard-forward-private/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:e7ee8a71010e5161055942d5e4ee29925aa5ba4ae38756ce1cf4e4a5dfdbaf42"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "orchard-reverse-public",
+    "asset": {
+      "id": "orchard-reverse-public",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "public",
+      "provenance": {
+        "direction": "reverse",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:orchard-reverse-public/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:e757255b43ff46a6eb04df3943239fc1d101fb71cc5923ee6ac8b21c937a9931",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "orchard"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic fruit quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "orchard-reverse-public-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:orchard-reverse-public/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:c82f04e1e338c8b7077ae6520a0b7be2309fd8d2002b9b84e81ce74798c363e6"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "orchard-reverse-private",
+    "asset": {
+      "id": "orchard-reverse-private",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "private",
+      "provenance": {
+        "direction": "reverse",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:orchard-reverse-private/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:7600a4e82878f1c02ae1d6acc6122505491ddf0bd1edba8193a8ca4d76931c12",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "orchard"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic fruit quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:orchard-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "orchard-reverse-private-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:orchard-reverse-private/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:b7cd698a35ee21dbee4300cab5a98ed0fd6d03422682d6f42d38ced526009e73"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "observatory-forward-public",
+    "asset": {
+      "id": "observatory-forward-public",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "public",
+      "provenance": {
+        "direction": "forward",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:observatory-forward-public/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:7e885ef3f0fb1028e15a7a98fd1b5facc14d78b74cfc4d9ea0a85eb069aadebc",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "observatory"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic observation quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "observatory-forward-public-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:observatory-forward-public/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:89f325956db5243ceb78fd1fa911ab0640c277d9f725c145efcc55d33ed54f42"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "observatory-forward-private",
+    "asset": {
+      "id": "observatory-forward-private",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "private",
+      "provenance": {
+        "direction": "forward",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:observatory-forward-private/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:00203d0e8e1f70f1d7444b0fc788883135734dfba735efd9eaff7c7b9484f597",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "observatory"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic observation quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-forward-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "observatory-forward-private-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:observatory-forward-private/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:e47b885676789f3dbe75c7b6e8da4cf536a645a74bc876051e4a988ef89405e4"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "observatory-reverse-public",
+    "asset": {
+      "id": "observatory-reverse-public",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "public",
+      "provenance": {
+        "direction": "reverse",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:observatory-reverse-public/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:74be000312343813efda6eef234bcf8a676183b5b2c4a60c305d52df72fe0c76",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "observatory"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic observation quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-public/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "observatory-reverse-public-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:observatory-reverse-public/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:7330f182f6cc415741680d010c2b805a8e3f88fdaa63c15d3caa3834775f61fa"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  },
+  {
+    "name": "observatory-reverse-private",
+    "asset": {
+      "id": "observatory-reverse-private",
+      "version": "0.1.0",
+      "product": "harness",
+      "specVersion": "v1",
+      "visibility": "private",
+      "provenance": {
+        "direction": "reverse",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "synthetic",
+            "locator": "synthetic:observatory-reverse-private/record-1",
+            "revision": "synthetic-r1",
+            "digest": "sha256:1b43eb0e760e59558325083878da09dc328d4695ed9413c2ea3685454093ba01",
+            "status": "synthetic"
+          }
+        ]
+      },
+      "extensions": [],
+      "dependencies": [],
+      "kind": "HarnessComponent",
+      "applicability": {
+        "enabled": true,
+        "domains": [
+          "observatory"
+        ]
+      },
+      "objectives": [
+        {
+          "id": "objective",
+          "description": "Check synthetic observation quality"
+        }
+      ],
+      "preconditions": [
+        {
+          "id": "ready-check",
+          "description": "Synthetic observation is ready",
+          "evidenceKey": "ready"
+        }
+      ],
+      "inputs": [
+        {
+          "id": "ready",
+          "type": "boolean"
+        },
+        {
+          "id": "score",
+          "type": "number"
+        }
+      ],
+      "parameters": [
+        {
+          "id": "minimum",
+          "type": "number",
+          "default": 10
+        }
+      ],
+      "deliverables": [
+        {
+          "id": "report",
+          "description": "Immutable synthetic evaluation report"
+        }
+      ],
+      "rules": [
+        {
+          "id": "quality",
+          "target": "Synthetic quality score",
+          "evidenceKey": "score",
+          "operator": "gte",
+          "parameterRef": "minimum",
+          "severity": "warning",
+          "blocking": false
+        }
+      ],
+      "sourceMappings": [
+        {
+          "id": "mapping-objective",
+          "targetRef": "objective",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready-check",
+          "targetRef": "ready-check",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-ready",
+          "targetRef": "ready",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-score",
+          "targetRef": "score",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-minimum",
+          "targetRef": "minimum",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-report",
+          "targetRef": "report",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        },
+        {
+          "id": "mapping-quality",
+          "targetRef": "quality",
+          "sourceRef": "source",
+          "sourceLocator": "synthetic:observatory-reverse-private/record-1",
+          "sourceRevision": "synthetic-r1",
+          "status": "synthetic"
+        }
+      ]
+    },
+    "evidence": {
+      "id": "observatory-reverse-private-observation",
+      "version": "0.1.0",
+      "source": {
+        "locator": "synthetic:observatory-reverse-private/observation-1",
+        "revision": "synthetic-r1",
+        "digest": "sha256:870dc88da7e1dbf84a15c4da78c593aaa42d4a2669b5afc9c247c59d884ecd40"
+      },
+      "values": {
+        "ready": true,
+        "score": 12
+      }
+    },
+    "expected": "PASS"
+  }
+]
