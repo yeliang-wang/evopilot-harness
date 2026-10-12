@@ -1,0 +1,46 @@
+{
+  "schema": "evopilot-harness-semantic-consumer-provenance/v1",
+  "sourceCommit": "372733fd7b67ec3bee9efe6322f0229db77b160d",
+  "sourceFiles": [
+    {
+      "original": "src/v4/semantics/semantic-compatibility.mjs",
+      "sourceSha256": "29e5352b624d0674a7ff8bd4958298e80156ee836c4f72da7d022cb56718ce51"
+    },
+    {
+      "original": "src/v4/semantics/ontology-grounding.mjs",
+      "sourceSha256": "5350cfd6400125e4d7ddf64108e13c7b7c72e2dccebafb1ffc2765d9c28b344b"
+    },
+    {
+      "original": "src/v3/utils.mjs",
+      "sourceSha256": "527fbd453bec101eeea718f6005faeae681504c90e2370fd78abfab2e23f8b72"
+    },
+    {
+      "original": "schemas/harness-semantic-requirements-v1.schema.json",
+      "sourceSha256": "98c6864f796da774cfaa68f43bacb23fe7720db1531a87817e1f53d655cd9236"
+    },
+    {
+      "original": "schemas/semantic-compatibility-report-v1.schema.json",
+      "sourceSha256": "5f77a34f013e46539f2fcf3e9b20dbf6ece5353b53adb43b250445298989d166"
+    }
+  ],
+  "consumerVersion": "0.1.0",
+  "owner": "harness",
+  "ownership": "Harness requirements and compatibility reports only; imported Ontology DTO vocabulary is not public Ontology schema ownership.",
+  "adaptations": [
+    "Pure owned consumer, no runtime or development-reference imports.",
+    "Frozen vendor object hashing, canonical serialization and immutable cloning replace legacy utilities; raw string hashing is not reused.",
+    "Bounded descriptor-safe closed imported grounding validation and exact expected foundation digest.",
+    "Concept-only valid nonempty reports retain original canonical hashes and comparison priority.",
+    "Relations explicitly NOT_EVALUATED; otherwise compatible relation-bearing reports become INDETERMINATE. This is a non-backward-equivalent correction in the new 0.1.0 API only.",
+    "Empty grounding coverage cannot be COMPATIBLE; malformed evidence rejects.",
+    "Read-only scoped service inspect has authority false and creates no receipt or revision.",
+    "No foundation, candidate, pack, snapshot, reasoning, classification, catalog or proposal producer copied."
+  ],
+  "limitations": [
+    "Caller-supplied hashes establish local integrity only, not provenance or owner authority.",
+    "Evidence requirements remain legacy descriptive metadata; no evidence or edge resolution is invented.",
+    "Full E03 transport/Expert/Host audit and operator filesystem verification remain pending."
+  ],
+  "authority": false,
+  "acceptance": false
+}

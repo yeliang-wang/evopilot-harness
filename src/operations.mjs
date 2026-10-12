@@ -5,8 +5,9 @@ import { validateHarness } from './specification.mjs';
 import { buildDelivery, verifyDelivery } from './delivery.mjs';
 import { fail, LIMITS, slug } from './state.mjs';
 import { importOperations, importMutations, importFields, operateImport } from './import-operations.mjs';
+import { evaluateSemanticCompatibility } from './semantic-consumer.mjs';
 
-export const operations = Object.freeze([...importOperations, 'workspace.inspect', 'receipt.inspect', 'asset.put', 'asset.inspect', 'asset.list', 'asset.review', 'asset.decide', 'asset.publish', 'asset.evaluate', 'evaluation.inspect']);
+export const operations = Object.freeze([...importOperations, 'semantic.compatibility.inspect', 'workspace.inspect', 'receipt.inspect', 'asset.put', 'asset.inspect', 'asset.list', 'asset.review', 'asset.decide', 'asset.publish', 'asset.evaluate', 'evaluation.inspect']);
 export const mutations = Object.freeze([...importMutations, 'asset.put', 'asset.review', 'asset.decide', 'asset.publish', 'asset.evaluate']);
 
 // Dictionary keys serialize all six public reference fields canonically. Scope
@@ -61,19 +62,21 @@ export function validateRequest(r) {
     if (!Number.isSafeInteger(r.expectedRevision) || r.expectedRevision < 0) fail('INVALID_REQUEST', 'Expected nonnegative revision');
   }
   const fields = { ...importFields,
+    'semantic.compatibility.inspect': ['requirements', 'groundingResult', 'eligibility'],
     'workspace.inspect': [], 'receipt.inspect': ['requestId'], 'asset.put': ['asset'],
     'asset.inspect': ['id', 'version'], 'asset.list': [], 'asset.review': ['id', 'version'],
     'asset.decide': ['id', 'version', 'reviewDigest', 'decision', 'humanEvidenceRef'],
     'asset.publish': ['id', 'version'], 'asset.evaluate': ['id', 'version', 'evidence', 'configuration'], 'evaluation.inspect': ['requestId'],
   };
   exactFields(r.input, fields[r.operation]);
-  for (const field of fields[r.operation]) if (!['asset', 'raw', 'evidence', 'configuration'].includes(field)) textField(r.input[field]);
+  for (const field of fields[r.operation]) if (!['asset', 'raw', 'evidence', 'configuration', 'requirements', 'groundingResult', 'eligibility'].includes(field)) textField(r.input[field]);
   if (r.operation === 'legacy.import' && typeof r.input.raw !== 'string') fail('INVALID_REQUEST', 'Raw input must be a string');
   if (['receipt.inspect', 'evaluation.inspect'].includes(r.operation)) slug(r.input.requestId);
   if (r.operation === 'asset.decide' && (!['APPROVE', 'REJECT'].includes(r.input.decision) || !/^sha256:[a-f0-9]{64}$/.test(r.input.reviewDigest))) fail('INVALID_REQUEST', 'Explicit decision and review digest required');
   return write;
 }
 export function operate(store, state, r, providers) {
+  if (r.operation === 'semantic.compatibility.inspect') return { workspaceId: store.identity.id, scope: r.scope, report: evaluateSemanticCompatibility(r.input), authority: false };
   if (importOperations.includes(r.operation)) return operateImport(store, state, r);
   const scopeKey = stableSerialize(r.scope);
   const own = a => stableSerialize(a.scope) === scopeKey;

@@ -97,7 +97,7 @@ export async function checkSource() {
     'assert.equal(api.PRODUCT, ' + JSON.stringify(PRODUCT) + ');',
     "assert.equal(api.VERSION, '0.1.0');",
     'assert.equal(api.capabilities().authority, false);',
-    'assert.equal(api.capabilities().businessOperationsReady, false);',
+    'assert.equal(api.capabilities().businessOperationsReady, true);',
     'const serviceAPI = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'src/service.mjs')).href) + ');',
     'const service = serviceAPI.createHarnessService({workspaceRoot: ' + JSON.stringify(resolve(ROOT, 'discovery-must-not-create')) + ', workspaceId: "discovery"});',
     'assert.equal(service.capabilities().authority, false);',

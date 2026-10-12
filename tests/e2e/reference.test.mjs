@@ -41,12 +41,14 @@ test('package boundary: default capabilities are truthful immutable data', () =>
   assert.equal(api.VERSION, '0.1.0');
   assert.equal(api.PRODUCT, 'harness');
   const capabilities = api.capabilities();
-  assert.equal(capabilities.businessOperationsReady, false);
-  assert.equal(capabilities.implementationStage, 'M1_FOUNDATION');
+  assert.equal(capabilities.businessOperationsReady, true);
+  assert.equal(capabilities.implementationStage, 'M2_OWNED_SERVICE');
+  for (const field of ['hostReady', 'pluginReady', 'productionReady', 'softwareRelease']) assert.equal(capabilities[field], false);
+  assert.equal(capabilities.persistence, 'separate/service');
   assert.equal(capabilities.authority, false);
   assert(Object.isFrozen(capabilities));
   assert(Object.isFrozen(capabilities.referenceApi));
-  assert.deepEqual(Object.keys(api).sort(), ['PRODUCT', 'VERSION', 'capabilities', 'inspectOntologyReference', 'validateHarness', 'evaluateHarness', 'buildDelivery', 'verifyDelivery'].sort());
+  assert.deepEqual(Object.keys(api).sort(), ['PRODUCT', 'VERSION', 'capabilities', 'inspectOntologyReference', 'validateHarness', 'evaluateHarness', 'buildDelivery', 'verifyDelivery', 'createHarnessSemanticRequirements', 'evaluateSemanticCompatibility'].sort());
 });
 
 test('vendored v1 wire and public boundary are independent of implementation revision', () => {

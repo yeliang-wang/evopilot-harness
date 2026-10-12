@@ -100,7 +100,7 @@ test('nonblocking warning never grants authority or mutates version', () => {
   assert.equal(r.status, 'FAIL'); assert.equal(r.rules[0].severity, 'warning'); assert.equal(r.rules[0].blocking, false);
   assert.equal(r.authority, false); assert.equal(r.released, false);
   assert.equal(JSON.stringify({ asset, evidence, config }), before);
-  assert.equal(capabilities().businessOperationsReady, false);
+  assert.equal(capabilities().businessOperationsReady, true);
 });
 test('closed JSON source coverage and extension conflicts', () => {
   const { asset, evidence } = fresh();

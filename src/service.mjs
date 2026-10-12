@@ -9,7 +9,7 @@ export function createHarnessService(options, trustedProviders = {}) {
   bounded(options); exactFields(options, ['workspaceRoot', 'workspaceId']);
   const { workspaceRoot, workspaceId } = options;
   let store = null, closed = false;
-  const capabilities = () => frozenClone({ product: 'harness', stage: 'M2_FIRST_SLICE', operations, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['CLI', 'MCP', 'Expert', 'Host acceptance'] });
+  const capabilities = () => frozenClone({ product: 'harness', stage: 'M2_OWNED_SERVICE', businessOperationsReady: true, operations, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['MCP', 'Expert', 'Host acceptance'] });
   function initialize() {
     if (closed) fail('CLOSED', 'Service is closed');
     if (!store) store = openState(workspaceRoot, workspaceId);

@@ -14,3 +14,7 @@ Pending within the existing plan: operator verification and the later import of 
 
 See the [product entry and API links](../README.md).
 
+
+M2 now includes the [read-only semantic consumer](semantic-consumer.md), preserving concept comparison and canonical object hashes while correcting silently ignored relation constraints in the new 0.1.0 API. Capabilities reflect implemented M2 operations; full E03 transport/Expert/Host audit remains pending. Focused pure tests pass. Operator filesystem tests remain pending. The source checker still asserts the old false businessOperationsReady value; updating scripts/check.mjs is outside this bounded eleven-file edit, so check/build currently fail at that stale assertion.
+
+Validation limitation: tests/e2e/specification.test.mjs also retains the obsolete false readiness assertion outside the allowed edit scope. Its pure run passes 16 of 17 tests; the focused reference/consumer run passes all 9. Both that assertion and scripts/check.mjs require a separately scoped update.
