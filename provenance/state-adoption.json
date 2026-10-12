@@ -1,0 +1,89 @@
+{
+  "schema": "harness-state-adoption/v1",
+  "reference": {
+    "origin": "evopilot-ontology local new source",
+    "commit": "1a6c069eb8d19195687d20b19086c087e58927d6",
+    "role": "READ_ONLY_IMPLEMENTATION_REFERENCE_NOT_RUNTIME_DEPENDENCY",
+    "operatorTests": "173 passed before R24; exact service/import behavior evidenced in executor-r23",
+    "files": [
+      {
+        "path": "src/state.mjs",
+        "sha256": "c58a29d610e76f0b3ff0014648aabc6d5fcdd506285e840b49099d9cccd8f0ce"
+      },
+      {
+        "path": "src/service.mjs",
+        "sha256": "82d27efe07da8e12fb3536688f9ba437a50c9803c14fa071914ee3bbaf3299e3"
+      },
+      {
+        "path": "src/native-operations.mjs",
+        "sha256": "05c809b1fe300ce30678453b3cadb2a88dc1ace4b2465ba78275b46687d9cffb"
+      },
+      {
+        "path": "src/import-operations.mjs",
+        "sha256": "bbc9986784cf6642ef0331f72ac94f8c85e3d55f15cb8bf18800374090390d37"
+      },
+      {
+        "path": "tests/e2e/service.test.mjs",
+        "sha256": "b480fcd490f25e2cf888be257a936a49aeba13304c60177e29d416dcebd42f63"
+      },
+      {
+        "path": "tests/e2e/import-service.test.mjs",
+        "sha256": "945cf69030fa3e37a41c16d2ea3fc50af4beb3984338f0116ed978bf8cd4a628"
+      },
+      {
+        "path": "tests/fixtures/service-worker.mjs",
+        "sha256": "c87cbaeb7acbee71880ad449f6a444a766e07e59369c69bc9715ed15fb57cc59"
+      }
+    ]
+  },
+  "verifiedFileHashes": true,
+  "adoptedMechanisms": [
+    "SQLite transaction/CAS/receipts/audit",
+    "workspace identity and paths",
+    "content-addressed blobs",
+    "lossless source retention"
+  ],
+  "excluded": [
+    "Ontology producer",
+    "Ontology model/semantic validation",
+    "runtime reference imports"
+  ],
+  "archiveProvenance": "public-assets.json",
+  "boundedContinuation": {
+    "requestDigest": "sha256:e5557d55a72ad3ad8c18f3b07f6a4a2a4acf62d697ef81377885bbe25597b38c",
+    "changes": [
+      "exact service export and read-only discovery check",
+      "composed evaluation over verified published closures",
+      "historical configured-format recognition without semantic validation"
+    ],
+    "verification": "source checker and in-memory synthetic composition checks passed; expanded filesystem suite pending operator execution",
+    "pending": [
+      "45 configured source imports",
+      "CLI",
+      "MCP",
+      "Expert",
+      "later Host acceptance"
+    ],
+    "authority": false
+  },
+  "status": "local reversible R28 source repair; operator filesystem tests and six explicit reinspections pending",
+  "boundedRepair": {
+    "requestDigest": "sha256:6e5d192b373ca0e4adaace1ff7ad53618a4f43bae510bb576e22e7a78f7a401a",
+    "changes": [
+      "canonical dictionary regression fixture",
+      "format-specific historical structural identity checks",
+      "explicit digest-bound source reinspection with bounded append-only classification history"
+    ],
+    "operatorPriorEvidence": "45 tests passed, 2 failed; check/build passed; 146 sources retained with raw bytes verified; six classification repairs pending",
+    "verification": "source check/build checker passed; four targeted synthetic/in-memory tests passed, including all 101 archived sources and reinspection; full filesystem suite pending operator",
+    "pending": [
+      "operator full filesystem tests",
+      "operator explicit reinspection of six retained records",
+      "CLI",
+      "MCP",
+      "Expert",
+      "Host acceptance"
+    ],
+    "authority": false
+  }
+}

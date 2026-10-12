@@ -31,7 +31,8 @@ const expected = {
   ],
   "exports": {
     ".": "./src/index.mjs",
-    "./sources": "./src/asset-sources.mjs"
+    "./sources": "./src/asset-sources.mjs",
+    "./service": "./src/service.mjs"
   },
   "scripts": {
     "build": "node scripts/check.mjs",
@@ -78,7 +79,7 @@ export async function checkSource() {
     assert.doesNotMatch(source, /\bimport\s*\(|\brequire\s*\(|\beval\s*\(|\/Users\/|\/home\/|EVOPILOT_HARNESS_HOME|defaultHarnessHome|\.evopilot-harness|\bprocess\s*(?:\.\s*(?:env|cwd|chdir)|\[)|\bglobalThis\s*(?:\.|\[)|\bm0\//);
     for (const specifier of specifiers(source)) {
       if (isBuiltin(specifier)) continue;
-      if (specifier === 'yaml' && (path.endsWith('/src/asset-sources.mjs') || PRODUCT === 'ontology' && path.includes('/src/compat/'))) continue;
+      if (specifier === 'yaml' && (path === resolve(ROOT, 'src/asset-sources.mjs') || path === resolve(ROOT, 'src/import-operations.mjs') || PRODUCT === 'ontology' && path.includes('/src/compat/'))) continue;
       if (PRODUCT === 'ontology' && path.includes('/src/compat/') && specifier === 'ajv/dist/2020.js') continue;
       assert(specifier.startsWith('.'), 'Undeclared import: ' + specifier);
       const target = resolve(dirname(path), specifier);
@@ -93,6 +94,12 @@ export async function checkSource() {
     "assert.equal(api.VERSION, '0.1.0');",
     'assert.equal(api.capabilities().authority, false);',
     'assert.equal(api.capabilities().businessOperationsReady, false);',
+    'const serviceAPI = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'src/service.mjs')).href) + ');',
+    'const service = serviceAPI.createHarnessService({workspaceRoot: ' + JSON.stringify(resolve(ROOT, 'discovery-must-not-create')) + ', workspaceId: "discovery"});',
+    'assert.equal(service.capabilities().authority, false);',
+    'assert.equal(service.capabilities().composedEvaluation, true);',
+    'assert(service.capabilities().operations.includes("asset.evaluate"));',
+    'service.close();',
   ].join('\n');
   const result = spawnSync(process.execPath, ['--permission', '--allow-fs-read=' + ROOT, '--input-type=module', '-e', code], {
     cwd: ROOT, encoding: 'utf8', env: { ...process.env, NODE_OPTIONS: '', OPENSSL_CONF: '/dev/null' },

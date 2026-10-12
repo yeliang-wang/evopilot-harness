@@ -20,7 +20,8 @@
   ],
   "exports": {
     ".": "./src/index.mjs",
-    "./sources": "./src/asset-sources.mjs"
+    "./sources": "./src/asset-sources.mjs",
+    "./service": "./src/service.mjs"
   },
   "scripts": {
     "build": "node scripts/check.mjs",
