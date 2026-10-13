@@ -1,6 +1,6 @@
 {
   "name": "@evopilot-next/harness",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "bin": {
     "evopilot-next-harness": "dist/cli.js"
@@ -37,6 +37,10 @@
     "./service": {
       "types": "./dist/service.d.ts",
       "import": "./dist/service.js"
+    },
+    "./workspace-migration": {
+      "types": "./dist/workspace-migration.d.ts",
+      "import": "./dist/workspace-migration.js"
     }
   },
   "scripts": {

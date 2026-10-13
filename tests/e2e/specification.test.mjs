@@ -137,7 +137,7 @@ test('evidence bindings and deterministic package integrity', () => {
   assert.equal(r.configurationDigest, sha256({ minimum: 10 })); assert.equal(r.evidenceDigest, sha256(evidence));
   assert.deepEqual(r.evidence, { id: evidence.id, version: evidence.version, source: evidence.source });
   const d = buildDelivery(asset);
-  assert.equal(d.manifest.productVersion, '0.1.1');
+  assert.equal(d.manifest.productVersion, '0.2.0');
   assert.deepEqual(d, buildDelivery(clone(asset)));
   assert.equal(d.evaluationReport.status, 'NOT_RUN');
   assert.equal(d.manifest.contentDigest, sha256(Object.fromEntries(Object.entries(d).filter(([k]) => !['manifest','digest','authority','released'].includes(k)))));

@@ -1,3 +1,4 @@
+import { readRelocations, acceptsWorkspace as acceptRelocatedWorkspace } from './location-lineage.js';
 import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
 import { errorCode } from './types.js';
 import { DatabaseSync } from 'node:sqlite';
@@ -72,7 +73,7 @@ export function openState(root: string, id: string) {
   if (root === sourceRoot || root.startsWith(sourceRoot + sep) || sourceRoot.startsWith(root + sep)) fail('UNSAFE_WORKSPACE', 'Source workspace forbidden');
   ancestors(root);
   const marker = join(root, 'workspace.json');
-  const identity = { schema: 'evopilot-workspace/v1', id, canonicalRoot: root, ownerUid: uid };
+  const identity = { schema: 'evopilot-workspace/v1' as const, id, canonicalRoot: root, ownerUid: uid };
   const existing = stat(root);
   if (existing) {
     checked(root, uid, true);
@@ -93,7 +94,7 @@ export function openState(root: string, id: string) {
   if (!stat(marker)) createFile(marker, stableSerialize(identity));
   for (const d of dirs) if (!stat(d)) { mkdirSync(d, { mode: 0o700 }); syncDir(dirname(d)); }
   if (!existed) createFile(dbPath, '');
-  let db;
+  let db: DatabaseSync | undefined;
   function guard() {
     ancestors(root); checked(root, uid, true); checked(marker, uid, false);
     let value; try { value = JSON.parse(readFileSync(marker, 'utf8')); } catch { fail('IDENTITY_MISMATCH', 'Malformed identity'); }
@@ -101,6 +102,7 @@ export function openState(root: string, id: string) {
     for (const d of dirs) checked(d, uid, true);
     for (const p of [dbPath, dbPath + '-wal', dbPath + '-shm', dbPath + '-journal']) checked(p, uid, false, true);
     checked(dbPath, uid, false);
+    if (db) readRelocations(db, identity, 'harness');
   }
   try {
     db = new DatabaseSync(dbPath, { timeout: 1000, allowExtension: false });
@@ -115,8 +117,9 @@ export function openState(root: string, id: string) {
     }
     db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;');
     if (!existed) db.exec("BEGIN IMMEDIATE; CREATE TABLE state (singleton INTEGER PRIMARY KEY CHECK(singleton=1), revision INTEGER NOT NULL, data TEXT NOT NULL); INSERT INTO state VALUES(1,0,'{\"assets\":[]}'); CREATE TABLE receipts (scope TEXT NOT NULL, request_id TEXT NOT NULL, digest TEXT NOT NULL, receipt TEXT NOT NULL, PRIMARY KEY(scope,request_id)); CREATE TABLE audit (revision INTEGER PRIMARY KEY, uid INTEGER NOT NULL, operation TEXT NOT NULL, request_digest TEXT NOT NULL, result_digest TEXT NOT NULL); PRAGMA user_version=1; COMMIT;");
+    readRelocations(db, identity, 'harness');
     guard();
-  } catch (e) { if (db) db.close(); fail('CORRUPT_STATE', 'Cannot open verified Harness state: ' + (errorCode(e) || 'invalid database')); }
+  } catch (e) { if (db) db.close(); if (['INVALID_LINEAGE','MISSING_RELOCATION_KEY'].includes(errorCode(e) ?? '')) throw e; fail('CORRUPT_STATE', 'Cannot open verified Harness state: ' + (errorCode(e) || 'invalid database')); }
   function blob(scope: Scope, value: unknown) {
     guard();
     const bytes = stableSerialize(value);
@@ -168,5 +171,5 @@ export function openState(root: string, id: string) {
     if (verifyRawBlob(scope, digest) !== raw) fail('CORRUPT_BLOB', 'Raw source bytes differ');
     return digest;
   }
-  return { db, uid, identity, guard, blob, verifyBlob, rawBlob, verifyRawBlob };
+  return { db, uid, identity, guard, blob, verifyBlob, rawBlob, verifyRawBlob, acceptsWorkspace: (value: unknown, digest: string) => acceptRelocatedWorkspace(db, identity, 'harness', value, digest) };
 }

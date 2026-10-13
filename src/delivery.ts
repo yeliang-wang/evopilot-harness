@@ -2,7 +2,7 @@ import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Provider
 import { assertJSON, exactFields, sha256, frozenClone, stableSerialize } from '../vendor/compatibility/v1/reference.mjs';
 import { validateHarness, configurationFor, failure } from './specification.js';
 
-export function buildDelivery(asset: HarnessAsset) {
+function buildForVersion(asset: HarnessAsset, productVersion: string) {
   const validationReport = validateHarness(asset);
   if (!validationReport.valid) throw new TypeError('Cannot deliver invalid Harness');
   const dependencyState = asset.dependencies.length ? 'NOT_RESOLVED' : 'NOT_REQUIRED';
@@ -16,14 +16,19 @@ export function buildDelivery(asset: HarnessAsset) {
     validationReport,
     dependencyReport: { status: dependencyState, harnessRole: dependencyRole, kindVerification: asset.dependencies.some(d => d.product === 'harness') ? 'NOT_RESOLVED' : 'NOT_REQUIRED', pins: asset.dependencies },
   };
-  const manifest = { product: 'harness', productVersion: '0.1.1', specVersion: 'v1', id: asset.id, version: asset.version, visibility: asset.visibility, modelDigest: sha256(asset), contentDigest: sha256(content), dependencies: asset.dependencies, dependencyState };
+  const manifest = { product: 'harness', productVersion, specVersion: 'v1', id: asset.id, version: asset.version, visibility: asset.visibility, modelDigest: sha256(asset), contentDigest: sha256(content), dependencies: asset.dependencies, dependencyState };
   return frozenClone({ ...content, manifest, digest: sha256({ ...content, manifest }), authority: false, released: false });
 }
+
+export function buildDelivery(asset: HarnessAsset) { return buildForVersion(asset, '0.2.0'); }
+
 export function verifyDelivery(delivery: unknown) {
   try {
     assertJSON(delivery);
     exactFields(delivery, ['definition', 'configuration', 'rules', 'evidenceRequirements', 'evaluationReport', 'validationReport', 'dependencyReport', 'manifest', 'digest', 'authority', 'released']);
-    const expected = buildDelivery(delivery.definition as unknown as HarnessAsset);
+    const producer = (delivery.manifest as {productVersion?: unknown})?.productVersion;
+    if (typeof producer !== 'string' || !['0.1.0','0.1.1','0.2.0'].includes(producer)) throw new TypeError('Unsupported delivery producer version');
+    const expected = buildForVersion(delivery.definition as unknown as HarnessAsset, producer);
     if (stableSerialize(expected) !== stableSerialize(delivery)) throw new TypeError('Delivery content, manifest or report mismatch');
     return frozenClone({ valid: true, status: 'VALID', digest: expected.digest, authority: false, released: false });
   } catch (error) { return failure(error); }

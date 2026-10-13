@@ -4,7 +4,7 @@
 
 Harness defines reusable QA and delivery-evidence standards for EvoPilot projects. It validates declarative checks, evaluates supplied evidence, and packages deterministic deliveries with traceable source mappings. It does not execute repairs or infer business acceptance.
 
-**v0.1.1 Preview** provides strict TypeScript source, compiled package exports and typed service responses. The published **[v0.1.0 Preview](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.1.0)** remains the historical baseline. See the [changelog](CHANGELOG.md) and [roadmap](docs/roadmap.md).
+**v0.2.0 Preview** provides strict TypeScript source, compiled package exports and typed service responses. The published **[v0.1.0 Preview](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.1.0)** remains the historical baseline. See the [changelog](CHANGELOG.md) and [roadmap](docs/roadmap.md).
 
 ## Product boundaries
 

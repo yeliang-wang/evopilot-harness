@@ -11,3 +11,7 @@ Do not regenerate frozen vendor bytes; the parent canonical generator owns that 
 The published v0.1.0 Preview is the historical baseline; v0.1.1 repair remains under acceptance as described in [the roadmap](docs/roadmap.md). Parent composition owns MCP, Expert and Codex connection guidance. Capability metadata is not acceptance evidence.
 
 Source changes, technical checks, local asset decisions, Runtime business completion, Host acceptance and software release are separate. Follow the current explicit authorization for remote operations and releases; these instructions add none. Respect retained receipts after uncertain responses and never infer authority to redispatch. Preserve the current request's boundaries for release pipelines and installations.
+
+## Approved v0.2.0 evolution
+
+The current user-approved Workspace v0.2.0 Target supersedes historical repair-only scope for this task. Implement only the owning workspace identity, relocation/snapshot APIs, exact component metadata, tests and documentation needed by that Target. Preserve immutable business records, frozen asset v1 specifications and compatibility/vendor bytes. Real-data cutover follows isolated migration verification. Existing project source and releases stay unchanged. The parent coordinates exact-candidate acceptance and conditional Preview release; tests alone confer no authority.
