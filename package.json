@@ -1,16 +1,22 @@
 {
   "name": "@evopilot-next/harness",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
-  "bin": { "evopilot-next-harness": "src/cli.mjs" },
+  "bin": {
+    "evopilot-next-harness": "dist/cli.js"
+  },
   "type": "module",
   "engines": {
     "node": ">=24.14.0"
   },
   "files": [
+    "dist",
     "src",
     "vendor",
     "README.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
     "specifications",
     "examples",
     "assets",
@@ -20,17 +26,30 @@
     "NOTICE"
   ],
   "exports": {
-    ".": "./src/index.mjs",
-    "./sources": "./src/asset-sources.mjs",
-    "./service": "./src/service.mjs"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./sources": {
+      "types": "./dist/asset-sources.d.ts",
+      "import": "./dist/asset-sources.js"
+    },
+    "./service": {
+      "types": "./dist/service.d.ts",
+      "import": "./dist/service.js"
+    }
   },
   "scripts": {
-    "build": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "test": "node --test tests/e2e/*.test.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.19.2"
+  }
 }

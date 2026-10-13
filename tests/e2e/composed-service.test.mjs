@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { createHarnessService } from '@evopilot-next/harness/service';
 import { validateHarness, evaluateHarness } from '@evopilot-next/harness';
 import { sha256, stableSerialize } from '../../vendor/compatibility/v1/reference.mjs';
-import { operate } from '../../src/operations.mjs';
+import { operate } from '../../dist/operations.js';
 
 const scope = { visibility: 'public', projectId: 'alpha' };
 const shared = { ...scope, projectId: 'shared' };

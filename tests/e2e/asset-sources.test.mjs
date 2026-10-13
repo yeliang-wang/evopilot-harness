@@ -69,15 +69,15 @@ test('isolated real archive tampering fails closed, including after successful a
     throw error;
   }
   try {
-    mkdirSync(join(directory, 'src'));
+    mkdirSync(join(directory, 'dist'));
     mkdirSync(join(directory, 'assets'));
     mkdirSync(join(directory, 'node_modules'));
-    cpSync(new URL('src/asset-sources.mjs', root), join(directory, 'src/asset-sources.mjs'));
+    cpSync(new URL('dist/asset-sources.js', root), join(directory, 'dist/asset-sources.js'));
     cpSync(new URL('node_modules/yaml', root), join(directory, 'node_modules/yaml'), { recursive: true });
     const original = readFileSync(new URL('assets/legacy-sources.json', root), 'utf8');
     const target = join(directory, 'assets/legacy-sources.json');
     writeFileSync(target, original);
-    const isolated = await import(pathToFileURL(join(directory, 'src/asset-sources.mjs')).href);
+    const isolated = await import(pathToFileURL(join(directory, 'dist/asset-sources.js')).href);
     assert.equal(isolated.listPublicSources().count, 101);
     const mutations = [
       a => { a.owner = 'foreign'; },

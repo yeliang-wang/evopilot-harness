@@ -1,20 +1,23 @@
+interface ArchiveDocument { [key: string]: unknown; kind?: unknown; schema?: unknown; apiVersion?: unknown; id?: unknown; version?: unknown; digest?: unknown; metadata?: { id?: unknown; version?: unknown; digest?: unknown } }
+interface Archive { schema: string; version: number; owner: string; sourceCommit: string; entries: Record<string, { raw: string; bytes: number; sha256: string; classification: string; observed: ReturnType<typeof identity> }> }
+export interface PublicSourceReport { schema: string; status: string; owner: string; sourcePath: string; sourceCommit: string; classification: string; observed: ReturnType<typeof identity>; sourceReference: ReturnType<typeof identity> & { sourcePath: string; sourceCommit: string; rawDigest: string }; sha256: string; bytes: number; raw: string; document: ArchiveDocument; authority: boolean; businessConfirmed: boolean; released: boolean }
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { parseDocument } from 'yaml';
 
-const OWNER = 'harness';
+const OWNER: string = 'harness';
 const COMMIT = '372733fd7b67ec3bee9efe6322f0229db77b160d';
 const ARCHIVE_HASH = 'feb8df8a9588e043dc8c3e4b398b82626b57c55b8448592a9c477dbf4b6cefd4';
 const MAPPING = [["HarnessBundle",null,"harness.evopilot.io/v3","harness","definition"],["HarnessComponent",null,"harness.evopilot.io/v3","harness","definition"],["HarnessProfile",null,"harness.evopilot.io/v3","harness","definition"],[null,"evopilot-harness-template/v1",null,"harness","template"],[null,"evopilot-harness-template/v2",null,"harness","template"],[null,"evopilot-harness-export/v1",null,"harness","export-mapping"],[null,"evopilot-selected-harness-example/v1",null,"harness","binding-example"],["DomainHarnessPack",null,"semantics.evopilot.io/v1","harness","guidance"],["AdvisorPolicyPack",null,"harness.evopilot.io/v1","harness","policy"],["ComparisonPolicyPack",null,"comparison.evopilot.io/v1","harness","policy"],["ProfessionalCompletenessPolicyPack",null,"learning.evopilot.io/v1","harness","policy"],["MatchPolicyPack",null,"harness.evopilot.io/v1","harness","policy"],["HarnessAsset",null,"evopilot.dev/v2","harness","definition"]];
-const hash = value => createHash('sha256').update(value).digest('hex');
+const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const authority = { authority: false, businessConfirmed: false, released: false };
-function identity(d) {
+function identity(d: ArchiveDocument) {
   return { kind: d.kind ?? null, schema: d.schema ?? null, apiVersion: d.apiVersion ?? null,
     id: d.metadata?.id ?? d.id ?? null, version: d.metadata?.version ?? d.version ?? null,
     digest: d.metadata?.digest ?? d.digest ?? null };
 }
 
-function freeze(value, seen = new Set()) {
+function freeze<T>(value: T, seen = new Set<unknown>()): T {
   if (value && typeof value === 'object' && !seen.has(value)) {
     seen.add(value);
     for (const child of Object.values(value)) freeze(child, seen);
@@ -22,11 +25,11 @@ function freeze(value, seen = new Set()) {
   }
   return value;
 }
-function sourceKey(key) {
+function sourceKey(key: unknown): key is string {
   return typeof key === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9/_.@-]*\.yaml$/.test(key)
     && !key.split('/').some(part => !part || part === '.' || part === '..');
 }
-function parse(raw) {
+function parse(raw: string): ArchiveDocument {
   const yaml = parseDocument(raw, { uniqueKeys: true, schema: 'core', customTags: [] });
   if (yaml.errors.length || yaml.warnings.length) throw new TypeError('Invalid preserved YAML');
   const document = yaml.toJS({ maxAliasCount: 100 });
@@ -43,11 +46,11 @@ function load() {
   // Read on every access so changes after an earlier successful read fail closed.
   const bytes = readFileSync(new URL('../assets/legacy-sources.json', import.meta.url));
   if (hash(bytes) !== ARCHIVE_HASH) throw new TypeError('Public source archive integrity failure');
-  const archive = JSON.parse(bytes.toString('utf8'));
+  const archive = JSON.parse(bytes.toString('utf8')) as Archive;
   if (archive.schema !== 'evopilot-public-source-archive/v1' || archive.version !== 1
     || archive.owner !== OWNER || archive.sourceCommit !== COMMIT
     || Object.keys(archive.entries).length !== 101) throw new TypeError('Invalid archive ownership');
-  const reports = {};
+  const reports: Record<string, PublicSourceReport> = {};
   for (const [sourcePath, entry] of Object.entries(archive.entries)) {
     if (!sourceKey(sourcePath) || Object.hasOwn(reports, sourcePath)
       || typeof entry.raw !== 'string' || Buffer.byteLength(entry.raw, 'utf8') !== entry.bytes
@@ -75,7 +78,7 @@ export function listPublicSources() {
 }
 
 /** Exact manifest key lookup. Archived paths, bindings and recipes are never resolved or executed. */
-export function readPublicSource(sourcePath) {
+export function readPublicSource(sourcePath: string) {
   if (!sourceKey(sourcePath)) throw new TypeError('Unknown public source key');
   const reports = load();
   if (!Object.hasOwn(reports, sourcePath)) throw new TypeError('Unknown public source key');

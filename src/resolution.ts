@@ -1,26 +1,27 @@
+import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
 import { exactFields, frozenClone, sha256, stableSerialize, validateReference } from '../vendor/compatibility/v1/reference.mjs';
 import { isPromise } from 'node:util/types';
-import { verifyDelivery } from './delivery.mjs';
-import { bounded, fail, slug } from './state.mjs';
+import { verifyDelivery } from './delivery.js';
+import { bounded, fail, slug } from './state.js';
 
-export function validateProviders(value) {
+export function validateProviders(value: unknown): Providers {
   if (!value || ![Object.prototype, null].includes(Object.getPrototypeOf(value))) fail('INVALID_PROVIDER', 'Expected host provider object');
   const descriptors = Object.getOwnPropertyDescriptors(value);
   for (const key of Reflect.ownKeys(descriptors)) {
-    const d = descriptors[key];
+    const d = Reflect.get(descriptors, key) as PropertyDescriptor;
     if (key !== 'resolveOntology' || !Object.hasOwn(d, 'value') || typeof d.value !== 'function') fail('INVALID_PROVIDER', 'Unknown or invalid host provider');
   }
   return Object.freeze({ ...(descriptors.resolveOntology ? { resolveOntology: descriptors.resolveOntology.value } : {}) });
 }
-export const referenceFor = a => ({ product: 'harness', id: a.model.id, version: a.model.version, specVersion: 'v1', visibility: a.scope.visibility, digest: a.delivery.digest });
+export const referenceFor = (a: AssetRecord): Reference => ({ product: 'harness', id: a.model.id, version: a.model.version, specVersion: 'v1', visibility: a.scope.visibility, digest: a.delivery!.digest });
 
-export function resolveClosure(store, state, root, providers, verifyPublished = true) {
-  const nodes = new Map(), active = new Set(), external = new Map();
+export function resolveClosure(store: Store, state: State, root: AssetRecord, providers: Providers, verifyPublished = true): Closure {
+  const nodes = new Map<string, Closure["nodes"][number]>(), active = new Set<string>(), external = new Map<string, OntologyResponse>();
   let visits = 0;
-  const accessible = (scope, ref, projectId) => ref.visibility === 'private'
+  const accessible = (scope: Scope, ref: Reference, projectId: string) => ref.visibility === 'private'
     ? scope.visibility === 'private' && projectId === scope.projectId
     : projectId === scope.projectId || projectId === 'shared';
-  function walk(a, depth) {
+  function walk(a: AssetRecord, depth: number) {
     if (depth > 64 || ++visits > 1000) fail('GRAPH_LIMIT', 'Dependency closure limit');
     const key = stableSerialize({ scope: a.scope, id: a.model.id, version: a.model.version });
     if (active.has(key)) fail('DEPENDENCY_CYCLE', 'Cyclic dependency closure');
@@ -43,15 +44,15 @@ export function resolveClosure(store, state, root, providers, verifyPublished = 
         bounded(response); exactFields(response, ['reference', 'published', 'workspaceId', 'projectId']);
         validateReference(response.reference, { product: 'ontology' }); slug(response.projectId);
         if (response.published !== true || response.workspaceId !== store.identity.id || stableSerialize(response.reference) !== stableSerialize(ref) || !accessible(a.scope, ref, response.projectId)) fail('DEPENDENCY_MISMATCH', 'Exact published scoped Ontology reference required');
-        external.set(stableSerialize({ scope: a.scope, reference: ref }), response);
+        external.set(stableSerialize({ scope: a.scope, reference: ref }), response as unknown as OntologyResponse);
         continue;
       }
       const matches = state.assets.filter(d => d.scope.visibility === ref.visibility && accessible(a.scope, ref, d.scope.projectId) && d.model.id === ref.id && d.model.version === ref.version);
       if (matches.length !== 1 || !matches[0].delivery) fail('UNAVAILABLE_DEPENDENCY', 'Unique published Harness dependency required');
       const d = matches[0];
       store.verifyBlob(d.scope, d.model); store.verifyBlob(d.scope, d.delivery);
-      if (!verifyDelivery(d.delivery).valid || stableSerialize(d.delivery.definition) !== stableSerialize(d.model) || stableSerialize(referenceFor(d)) !== stableSerialize(ref)) fail('DEPENDENCY_MISMATCH', 'Dependency delivery drift');
-      const expected = { HarnessProfile: 'HarnessComponent', HarnessBundle: 'HarnessProfile' }[a.model.kind];
+      if (!verifyDelivery(d.delivery).valid || stableSerialize(d.delivery!.definition) !== stableSerialize(d.model) || stableSerialize(referenceFor(d)) !== stableSerialize(ref)) fail('DEPENDENCY_MISMATCH', 'Dependency delivery drift');
+      const expected = ({ HarnessProfile: 'HarnessComponent', HarnessBundle: 'HarnessProfile' } as Partial<Record<HarnessAsset['kind'], string>>)[a.model.kind];
       if (a.model.kind === 'HarnessComponent' || expected && d.model.kind !== expected || a.model.kind === 'EvaluationPack' && !a.model.applicability.domains.some(domain => d.model.applicability.domains.includes(domain))) fail('DEPENDENCY_KIND', 'Dependency role or applicability mismatch');
       walk(d, depth + 1);
     }
@@ -62,13 +63,13 @@ export function resolveClosure(store, state, root, providers, verifyPublished = 
   if (verifyPublished) {
     for (const a of state.assets) {
       const key = stableSerialize({ scope: a.scope, id: a.model.id, version: a.model.version });
-      if (nodes.has(key) && a.delivery && resolveClosure(store, state, a, providers, false).closureDigest !== a.resolution.closureDigest) fail('DEPENDENCY_MISMATCH', 'Published closure drift');
+      if (nodes.has(key) && a.delivery && resolveClosure(store, state, a, providers, false).closureDigest !== a.resolution!.closureDigest) fail('DEPENDENCY_MISMATCH', 'Published closure drift');
     }
   }
   // The draft root has no delivery yet. Its subject stays identical after publication.
   const entries = [...nodes.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v);
   const rootEntry = entries.find(e => e.assetDigest === sha256(root.model) && stableSerialize(e.scope) === stableSerialize(root.scope));
-  rootEntry.reference = null;
+  rootEntry!.reference = null;
   const report = { workspaceId: store.identity.id, scope: root.scope, status: 'RESOLVED', nodes: entries, external: [...external.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v), authority: false };
   return { ...report, closureDigest: sha256(report) };
 }

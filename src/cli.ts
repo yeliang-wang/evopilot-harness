@@ -1,12 +1,14 @@
 #!/usr/bin/env node
+import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
+import { errorCode } from './types.js';
 import { constants, realpathSync } from 'node:fs';
 import { lstat, open } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRODUCT, VERSION } from './index.mjs';
-import { createHarnessService } from './service.mjs';
-import { operations, validateRequest } from './operations.mjs';
-import { bounded, fail, LIMITS, slug } from './state.mjs';
+import { PRODUCT, VERSION } from './index.js';
+import { createHarnessService } from './service.js';
+import { operations, validateRequest } from './operations.js';
+import { bounded, fail, LIMITS, slug } from './state.js';
 
 const serviceCodes = new Set(('CLOSED NOT_INITIALIZED REQUEST_CONFLICT CORRUPT_STATE REVISION_CONFLICT NOT_FOUND LIMIT INVALID_ENCODING INVALID_FORMAT INVALID_SOURCE CORRUPT_BLOB INSPECTION_CONFLICT REINSPECTION_NOT_REPAIRABLE UNKNOWN_SOURCE INVALID_REQUEST SCOPE_MISMATCH GRAPH_LIMIT DEPENDENCY_CYCLE DEPENDENCY_MISMATCH UNAVAILABLE_DEPENDENCY DEPENDENCY_KIND UNSUPPORTED_OPERATION INVALID_MODEL IMMUTABLE_VERSION NOT_PUBLISHED REVIEW_REQUIRED REVIEW_MISMATCH APPROVAL_REQUIRED PENDING_MODEL INVALID_DELIVERY UNSAFE_WORKSPACE UNSUPPORTED_PLATFORM UNKNOWN_WORKSPACE IDENTITY_MISMATCH STATE_ERROR').split(' '));
 const help = {
@@ -14,7 +16,7 @@ const help = {
   input: 'One bounded JSON request from stdin or the exact explicit regular file.',
   exitCodes: { success: 0, serviceFailure: 1, invalidInput: 2 },
 };
-function parseArgs(args) {
+function parseArgs(args: string[]) {
   if (!Array.isArray(args) || args.some(a => typeof a !== 'string')) fail('USAGE', 'Invalid arguments');
   const [raw, ...rest] = args;
   const command = raw === '--help' ? 'help' : raw === '--version' ? 'version' : raw;
@@ -23,7 +25,7 @@ function parseArgs(args) {
     return { command };
   }
   if (command !== 'request') fail('USAGE', 'Expected a supported command');
-  const flags = {};
+  const flags: Record<string, string> = {};
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i], value = rest[i + 1];
     if (!['--workspace', '--workspace-id', '--request-file'].includes(key) || Object.hasOwn(flags, key) || !value || value.startsWith('--')) fail('USAGE', 'Invalid request flags');
@@ -36,9 +38,9 @@ function parseArgs(args) {
   if (file && !isAbsolute(file)) fail('USAGE', 'Absolute request file required');
   return { command, root, id: flags['--workspace-id'], file };
 }
-async function readInput(file, stdin) {
-  const chunks = []; let size = 0;
-  const add = chunk => {
+async function readInput(file: string | undefined, stdin: AsyncIterable<string | Uint8Array>) {
+  const chunks: Buffer[] = []; let size = 0;
+  const add = (chunk: string | Uint8Array) => {
     const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += bytes.length;
     if (size > LIMITS.requestBytes) fail('LIMIT', 'Request byte limit');
@@ -61,7 +63,7 @@ async function readInput(file, stdin) {
         add(buffer.subarray(0, bytesRead));
       }
     } catch (error) {
-      if (error.code === 'LIMIT') throw error;
+      if (errorCode(error) === 'LIMIT') throw error;
       fail('INPUT_FILE', 'Cannot read regular request file');
     } finally { await handle?.close(); }
   } else {
@@ -77,7 +79,7 @@ async function readInput(file, stdin) {
 }
 
 // Injected streams are trusted test/host code, never request-configurable providers.
-export async function main(args, { stdin = process.stdin, stdout = process.stdout } = {}) {
+export async function main(args: string[], { stdin = process.stdin, stdout = process.stdout }: { stdin?: AsyncIterable<string | Uint8Array>; stdout?: { write(text: string): unknown } } = {}) {
   let response, exitCode = 0, executing = false;
   try {
     const parsed = parseArgs(args);
@@ -92,7 +94,7 @@ export async function main(args, { stdin = process.stdin, stdout = process.stdou
     };
     else {
       const request = await readInput(parsed.file, stdin);
-      const service = createHarnessService({ workspaceRoot: parsed.root, workspaceId: parsed.id });
+      const service = createHarnessService({ workspaceRoot: parsed.root!, workspaceId: parsed.id! });
       try {
         executing = true;
         service.initialize();
@@ -101,7 +103,7 @@ export async function main(args, { stdin = process.stdin, stdout = process.stdou
     }
     response = { ok: true, product: PRODUCT, version: VERSION, result, authority: false };
   } catch (error) {
-    const code = ['USAGE', 'INPUT_FILE'].includes(error?.code) || serviceCodes.has(error?.code) ? error.code : executing ? 'STATE_ERROR' : 'INVALID_REQUEST';
+    const code = ['USAGE', 'INPUT_FILE'].includes(errorCode(error) ?? "") || serviceCodes.has(errorCode(error) ?? "") ? errorCode(error) : executing ? 'STATE_ERROR' : 'INVALID_REQUEST';
     // Never echo exception messages, paths, parser excerpts or caller-controlled fields.
     const message = code === 'USAGE' ? 'Invalid command arguments; use help.'
       : code === 'INPUT_FILE' ? 'Cannot read a bounded regular request file.'

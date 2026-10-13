@@ -1,5 +1,20 @@
 # Local Harness service
 
+The service source is `src/service.ts`; the package export resolves to compiled `dist/service.js` with `dist/service.d.ts`. In a source checkout run `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then `npm test`. Build cleans generated `dist` only. Installed tarballs provide the compiled API and declarations without development scripts/tests.
+
+Public types are available from `@evopilot-next/harness` and service request/result types from `@evopilot-next/harness/service`. `execute(Request<K>)` returns `Response<K>` for the operation key, not a caller-selected result type. `workspace.inspect` returns `revision` directly. Mutations return a receipt with `revision`, the exact `operation`, and its mapped `result`; `receipt.inspect` returns a discriminated union of mutation receipts. `evaluation.inspect` returns an evaluation receipt. Retained legacy document data and the semantic compatibility report remain explicitly `unknown` at their compatibility boundaries.
+
+```ts
+import { createHarnessService, type Scope } from '@evopilot-next/harness/service';
+const scope: Scope = { visibility: 'private', projectId: 'demo' };
+const service = createHarnessService({ workspaceRoot: '/absolute/operator/harness-workspace', workspaceId: 'demo' });
+service.initialize();
+try {
+  const workspace = service.execute({ operation: 'workspace.inspect', scope, input: {} });
+  const revision: number = workspace.revision;
+} finally { service.close(); }
+```
+
 `@evopilot-next/harness/service` exports `createHarnessService({workspaceRoot, workspaceId}, trustedProviders = {})`. Construction and `capabilities()` are pure. Call `initialize()` explicitly before `execute(request)`; `close()` permanently closes that instance. Use experimental `node:sqlite` on Node 24.14.0. No new dependencies are required.
 
 The workspace must be an isolated canonical absolute path outside source/Git trees, with an existing parent. An empty root can be initialized. Existing workspaces must have the exact shared identity `{schema: "evopilot-workspace/v1", id, canonicalRoot, ownerUid}`. Initialized Ontology state may coexist; Harness touches only its own product state and blobs. Unknown roots, corrupt existing databases, unsafe ownership/modes, symlinks and hardlinked files fail closed.
@@ -48,7 +63,7 @@ The generic new-state mechanisms were adapted from the exact staged reference re
 
 ## Verification and integration
 
-The service tests (SOURCE-CHECKOUT: `tests/e2e/service.test.mjs`) cover explicit initialization, review invalidation, scope isolation, immutable publication, concurrent writers, restart receipts, a child killed before COMMIT and unsafe workspace rejection. Composition tests (SOURCE-CHECKOUT: `tests/e2e/composed-service.test.mjs`) cover exact closures, evidence status precedence and provider drift. Import tests (SOURCE-CHECKOUT: `tests/e2e/import-service.test.mjs`) cover retained-source behavior. Run `npm test` in a source checkout with permission to create isolated temporary workspaces; the current verified baseline is recorded in the [README](../README.md).
+The service tests (SOURCE-CHECKOUT: `tests/e2e/service.test.mjs`) cover explicit initialization, review invalidation, scope isolation, immutable publication, concurrent writers, restart receipts, a child killed before COMMIT and unsafe workspace rejection. Composition tests (SOURCE-CHECKOUT: `tests/e2e/composed-service.test.mjs`) cover exact closures, evidence status precedence and provider drift. Import tests (SOURCE-CHECKOUT: `tests/e2e/import-service.test.mjs`) cover retained-source behavior. Run `npm test` in a source checkout with permission to create isolated temporary workspaces; candidate verification remains subject to the [roadmap](roadmap.md).
 
 The source checker (SOURCE-CHECKOUT: `scripts/check.mjs`) verifies exact exports, owned imports and pinned vendor integrity, including service construction and discovery under read-only Node permissions. It expects implemented business operations to be available. There is no production test hook.
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { validateHarness, evaluateHarness, buildDelivery, verifyDelivery, capabilities } from '../../src/index.mjs';
+import { validateHarness, evaluateHarness, buildDelivery, verifyDelivery, capabilities } from '../../dist/index.js';
 import { sha256 } from '../../vendor/compatibility/v1/reference.mjs';
 
 const cases = JSON.parse(await readFile(new URL('../../examples/synthetic-harnesses.json', import.meta.url), 'utf8'));
@@ -137,6 +137,7 @@ test('evidence bindings and deterministic package integrity', () => {
   assert.equal(r.configurationDigest, sha256({ minimum: 10 })); assert.equal(r.evidenceDigest, sha256(evidence));
   assert.deepEqual(r.evidence, { id: evidence.id, version: evidence.version, source: evidence.source });
   const d = buildDelivery(asset);
+  assert.equal(d.manifest.productVersion, '0.1.1');
   assert.deepEqual(d, buildDelivery(clone(asset)));
   assert.equal(d.evaluationReport.status, 'NOT_RUN');
   assert.equal(d.manifest.contentDigest, sha256(Object.fromEntries(Object.entries(d).filter(([k]) => !['manifest','digest','authority','released'].includes(k)))));

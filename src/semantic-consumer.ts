@@ -1,3 +1,4 @@
+import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
 // Imported wire vocabulary, not Ontology ownership. See provenance/semantic-consumer.json.
 import { sha256, frozenClone, stableSerialize, exactFields, assertJSON } from '../vendor/compatibility/v1/reference.mjs';
 
@@ -10,20 +11,20 @@ const OUTCOMES = Object.freeze(['RESOLVED', 'UNRESOLVED_CONCEPT', 'AMBIGUOUS_CON
 const PRECEDENCE = ['EVIDENCE_INSUFFICIENT', 'CONFLICTING_CONCEPT', 'AMBIGUOUS_CONCEPT', 'RESOLVED', 'EXTENSION_REQUIRED', 'UNRESOLVED_CONCEPT'];
 const requirementAuthority = { descriptiveConstraintOnly: true, executable: false, provesEligibility: false, mayApprove: false, mayPublish: false };
 const groundingAuthority = { deterministicResolverDecides: true, llmAdviceIsEvidenceOnly: true, llmMayAssignAuthoritativeConceptId: false, provesHarnessEligibility: false, mayCreateProposal: false, mayApprove: false, mayPublish: false, appendOnlyReanalysis: true };
-function fail(code, message) { throw Object.assign(new Error(message), { name: 'SemanticCompatibilityError', code }); }
-function check(condition) { if (!condition) fail('GROUNDING_RESULT_INVALID', 'Invalid imported grounding evidence'); }
-const compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
-function digestField(v) { if (typeof v !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(v)) fail('SEMANTIC_DIGEST_REQUIRED', 'Exact sha256 digest required'); return v; }
-function text(v) { check(typeof v === 'string' && !!v.trim()); }
-function list(v, max = 512) { check(Array.isArray(v) && v.length <= max); return v; }
-function strings(v, max = 512) { list(v, max).forEach(text); }
-function same(a, b) { return stableSerialize(a) === stableSerialize(b); }
+function fail(code: string, message: string): never { throw Object.assign(new Error(message), { name: 'SemanticCompatibilityError', code }); }
+function check(condition: unknown): asserts condition { if (!condition) fail('GROUNDING_RESULT_INVALID', 'Invalid imported grounding evidence'); }
+const compare = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
+function digestField(v: unknown) { if (typeof v !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(v)) fail('SEMANTIC_DIGEST_REQUIRED', 'Exact sha256 digest required'); return v; }
+function text(v: unknown): asserts v is string { check(typeof v === 'string' && !!v.trim()); }
+function list<T>(v: T[], max = 512): T[] { check(Array.isArray(v) && v.length <= max); return v; }
+function strings(v: string[], max = 512) { list(v, max).forEach(text); }
+function same(a: unknown, b: unknown) { return stableSerialize(a) === stableSerialize(b); }
 
 // Bound descriptor traversal before serialization; no getters or coercion hooks.
-function boundedData(value) {
+function boundedData(value: unknown) {
   let nodes = 0, bytes = 0;
   const active = new Set();
-  function visit(v, depth) {
+  function visit(v: unknown, depth: number) {
     if (++nodes > 20000 || depth > 48) fail('LIMIT', 'Semantic input structure limit');
     if (typeof v === 'string') bytes += Buffer.byteLength(v);
     if (bytes > 524288) fail('LIMIT', 'Semantic input byte limit');
@@ -41,22 +42,22 @@ function boundedData(value) {
   visit(value, 0); assertJSON(value);
   if (Buffer.byteLength(stableSerialize(value)) > 524288) fail('LIMIT', 'Semantic input byte limit');
 }
-function unique(values = []) {
+function unique(values: JSONValue[] = []) {
   list(values);
   return [...new Set(values.map(v => { if (!['string', 'number', 'boolean'].includes(typeof v) && v !== null) fail('SEMANTIC_REQUIREMENTS_INVALID', 'Scalar text required'); return String(v).trim(); }).filter(Boolean))].sort();
 }
-function concepts(values = []) {
+function concepts(values: ConceptInput[] = []) {
   list(values);
   const normalized = values.map(item => {
     exactFields(item, ['conceptId', 'metaType'], ['rationale', 'evidenceRefs']);
-    for (const k of ['conceptId', 'metaType', 'rationale']) if (Object.hasOwn(item, k) && typeof item[k] !== 'string') fail('SEMANTIC_REQUIREMENT_INVALID', 'Text required');
+    for (const k of ['conceptId', 'metaType', 'rationale']) if (Object.hasOwn(item, k) && typeof Reflect.get(item, k) !== 'string') fail('SEMANTIC_REQUIREMENT_INVALID', 'Text required');
     const conceptId = item.conceptId.trim(), metaType = item.metaType.toUpperCase();
     if (!conceptId || !META_TYPES.includes(metaType)) fail('SEMANTIC_REQUIREMENT_INVALID', 'Concept id and known meta type required');
     return { conceptId, metaType, rationale: (item.rationale ?? '').trim(), evidenceRefs: unique(item.evidenceRefs) };
   });
   return [...new Map(normalized.map(i => [i.conceptId, i])).values()].sort((a, b) => compare(a.conceptId, b.conceptId));
 }
-export function createHarnessSemanticRequirements(input = {}) {
+export function createHarnessSemanticRequirements(input: SemanticRequirementsInput = {} as SemanticRequirementsInput) {
   boundedData(input);
   exactFields(input, ['foundationDigest'], ['requiredConcepts', 'prohibitedConcepts', 'relationRequirements', 'evidenceRequirements', 'schema', 'authority', 'requirementsDigest']);
   const requiredConcepts = concepts(input.requiredConcepts), prohibitedConcepts = concepts(input.prohibitedConcepts);
@@ -69,15 +70,16 @@ export function createHarnessSemanticRequirements(input = {}) {
     return value;
   }).sort((a, b) => compare(JSON.stringify(a), JSON.stringify(b)));
   const core = { schema: REQUIREMENTS_SCHEMA, foundationDigest: digestField(input.foundationDigest), requiredConcepts, prohibitedConcepts, relationRequirements, evidenceRequirements: unique(input.evidenceRequirements), authority: requirementAuthority };
-  core.requirementsDigest = sha256(core);
-  for (const field of ['schema', 'authority', 'requirementsDigest']) if (Object.hasOwn(input, field) && !same(input[field], core[field])) fail('SEMANTIC_REQUIREMENTS_INVALID', 'Requirements binding mismatch');
-  return frozenClone(core);
+  const requirementsDigest = sha256(core);
+  const result = { ...core, requirementsDigest };
+  for (const field of ['schema', 'authority', 'requirementsDigest']) if (Object.hasOwn(input, field) && !same(Reflect.get(input, field), Reflect.get(result, field))) fail('SEMANTIC_REQUIREMENTS_INVALID', 'Requirements binding mismatch');
+  return frozenClone(result);
 }
 
-function validateGrounding(value) {
+function validateGrounding(value: GroundingResult) {
   exactFields(value, ['schema', 'foundationDigest', 'candidateSetDigest', 'sourceSnapshotDigest', 'evidenceGraphDigest', 'conceptSetDigest', 'results', 'outcomeCounts', 'precedence', 'priorResultDigests', 'presentation', 'authority', 'groundingResultDigest']);
   check(value.schema === GROUNDING_SCHEMA);
-  for (const k of ['foundationDigest', 'candidateSetDigest', 'sourceSnapshotDigest', 'evidenceGraphDigest', 'conceptSetDigest', 'groundingResultDigest']) digestField(value[k]);
+  for (const k of ['foundationDigest', 'candidateSetDigest', 'sourceSnapshotDigest', 'evidenceGraphDigest', 'conceptSetDigest', 'groundingResultDigest']) digestField(Reflect.get(value, k));
   const { groundingResultDigest, ...core } = value;
   check(sha256(core) === groundingResultDigest);
   check(same(value.authority, groundingAuthority) && same(value.precedence, PRECEDENCE));
@@ -87,7 +89,7 @@ function validateGrounding(value) {
     exactFields(row, ['candidateId', 'outcome', 'resolvedConceptId', 'candidateConceptIds', 'conflictConceptIds', 'evidenceIds', 'evidenceFamilies', 'uncertainty', 'explanation', 'userActions', 'proposedExtension', 'decisionSignals']);
     text(row.candidateId); check(!ids.has(row.candidateId)); ids.add(row.candidateId);
     check(OUTCOMES.includes(row.outcome));
-    for (const k of ['candidateConceptIds', 'conflictConceptIds', 'userActions']) strings(row[k]);
+    for (const k of ['candidateConceptIds', 'conflictConceptIds', 'userActions']) strings(Reflect.get(row, k) as string[]);
     strings(row.evidenceIds, 64); strings(row.evidenceFamilies, 64);
     check(['LOW', 'BOUNDED', 'HIGH'].includes(row.uncertainty)); text(row.explanation);
     const signals = row.decisionSignals;
@@ -122,7 +124,7 @@ function validateGrounding(value) {
   });
 }
 
-export function evaluateSemanticCompatibility(input) {
+export function evaluateSemanticCompatibility(input: SemanticInput) {
   boundedData(input);
   exactFields(input, ['requirements', 'groundingResult'], ['eligibility']);
   const { groundingResult, eligibility = null } = input;
@@ -135,11 +137,13 @@ export function evaluateSemanticCompatibility(input) {
   const prohibited = requirements.prohibitedConcepts.filter(r => resolved.has(r.conceptId));
   const unresolved = groundingResult.results.filter(r => r.outcome !== 'RESOLVED');
   const status = missing.length || prohibited.length ? 'INCOMPATIBLE' : unresolved.length || !groundingResult.results.length || requirements.relationRequirements.length ? 'INDETERMINATE' : 'COMPATIBLE';
-  const core = { schema: REPORT_SCHEMA, status, requirementsDigest: requirements.requirementsDigest, groundingResultDigest: groundingResult.groundingResultDigest,
+  const report = { schema: REPORT_SCHEMA, status, requirementsDigest: requirements.requirementsDigest, groundingResultDigest: groundingResult.groundingResultDigest,
     matchedRequiredConceptIds: requirements.requiredConcepts.filter(r => resolved.has(r.conceptId)).map(r => r.conceptId), missingRequiredConceptIds: missing.map(r => r.conceptId), presentProhibitedConceptIds: prohibited.map(r => r.conceptId), unresolvedCandidateIds: unresolved.map(r => r.candidateId), eligibilityObservation: eligibility,
     authority: { semanticCompatibilityOnly: true, harnessEligibilityIndependent: true, mayOverrideEligibility: false, mayCreateProposal: false, mayApprove: false, mayPublish: false } };
+  const core: typeof report & { relationEvaluation?: { status: string; constraints: RelationRequirement[] }; compatibilityReportDigest?: string } = report;
   // New 0.1.0 correction: legacy code silently ignored these constraints.
   if (requirements.relationRequirements.length) core.relationEvaluation = { status: 'NOT_EVALUATED', constraints: requirements.relationRequirements };
   core.compatibilityReportDigest = sha256(core);
-  return frozenClone(core);
+  const result = core;
+  return frozenClone(result);
 }

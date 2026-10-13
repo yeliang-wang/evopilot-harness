@@ -5,10 +5,10 @@ import { existsSync, mkdtempSync, realpathSync, readFileSync, writeFileSync, sym
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { operations } from '../../src/operations.mjs';
-import { LIMITS } from '../../src/state.mjs';
+import { operations } from '../../dist/operations.js';
+import { LIMITS } from '../../dist/state.js';
 
-const cli = fileURLToPath(new URL('../../src/cli.mjs', import.meta.url));
+const cli = fileURLToPath(new URL('../../dist/cli.js', import.meta.url));
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const scope = { visibility: 'public', projectId: 'alpha' };
 const asset = JSON.parse(readFileSync(new URL('../../examples/synthetic-harnesses.json', import.meta.url)))[0].asset;
@@ -26,7 +26,7 @@ function invoke(args, input = '', status = 0, flags = []) {
   assert.equal(envelope.ok, status === 0);
   assert.equal(envelope.authority, false);
   assert.deepEqual(Object.keys(envelope).sort(), (status === 0 ? ['ok', 'product', 'version', 'result', 'authority'] : ['ok', 'error', 'authority']).sort());
-  if (status === 0) { assert.equal(envelope.product, 'harness'); assert.equal(envelope.version, '0.1.0'); }
+  if (status === 0) { assert.equal(envelope.product, 'harness'); assert.equal(envelope.version, '0.1.1'); }
   return status === 0 ? envelope.result : envelope.error;
 }
 function setup(t) {

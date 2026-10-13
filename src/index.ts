@@ -1,6 +1,6 @@
 import { inspectReference } from '../vendor/compatibility/v1/reference.mjs';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';
 export const PRODUCT = 'harness';
 
 export function capabilities() {
@@ -20,11 +20,12 @@ export function capabilities() {
   });
 }
 
-export function inspectOntologyReference(ref, observed) {
+export function inspectOntologyReference(ref: unknown, observed: unknown) {
   return inspectReference(ref, observed, { product: 'ontology' });
 }
 
-export { validateHarness } from './specification.mjs';
-export { evaluateHarness } from './evaluation.mjs';
-export { buildDelivery, verifyDelivery } from './delivery.mjs';
-export { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from './semantic-consumer.mjs';
+export { validateHarness } from './specification.js';
+export { evaluateHarness } from './evaluation.js';
+export { buildDelivery, verifyDelivery } from './delivery.js';
+export { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from './semantic-consumer.js';
+export type * from './types.js';

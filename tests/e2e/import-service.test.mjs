@@ -4,8 +4,8 @@ import { mkdtempSync, realpathSync, rmSync, readFileSync, writeFileSync } from '
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHarnessService } from '@evopilot-next/harness/service';
-import { listPublicSources, readPublicSource } from '../../src/asset-sources.mjs';
-import { operateImport } from '../../src/import-operations.mjs';
+import { listPublicSources, readPublicSource } from '../../dist/asset-sources.js';
+import { operateImport } from '../../dist/import-operations.js';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { sha256 } from '../../vendor/compatibility/v1/reference.mjs';

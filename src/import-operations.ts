@@ -1,8 +1,11 @@
+import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
+import { errorCode } from './types.js';
+export interface LegacyDocument { [key: string]: unknown; kind?: string; schema?: string; apiVersion?: string; metadata?: Record<string, unknown>; sourceAsset?: Record<string, unknown> }
 import { parseDocument, visit } from 'yaml';
 import { createHash } from 'node:crypto';
 import { sha256, stableSerialize } from '../vendor/compatibility/v1/reference.mjs';
-import { listPublicSources, readPublicSource } from './asset-sources.mjs';
-import { bounded, fail, LIMITS } from './state.mjs';
+import { listPublicSources, readPublicSource } from './asset-sources.js';
+import { bounded, fail, LIMITS } from './state.js';
 
 export const importFields = Object.freeze({
   'source.install': ['sourcePath'], 'source.inspect': ['sourceId'], 'source.list': [],
@@ -11,10 +14,10 @@ export const importFields = Object.freeze({
 });
 export const importOperations = Object.freeze(Object.keys(importFields));
 export const importMutations = Object.freeze(['source.install', 'legacy.import', 'source.reinspect']);
-const origin = s => ({ sourceLocator: s.sourceLocator, sourceRevision: s.sourceRevision, sourceVisibility: s.sourceVisibility });
-const sourceKey = s => sha256({ scope: s.scope, rawDigest: s.rawDigest, format: s.format, ...origin(s) });
+const origin = (s: SourceOrigin) => ({ sourceLocator: s.sourceLocator, sourceRevision: s.sourceRevision, sourceVisibility: s.sourceVisibility });
+const sourceKey = (s: SourceOrigin & { scope: Scope; rawDigest: string; format: string }) => sha256({ scope: s.scope, rawDigest: s.rawDigest, format: s.format, ...origin(s) });
 
-function parseRaw(raw, format) {
+function parseRaw(raw: string, format: string): LegacyDocument {
   if (typeof raw !== 'string' || !raw.isWellFormed()) fail('INVALID_ENCODING', 'Source must be a well-formed UTF-8 string; caller retains original');
   if (Buffer.byteLength(raw) > LIMITS.requestBytes) fail('LIMIT', 'Source exceeds byte limit; caller retains original');
   if (!['json', 'yaml', 'text'].includes(format)) fail('INVALID_FORMAT', 'Source format must be json, yaml or text');
@@ -26,29 +29,29 @@ function parseRaw(raw, format) {
       const parsed = parseDocument(raw, { uniqueKeys: true, customTags: [] });
       if (parsed.errors.length || parsed.warnings.length) fail('INVALID_SOURCE', 'YAML errors or warnings');
       visit(parsed, (_key, node) => {
-        if (node?.tag && !['tag:yaml.org,2002:str', 'tag:yaml.org,2002:int', 'tag:yaml.org,2002:float', 'tag:yaml.org,2002:bool', 'tag:yaml.org,2002:null', 'tag:yaml.org,2002:map', 'tag:yaml.org,2002:seq'].includes(node.tag)) fail('INVALID_SOURCE', 'Custom YAML tags forbidden');
+        if (node && typeof node === "object" && "tag" in node && node.tag && !['tag:yaml.org,2002:str', 'tag:yaml.org,2002:int', 'tag:yaml.org,2002:float', 'tag:yaml.org,2002:bool', 'tag:yaml.org,2002:null', 'tag:yaml.org,2002:map', 'tag:yaml.org,2002:seq'].includes(String(node.tag))) fail('INVALID_SOURCE', 'Custom YAML tags forbidden');
       });
       document = parsed.toJS({ maxAliasCount: 100 });
     }
     bounded(document);
   } catch (e) {
-    if (e.code === 'LIMIT') throw e;
+    if (errorCode(e) === 'LIMIT') throw e;
     fail('INVALID_SOURCE', 'Malformed or unsafe source; caller retains original bytes');
   }
   return document;
 }
 
-function classify(document, format, packagedSource) {
-  const foreign = ['OntologyPack', 'DomainOntologyPack', 'ProjectOntologyOverlay'].includes(document?.kind)
-    || ['product', 'producer', 'schema', 'apiVersion', 'kind'].some(key => typeof document?.[key] === 'string' && /ontology/i.test(document[key]));
-  const knownRecord = ['Catalog', 'HarnessCatalog', 'HarnessLock', 'HarnessProposal'].includes(document?.kind);
+function classify(document: LegacyDocument, format: string, packagedSource: boolean) {
+  const foreign = ['OntologyPack', 'DomainOntologyPack', 'ProjectOntologyOverlay'].includes(document?.kind ?? "")
+    || ['product', 'producer', 'schema', 'apiVersion', 'kind'].some(key => typeof document?.[key] === 'string' && /ontology/i.test(document[key] as string));
+  const knownRecord = ['Catalog', 'HarnessCatalog', 'HarnessLock', 'HarnessProposal'].includes(document?.kind ?? "");
   const historical = document?.apiVersion === 'harness.evopilot.io/v3'
-    && ['HarnessBundle', 'HarnessProfile', 'HarnessComponent', 'AssetDeltaProposal'].includes(document?.kind)
-    || ['evopilot-harness-template/v1', 'evopilot-harness-export/v1', 'evopilot-harness-catalog/v3'].includes(document?.schema);
-  const structuralIssues = [];
-  const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-  const string = (parent, field, label = field) => {
-    if (typeof parent?.[field] !== 'string' || !parent[field].trim()) structuralIssues.push('MISSING_OR_INVALID_' + label.toUpperCase());
+    && ['HarnessBundle', 'HarnessProfile', 'HarnessComponent', 'AssetDeltaProposal'].includes(document?.kind ?? "")
+    || ['evopilot-harness-template/v1', 'evopilot-harness-export/v1', 'evopilot-harness-catalog/v3'].includes(document?.schema ?? "");
+  const structuralIssues: string[] = [];
+  const object = (value: unknown) => value !== null && typeof value === 'object' && !Array.isArray(value);
+  const string = (parent: Record<string, unknown> | undefined, field: string, label = field) => {
+    if (typeof parent?.[field] !== 'string' || !(parent[field] as string).trim()) structuralIssues.push('MISSING_OR_INVALID_' + label.toUpperCase());
   };
   if (historical) {
     if (document.apiVersion === 'harness.evopilot.io/v3') {
@@ -78,10 +81,10 @@ function classify(document, format, packagedSource) {
   return { inspection, status: recognized && !structuralIssues.length ? 'PRESERVED_SOURCE' : 'QUARANTINED' };
 }
 
-export function operateImport(store, state, r) {
-  const own = s => stableSerialize(s.scope) === stableSerialize(r.scope);
+export function operateImport(store: Store, state: State, r: DispatchRequest) {
+  const own = (s: SourceRecord) => stableSerialize(s.scope) === stableSerialize(r.scope);
   const sources = state.sources ?? [];
-  const inspect = source => {
+  const inspect = (source: SourceRecord) => {
     if (sourceKey(source) !== source.sourceId || sha256(source.document) !== source.documentDigest) fail('CORRUPT_STATE', 'Source identity differs');
     const raw = store.verifyRawBlob(source.scope, source.rawDigest);
     if (sha256(parseRaw(raw, source.format)) !== source.documentDigest) fail('CORRUPT_BLOB', 'Source document differs');
@@ -113,7 +116,7 @@ export function operateImport(store, state, r) {
         packagedSource = true;
       }
     }
-    const next = classify(source.document, source.format, packagedSource);
+    const next = classify(source.document as LegacyDocument, source.format, packagedSource);
     if (source.status === 'QUARANTINED' && next.status === 'PRESERVED_SOURCE') {
       const issues = source.inspection.structuralIssues;
       if (!source.inspection.recognized || !['HISTORICAL_SOURCE', 'PINNED_ARCHIVE'].includes(source.inspection.reason)
@@ -137,7 +140,7 @@ export function operateImport(store, state, r) {
     source.authority = false;
     return source;
   }
-  let input = r.input, packagedSource = false;
+  let input: Partial<DispatchInput> & SourceOrigin & { raw: string; format: string } = r.input, packagedSource = false;
   if (r.operation === 'source.install') {
     const listed = listPublicSources().sources.find(s => s.owner === 'harness' && s.sourcePath === input.sourcePath);
     if (!listed) fail('UNKNOWN_SOURCE', 'Exact packaged Harness source path key required');
@@ -157,12 +160,12 @@ export function operateImport(store, state, r) {
     kind: document?.kind ?? null, schema: document?.schema ?? null, apiVersion: document?.apiVersion ?? null,
   };
   const record = { scope: r.scope, ...origin(input), format: input.format, rawDigest: 'sha256:' + createHash('sha256').update(input.raw).digest('hex'), documentDigest: sha256(document), document, inspection, observed, status, authority: false };
-  record.sourceId = sourceKey(record);
-  const prior = sources.find(s => own(s) && s.sourceId === record.sourceId);
+  const identified = { ...record, sourceId: sourceKey(record) };
+  const prior = sources.find(s => own(s) && s.sourceId === identified.sourceId);
   if (prior) { inspect(prior); return prior; }
   if (sources.length >= LIMITS.sources) fail('LIMIT', 'Source count limit');
   store.rawBlob(r.scope, input.raw);
   state.sources ??= [];
-  state.sources.push(record);
-  return record;
+  state.sources.push(identified);
+  return identified;
 }

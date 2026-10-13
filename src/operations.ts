@@ -1,18 +1,19 @@
-import { resolveClosure, referenceFor } from './resolution.mjs';
-import { evaluateHarness } from './evaluation.mjs';
+import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
+import { resolveClosure, referenceFor } from './resolution.js';
+import { evaluateHarness } from './evaluation.js';
 import { exactFields, textField, sha256, stableSerialize } from '../vendor/compatibility/v1/reference.mjs';
-import { validateHarness } from './specification.mjs';
-import { buildDelivery, verifyDelivery } from './delivery.mjs';
-import { fail, LIMITS, slug } from './state.mjs';
-import { importOperations, importMutations, importFields, operateImport } from './import-operations.mjs';
-import { evaluateSemanticCompatibility } from './semantic-consumer.mjs';
+import { validateHarness } from './specification.js';
+import { buildDelivery, verifyDelivery } from './delivery.js';
+import { fail, LIMITS, slug } from './state.js';
+import { importOperations, importMutations, importFields, operateImport } from './import-operations.js';
+import { evaluateSemanticCompatibility } from './semantic-consumer.js';
 
 export const operations = Object.freeze([...importOperations, 'semantic.compatibility.inspect', 'workspace.inspect', 'receipt.inspect', 'asset.put', 'asset.inspect', 'asset.list', 'asset.review', 'asset.decide', 'asset.publish', 'asset.evaluate', 'evaluation.inspect']);
 export const mutations = Object.freeze([...importMutations, 'asset.put', 'asset.review', 'asset.decide', 'asset.publish', 'asset.evaluate']);
 
 // Dictionary keys serialize all six public reference fields canonically. Scope
 // stays explicit in each result; ambiguous public identities fail resolution.
-function evaluateComposed(store, state, root, closure, input) {
+function evaluateComposed(store: Store, state: State, root: AssetRecord, closure: Closure, input: DispatchInput) {
   const members = closure.nodes.map(node => {
     const matches = state.assets.filter(a => stableSerialize(a.scope) === stableSerialize(node.scope) && sha256(a.model) === node.assetDigest);
     if (matches.length !== 1) fail('DEPENDENCY_MISMATCH', 'Exact closure member required');
@@ -51,7 +52,7 @@ function evaluateComposed(store, state, root, closure, input) {
     closureDigest: closure.closureDigest, evidenceDigest: sha256(input.evidence), configurationDigest: sha256(input.configuration),
     evaluation, evaluationDigest: sha256(evaluation), status, authority: false, actions: [] };
 }
-export function validateRequest(r) {
+export function validateRequest(r: DispatchRequest) {
   if (!operations.includes(r.operation)) fail('UNSUPPORTED_OPERATION', 'Operation is outside this service slice');
   const write = mutations.includes(r.operation);
   exactFields(r, ['operation', 'scope', 'input', ...(write ? ['requestId', 'expectedRevision'] : [])]);
@@ -69,17 +70,17 @@ export function validateRequest(r) {
     'asset.publish': ['id', 'version'], 'asset.evaluate': ['id', 'version', 'evidence', 'configuration'], 'evaluation.inspect': ['requestId'],
   };
   exactFields(r.input, fields[r.operation]);
-  for (const field of fields[r.operation]) if (!['asset', 'raw', 'evidence', 'configuration', 'requirements', 'groundingResult', 'eligibility'].includes(field)) textField(r.input[field]);
+  for (const field of fields[r.operation]) if (!['asset', 'raw', 'evidence', 'configuration', 'requirements', 'groundingResult', 'eligibility'].includes(field)) textField(Reflect.get(r.input, field));
   if (r.operation === 'legacy.import' && typeof r.input.raw !== 'string') fail('INVALID_REQUEST', 'Raw input must be a string');
   if (['receipt.inspect', 'evaluation.inspect'].includes(r.operation)) slug(r.input.requestId);
   if (r.operation === 'asset.decide' && (!['APPROVE', 'REJECT'].includes(r.input.decision) || !/^sha256:[a-f0-9]{64}$/.test(r.input.reviewDigest))) fail('INVALID_REQUEST', 'Explicit decision and review digest required');
   return write;
 }
-export function operate(store, state, r, providers) {
+export function operate(store: Store, state: State, r: DispatchRequest, providers: Providers) {
   if (r.operation === 'semantic.compatibility.inspect') return { workspaceId: store.identity.id, scope: r.scope, report: evaluateSemanticCompatibility(r.input), authority: false };
   if (importOperations.includes(r.operation)) return operateImport(store, state, r);
   const scopeKey = stableSerialize(r.scope);
-  const own = a => stableSerialize(a.scope) === scopeKey;
+  const own = (a: AssetRecord) => stableSerialize(a.scope) === scopeKey;
   const find = () => {
     const a = state.assets.find(a => own(a) && a.model.id === r.input.id && a.model.version === r.input.version);
     if (!a) fail('NOT_FOUND', 'Asset not found in scope');
@@ -112,7 +113,7 @@ export function operate(store, state, r, providers) {
   if (r.operation === 'asset.evaluate') {
     if (!a.delivery) fail('NOT_PUBLISHED', 'Evaluation requires a published root');
     const closure = resolveClosure(store, state, a, providers);
-    if (closure.closureDigest !== a.resolution.closureDigest) fail('DEPENDENCY_MISMATCH', 'Published closure drift');
+    if (closure.closureDigest !== a.resolution!.closureDigest) fail('DEPENDENCY_MISMATCH', 'Published closure drift');
     if (a.model.kind !== 'HarnessComponent') {
       const report = evaluateComposed(store, state, a, closure, r.input);
       return { report, reportDigest: store.blob(a.scope, report) };
@@ -132,19 +133,19 @@ export function operate(store, state, r, providers) {
   }
   const currentReview = () => {
     const current = reviewSubject();
-    if (!a.review || a.review.reviewDigest !== sha256(current)) fail('REVIEW_REQUIRED', 'Current exact review required');
+    if (!a.review || a.review!.reviewDigest !== sha256(current)) fail('REVIEW_REQUIRED', 'Current exact review required');
   };
   currentReview();
   if (r.operation === 'asset.decide') {
-    if (r.input.reviewDigest !== a.review.reviewDigest) fail('REVIEW_MISMATCH', 'Decision must bind exact review');
+    if (r.input.reviewDigest !== a.review!.reviewDigest) fail('REVIEW_MISMATCH', 'Decision must bind exact review');
     a.decision = { reviewDigest: r.input.reviewDigest, decision: r.input.decision, humanEvidenceRef: r.input.humanEvidenceRef, uid: store.uid };
     return a.decision;
   }
-  if (!a.decision || a.decision.decision !== 'APPROVE' || a.decision.reviewDigest !== a.review.reviewDigest) fail('APPROVAL_REQUIRED', 'Exact human approval required');
+  if (!a.decision || a.decision.decision !== 'APPROVE' || a.decision.reviewDigest !== a.review!.reviewDigest) fail('APPROVAL_REQUIRED', 'Exact human approval required');
   if (validateHarness(a.model).status !== 'VALID') fail('PENDING_MODEL', 'Only VALID models may publish');
   const resolution = resolveClosure(store, state, a, providers);
-  if (sha256(reviewSubject()) !== a.review.reviewDigest) fail('REVIEW_REQUIRED', 'Resolution changed during publication');
-  if (resolution.closureDigest !== a.review.resolution.closureDigest) fail('REVIEW_REQUIRED', 'Exact reviewed closure required');
+  if (sha256(reviewSubject()) !== a.review!.reviewDigest) fail('REVIEW_REQUIRED', 'Resolution changed during publication');
+  if (resolution.closureDigest !== a.review!.resolution.closureDigest) fail('REVIEW_REQUIRED', 'Exact reviewed closure required');
   store.blob(a.scope, resolution); a.resolution = resolution;
   const delivery = buildDelivery(a.model);
   if (!verifyDelivery(delivery).valid) fail('INVALID_DELIVERY', 'Delivery failed verification');

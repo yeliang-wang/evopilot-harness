@@ -5,8 +5,8 @@ import { readFileSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import * as api from '../../src/index.mjs';
-import { createHarnessService } from '../../src/service.mjs';
+import * as api from '../../dist/index.js';
+import { createHarnessService } from '../../dist/service.js';
 import { sha256 } from '../../vendor/compatibility/v1/reference.mjs';
 
 const foundationDigest = 'sha256:' + 'a'.repeat(64);
@@ -78,7 +78,7 @@ test('semantic pure: malformed, tampered, unknown, unbounded and non-data inputs
 
 test('semantic pure: exported consumer dependencies remain pure and own no Ontology production', () => {
   for (const name of ['createOntologyFoundation', 'createOntologyPack', 'createOntologySnapshot', 'defaultemptyOntologyPack']) assert.equal(api[name], undefined);
-  const source = readFileSync(new URL('../../src/semantic-consumer.mjs', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../../dist/semantic-consumer.js', import.meta.url), 'utf8');
   const imports = [...source.matchAll(/from ['"]([^'"]+)['"]/g)].map(m => m[1]);
   assert.deepEqual(imports, ['../vendor/compatibility/v1/reference.mjs']);
   assert.doesNotMatch(source, /\b(?:eval|require)\s*\(|\bimport\s*\(|node:fs|node:child_process|\.local\//);

@@ -1,6 +1,6 @@
 # Independent Harness CLI
 
-`evopilot-next-harness` is the package bin for `src/cli.mjs` (also runnable as `node src/cli.mjs` in this checkout). Its owned relative modules and packaged assets work without a developer or parent repository. Node **24.14.0** is the supported baseline; `node:sqlite` is experimental and may print a runtime warning to stderr. stdout contains exactly one JSON envelope.
+`evopilot-next-harness` is the package bin for `dist/cli.js` (also runnable as `node dist/cli.js` after building this checkout). Its owned relative modules and packaged assets work without a developer or parent repository. Node **24.14.0** is the supported baseline; `node:sqlite` is experimental and may print a runtime warning to stderr. stdout contains exactly one JSON envelope.
 
 `capabilities`, `help`/`--help`, and `version`/`--version` require no workspace and create no filesystem state. Capabilities lists the exact owned service operations and limits. The parent EvoPilot Preview implements MCP, Expert and connection support with a native Ontology resolver. This standalone CLI supplies no resolver; its static pending labels do not describe the current parent composition. Expert is off by default and requires explicit Preview selection and task activation of the current stdio connection; installed MCP is passive. Desktop/Host acceptance status is supplied separately in a local report bound to the exact candidate; without that report, no acceptance claim is made. M0 and technical tests do not establish Host acceptance. Discovery and successful requests confer no acceptance or release authority.
 
@@ -58,7 +58,7 @@ The standalone CLI deliberately configures no external Ontology resolver. The em
 
 ## Output and exit status
 
-Success: `{"ok":true,"product":"harness","version":"0.1.0","result":{},"authority":false}` (result varies by operation).
+Success: `{"ok":true,"product":"harness","version":"0.1.1","result":{},"authority":false}` (result varies by operation).
 
 Failure: `{"ok":false,"error":{"code":"REVISION_CONFLICT","message":"Harness service request failed."},"authority":false}`. Error messages are fixed, sanitized text; they never echo caller contents, paths or stacks.
 
@@ -72,4 +72,6 @@ Unknown/duplicate flags, missing values, extra positional arguments and extra fl
 
 ## Local verification
 
-`node scripts/check.mjs` preserves the owned-import and frozen-v1 guards and verifies silent CLI import under read-only filesystem permissions. CLI tests (SOURCE-CHECKOUT: `tests/e2e/cli.test.mjs`) exercise discovery, bounded input, persistence across processes, CAS, receipt replay and unavailable external dependencies. Run them from a source checkout with `node --test tests/e2e/cli.test.mjs`; they are included in the verified suite described in the [README](../README.md). Process tests need permission to create isolated temporary workspaces. Neither tests nor CLI output establish acceptance.
+In a source checkout run `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then `npm test`. Source lives in `src/*.ts`; build compiles strict TypeScript into JavaScript and declarations and cleans only generated `dist`. Installed tarballs already contain compiled output and omit development scripts/tests. Use `node dist/cli.js help` and `node dist/cli.js version` for source-checkout discovery.
+
+`node scripts/check.mjs` preserves the owned-import and frozen-v1 guards and verifies silent CLI import under read-only filesystem permissions. CLI tests (SOURCE-CHECKOUT: `tests/e2e/cli.test.mjs`) exercise discovery, bounded input, persistence across processes, CAS, receipt replay and unavailable external dependencies. Run them from a source checkout with `node --test tests/e2e/cli.test.mjs`; they are included in the full suite described in the [README](../README.md). Process tests need permission to create isolated temporary workspaces. Neither tests nor CLI output establish acceptance.
