@@ -16,6 +16,8 @@ The [README](../README.md) records the current passing technical baseline. Servi
 
 ## Remaining scope
 
+The subsequent M5 user decision authorizes source, CI and public release preparation for `yeliang-wang/evopilot`, `yeliang-wang/evopilot-runtime`, `yeliang-wang/evopilot-harness` and `yeliang-wang/evopilot-ontology`. This narrowly supersedes the earlier local-only GitHub restriction while preserving the M0–M4 baseline. The current Harness task prepares infrastructure and documentation only; no feature implementation, remote operation, tag, actual Release or daily installation is included. Publication remains disabled by default (`publish=false`) and requires validation against the external M5 target and an independent explicit user release decision.
+
 Desktop/Host acceptance status is supplied separately in a local report bound to the exact candidate; without that report, no acceptance claim is made. M0 and technical tests do not establish Host acceptance. GitHub execution, stable 1.0, production readiness and software Release are not claimed complete. Retained legacy sources do not demonstrate that all advanced feedback, calibration or matching algorithms have been ported.
 
 Future development is limited to approved 0.1.x real-project feedback. No additional feature scope is proposed here. Existing audit records remain retained externally.

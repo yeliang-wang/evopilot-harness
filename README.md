@@ -34,3 +34,9 @@ The current operator-verified baseline is 60 Harness technical tests passing wit
 The 101-document public archive exists and its hashes are verified. The 146 historical sources (101 public and 45 private) were imported only into an isolated acceptance workspace; they are not automatically approved or published native assets. Existing licenses and provenance retain their ownership. Advanced legacy feedback, calibration and matching algorithms are not all claimed as ported.
 
 Read the [current roadmap](docs/roadmap.md) for remaining acceptance boundaries and approved 0.1.x real-project feedback scope. GitHub execution and software Release are not claimed complete.
+
+## Source and Preview release distribution
+
+The M5 source/CI/release-preparation scope covers [this Harness repository](https://github.com/yeliang-wang/evopilot-harness). The [v0.1.0 Preview release](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.1.0) is pending until published. See the parent [common release mechanics](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md) and [Codex plugin composition](https://github.com/yeliang-wang/evopilot).
+
+CI and release preparation use Node 24.14.0. For Harness, `expected_digest` is the tarball SHA256 from the parent verified CI. The default `publish=false` permits preparation with publication disabled; publication requires validation against the external M5 target and an explicit user decision. Code, scripts and CI tests do not establish Host acceptance or release authority. Existing feature metadata and the M0–M4 baseline remain unchanged; this preparation adds no production-readiness claim.
