@@ -34,10 +34,16 @@ function object(v: unknown): Record<string, unknown> { if (!v || typeof v !== 'o
     throw new TypeError('Native report object required'); return v as Record<string, unknown>; }
 function rows(v: unknown): unknown[] { if (!Array.isArray(v))
     throw new TypeError('Native report list required'); return v; }
+function conftestRow(value: unknown): Record<string, unknown> {
+    nativeExact(value, ['filename', 'namespace', 'successes'], ['failures', 'warnings', 'skipped', 'exceptions']);
+    if (typeof value.filename !== 'string' || !value.filename || typeof value.namespace !== 'string')
+        throw new TypeError('Invalid Conftest result identity');
+    return value;
+}
 function astDeclarations(ast: unknown) { const root = object(ast), pkg = object(root.package), namespace = rows(pkg.path).map(x => object(x).value).join('.'); const names = rows(root.rules ?? []).map(r => { const head = object(object(r).head); if (typeof head.name !== 'string')
     throw new TypeError('Unsupported dynamic/native rule head'); return head.name; }); return { namespace, names }; }
 function conftestResults(raw: unknown, catalog: HarnessRule[]) { const failures: string[] = [], warnings: string[] = []; let successes = 0; for (const rawRow of rows(raw)) {
-    const r = object(rawRow);
+    const r = conftestRow(rawRow);
     if (typeof r.successes !== 'number' || !Number.isSafeInteger(r.successes) || r.successes < 0 || r.skipped || r.exceptions)
         throw new TypeError('Unexpected Conftest result');
     successes += r.successes;
@@ -140,12 +146,15 @@ export async function validateNativeHarness(packageValue: NativePackage, toolcha
         if (cmd.exitCode !== 0)
             throw new TypeError('Conftest verify failed');
         const verify = rows(parse(cmd));
-        if (verify.length !== expectedTests.length || verify.some(x => { const r = object(x); return r.successes !== 1 || r.failures || r.skipped || r.exceptions; }))
+        if (verify.length !== expectedTests.length || verify.some(x => { const r = conftestRow(x); return r.successes !== 1 || r.failures || r.warnings || r.skipped || r.exceptions; }))
             throw new TypeError('Conftest verify empty, skipped or incomplete');
         cmd = await run('test-ids', 'opa', ['test', '--format', 'json', '--fail-on-empty', '--capabilities', cap, ...policyPaths, '_effective/parameters.json']);
         if (cmd.exitCode !== 0)
             throw new TypeError('OPA tests failed/empty/skipped');
-        const tests = rows(parse(cmd)).map(x => object(x));
+        const tests = rows(parse(cmd)).map(x => {
+            nativeExact(x, ['package', 'name', 'location', 'duration'], ['fail', 'skip', 'error', 'output']);
+            return object(x);
+        });
         if (tests.some(t => t.fail || t.skip || t.error || typeof t.name !== 'string' || typeof t.package !== 'string'))
             throw new TypeError('OPA non-PASS test');
         equalSet(tests.map(t => String(t.package) + '.' + String(t.name)), expectedTests, 'Executed test IDs');
