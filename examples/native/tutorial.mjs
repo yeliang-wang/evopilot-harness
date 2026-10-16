@@ -1,3 +1,4 @@
+import { syntheticDecisionEvidence } from './decision-evidence.mjs';
 // A self-contained synthetic SDK tutorial; never opens a user's project/Workspace.
 import { readFileSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -25,7 +26,7 @@ try {
   const report = await write('native.package.validate', identity, 'validate');
   if (report.executionStatus !== 'SUCCEEDED' || report.qualityStatus !== 'PASS') throw new Error(report.issues.join('; '));
   const review = await write('native.package.review', identity, 'review');
-  await write('native.package.decide', { ...identity, reviewDigest: review.reviewDigest, decision: 'APPROVE', humanEvidenceRef: 'synthetic:test-fixture-only-no-project-authority' }, 'decide');
+  await write('native.package.decide', { ...identity, reviewDigest: review.reviewDigest, decision: 'APPROVE', humanEvidenceRef: syntheticDecisionEvidence(root,{owner:'harness',operation:'native.package.decide',workspaceId:'synthetic-tutorial',scope,reviewDigest:review.reviewDigest,decision:'APPROVE'}) }, 'decide');
   await write('native.package.publish', identity, 'publish');
   const readback = await service.native({ operation: 'native.package.readback', scope, input: identity });
   console.log(JSON.stringify({ synthetic: true, temporaryWorkspaceRemoved: true, reference: readback.reference, criteria: report.criteria, reportDigest: report.reportDigest, authority: false }, null, 2));

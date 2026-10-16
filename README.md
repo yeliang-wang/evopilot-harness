@@ -58,3 +58,5 @@ Historical JSON operations and deliveries are retained read-only. Current writes
 - [Parent release procedure](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md).
 
 Navigation takes inspiration from [OpenHands](https://github.com/OpenHands/OpenHands); wording is original and no affiliation is implied. Preview software and technical validation do not constitute a stable v1.0 or production-readiness guarantee.
+
+Native approvals bind readable, digest-pinned evidence to the exact review, Workspace and operation. See [decision evidence](docs/native-decisions.md) for the format, historical readback and trusted-operator boundary.

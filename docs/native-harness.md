@@ -106,3 +106,5 @@ EVOPILOT_TEST_NATIVE_TOOLCHAIN=/absolute/path/to/verified/native-toolchain.json 
 ```
 
 The variable supplies host test construction, not a product request. Missing tools fail E2E; tests do not silently skip. Historical fixture writers exist only under `tests/fixtures`, are pinned to the old source commit, and are excluded from installed package files. They construct synthetic historical states for readback/corruption/relocation tests; they do not enable legacy writes in the current service.
+
+Before a new decision, retain the actual authorization source and bind it using the [decision evidence format](native-decisions.md). Opaque approval labels no longer authorize new native work; historical receipts remain unchanged.

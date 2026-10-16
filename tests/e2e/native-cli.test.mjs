@@ -1,3 +1,4 @@
+import { syntheticDecisionEvidence } from '../fixtures/native/decision-evidence.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -14,7 +15,7 @@ test('C01/H01: public CLI performs native validation and publication with pinned
     const args = [fileURLToPath(new URL('../../dist/cli.js', import.meta.url)), 'request', '--workspace', join(root, 'workspace'), '--workspace-id', 'cli', '--toolchain', process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN];
     const call = request => { const p = spawnSync(process.execPath, args, { input: JSON.stringify(request), encoding: 'utf8' }); assert.ifError(p.error); return { exit: p.status, output: JSON.parse(p.stdout) }; };
     let revision = 0;
-    const write = (operation, input, requestId) => { const r = call({ operation, scope, input, requestId, expectedRevision: revision }); assert.equal(r.exit, 0, JSON.stringify(r.output)); revision = r.output.result.revision; return r.output.result.result; };
+    const write = (operation, input, requestId) => { if(input.humanEvidenceRef?.startsWith('synthetic'))input={...input,humanEvidenceRef:syntheticDecisionEvidence(root,{owner:'harness',operation,workspaceId:'cli',scope,reviewDigest:input.reviewDigest,decision:input.decision})};const r = call({ operation, scope, input, requestId, expectedRevision: revision }); assert.equal(r.exit, 0, JSON.stringify(r.output)); revision = r.output.result.revision; return r.output.result.result; };
     const pkg = syntheticHarnessPackage(), id = { id: pkg.manifest.id, version: pkg.manifest.version };
     write('native.package.put', { package: pkg }, 'put');
     const valid = write('native.package.validate', id, 'validate');

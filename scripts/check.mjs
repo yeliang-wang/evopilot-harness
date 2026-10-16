@@ -125,7 +125,7 @@ export async function checkSource() {
       assert(specifier.startsWith('.'), 'Undeclared import: ' + specifier);
       const resolved = resolve(dirname(path), specifier);
       const target = path.endsWith(".ts") && resolved.endsWith(".js") ? resolved.slice(0, -3) + ".ts" : resolved;
-      assert(target.startsWith(resolve(ROOT, 'src') + sep) || path.startsWith(generatedRoot + sep) && target.startsWith(generatedRoot + sep) || [resolve(vendor,'reference.mjs'),resolve(vendor,'native.mjs')].includes(target), 'Foreign source import');
+      assert(target.startsWith(resolve(ROOT, 'src') + sep) || path.startsWith(generatedRoot + sep) && target.startsWith(generatedRoot + sep) || [resolve(vendor,'reference.mjs'),resolve(vendor,'native.mjs'),resolve(vendor,'decision-evidence.mjs')].includes(target), 'Foreign source import');
       assert((await lstat(target)).isFile(), 'Import must be an owned regular file');
     }
   }

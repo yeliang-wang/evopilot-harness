@@ -6,6 +6,7 @@ import { fail, slug } from './state.js';
 import { inspectHarnessStandard } from './native-standard.js';
 import { inspectHarnessPackage } from './native-package.js';
 import { validateNativeHarness } from './native-evaluation.js';
+import { verifyDecisionEvidence } from '../vendor/compatibility/v1/decision-evidence.mjs';
 export const NATIVE_OPERATIONS: NativeOperation[] = ['standard.inspect', 'native.package.put', 'native.package.inspect', 'native.package.list', 'native.package.validate', 'native.package.review', 'native.package.decide', 'native.package.publish', 'native.package.readback', 'native.receipt.inspect'];
 const mutations = new Set(['native.package.put', 'native.package.validate', 'native.package.review', 'native.package.decide', 'native.package.publish']);
 const fields: Record<NativeOperation, string[]> = { 'standard.inspect': [], 'native.package.put': ['package'], 'native.package.inspect': ['id', 'version'], 'native.package.list': [], 'native.package.validate': ['id', 'version'], 'native.package.review': ['id', 'version'], 'native.package.decide': ['id', 'version', 'reviewDigest', 'decision', 'humanEvidenceRef'], 'native.package.publish': ['id', 'version'], 'native.package.readback': ['id', 'version'], 'native.receipt.inspect': ['requestId'] };
@@ -166,13 +167,14 @@ export async function executeNativeHarness(store: Store, request: NativeRequest,
                 if (r.operation === 'native.package.decide') {
                     if (r.input.reviewDigest !== review.reviewDigest || !['APPROVE', 'REJECT'].includes(r.input.decision))
                         fail('REVIEW_MISMATCH', 'Decision must bind exact review');
-                    nativeText(r.input.humanEvidenceRef);
+                    verifyDecisionEvidence(r.input.humanEvidenceRef,{owner:'harness',operation:'native.package.decide',workspaceId:store.identity.id,scope:r.scope,reviewDigest:review.reviewDigest,decision:r.input.decision});
                     candidate.decision = { reviewDigest: r.input.reviewDigest, decision: r.input.decision, humanEvidenceRef: r.input.humanEvidenceRef };
                     result = candidate.decision;
                 }
                 else if (r.operation === 'native.package.publish') {
                     if (candidate.decision?.decision !== 'APPROVE' || candidate.decision.reviewDigest !== review.reviewDigest)
                         fail('APPROVAL_REQUIRED', 'Exact domain approval required');
+                    verifyDecisionEvidence(candidate.decision.humanEvidenceRef,{owner:'harness',operation:'native.package.decide',workspaceId:store.identity.id,scope:r.scope,reviewDigest:review.reviewDigest,decision:'APPROVE'});
                     candidate.published = true;
                     result = { reference: candidate.reference, published: true, workspaceId: store.identity.id, scope: r.scope, package: candidate.package, validation: candidate.validation };
                 }
