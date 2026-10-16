@@ -1,3 +1,5 @@
+> Historical/compatibility reference: new assets use the [current native Harness API](native-harness.md). Retired JSON mutation routes are read-only; retained records keep their original meaning.
+
 # Preserved public sources
 
 Import `listPublicSources` and `readPublicSource` from `@evopilot-next/harness/sources`.

@@ -1,77 +1,36 @@
-# Independent Harness CLI
+# Harness CLI
 
-`evopilot-next-harness` is the package bin for `dist/cli.js` (also runnable as `node dist/cli.js` after building this checkout). Its owned relative modules and packaged assets work without a developer or parent repository. Node **24.14.0** is the supported baseline; `node:sqlite` is experimental and may print a runtime warning to stderr. stdout contains exactly one JSON envelope.
-
-`capabilities`, `help`/`--help`, and `version`/`--version` require no workspace and create no filesystem state. Capabilities lists the exact owned service operations and limits. The parent EvoPilot Preview implements MCP, Expert and connection support with a native Ontology resolver. This standalone CLI supplies no resolver; its static pending labels do not describe the current parent composition. Expert is off by default and requires explicit Preview selection and task activation of the current stdio connection; installed MCP is passive. Desktop/Host acceptance status is supplied separately in a local report bound to the exact candidate; without that report, no acceptance claim is made. M0 and technical tests do not establish Host acceptance. Discovery and successful requests confer no acceptance or release authority.
-
-```sh
-evopilot-next-harness capabilities
-evopilot-next-harness help
-evopilot-next-harness version
-```
-
-## Explicit workspace and request
+The current CLI accepts native operations using the same envelope as the
+[native service](native-harness.md#operations). Inspect with
+`evopilot-next-harness capabilities`; mutations require `requestId` and the
+current owner `expectedRevision`.
 
 ```sh
-evopilot-next-harness request --workspace /absolute/operator/harness-workspace --workspace-id demo --request-file /absolute/operator/request.json
+evopilot-next-harness request \
+  --workspace /absolute/private/state \
+  --workspace-id my-workspace \
+  --toolchain /absolute/verified/native-toolchain.json \
+  --request-file /absolute/native-request.json
 ```
 
-Both workspace flags are required. The root must be a canonical absolute path outside source/Git trees, with an existing parent and no linked ancestors. The service checks OS ownership, private modes and workspace identity; it does not adopt an unknown nonempty directory. `workspace-id` and scope `projectId` use lowercase slug syntax. No cwd, environment, historical path, glob or directory scan selects the request or workspace.
+`standard.inspect` is discovery. The authoring sequence is
+`native.package.put`, `native.package.validate`, `native.package.review`,
+`native.package.decide`, `native.package.publish`, then
+`native.package.readback`. Passing validation cannot supply the human decision.
+Use the pinned [toolchain preparation](native-harness.md#installed-tools).
+Requests cannot inject trusted providers or executable overrides.
 
-Omit `--request-file` to read one JSON request from stdin through EOF. The explicit file path must be absolute and identify a regular non-symlink file. Files and stdin are limited to **524288 bytes**, including JSON whitespace. Invalid UTF-8, malformed JSON, unsupported operations, wrong envelope fields and invalid scope are rejected before initialization. Nested input also follows the service's node/depth limits. Business validation occurs in the service; a syntactically valid but semantically invalid request can initialize an empty workspace before failing.
+Historical JSON reads remain available through `request`; new historical writes
+return `HISTORICAL_READ_ONLY`. Use `native.receipt.inspect` for native receipts
+and `receipt.inspect` for historical ones. Read the owner global revision again
+after each mutation or failed claimed operation. Discovery has no state writes.
 
-An initial scoped inspection explicitly initializes the workspace and returns its global revision (zero when new):
+A response is one JSON line. Exit 0 means the operation returned; inspect its
+quality result separately. Exit 2 is invalid input/usage; exit 1 is service
+failure. Errors do not echo raw exception text or request contents. After a lost
+response inspect the original receipt; do not invent a new request ID to retry
+uncertain execution. No CLI success grants software release authority.
 
-```json
-{"operation":"workspace.inspect","scope":{"visibility":"public","projectId":"demo"},"input":{}}
-```
-
-Reads have exactly `operation`, `scope` and `input`. Writes additionally require `requestId` and `expectedRevision`. See [service operations](service.md) for the complete input fields. This complete source-only write stores inert synthetic data:
-
-```json
-{
-  "operation": "legacy.import",
-  "scope": {"visibility": "public", "projectId": "demo"},
-  "input": {
-    "raw": "{\"note\":\"synthetic source only\"}",
-    "format": "json",
-    "sourceLocator": "synthetic:cli-example",
-    "sourceRevision": "1",
-    "sourceVisibility": "public"
-  },
-  "requestId": "source-1",
-  "expectedRevision": 0
-}
-```
-
-For `asset.put`, input is `{"asset": <complete native asset>}`; the [synthetic examples](../examples/synthetic-harnesses.json) contain complete public models. An inserted asset is a draft with no review, approval or publication. Asset/source inspection, lifecycle and evaluation use the same exact service envelopes.
-
-Inspect the receipt in a fresh process using:
-
-```json
-{"operation":"receipt.inspect","scope":{"visibility":"public","projectId":"demo"},"input":{"requestId":"source-1"}}
-```
-
-Use `workspace.inspect` to obtain the revision for a *new* intent. Retrying the same scoped request ID and identical operation/input returns the retained receipt even with a stale expected revision; it creates no duplicate write. Reusing the ID with changed intent yields `REQUEST_CONFLICT`. A new ID with a stale revision yields `REVISION_CONFLICT`. The CLI never refreshes CAS, retries, approves, publishes or runs another request automatically. After an uncertain response, inspect the exact receipt before choosing any next action.
-
-The standalone CLI deliberately configures no external Ontology resolver. The embedding service API accepts a trusted `resolveOntology` callback, and the parent composition supplies a product-test-validated native published Ontology resolver; see [service prerequisites](service.md). Operations needing one return `UNAVAILABLE_DEPENDENCY`; missing published Harness dependencies use that same service code. No request can inject a resolver, shell command, network action or executable evaluation JavaScript. Sources remain inert data. The CLI does not collect LLM credentials or use a retired Suite fallback.
-
-## Output and exit status
-
-Success: `{"ok":true,"product":"harness","version":"0.1.1","result":{},"authority":false}` (result varies by operation).
-
-Failure: `{"ok":false,"error":{"code":"REVISION_CONFLICT","message":"Harness service request failed."},"authority":false}`. Error messages are fixed, sanitized text; they never echo caller contents, paths or stacks.
-
-| Exit | Meaning |
-| --- | --- |
-| 0 | Discovery/help/version or one successful service request |
-| 1 | Workspace initialization or service execution failed; inspect the error code |
-| 2 | Argument, input file, decoding, byte/structure limit or request-envelope validation failed before initialization |
-
-Unknown/duplicate flags, missing values, extra positional arguments and extra flags on discovery commands fail. `main(args, {stdin, stdout})` is exported for trusted code and returns the exit status; importing the module does not execute it or create state. There are no install or cleanup commands.
-
-## Local verification
-
-In a source checkout run `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then `npm test`. Source lives in `src/*.ts`; build compiles strict TypeScript into JavaScript and declarations and cleans only generated `dist`. Installed tarballs already contain compiled output and omit development scripts/tests. Use `node dist/cli.js help` and `node dist/cli.js version` for source-checkout discovery.
-
-`node scripts/check.mjs` preserves the owned-import and frozen-v1 guards and verifies silent CLI import under read-only filesystem permissions. CLI tests (SOURCE-CHECKOUT: `tests/e2e/cli.test.mjs`) exercise discovery, bounded input, persistence across processes, CAS, receipt replay and unavailable external dependencies. Run them from a source checkout with `node --test tests/e2e/cli.test.mjs`; they are included in the full suite described in the [README](../README.md). Process tests need permission to create isolated temporary workspaces. Neither tests nor CLI output establish acceptance.
+See the [standard](../specifications/v1/README.md),
+[native lifecycle tutorial](../examples/native/tutorial.mjs), and
+[documentation index](README.md).

@@ -1,19 +1,22 @@
+import { executeNativeHarness, NATIVE_OPERATIONS } from './native-service.js';
+import { inspectHarnessStandard } from './native-standard.js';
+import type { NativeRequest, NativeOperation, NativeResponse } from './native-types.js';
 import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
 import { errorCode } from './types.js';
 import type { Operation, Request, Response } from './types.js';
 export type { Operation, OperationInputs, Request, ServiceRequest, Response, ResultMap, Mutation, MutationReceipt, Receipt, Scope, WorkspaceOptions, Providers, HarnessAsset, Evidence, AssetRecord, SourceRecord, EvaluationReport } from './types.js';
 import { validateProviders } from './resolution.js';
 import { exactFields, frozenClone, sha256, stableSerialize } from '../vendor/compatibility/v1/reference.mjs';
-import { openState, bounded, fail, LIMITS, validateState } from './state.js';
-import { operations, validateRequest, operate } from './operations.js';
+import { openState, bounded, fail, slug, LIMITS, validateState } from './state.js';
+import { operations, mutations, validateRequest, operate } from './operations.js';
 
 // Construction and discovery are pure. Persistence begins only at initialize().
 export function createHarnessService(options: WorkspaceOptions, trustedProviders: Providers = {}) {
   const providers = validateProviders(trustedProviders);
   bounded(options); exactFields(options, ['workspaceRoot', 'workspaceId']);
   const { workspaceRoot, workspaceId } = options;
-  let store: Store | null = null, closed = false;
-  const capabilities = () => frozenClone({ product: 'harness', version: '0.2.0', stage: 'M2_OWNED_SERVICE', businessOperationsReady: true, operations, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['MCP', 'Expert', 'Host acceptance'] });
+  let store: Store | null = null, closed = false, activeNative = 0;
+  const capabilities = () => frozenClone({ product: 'harness', version: '0.3.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
   function initialize() {
     if (closed) fail('CLOSED', 'Service is closed');
     if (!store) store = openState(workspaceRoot, workspaceId);
@@ -27,6 +30,11 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
       if (closed) fail('CLOSED', 'Service is closed');
       if (!store) fail('NOT_INITIALIZED', 'Explicit initialize required');
       store.guard();
+      if (write) {
+        const retained = store.db.prepare('SELECT digest, receipt FROM receipts WHERE scope=? AND request_id=?').get(stableSerialize(r.scope),r.requestId);
+        if (retained && retained.digest === sha256({operation:r.operation,scope:r.scope,input:r.input})) return frozenClone(JSON.parse(retained.receipt as string));
+        fail('HISTORICAL_READ_ONLY','Retired JSON operations cannot write or certify corrected v1; use native.package.*');
+      }
       const { db } = store;
       db.exec(write ? 'BEGIN IMMEDIATE' : 'BEGIN'); transaction = true;
       const scope = stableSerialize(r.scope);
@@ -81,6 +89,17 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
     // native handlers and the transaction wrapper establish this result mapping.
     return executeCore(request) as Response<Operation>;
   }
-  function close() { if (store) { store.db.close(); store = null; } closed = true; }
-  return Object.freeze({ capabilities, initialize, execute, close });
+  function native<K extends NativeOperation>(request: NativeRequest<K>): Promise<NativeResponse<K>>;
+  async function native(request: NativeRequest): Promise<NativeResponse<NativeOperation>> {
+    if (closed) fail('CLOSED','Service is closed');
+    if (request.operation === 'standard.inspect') {
+      if (stableSerialize(Object.keys(request).sort()) !== stableSerialize(['input', 'operation', 'scope']) || !request.input || Object.keys(request.input).length || !request.scope || stableSerialize(Object.keys(request.scope).sort()) !== stableSerialize(['projectId', 'visibility']) || !['public', 'private'].includes(request.scope.visibility)) fail('INVALID_REQUEST', 'Exact standard inspection request required');
+      slug(request.scope.projectId); return inspectHarnessStandard();
+    }
+    if (!store) fail('NOT_INITIALIZED','Explicit initialize required');
+    activeNative++;
+    try { return await executeNativeHarness(store,request,providers) as NativeResponse<NativeOperation>; } finally { activeNative--; }
+  }
+  function close() { if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
+  return Object.freeze({ capabilities, initialize, execute, native, close });
 }

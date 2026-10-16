@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createHarnessService } from '@evopilot-next/harness/service';
+import { createHistoricalFixtureService as createHarnessService } from '../fixtures/v020-service.mjs';
 import { validateHarness, evaluateHarness } from '@evopilot-next/harness';
 import { sha256, stableSerialize } from '../../vendor/compatibility/v1/reference.mjs';
 import { operate } from '../../dist/operations.js';
@@ -52,7 +52,7 @@ function graph(s, enabled = true, leafEnabled = true) {
 }
 const evaluate = (s, published, inputs, configuration = {}) => write(s, 'asset.evaluate', { id: published.reference.id, version: published.reference.version, evidence: inputs, configuration });
 
-test('synthetic composed models validate with proper source mappings and core warning semantics', () => {
+test('historical fixture/readback: synthetic composed models validate with proper source mappings and core warning semantics', () => {
   for (const kind of ['HarnessComponent', 'HarnessProfile', 'HarnessBundle', 'EvaluationPack']) {
     const dependencies = kind !== 'HarnessComponent' ? [{ product: 'harness', id: 'dependency', version: '0.1.0', specVersion: 'v1', visibility: 'public', digest: sha256('dependency') }] : [];
     const validation = validateHarness(model('synthetic', kind, dependencies));
@@ -62,7 +62,7 @@ test('synthetic composed models validate with proper source mappings and core wa
   assert.equal(evaluateHarness(model('synthetic'), evidence(1), {}).status, 'FAIL');
 });
 
-test('in-memory source integration verifies composed publication, missing input and status precedence', () => {
+test('historical fixture/readback: in-memory source integration verifies composed publication, missing input and status precedence', () => {
   const blobs = new Map(), state = { assets: [] };
   const store = { identity: { id: 'memory', canonicalRoot: '/synthetic' }, uid: 1,
     blob(scope, value) { const digest = sha256(value); blobs.set(stableSerialize(scope) + digest, stableSerialize(value)); return digest; },
@@ -90,7 +90,7 @@ test('in-memory source integration verifies composed publication, missing input 
   assert.throws(() => evaluate(s, disabled, { arbitrary: null }), { code: 'INVALID_REQUEST' });
 });
 
-test('published Bundle and EvaluationPack bind exact unique leaves, inputs and persisted receipts', t => {
+test('historical fixture/readback: published Bundle and EvaluationPack bind exact unique leaves, inputs and persisted receipts', t => {
   const { service: s, options } = setup(t);
   const { component, second, bundle } = graph(s);
   const pack = publish(s, model('pack', 'EvaluationPack', [bundle.reference, component.reference]));
@@ -118,7 +118,7 @@ test('published Bundle and EvaluationPack bind exact unique leaves, inputs and p
   assert.deepEqual(reopened.execute({ operation: 'asset.evaluate', scope, input: { id: 'pack', version: '0.1.0', evidence: inputs, configuration }, requestId: receipt.requestId, expectedRevision: 0 }), receipt);
 });
 
-test('missing evidence, warning failure, ERROR priority and exact dictionary rejection', t => {
+test('historical fixture/readback: missing evidence, warning failure, ERROR priority and exact dictionary rejection', t => {
   const { service: s } = setup(t), { component, second, bundle } = graph(s);
   const a = stableSerialize(component.reference), b = stableSerialize(second.reference);
   const cases = [
@@ -145,7 +145,7 @@ test('missing evidence, warning failure, ERROR priority and exact dictionary rej
   assert.equal(read(s, 'asset.inspect', { id: 'bundle', version: '0.1.0' }).delivery.digest, bundle.reference.digest);
 });
 
-test('explicit disabled roots and all disabled leaves yield N/A while malformed inputs remain ERROR', t => {
+test('historical fixture/readback: explicit disabled roots and all disabled leaves yield N/A while malformed inputs remain ERROR', t => {
   for (const [rootEnabled, leafEnabled] of [[false, true], [true, false]]) {
     const { service: s } = setup(t), { component, second, bundle } = graph(s, rootEnabled, leafEnabled);
     const a = stableSerialize(component.reference), b = stableSerialize(second.reference);
@@ -156,7 +156,7 @@ test('explicit disabled roots and all disabled leaves yield N/A while malformed 
   }
 });
 
-test('published closure revalidation blocks changed providers and referenced resolution blob drift', t => {
+test('historical fixture/readback: published closure revalidation blocks changed providers and referenced resolution blob drift', t => {
   const ref = { product: 'ontology', id: 'semantic', version: '1.0.0', specVersion: 'v1', visibility: 'public', digest: sha256('ontology') };
   let projectId = 'alpha';
   const { service: s, options } = setup(t, { resolveOntology: () => ({ reference: ref, published: true, workspaceId: 'composed', projectId }) });

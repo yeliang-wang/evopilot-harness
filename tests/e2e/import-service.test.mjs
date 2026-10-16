@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, realpathSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createHarnessService } from '@evopilot-next/harness/service';
+import { createHistoricalFixtureService as createHarnessService } from '../fixtures/v020-service.mjs';
 import { listPublicSources, readPublicSource } from '../../dist/asset-sources.js';
 import { operateImport } from '../../dist/import-operations.js';
 import { createHash } from 'node:crypto';
@@ -23,7 +23,7 @@ function setup(t) {
   return { service, options };
 }
 
-test('in-memory historical recognition retains raw inputs without native authority', () => {
+test('historical fixture/readback: in-memory historical recognition retains raw inputs without native authority', () => {
   const state = { sources: [] }, rawBlobs = new Map();
   const store = {
     rawBlob(selected, raw) { rawBlobs.set(JSON.stringify(selected) + 'sha256:' + createHash('sha256').update(raw).digest('hex'), raw); },
@@ -56,7 +56,7 @@ test('in-memory historical recognition retains raw inputs without native authori
   assert.equal(state.assets, undefined);
 });
 
-test('all 101 own archive keys retain exact raw bytes and observed identity across restart', t => {
+test('historical fixture/readback: all 101 own archive keys retain exact raw bytes and observed identity across restart', t => {
   const { service, options } = setup(t), entries = listPublicSources().sources;
   assert.equal(entries.length, 101);
   const installed = entries.map(entry => {
@@ -76,7 +76,7 @@ test('all 101 own archive keys retain exact raw bytes and observed identity acro
   assert.throws(() => write(reopened, 'source.install', { sourcePath: '/etc/passwd' }), { code: 'UNKNOWN_SOURCE' });
 });
 
-test('whitespace, multiline text, identity/lifecycle, origin, quarantine and foreign records', t => {
+test('historical fixture/readback: whitespace, multiline text, identity/lifecycle, origin, quarantine and foreign records', t => {
   const { service } = setup(t);
   const raws = [' \n {"kind":"Catalog","id":"original","version":"old-version","lifecycle":"active"}\n  ', '# Catalog\n\n  inert instructions\n', 'kind: HarnessLock\nmetadata:\n  id: old\n  version: legacy\n  status: approved\n'];
   for (const [i, raw] of raws.entries()) {
@@ -104,7 +104,7 @@ test('whitespace, multiline text, identity/lifecycle, origin, quarantine and for
   assert.throws(() => write(service, 'legacy.import', inline('\ud800')), { code: 'INVALID_ENCODING' });
 });
 
-test('raw tampering fails every inspection and source list', t => {
+test('historical fixture/readback: raw tampering fails every inspection and source list', t => {
   const { service, options } = setup(t);
   const record = write(service, 'legacy.import', inline(' {"schema":"unknown"}\n')).result;
   writeFileSync(join(options.workspaceRoot, 'public/harness/sources', record.rawDigest.slice(7) + '.raw'), 'tampered');
@@ -112,7 +112,7 @@ test('raw tampering fails every inspection and source list', t => {
   assert.throws(() => read(service, 'source.list'), { code: 'CORRUPT_BLOB' });
 });
 
-test('configured historical format families preserve identity and bytes without schema or publication authority', t => {
+test('historical fixture/readback: configured historical format families preserve identity and bytes without schema or publication authority', t => {
   const { service } = setup(t);
   for (const document of historicalFixtures()) {
     const raw = ' \n' + JSON.stringify(document, null, 2) + '\n';
@@ -173,7 +173,7 @@ function malformedFixtures() {
   ];
 }
 
-test('explicit reinspection repairs synthetic prior SQLite classification through public service', t => {
+test('historical fixture/readback: explicit reinspection repairs synthetic prior SQLite classification through public service', t => {
   const { service, options } = setup(t);
   const packaged = listPublicSources().sources.find(s => s.observed.schema === 'evopilot-harness-export/v1');
   const originals = [
@@ -226,7 +226,7 @@ test('explicit reinspection repairs synthetic prior SQLite classification throug
   assert.throws(() => write(service, 'source.reinspect', { sourceId: current.sourceId, expectedInspectionDigest: sha256(current.inspection) }), { code: 'CORRUPT_BLOB' });
 });
 
-test('in-memory reinspection preserves archive bytes, quarantine and bounded history', () => {
+test('historical fixture/readback: in-memory reinspection preserves archive bytes, quarantine and bounded history', () => {
   const state = { sources: [] }, blobs = new Map();
   const store = {
     uid: process.getuid(),

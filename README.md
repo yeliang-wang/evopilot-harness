@@ -1,69 +1,60 @@
 # EvoPilot Harness
 
-[Quickstart](#quickstart) · [Documentation](docs/README.md) · [Downloads](https://github.com/yeliang-wang/evopilot-harness/releases) · [Contribute](CONTRIBUTING.md)
+[Quickstart](#quickstart) · [Documentation](docs/README.md) · [Standards](specifications/v1/README.md) · [Downloads](https://github.com/yeliang-wang/evopilot-harness/releases) · [Contribute](CONTRIBUTING.md)
 
-Harness defines reusable QA and delivery-evidence standards for EvoPilot projects. It validates declarative checks, evaluates supplied evidence, and packages deterministic deliveries with traceable source mappings. It does not execute repairs or infer business acceptance.
+Harness defines and verifies QA/SRE delivery criteria for projects developed with a third-party AI assistant. It turns explicit project requirements into reusable native policies, validates evidence, and preserves reviewed immutable deliveries. It does not run business builds, deployments or autonomous repairs.
 
-**v0.2.0 Preview** provides strict TypeScript source, compiled package exports and typed service responses. The published **[v0.1.0 Preview](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.1.0)** remains the historical baseline. See the [changelog](CHANGELOG.md) and [roadmap](docs/roadmap.md).
+The current development implements the **v0.3 standards correction**. Existing published versions remain historical releases; implementation and tests alone do not mean this candidate has been released or that a real project has passed acceptance.
+
+## Adopted standards
+
+| Part | Basis | What EvoPilot adds |
+|---|---|---|
+| Rule language | [OPA Rego v1](https://www.openpolicyagent.org/docs/policy-language) | Stable rule IDs, source mappings and mandatory coverage |
+| Quality evaluation | [Conftest 0.71.1](https://www.conftest.dev/options/) with embedded OPA 1.21.1 | Fixed configuration, pure capabilities, fail-on-warn and exact evidence identity |
+| Rule tests | [OPA CLI 1.21.2](https://www.openpolicyagent.org/docs/policy-testing) and Conftest verify | Exact test IDs, positive/negative cases and cross-engine comparison |
+| Package and lifecycle | EvoPilot conventions | Source/requirement closure, review, explicit decision, immutable publication and receipts |
+
+Rego and Conftest are upstream formats/tools, **not a universal industry Harness standard**. Read the [adoption table](specifications/v1/adoption.md), [machine-readable support matrix](specifications/v1/support-matrix.json), [directory rules](specifications/v1/directory-layout.json) and [conformance cases](specifications/v1/conformance-cases.json). `specifications/v1` is corrected directly; its actual digest distinguishes it from historical v1 semantics.
 
 ## Product boundaries
 
 | Product | Responsibility |
-| --- | --- |
-| [Harness](https://github.com/yeliang-wang/evopilot-harness) | QA definitions, evidence evaluation, asset review and delivery lifecycle |
-| [Runtime](https://github.com/yeliang-wang/evopilot-runtime) | Projects, goals, execution, credentials, decisions and audit; consumption of published Harness deliveries |
-| [Ontology](https://github.com/yeliang-wang/evopilot-ontology) | Semantic definitions, grounding and instance validation |
-| [Parent EvoPilot](https://github.com/yeliang-wang/evopilot) | Product composition, MCP and Expert connection |
+|---|---|
+| [Harness](https://github.com/yeliang-wang/evopilot-harness) | Quality policies, native validation and reviewed asset lifecycle |
+| [Ontology](https://github.com/yeliang-wang/evopilot-ontology) | Native semantic definitions, relationships and constraints |
+| [Runtime](https://github.com/yeliang-wang/evopilot-runtime) | Approved collection, protected evidence receipts, execution and project completion |
+| [EvoPilot](https://github.com/yeliang-wang/evopilot) | Expert, Workspace, installer, composition and Codex plugin |
 
-For Codex, use the [parent plugin connection instructions](https://github.com/yeliang-wang/evopilot#readme); an independent Harness Codex plugin is not required. The four end-to-end flow guides live in the parent's [first journey](https://github.com/yeliang-wang/evopilot/blob/main/docs/first-journey.md). Standalone Harness supplies its CLI and compiled package API.
+The parent supplies the Codex plugin; Harness does not require a separate plugin. The same standard supports forward design and reverse extraction, public and private projects. A successful policy run does not prove that the input was actually collected, or that the project scope was complete: Runtime checks those independently.
 
 ## Quickstart
 
-Use Node 24.14.0 or later within the supported Node 24 baseline. From this repository's source checkout:
+Use Node 24.14.0 and the parent-installed pinned native toolchain:
 
 ```sh
 npm ci --ignore-scripts
 npm run build
 npm run check
-npm test
-node dist/cli.js help
-node dist/cli.js version
+EVOPILOT_TEST_NATIVE_TOOLCHAIN=/absolute/path/to/verified/native-toolchain.json npm test
 ```
 
-TypeScript compiles from `src/*.ts` to `dist/*.js` with declarations. Build cleans only generated `dist`; check verifies strict types, package consumer contracts, owned imports and pinned vendor integrity. Full tests create isolated temporary workspaces. These commands describe local verification, not a claim of passing CI or Host acceptance.
-
-Download a published Preview tarball from [releases](https://github.com/yeliang-wang/evopilot-harness/releases) and install that local file with `npm install /absolute/path/to/downloaded-package.tgz`. Installed tarballs contain compiled JavaScript and type declarations; they omit development scripts/tests. ESM consumers use the package exports:
+Build emits strict TypeScript declarations and JavaScript. Tests use temporary private states and synthetic fixtures. Missing native executables are a test failure, never a skipped acceptance result.
 
 ```js
-import { validateHarness, evaluateHarness, buildDelivery } from '@evopilot-next/harness';
 import { createHarnessService } from '@evopilot-next/harness/service';
+import { inspectHarnessStandard, validateNativeHarness } from '@evopilot-next/harness/native';
 ```
 
-The installed command is `evopilot-next-harness`. Discovery needs no workspace. Persistent operations require an explicit isolated workspace and initialization; see the [CLI guide](docs/cli.md) and [service API](docs/service.md). The standalone CLI supplies no external Ontology resolver. Embedders configure a trusted resolver; parent composition supplies one.
+Follow the [native API and lifecycle guide](docs/native-harness.md), starting with the [synthetic native package builder](examples/native/package.mjs) and [runnable tutorial](examples/native/tutorial.mjs). Use original `policy/*.rego`, native `*_test.rego`, bounded JSON parameter data, source mappings and fixed cases. The owner lifecycle is **put → validate → review → decide → publish/readback**. Explicit decisions retain their own authority; warnings do not automatically trigger a release or repair.
 
-## Assets and provenance
-
-The [native v1 specification](specifications/v1/README.md) defines HarnessComponent checks, HarnessProfile component groups, HarnessBundle profile groups, and EvaluationPack checks with pinned dependencies. Start with the [template](specifications/v1/templates/harness.json) and [synthetic examples](examples/synthetic-harnesses.json).
-
-Definitions declare objectives, deliverables, inputs, parameters, preconditions and rules. Forward provenance connects designed requirements to their sources; reverse provenance records observed source material and its inferred definitions. Every semantic row carries source mappings tied to source locator, revision and status. Hashes preserve reproducibility; they do not authenticate outside observations.
-
-Public and private project scopes remain explicit. Public assets cannot depend on private material; private references stay within their project. Runtime consumes exact published deliveries, not unreviewed drafts. Publication requires a current review, explicit decision and resolved dependencies; published versions are immutable.
-
-Extensions are additive, versioned namespace records. They cannot override base fields. Unsupported required extensions fail validation; optional unknown extensions remain inert and `NOT_EVALUATED`. Evolve extensions through explicit versions instead of rewriting the frozen v1 format.
-
-## Evidence and decisions
-
-Evaluation reports distinguish `PASS`, `FAIL`, `ERROR`, `INDETERMINATE` and explicit `N/A`. Missing evidence or zero checks never imply success. Severity and blocking are independent: a failed nonblocking warning remains `FAIL`. A warning does not automatically publish, bump a version or launch repair.
-
-Pure delivery construction leaves evaluation `NOT_RUN` and unresolved dependencies `NOT_RESOLVED`. Deterministic reports, capability flags, schema validity and successful tests provide technical evidence. Human decisions, asset publication, Runtime business completion, Host acceptance and software release each retain their own authority boundary.
-
-The introductory layout and navigation acknowledge [OpenHands](https://github.com/OpenHands/OpenHands) as inspiration. The wording is original; no affiliation or endorsement is implied.
+Historical JSON operations and deliveries are retained read-only. Current writes use the corrected native package contract; converting the old JSON format alone does not count as re-extraction. See [re-extraction and history](specifications/v1/re-extraction.md).
 
 ## Documentation and contribution
 
-- [Documentation index](docs/README.md).
-- [Service lifecycle and typed responses](docs/service.md), [CLI requests and receipts](docs/cli.md), and [semantic compatibility](docs/semantic-consumer.md).
-- [Preserved public sources](docs/public-assets.md) and [archive provenance](provenance/public-assets.json): 101 documents retained as inert data, not automatically approved native assets.
-- [Contributing](CONTRIBUTING.md), [security boundary](SECURITY.md), [Apache-2.0 license](LICENSE) and [notices](NOTICE).
+- [Current native guide](docs/native-harness.md), [documentation index](docs/README.md), [Roadmap](docs/roadmap.md).
+- [Preserved public sources](docs/public-assets.md): 101 archived documents remain inert reference material, not automatically approved native packages.
+- [Contributing](CONTRIBUTING.md), [security](SECURITY.md), [license](LICENSE) and [notices](NOTICE).
+- [Parent release procedure](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md).
 
-Repository: [yeliang-wang/evopilot-harness](https://github.com/yeliang-wang/evopilot-harness). Common release mechanics belong to the [parent release guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md). No stable 1.0 or production-readiness claim is made.
+Navigation takes inspiration from [OpenHands](https://github.com/OpenHands/OpenHands); wording is original and no affiliation is implied. Preview software and technical validation do not constitute a stable v1.0 or production-readiness guarantee.

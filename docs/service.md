@@ -1,3 +1,5 @@
+> Historical/compatibility reference: new assets use the [current native Harness API](native-harness.md). Retired JSON mutation routes are read-only; retained records keep their original meaning.
+
 # Local Harness service
 
 The service source is `src/service.ts`; the package export resolves to compiled `dist/service.js` with `dist/service.d.ts`. In a source checkout run `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then `npm test`. Build cleans generated `dist` only. Installed tarballs provide the compiled API and declarations without development scripts/tests.

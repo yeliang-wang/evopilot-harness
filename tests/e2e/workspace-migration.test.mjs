@@ -7,7 +7,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { spawnSync } from 'node:child_process';
 import { inspectWorkspaceSnapshot, relocateWorkspaceSnapshot } from '@evopilot-next/harness/workspace-migration';
 import { keyDirectory } from '../../dist/location-lineage.js';
-import { createHarnessService } from '../../dist/service.js';
+import { createHistoricalFixtureService as createHarnessService } from '../fixtures/v020-service.mjs';
 import { sha256 } from '../../vendor/compatibility/v1/reference.mjs';
 const product = 'harness', createService = createHarnessService;
 const scope = { visibility: 'public', projectId: 'synthetic' };
@@ -53,7 +53,7 @@ async function populate(options) {
   }
   service.close(); return { providers, executions };
 }
-test('same-host relocation preserves owner records, blobs, pins, receipts and supports exact retry', async t => {
+test('historical fixture/readback: same-host relocation preserves owner records, blobs, pins, receipts and supports exact retry', async t => {
   const fixture = setup(t), { options, sourceRoot, destinationRoot, workspaceId } = fixture;
   const { providers, executions } = await populate(options);
   const before = businessTables(sourceRoot), snapshot = inspectWorkspaceSnapshot(options);
@@ -85,7 +85,7 @@ test('same-host relocation preserves owner records, blobs, pins, receipts and su
     assert.equal(review.workspace.canonicalRoot, destinationRoot);
   }
 });
-test('forged lineage, missing local key, wrong owner/root and modified copy fail closed', async t => {
+test('historical fixture/readback: forged lineage, missing local key, wrong owner/root and modified copy fail closed', async t => {
   const { parent, options, sourceRoot, destinationRoot, workspaceId } = setup(t); await populate(options);
   const snapshot = inspectWorkspaceSnapshot(options); privateCopy(sourceRoot, destinationRoot);
   const request = { sourceRoot, destinationRoot, workspaceId, expectedSnapshotDigest: snapshot.snapshotDigest };
@@ -105,14 +105,14 @@ test('forged lineage, missing local key, wrong owner/root and modified copy fail
   const changed = new DatabaseSync(join(altered, 'state', product, product + '.db')); changed.prepare('UPDATE audit SET result_digest=? WHERE revision=1').run('sha256:' + '0'.repeat(64)); changed.close();
   assert.throws(() => relocateWorkspaceSnapshot({ ...request, destinationRoot: altered }), { code: 'CORRUPT_STATE' });
 });
-test('no source initialization, Git roots and linked/private data safety', t => {
+test('historical fixture/readback: no source initialization, Git roots and linked/private data safety', t => {
   const { parent, sourceRoot, workspaceId } = setup(t);
   assert.throws(() => inspectWorkspaceSnapshot({ workspaceRoot: sourceRoot, workspaceId }));
   mkdirSync(sourceRoot, { mode: 0o700 }); mkdirSync(join(sourceRoot, '.git'));
   assert.throws(() => inspectWorkspaceSnapshot({ workspaceRoot: sourceRoot, workspaceId }), { code: 'UNSAFE_WORKSPACE' });
 });
 
-test('second relocation retains validated ancestry and preserves historical bytes', async t => {
+test('historical fixture/readback: second relocation retains validated ancestry and preserves historical bytes', async t => {
   const { parent, options, sourceRoot, destinationRoot, workspaceId } = setup(t); await populate(options);
   const first = inspectWorkspaceSnapshot(options), original = businessTables(sourceRoot); privateCopy(sourceRoot, destinationRoot);
   const relocated = relocateWorkspaceSnapshot({ sourceRoot, destinationRoot, workspaceId, expectedSnapshotDigest: first.snapshotDigest }); cleanKeys(t, relocated);
@@ -124,7 +124,7 @@ test('second relocation retains validated ancestry and preserves historical byte
   try { assert.equal(read(service, 'workspace.inspect').revision, first.revision); } finally { service.close(); }
 });
 
-test('snapshot does not attest missing material or an unbound historical review', async t => {
+test('historical fixture/readback: snapshot does not attest missing material or an unbound historical review', async t => {
   const { options, sourceRoot } = setup(t); await populate(options);
   const db = new DatabaseSync(join(sourceRoot, 'state', product, product + '.db'));
   const row = db.prepare('SELECT data FROM state WHERE singleton=1').get(), state = JSON.parse(row.data);
@@ -151,7 +151,7 @@ function retainSyntheticDestinationKeys(t, destination) {
   } finally { db.close(); }
 }
 
-test('killed marker writer resumes exact relocation without copied-state orphans or rewritten history', async t => {
+test('historical fixture/readback: killed marker writer resumes exact relocation without copied-state orphans or rewritten history', async t => {
   for (const boundary of ['partial-write', 'after-rename']) {
     const { options, sourceRoot, destinationRoot, workspaceId } = setup(t); await populate(options);
     const snapshot = inspectWorkspaceSnapshot(options), original = businessTables(sourceRoot);
@@ -199,7 +199,7 @@ test('killed marker writer resumes exact relocation without copied-state orphans
   }
 });
 
-test('foreign marker staging is rejected verbatim and never cleaned as an owned interruption', async t => {
+test('historical fixture/readback: foreign marker staging is rejected verbatim and never cleaned as an owned interruption', async t => {
   const { options, sourceRoot, destinationRoot, workspaceId } = setup(t); await populate(options);
   const snapshot = inspectWorkspaceSnapshot(options), original = businessTables(sourceRoot);
   privateCopy(sourceRoot, destinationRoot);

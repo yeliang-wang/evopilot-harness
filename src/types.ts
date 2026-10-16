@@ -1,3 +1,4 @@
+import type { NativeHarnessProviders } from './native-types.js';
 import type { buildDelivery } from './delivery.js';
 import type { evaluateHarness } from './evaluation.js';
 import type { openState } from './state.js';
@@ -18,7 +19,7 @@ export interface Evidence { id: string; version: string; source: { locator: stri
 export interface Validation { valid: boolean; status: string; errors: { code: string; path: string; message: string }[]; extensions?: { namespace: string; version: string; status: string }[]; authority: boolean; released: boolean }
 export type Delivery = ReturnType<typeof buildDelivery>;
 export interface OntologyResponse { reference: Reference; published: boolean; workspaceId: string; projectId: string }
-export interface Providers { resolveOntology?: (request: { workspaceId: string; scope: Scope; reference: Reference }) => unknown }
+export interface Providers extends NativeHarnessProviders { resolveOntology?: (request: { workspaceId: string; scope: Scope; reference: Reference }) => unknown }
 export interface Closure { workspaceId: string; scope: Scope; status: string; nodes: { scope: Scope; assetDigest: string; pins: Reference[]; reference: Reference | null }[]; external: OntologyResponse[]; authority: boolean; closureDigest: string }
 export interface AssetRecord { scope: Scope; model: HarnessAsset; digest: string; validation: Validation; review: ({ workspace: WorkspaceIdentity; scope: Scope; assetDigest: string; validation: Validation; resolution: Closure; uid: number; reviewDigest: string }) | null; decision: { reviewDigest: string; decision: string; humanEvidenceRef: string; uid: number } | null; delivery: Delivery | null; resolution?: Closure }
 export interface Inspection { recognized: boolean; valid: boolean; schemaValidation: string; structuralIssues: string[]; reason: string; authority: boolean }

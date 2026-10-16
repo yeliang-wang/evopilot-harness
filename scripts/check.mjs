@@ -11,7 +11,7 @@ const PRODUCT = 'harness';
 const PIN = 'df4f7246ae35ef9114e2b93663d520e7ff4f44f14f886ac8ba43e9fc080ddc9a';
 const expected = {
   "name": "@evopilot-next/harness",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -60,6 +60,7 @@ const expected = {
     "@types/node": "24.19.2"
   }
 };
+expected.exports['./native'] = { types: './dist/native.d.ts', import: './dist/native.js' };
 expected.exports['./workspace-migration'] = { types: './dist/workspace-migration.d.ts', import: './dist/workspace-migration.js' };
 const specifiers = source => [...source.matchAll(/^[\t ]*(?:import\s+(?:(?:[\w$]+(?:\s*,\s*)?)?(?:\{[^}]*\}|\*\s+as\s+[\w$]+)?\s*from\s*)?|export\s+(?:\{[^}]*\}|\*(?:\s+as\s+[\w$]+)?)\s+from\s*)['"]([^'"]+)['"]/gm)].map(match => match[1]);
 
@@ -91,17 +92,28 @@ export async function checkSource() {
   assert((await readFile(resolve(ROOT, 'dist/cli.js'), 'utf8')).startsWith('#!/usr/bin/env node\n'));
   const vendor = resolve(ROOT, 'vendor/compatibility/v1');
   const manifest = JSON.parse(await readFile(resolve(vendor, 'manifest.json'), 'utf8'));
-  assert.deepEqual(manifest, {
-    contractRevision: '1.0.0', module: 'reference.mjs', sha256: PIN,
-    children: ['projects/evopilot-runtime', 'projects/evopilot-harness', 'projects/evopilot-ontology'],
-  });
-  const bytes = await readFile(resolve(vendor, manifest.module));
-  assert.equal(createHash('sha256').update(bytes).digest('hex'), PIN);
+  assert.equal(manifest.contractRevision, '1.1.0');
+  assert.equal(manifest.module,'native.mjs');
+  assert.equal(manifest.legacyModule,'reference.mjs');
+  assert.equal(manifest.legacySha256,PIN);
+  assert.deepEqual(manifest.children,['projects/evopilot-runtime','projects/evopilot-harness','projects/evopilot-ontology']);
+  for (const [name,digest] of Object.entries({...manifest.files,[manifest.module]:manifest.sha256,[manifest.legacyModule]:PIN})) {
+    assert.match(digest,/^[a-f0-9]{64}$/);
+    assert.equal(createHash('sha256').update(await readFile(resolve(vendor,name))).digest('hex'),digest);
+  }
+  const generatedRoot = resolve(vendor, 'toolchain');
+  const generated = JSON.parse(await readFile(resolve(generatedRoot, 'manifest.json'), 'utf8'));
+  assert.equal(generated.schema, 'evopilot-generated-toolchain/v1');
+  for (const entry of generated.files) {
+    assert(/^[a-zA-Z0-9_./-]+$/.test(entry.path) && !entry.path.split('/').includes('..'));
+    assert.equal(createHash('sha256').update(await readFile(resolve(generatedRoot, entry.path))).digest('hex'), entry.sha256);
+  }
   const sources = [...await files(resolve(ROOT, 'src')), ...await files(resolve(ROOT, 'vendor'))];
   for (const path of sources) {
-    if (!path.endsWith('.mjs') && !path.endsWith('.ts')) continue;
+    if (!path.endsWith('.mjs') && !path.endsWith('.ts') && !path.startsWith(generatedRoot + sep)) continue;
+    if (path.startsWith(generatedRoot + sep) && !/\.(js|ts)$/.test(path)) continue;
     const source = await readFile(path, 'utf8');
-    if (path.endsWith('.mjs')) {
+    if (path.endsWith('.mjs') || path.endsWith('.js')) {
       const syntax = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' });
       assert.ifError(syntax.error); assert.equal(syntax.status, 0, syntax.stderr);
     }
@@ -113,7 +125,7 @@ export async function checkSource() {
       assert(specifier.startsWith('.'), 'Undeclared import: ' + specifier);
       const resolved = resolve(dirname(path), specifier);
       const target = path.endsWith(".ts") && resolved.endsWith(".js") ? resolved.slice(0, -3) + ".ts" : resolved;
-      assert(target.startsWith(resolve(ROOT, 'src') + sep) || target === resolve(vendor, 'reference.mjs'), 'Foreign source import');
+      assert(target.startsWith(resolve(ROOT, 'src') + sep) || path.startsWith(generatedRoot + sep) && target.startsWith(generatedRoot + sep) || [resolve(vendor,'reference.mjs'),resolve(vendor,'native.mjs')].includes(target), 'Foreign source import');
       assert((await lstat(target)).isFile(), 'Import must be an owned regular file');
     }
   }
@@ -121,14 +133,14 @@ export async function checkSource() {
     "import assert from 'node:assert/strict';",
     'const api = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'dist/index.js')).href) + ');',
     'assert.equal(api.PRODUCT, ' + JSON.stringify(PRODUCT) + ');',
-    "assert.equal(api.VERSION, '0.2.0');",
+    "assert.equal(api.VERSION, '0.3.0');",
     'assert.equal(api.capabilities().authority, false);',
     'assert.equal(api.capabilities().businessOperationsReady, true);',
     'const serviceAPI = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'dist/service.js')).href) + ');',
     'const service = serviceAPI.createHarnessService({workspaceRoot: ' + JSON.stringify(resolve(ROOT, 'discovery-must-not-create')) + ', workspaceId: "discovery"});',
     'assert.equal(service.capabilities().authority, false);',
     'assert.equal(service.capabilities().composedEvaluation, true);',
-    'assert(service.capabilities().operations.includes("asset.evaluate"));',
+    'assert(service.capabilities().nativeOperations.includes("native.package.validate"));',
     'service.close();',
     'const cli = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'dist/cli.js')).href) + ');',
     'assert.equal(typeof cli.main, "function");',

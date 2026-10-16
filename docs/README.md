@@ -1,8 +1,10 @@
 # Harness documentation
 
-EvoPilot Harness v0.1.1 Preview provides declarative QA definitions, supplied-evidence evaluation and delivery lifecycle tools. Start with the [quickstart](../README.md#quickstart).
+The current Harness candidate adopts native Rego/Conftest and corrects v1; historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
 
 ## Guides and reference
+
+- [Current native guide and typed API](native-harness.md): standards, toolchain, package lifecycle, execution reports and recovery.
 
 - [CLI guide](cli.md): discovery, explicit workspace requests and retained receipts.
 - [Service API](service.md): typed operations, lifecycle, dependencies and persistence limits.

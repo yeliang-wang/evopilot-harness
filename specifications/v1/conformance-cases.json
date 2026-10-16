@@ -1,0 +1,143 @@
+{
+  "schema": "evopilot-standard-cases/v1",
+  "cases": [
+    {
+      "testId": "H_NATIVE_POLICY",
+      "standardId": "rego-v1",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_STRICT",
+      "standardId": "rego-v1",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_NATIVE_CASES",
+      "standardId": "conftest-results",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_WARN_BLOCK",
+      "standardId": "conftest-results",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_TEST_IDS",
+      "standardId": "native-tests",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_TEST_EMPTY",
+      "standardId": "native-tests",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_TEST_SKIP",
+      "standardId": "native-tests",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_TEST_DUPLICATE",
+      "standardId": "native-tests",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_CAPABILITY_NETWORK",
+      "standardId": "capabilities",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_CAPABILITY_CLOCK",
+      "standardId": "capabilities",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_OBSERVATION",
+      "standardId": "input-format",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_CONFIGURATION",
+      "standardId": "input-format",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_CATALOG",
+      "standardId": "namespace",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_NAMESPACE",
+      "standardId": "namespace",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_SOURCE",
+      "standardId": "source-coverage",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_REQUIREMENTS",
+      "standardId": "source-coverage",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_SOURCE_FRAGMENT",
+      "standardId": "source-coverage",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_MISSING_INPUT",
+      "standardId": "source-coverage",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_PARAMETERS",
+      "standardId": "project-parameters",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_CAPABILITY_NETWORK",
+      "standardId": "native-network",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_LEGACY_WRITE",
+      "standardId": "legacy-json",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_TEST_SKIP",
+      "standardId": "policy-exceptions",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    },
+    {
+      "testId": "H_CATALOG",
+      "standardId": "policy-exceptions",
+      "required": true,
+      "suite": "tests/e2e/native-harness.test.mjs"
+    }
+  ]
+}

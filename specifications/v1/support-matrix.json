@@ -1,0 +1,172 @@
+{
+  "schema": "evopilot-standard-support/v1",
+  "owner": "harness",
+  "records": [
+    {
+      "standardId": "rego-v1",
+      "normativeVersion": "v1",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Rego v1 native policy and strict compilation",
+      "adoptedMeaning": "Rego v1 native policy and strict compilation",
+      "supportStatus": "SUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_NATIVE_POLICY",
+        "H_STRICT"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "conftest-results",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.conftest.dev/options/",
+      "clause": "deny/violation/warn and fail-on-warn=true",
+      "adoptedMeaning": "deny/violation/warn and fail-on-warn=true",
+      "supportStatus": "SUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_NATIVE_CASES",
+        "H_WARN_BLOCK"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "native-tests",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Conftest verify plus exact OPA test IDs and fail-on-empty",
+      "adoptedMeaning": "Conftest verify plus exact OPA test IDs and fail-on-empty",
+      "supportStatus": "SUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_TEST_IDS",
+        "H_TEST_EMPTY",
+        "H_TEST_SKIP",
+        "H_TEST_DUPLICATE"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "capabilities",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Explicit pure builtin allowlist and allow_net=[]",
+      "adoptedMeaning": "Explicit pure builtin allowlist and allow_net=[]",
+      "supportStatus": "RESTRICTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_CAPABILITY_NETWORK",
+        "H_CAPABILITY_CLOCK"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "input-format",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "One manifested normalized JSON observation; JSON parameter data",
+      "adoptedMeaning": "One manifested normalized JSON observation; JSON parameter data",
+      "supportStatus": "RESTRICTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_OBSERVATION",
+        "H_CONFIGURATION"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "namespace",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Literal namespaces and complete catalog matched to upstream AST",
+      "adoptedMeaning": "Literal namespaces and complete catalog matched to upstream AST",
+      "supportStatus": "RESTRICTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_CATALOG",
+        "H_NAMESPACE"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "source-coverage",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "EvoPilot source provenance and mandatory requirements closure",
+      "adoptedMeaning": "EvoPilot source provenance and mandatory requirements closure",
+      "supportStatus": "SUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_SOURCE",
+        "H_REQUIREMENTS",
+        "H_SOURCE_FRAGMENT",
+        "H_MISSING_INPUT"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "project-parameters",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "EvoPilot typed bounded parameter schema, no implicit defaults",
+      "adoptedMeaning": "EvoPilot typed bounded parameter schema, no implicit defaults",
+      "supportStatus": "RESTRICTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_PARAMETERS"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "native-network",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Policy HTTP/DNS/network or automatic policy updates",
+      "adoptedMeaning": "Policy HTTP/DNS/network or automatic policy updates",
+      "supportStatus": "UNSUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_CAPABILITY_NETWORK"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "legacy-json",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Old JSON rule operators for new writes",
+      "adoptedMeaning": "Old JSON rule operators for new writes",
+      "supportStatus": "UNSUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_LEGACY_WRITE"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    },
+    {
+      "standardId": "policy-exceptions",
+      "normativeVersion": "v0.3-adoption",
+      "officialURL": "https://www.openpolicyagent.org/docs/",
+      "clause": "Exceptions, omitted mandatory queries or skipped cases",
+      "adoptedMeaning": "Exceptions, omitted mandatory queries or skipped cases",
+      "supportStatus": "UNSUPPORTED",
+      "engine": "conftest:0.71.1/opa:1.21.2",
+      "configuration": "specifications/v1/capabilities.json + exact native service argv",
+      "testIds": [
+        "H_TEST_SKIP",
+        "H_CATALOG"
+      ],
+      "limitations": "Supported only within the documented adopted profile; project completeness also requires Runtime independent fixed requirements."
+    }
+  ]
+}

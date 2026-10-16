@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evopilot:harness:v1:rule-catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "evopilot-rule-catalog/v1"
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "query": {
+            "type": "string",
+            "pattern": "^data\\.[A-Za-z_]\\w*(?:\\.[A-Za-z_]\\w*)+\\.(?:deny|violation|warn)(?:_[A-Za-z0-9_]+)?$"
+          },
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "qualityDomain": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "sourceIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+            }
+          },
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+            }
+          },
+          "inputRefs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+            }
+          },
+          "parameterRefs": {
+            "type": "array",
+            "minItems": 0,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+            }
+          },
+          "testIds": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+            }
+          },
+          "caseIds": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+            }
+          }
+        },
+        "required": [
+          "ruleId",
+          "query",
+          "namespace",
+          "required",
+          "qualityDomain",
+          "sourceIds",
+          "targets",
+          "inputRefs",
+          "parameterRefs",
+          "testIds",
+          "caseIds"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "rules"
+  ]
+}

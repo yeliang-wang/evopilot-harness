@@ -1,3 +1,5 @@
+> Historical/compatibility reference: new assets use the [current native Harness API](native-harness.md). Retired JSON mutation routes are read-only; retained records keep their original meaning.
+
 # Read-only semantic compatibility consumer
 
 The root API exports `createHarnessSemanticRequirements(input)` and `evaluateSemanticCompatibility({requirements, groundingResult, eligibility?})`. This Harness quality consumer normalizes descriptive requirements and compares concept IDs against imported immutable Ontology grounding results. It does not produce Foundation, candidate sets, packs, snapshots, proposals or catalogs, perform reasoning, approve or publish. Ontology fields remain externally owned; retained legacy schema strings and enum vocabulary are compatibility constants, documented in [provenance](../provenance/semantic-consumer.json).

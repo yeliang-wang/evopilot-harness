@@ -1,3 +1,5 @@
+import type {NativeToolchain} from '../vendor/compatibility/v1/native.mjs';
+import {nativeAssertJSON,nativeFrozenClone} from '../vendor/compatibility/v1/native.mjs';
 import type { Scope, State, Store, AssetRecord, HarnessAsset, Evidence, Providers, Closure, Reference, OntologyResponse, DispatchRequest, DispatchInput, JSONValue, ServiceRequest, WorkspaceOptions, SourceRecord, SourceOrigin, SemanticInput, SemanticRequirementsInput, GroundingResult, ConceptInput, RelationRequirement } from './types.js';
 import { exactFields, frozenClone, sha256, stableSerialize, validateReference } from '../vendor/compatibility/v1/reference.mjs';
 import { isPromise } from 'node:util/types';
@@ -9,9 +11,15 @@ export function validateProviders(value: unknown): Providers {
   const descriptors = Object.getOwnPropertyDescriptors(value);
   for (const key of Reflect.ownKeys(descriptors)) {
     const d = Reflect.get(descriptors, key) as PropertyDescriptor;
-    if (key !== 'resolveOntology' || !Object.hasOwn(d, 'value') || typeof d.value !== 'function') fail('INVALID_PROVIDER', 'Unknown or invalid host provider');
+    if (!['resolveOntology','nativeToolchain','resolveNativeDependency'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
+    if (key !== 'nativeToolchain' && typeof d.value !== 'function') fail('INVALID_PROVIDER','Expected trusted callback');
+    if (key === 'nativeToolchain') nativeAssertJSON(d.value);
   }
-  return Object.freeze({ ...(descriptors.resolveOntology ? { resolveOntology: descriptors.resolveOntology.value } : {}) });
+  return Object.freeze({
+    ...(descriptors.resolveOntology ? {resolveOntology:descriptors.resolveOntology.value}:{}),
+    ...(descriptors.nativeToolchain ? {nativeToolchain:nativeFrozenClone(descriptors.nativeToolchain.value as NativeToolchain)}:{}),
+    ...(descriptors.resolveNativeDependency ? {resolveNativeDependency:descriptors.resolveNativeDependency.value}:{})
+  });
 }
 export const referenceFor = (a: AssetRecord): Reference => ({ product: 'harness', id: a.model.id, version: a.model.version, specVersion: 'v1', visibility: a.scope.visibility, digest: a.delivery!.digest });
 

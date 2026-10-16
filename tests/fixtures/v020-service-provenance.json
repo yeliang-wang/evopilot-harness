@@ -1,0 +1,7 @@
+{
+  "purpose": "Construct synthetic historical database records to verify unchanged readback. Not an enabled product path.",
+  "sourceCommit": "94656d09a3e93818ee4ebdf9848f7e6c1782a6b9",
+  "sourcePath": "src/service.ts",
+  "sourceSha256": "1b70b152f36cb7bc79594b0648121b47700cf24b3ffae0f4cf299381aaeac799",
+  "fixtureSha256": "aabc5a048f2662b7d089b272b3c5dc15ac0a5993080ff796868545bfdd4e5118"
+}

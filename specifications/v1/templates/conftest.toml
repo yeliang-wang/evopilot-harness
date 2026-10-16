@@ -1,0 +1,6 @@
+namespace = "evopilot.base"
+output = "json"
+rego-version = "v1"
+strict = true
+show-builtin-errors = true
+fail-on-warn = true
