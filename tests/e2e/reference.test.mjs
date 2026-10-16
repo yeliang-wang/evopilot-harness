@@ -38,17 +38,17 @@ test('package boundary: changed bindings and unsupported input fail closed', () 
 });
 
 test('package boundary: default capabilities are truthful immutable data', () => {
-  assert.equal(api.VERSION, '0.2.0');
+  assert.equal(api.VERSION, '0.3.0');
   assert.equal(api.PRODUCT, 'harness');
   const capabilities = api.capabilities();
   assert.equal(capabilities.businessOperationsReady, true);
-  assert.equal(capabilities.implementationStage, 'M2_OWNED_SERVICE');
+  assert.equal(capabilities.implementationStage, 'NATIVE_STANDARDS');
   for (const field of ['hostReady', 'pluginReady', 'productionReady', 'softwareRelease']) assert.equal(capabilities[field], false);
   assert.equal(capabilities.persistence, 'separate/service');
   assert.equal(capabilities.authority, false);
   assert(Object.isFrozen(capabilities));
   assert(Object.isFrozen(capabilities.referenceApi));
-  assert.deepEqual(Object.keys(api).sort(), ['PRODUCT', 'VERSION', 'capabilities', 'inspectOntologyReference', 'validateHarness', 'evaluateHarness', 'buildDelivery', 'verifyDelivery', 'createHarnessSemanticRequirements', 'evaluateSemanticCompatibility'].sort());
+  assert.deepEqual(Object.keys(api).sort(), ['PRODUCT', 'VERSION', 'capabilities', 'inspectHarnessPackage', 'inspectHarnessStandard', 'inspectOntologyReference', 'validateHarness', 'validateNativeHarness', 'evaluateHarness', 'buildDelivery', 'verifyDelivery', 'createHarnessSemanticRequirements', 'evaluateSemanticCompatibility'].sort());
 });
 
 test('vendored v1 wire and public boundary are independent of implementation revision', () => {

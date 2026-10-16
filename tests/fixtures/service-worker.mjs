@@ -1,4 +1,4 @@
-import { createHarnessService } from '../../dist/service.js';
+import { createHistoricalFixtureService as createHarnessService } from './v020-service.mjs';
 import { DatabaseSync } from 'node:sqlite';
 
 // Test-only interception: actual service transaction reaches COMMIT after writing

@@ -44,3 +44,23 @@ const reviewDigest: string = reviewed.result.reviewDigest;
 reviewed.result.delivery;
 // @ts-expect-error Operation generics cannot prescribe an arbitrary output shape.
 service.execute<{ fabricated: true }>({ operation: 'workspace.inspect', scope, input: {} });
+
+
+export async function consumeNative() {
+  const standard = await service.native({operation:'standard.inspect',scope,input:{}});
+  const standardDigest: string = standard.standardDigest;
+  const validation = await service.native({operation:'native.package.validate',scope,input:{id:'example',version:'1.0.0'},requestId:'native-validation',expectedRevision:0});
+  if (validation.status === 'SUCCEEDED') {
+    const reportDigest: string = validation.result.reportDigest;
+    const quality: 'PASS' | 'FAIL' | 'ERROR' = validation.result.qualityStatus;
+    // @ts-expect-error A native validation is not a package publication.
+    validation.result.published;
+    return { standardDigest, reportDigest, quality };
+  }
+  // @ts-expect-error Nonterminal and failed receipts do not guarantee a report.
+  validation.result.reportDigest;
+  // @ts-expect-error A native mutation requires an idempotency key and CAS revision.
+  service.native({operation:'native.package.validate',scope,input:{id:'example',version:'1.0.0'}});
+  // @ts-expect-error The request cannot replace the trusted binary executable.
+  service.native({operation:'native.package.validate',scope,input:{id:'example',version:'1.0.0',executable:'/tmp/opa'},requestId:'bad',expectedRevision:0});
+}

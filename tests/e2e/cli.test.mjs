@@ -5,7 +5,8 @@ import { existsSync, mkdtempSync, realpathSync, readFileSync, writeFileSync, sym
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { operations } from '../../dist/operations.js';
+import { operations, mutations } from '../../dist/operations.js';
+import { NATIVE_OPERATIONS } from '../../dist/native-service.js';
 import { LIMITS } from '../../dist/state.js';
 
 const cli = fileURLToPath(new URL('../../dist/cli.js', import.meta.url));
@@ -26,7 +27,7 @@ function invoke(args, input = '', status = 0, flags = []) {
   assert.equal(envelope.ok, status === 0);
   assert.equal(envelope.authority, false);
   assert.deepEqual(Object.keys(envelope).sort(), (status === 0 ? ['ok', 'product', 'version', 'result', 'authority'] : ['ok', 'error', 'authority']).sort());
-  if (status === 0) { assert.equal(envelope.product, 'harness'); assert.equal(envelope.version, '0.2.0'); }
+  if (status === 0) { assert.equal(envelope.product, 'harness'); assert.equal(envelope.version, '0.3.0'); }
   return status === 0 ? envelope.result : envelope.error;
 }
 function setup(t) {
@@ -40,9 +41,9 @@ function setup(t) {
 test('CLI discovery/help/version run without write permission or workspace', () => {
   const flags = ['--permission', '--allow-fs-read=' + root];
   const capabilities = invoke(['capabilities'], '', 0, flags);
-  assert.deepEqual(capabilities.operations, operations);
+  assert.deepEqual(capabilities.operations, [...operations.filter(op => !mutations.includes(op)), ...NATIVE_OPERATIONS]);
   assert.equal(capabilities.providers.resolveOntology, false);
-  assert(capabilities.pending.includes('M3 parent provider wiring'));
+  assert(capabilities.historicalOperationsReadOnly);
   for (const command of ['help', '--help', 'version', '--version']) invoke([command], '', 0, flags);
   for (const args of [[], ['unknown'], ['help', 'extra'], ['capabilities', '--workspace', '/unused'], ['request'], ['request', '--workspace', 'relative', '--workspace-id', 'test']]) {
     assert.equal(invoke(args, '', 2, flags).code, 'USAGE');
@@ -63,23 +64,12 @@ test('CLI rejects malformed/bounded input and strict flags before initialization
   }
 });
 
-test('CLI stdin persists one asset/receipt across processes; CAS and idempotency stay exact', t => {
+test('CLI rejects retired JSON writes without creating assets or new receipts', t => {
   const { request } = setup(t);
-  const receipt = request(put);
-  assert.equal(receipt.revision, 1);
-  assert.deepEqual(request({ ...put, expectedRevision: 999 }), receipt);
-  assert.equal(request({ ...put, requestId: 'stale' }, 1).code, 'REVISION_CONFLICT');
-  assert.equal(request({ ...put, input: { asset: { ...asset, id: 'changed' } } }, 1).code, 'REQUEST_CONFLICT');
-  assert.deepEqual(request(read('receipt.inspect', { requestId: 'first' })), receipt);
-  const inspection = request(read('workspace.inspect'));
-  assert.equal(inspection.revision, 1); assert.equal(inspection.assetCount, 1);
-  const saved = request(read('asset.inspect', { id: asset.id, version: asset.version }));
-  assert.equal(saved.review, null); assert.equal(saved.decision, null); assert.equal(saved.delivery, null);
-  assert.equal(request(read('asset.list')).length, 1);
-  assert.equal(request(read('receipt.inspect', { requestId: 'first' }, { ...scope, projectId: 'other' }), 1).code, 'NOT_FOUND');
-  assert.equal(request({ ...read('asset.publish', { id: asset.id, version: asset.version }), requestId: 'publish', expectedRevision: 1 }, 1).code, 'REVIEW_REQUIRED');
-  assert.equal(request({ ...read('asset.evaluate', { id: asset.id, version: asset.version, evidence: {}, configuration: {} }), requestId: 'evaluate', expectedRevision: 1 }, 1).code, 'NOT_PUBLISHED');
-  assert.equal(request(read('workspace.inspect')).revision, 1);
+  assert.equal(request(put,1).code,'HISTORICAL_READ_ONLY');
+  assert.equal(request(read('workspace.inspect')).revision,0);
+  assert.deepEqual(request(read('asset.list')),[]);
+  assert.equal(request(read('receipt.inspect',{requestId:'first'}),1).code,'NOT_FOUND');
 });
 
 test('CLI explicit file accepts regular JSON and rejects missing/directory/symlink/oversize files', t => {
@@ -95,20 +85,16 @@ test('CLI explicit file accepts regular JSON and rejects missing/directory/symli
   writeFileSync(file, ' '.repeat(LIMITS.requestBytes + 1));
   assert.equal(invoke([...args, '--request-file', file], '', 2).code, 'LIMIT');
   assert.equal(existsSync(workspace), false);
-  writeFileSync(file, JSON.stringify(put));
-  assert.equal(invoke([...args, '--request-file', file], 'ignored malformed stdin').revision, 1);
+  writeFileSync(file, JSON.stringify(read('workspace.inspect')));
+  assert.equal(invoke([...args, '--request-file', file], 'ignored malformed stdin').revision, 0);
   const bin = join(parent, 'evopilot-next-harness'); symlinkSync(cli, bin);
   const child = spawnSync(process.execPath, [bin, 'version'], { encoding: 'utf8', env: { ...process.env, OPENSSL_CONF: '/dev/null', NODE_OPTIONS: '' } });
   assert.equal(child.status, 0, child.stderr); assert.equal(JSON.parse(child.stdout).ok, true);
 });
 
-test('CLI delegates source-only imports and leaves external Ontology dependency unavailable', t => {
-  const { request } = setup(t);
-  const dependency = { product: 'ontology', id: 'semantic', version: '1.0.0', specVersion: 'v1', visibility: 'public', digest: 'sha256:' + 'a'.repeat(64) };
-  request({ ...put, input: { asset: { ...asset, dependencies: [dependency] } } });
-  assert.equal(request({ ...read('asset.review', { id: asset.id, version: asset.version }), requestId: 'review', expectedRevision: 1 }, 1).code, 'UNAVAILABLE_DEPENDENCY');
-  const imported = request({ ...read('legacy.import', { raw: '{"note":"inert"}', format: 'json', sourceLocator: 'synthetic:test', sourceRevision: '1', sourceVisibility: 'public' }), requestId: 'source', expectedRevision: 1 });
-  assert.equal(imported.revision, 2);
-  assert.equal(request(read('source.list')).length, 1);
-  assert.equal(request(read('workspace.inspect')).assetCount, 1);
+test('CLI source mutation and publication paths cannot bypass historical read-only mode', t => {
+  const {request}=setup(t);
+  for (const operation of ['asset.review','asset.publish']) assert.equal(request({...read(operation,{id:asset.id,version:asset.version}),requestId:operation.replace('.','-'),expectedRevision:0},1).code,'HISTORICAL_READ_ONLY');
+  assert.equal(request({...read('legacy.import',{raw:'{}',format:'json',sourceLocator:'synthetic:test',sourceRevision:'1',sourceVisibility:'public'}),requestId:'source',expectedRevision:0},1).code,'HISTORICAL_READ_ONLY');
+  assert.deepEqual(request(read('source.list')),[]);
 });

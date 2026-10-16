@@ -1,0 +1,29 @@
+{
+  "schema": "evopilot-standard-lock/v1",
+  "owner": "harness",
+  "specVersion": "v1",
+  "standards": [
+    {
+      "id": "rego-v1",
+      "normativeVersion": "v1",
+      "url": "https://www.openpolicyagent.org/docs/policy-language"
+    },
+    {
+      "id": "conftest",
+      "normativeVersion": "0.71.1",
+      "url": "https://github.com/open-policy-agent/conftest/releases/tag/v0.71.1"
+    },
+    {
+      "id": "opa-cli",
+      "normativeVersion": "1.21.2",
+      "url": "https://github.com/open-policy-agent/opa/releases/tag/v1.21.2"
+    }
+  ],
+  "enginePair": {
+    "conftest": "0.71.1",
+    "embeddedOPA": "1.21.1",
+    "opaCLI": "1.21.2"
+  },
+  "toolchainBinding": "Installed toolchain.lock digest; binaries are supplied only by trusted service construction, never a request",
+  "license": "Apache-2.0"
+}

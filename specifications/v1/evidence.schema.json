@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evopilot:harness:v1:evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "evopilot-observation/v1"
+    },
+    "origin": {
+      "enum": [
+        "execution-result",
+        "synthetic",
+        "source-declaration",
+        "design-declaration",
+        "runtime-observation",
+        "imported"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "revision",
+        "digest"
+      ]
+    },
+    "values": {
+      "type": "object"
+    },
+    "collectionReceiptRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "claimId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+        }
+      },
+      "required": [
+        "id",
+        "digest",
+        "claimId"
+      ]
+    },
+    "sourceScopeDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "origin",
+    "source",
+    "values"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "origin": {
+            "const": "execution-result"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "collectionReceiptRef",
+          "sourceScopeDigest"
+        ]
+      }
+    }
+  ]
+}

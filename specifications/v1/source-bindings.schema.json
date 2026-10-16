@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evopilot:harness:v1:source-bindings",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "evopilot-source-bindings/v1"
+    },
+    "direction": {
+      "enum": [
+        "forward",
+        "reverse"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "status": {
+            "enum": [
+              "observed",
+              "inferred"
+            ]
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "private"
+            ]
+          },
+          "contentPath": {
+            "type": "string",
+            "pattern": "^sources/.+"
+          }
+        },
+        "required": [
+          "id",
+          "locator",
+          "revision",
+          "digest",
+          "status",
+          "visibility",
+          "contentPath"
+        ]
+      }
+    },
+    "mappings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requirementId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "targetId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "status": {
+            "enum": [
+              "observed",
+              "inferred"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "fileDigest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "selector": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "json-pointer"
+                  },
+                  "pointer": {
+                    "type": "string",
+                    "pattern": "^(?:/(?:[^~]|~[01])*)?$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "pointer"
+                ]
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "const": "lines"
+                  },
+                  "start": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "end": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "start",
+                  "end"
+                ]
+              }
+            ]
+          },
+          "fragmentDigest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "requirementId",
+          "targetId",
+          "sourceId",
+          "status",
+          "revision",
+          "fileDigest",
+          "selector",
+          "fragmentDigest"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "inferred"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "rationale"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "disposition": {
+            "enum": [
+              "covered",
+              "unresolved",
+              "not-applicable"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+          }
+        },
+        "required": [
+          "id",
+          "required",
+          "disposition"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "required": {
+                  "const": true
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "disposition": {
+                  "const": "covered"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "disposition": {
+                  "enum": [
+                    "unresolved",
+                    "not-applicable"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "reason"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "direction",
+    "sources",
+    "mappings",
+    "requirements"
+  ]
+}

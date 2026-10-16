@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evopilot:harness:v1:parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "evopilot-parameters/v1"
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "array",
+              "object"
+            ]
+          },
+          "minimum": {
+            "type": "number"
+          },
+          "maximum": {
+            "type": "number"
+          },
+          "enum": {
+            "type": "array",
+            "minItems": 1
+          },
+          "default": {}
+        },
+        "required": [
+          "type"
+        ]
+      }
+    },
+    "required": {
+      "type": "array",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!\\s)(?!.*[\\u0000-\\u001f\\u007f]).*\\S$|^[^\\s\\u0000-\\u001f\\u007f]$"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "properties",
+    "required"
+  ]
+}

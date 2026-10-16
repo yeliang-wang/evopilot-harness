@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { fork } from 'node:child_process';
 import { once } from 'node:events';
 import { DatabaseSync } from 'node:sqlite';
-import { createHarnessService } from '@evopilot-next/harness/service';
+import { createHistoricalFixtureService as createHarnessService } from '../fixtures/v020-service.mjs';
 import { sha256, stableSerialize } from '../../vendor/compatibility/v1/reference.mjs';
 
 const samples = JSON.parse(readFileSync(new URL('../../examples/synthetic-harnesses.json', import.meta.url)));
@@ -19,7 +19,7 @@ function group(base, id, kind, dependencies) {
   asset.sourceMappings = asset.sourceMappings.filter(m => targets.has(m.targetRef));
   return asset;
 }
-test('review invalidation, immutable publication and scoped persisted evaluation', t => {
+test('historical fixture/readback: review invalidation, immutable publication and scoped persisted evaluation', t => {
   const { service, options } = setup(t); service.initialize();
   const asset = clone(fixtures.assets[0]), input = { id: asset.id, version: asset.version };
   write(service, 'asset.put', { asset });
@@ -47,7 +47,7 @@ test('review invalidation, immutable publication and scoped persisted evaluation
   for (const operation of ['ontology.put', 'legacy.derive', 'shell.execute', 'unknown']) assert.throws(() => read(reopened, operation), { code: 'UNSUPPORTED_OPERATION' });
 });
 
-test('composed publication exact roles, scope ambiguity and missing evaluation evidence', t => {
+test('historical fixture/readback: composed publication exact roles, scope ambiguity and missing evaluation evidence', t => {
   const { service } = setup(t); service.initialize();
   const asset = fixtures.assets[0]; write(service, 'asset.put', { asset });
   const ref = write(service, 'asset.publish', approve(service, asset)).result.reference;
@@ -72,7 +72,7 @@ test('composed publication exact roles, scope ambiguity and missing evaluation e
   assert.throws(() => write(service, 'asset.review', { id: ambiguous.id, version: ambiguous.version }), { code: 'UNAVAILABLE_DEPENDENCY' });
 });
 
-test('host resolver is closed, synchronous, exact and cannot be request configured', async t => {
+test('historical fixture/readback: host resolver is closed, synchronous, exact and cannot be request configured', async t => {
   const { options } = setup(t);
   assert.throws(() => createHarnessService(options, { unknown: () => {} }), { code: 'INVALID_PROVIDER' });
   assert.throws(() => createHarnessService(options, { resolveOntology: 'code' }), { code: 'INVALID_PROVIDER' });
@@ -116,7 +116,7 @@ function worker(options, request, killBeforeCommit = false) {
   return { child, response };
 }
 
-test('discovery/construction pure; explicit identity, restart and closed API', t => {
+test('historical fixture/readback: discovery/construction pure; explicit identity, restart and closed API', t => {
   const { service, options } = setup(t);
   assert(service.capabilities().operations.includes('asset.publish'));
   assert.equal(existsSync(options.workspaceRoot), false);
@@ -129,7 +129,7 @@ test('discovery/construction pure; explicit identity, restart and closed API', t
   assert.equal(read(reopened, 'workspace.inspect').revision, 0); reopened.close();
 });
 
-test('forward/reverse models publish with separate exact review and human decision', t => {
+test('historical fixture/readback: forward/reverse models publish with separate exact review and human decision', t => {
   const { service } = setup(t); service.initialize();
   assert.deepEqual(new Set(fixtures.assets.map(a => a.provenance.direction)), new Set(['forward', 'reverse']));
   for (const model of fixtures.assets) {
@@ -143,7 +143,7 @@ test('forward/reverse models publish with separate exact review and human decisi
   }
 });
 
-test('scope isolation, exact idempotency, stale revision, closed bounded JSON', t => {
+test('historical fixture/readback: scope isolation, exact idempotency, stale revision, closed bounded JSON', t => {
   const { service } = setup(t); service.initialize();
   const model = fixtures.assets[0];
   const request = { operation: 'asset.put', input: { asset: model }, scope, requestId: 'same', expectedRevision: 0 };
@@ -164,7 +164,7 @@ test('scope isolation, exact idempotency, stale revision, closed bounded JSON', 
   assert.throws(() => service.execute({ ...request, expectedRevision: Infinity }));
 });
 
-test('review subject binds both workspace identity fields and project scope', t => {
+test('historical fixture/readback: review subject binds both workspace identity fields and project scope', t => {
   const first = setup(t), second = setup(t);
   first.service.initialize(); second.service.initialize();
   const model = fixtures.assets[0], input = { id: model.id, version: model.version };
@@ -182,7 +182,7 @@ test('review subject binds both workspace identity fields and project scope', t 
   }
 });
 
-test('real competing writers, committed restart, killed transaction rolls back state/receipt/audit', { timeout: 20000 }, async t => {
+test('historical fixture/readback: real competing writers, committed restart, killed transaction rolls back state/receipt/audit', { timeout: 20000 }, async t => {
   const { service, options } = setup(t); service.initialize(); service.close();
   const request = { operation: 'asset.put', input: { asset: fixtures.assets[0] }, scope, requestId: 'writer-a', expectedRevision: 0 };
   const a = worker(options, request), b = worker(options, { ...request, requestId: 'writer-b' });
@@ -204,7 +204,7 @@ test('real competing writers, committed restart, killed transaction rolls back s
   assert.throws(() => db.exec('DELETE FROM audit')); db.close();
 });
 
-test('unknown/identity/symlink workspaces and corrupt database reject without recreation', t => {
+test('historical fixture/readback: unknown/identity/symlink workspaces and corrupt database reject without recreation', t => {
   const { parent, options, service } = setup(t);
   mkdirSync(options.workspaceRoot, { mode: 0o700 });
   writeFileSync(join(options.workspaceRoot, 'unknown'), 'retained');
@@ -226,7 +226,7 @@ test('unknown/identity/symlink workspaces and corrupt database reject without re
   assert.throws(() => createHarnessService(safe).initialize(), { code: 'IDENTITY_MISMATCH' });
 });
 
-test('linked sidecars and mismatched immutable blob bytes cannot be adopted', t => {
+test('historical fixture/readback: linked sidecars and mismatched immutable blob bytes cannot be adopted', t => {
   const { service, options, parent } = setup(t); service.initialize();
   const model = fixtures.assets[0]; write(service, 'asset.put', { asset: model });
   const blob = join(options.workspaceRoot, 'public/harness', sha256(model).slice(7) + '.json');
@@ -241,7 +241,7 @@ test('linked sidecars and mismatched immutable blob bytes cannot be adopted', t 
   assert.equal(readFileSync(target, 'utf8'), 'retained');
 });
 
-test('shared identity coexists with untouched sibling state; hardlinked own database denied', t => {
+test('historical fixture/readback: shared identity coexists with untouched sibling state; hardlinked own database denied', t => {
   const { service, options, parent } = setup(t); service.initialize(); service.close();
   const sibling = join(options.workspaceRoot, 'state/ontology'); mkdirSync(sibling, { mode: 0o700 });
   const sentinel = join(sibling, 'retained'); writeFileSync(sentinel, 'untouched', { mode: 0o600 });

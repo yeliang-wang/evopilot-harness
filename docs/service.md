@@ -1,3 +1,5 @@
+> Historical/compatibility reference: new assets use the [current native Harness API](native-harness.md). Retired JSON mutation routes are read-only; retained records keep their original meaning.
+
 # Local Harness service
 
 The service source is `src/service.ts`; the package export resolves to compiled `dist/service.js` with `dist/service.d.ts`. In a source checkout run `npm ci --ignore-scripts`, `npm run build`, `npm run check`, then `npm test`. Build cleans generated `dist` only. Installed tarballs provide the compiled API and declarations without development scripts/tests.
@@ -80,3 +82,15 @@ Location records are versioned and attested using an OS-user-owned key in `~/.lo
 Restore a backup only to its original canonical location with the original same-host keys and services stopped. Verify it through each owner's snapshot API before use. A subsequent move to a new location uses the explicit relocation operation. Never restore an old snapshot over active state or discard writes made after a cutover.
 
 Historical bindings remain readable only when their exact immutable review/pointer digests occur in verified location lineage. New records use the current canonical identity. Pending old-location plans require fresh preparation and review. Claimed Runtime work retains the original claim and receipt IDs; an uncertain outcome is reconciled or cancelled, never dispatched again as part of migration. Inspection and migration evidence do not authorize asset publication, external execution, or a software release.
+
+### Same-machine hostname changes
+
+On macOS, relocation records bind the configured `LocalHostName.local` when the
+system supplies a valid local name. Readback recognizes that configured name or
+the current OS hostname, so a network-assigned hostname does not invalidate the
+same machine's signed records. Other platforms retain exact current-hostname
+binding. Home directory, uid, private local key, HMAC, source/destination chain,
+and historical receipt digests must still verify. A foreign configured/current
+name or missing key is rejected; caller-provided host overrides are unsupported.
+Existing signed records and business data are never rewritten. This does not
+provide cross-machine restore.

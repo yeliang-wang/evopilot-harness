@@ -1,0 +1,31 @@
+{
+  "schema": "evopilot-directory-layout/v1",
+  "owner": "harness",
+  "required": [
+    "conftest.toml",
+    "rule-catalog.json",
+    "coverage.json",
+    "parameter-schema.json",
+    "source-bindings.json",
+    "observations/current.json"
+  ],
+  "patterns": [
+    "policy/*.rego",
+    "policy/*_test.rego",
+    "data/*.json",
+    "tests/fixtures/*.json",
+    "sources/**"
+  ],
+  "entrypoints": [
+    "policy",
+    "tests",
+    "data",
+    "config",
+    "ruleCatalog",
+    "coverage",
+    "parameterSchema",
+    "observation"
+  ],
+  "sourceBindings": "source-bindings.json",
+  "privateAndPublicSameStandard": true
+}
