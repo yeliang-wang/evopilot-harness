@@ -1,11 +1,13 @@
 # Harness documentation
 
-The current Harness candidate adopts native Rego/Conftest and corrects v1; historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
+Harness v0.5.0 Preview combines corrected native Rego/Conftest standards, registered execution feedback and bounded online assessment. Historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
 
 ## Guides and reference
 
 - [Current native guide and typed API](native-harness.md): standards, toolchain, package lifecycle, execution reports and recovery.
 
+- [Registered execution feedback](feedback.md): owner review, exact reuse and new delivery proposals.
+- [Native decision evidence](native-decisions.md): review-bound human decisions and historical readback.
 - [CLI guide](cli.md): discovery, explicit workspace requests and retained receipts.
 - [Service API](service.md): typed operations, lifecycle, dependencies and persistence limits.
 - [Native v1 specification](../specifications/v1/README.md): asset formats and validation rules.
