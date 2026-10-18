@@ -1,0 +1,25 @@
+{
+  "profile": "openslo-v1-ratio-timeslices",
+  "sources": [
+    {
+      "name": "OpenSLO v1 specification",
+      "revision": "e0259752f252276485cfa2708dac2db00c2f3464",
+      "url": "https://github.com/OpenSLO/OpenSLO/blob/e0259752f252276485cfa2708dac2db00c2f3464/website/docs/specification.md",
+      "sha256": "ac6ea721628f7a72e7f52ba5619fce049125b24b3d02d5048dabe31a9f4c5ba3"
+    },
+    {
+      "name": "Prometheus HTTP API",
+      "url": "https://prometheus.io/docs/prometheus/latest/querying/api/",
+      "testedVersion": "3.5.0",
+      "api": "/api/v1/query_range"
+    },
+    {
+      "name": "Alertmanager default webhook",
+      "url": "https://prometheus.io/docs/alerting/latest/configuration/#webhook_config",
+      "testedVersion": "0.28.1",
+      "webhookVersion": "4"
+    }
+  ],
+  "fullOpenSLOCompliance": false,
+  "nativeV03StandardUnchanged": true
+}

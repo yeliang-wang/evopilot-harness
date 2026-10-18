@@ -1,6 +1,6 @@
 {
   "name": "@evopilot-next/harness",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "bin": {
     "evopilot-next-harness": "dist/cli.js"
@@ -45,6 +45,10 @@
     "./native": {
       "types": "./dist/native.d.ts",
       "import": "./dist/native.js"
+    },
+    "./online": {
+      "types": "./dist/online.d.ts",
+      "import": "./dist/online.js"
     }
   },
   "scripts": {
@@ -57,7 +61,8 @@
   },
   "license": "Apache-2.0",
   "devDependencies": {
-    "typescript": "5.9.3",
-    "@types/node": "24.19.2"
+    "@types/node": "24.19.2",
+    "ajv": "8.20.0",
+    "typescript": "5.9.3"
   }
 }

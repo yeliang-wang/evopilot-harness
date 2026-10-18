@@ -21,3 +21,7 @@ The current Harness candidate adopts native Rego/Conftest and corrects v1; histo
 - [Parent flow guides](https://github.com/yeliang-wang/evopilot/blob/main/docs/first-journey.md) and [release procedure](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md).
 
 Preview documentation describes software capabilities; technical checks do not establish business acceptance or production readiness.
+
+## v0.5 online integration
+
+[Online API](online-harness.md) and [OpenSLO implementation profile](../specifications/online/v1/README.md) define inputs, actual evidence, limits and state recovery.

@@ -4,7 +4,7 @@
 
 Harness defines and verifies QA/SRE delivery criteria for projects developed with a third-party AI assistant. It turns explicit project requirements into reusable native policies, validates evidence, and preserves reviewed immutable deliveries. It does not run business builds, deployments or autonomous repairs.
 
-**v0.4.0 Preview** adds reviewed regression feedback while preserving the corrected native v1 standards. Use the Downloads page for published artifacts. Source and synthetic tests alone do not establish real-project acceptance.
+**v0.5.0 Preview** adds bounded online SLO measurements, authenticated alerts, native evaluation and reviewable repair/regression feedback while preserving the corrected native v1 standards. Use the Downloads page for published artifacts. Source and synthetic tests alone do not establish real-project acceptance.
 
 ## Adopted standards
 
@@ -13,6 +13,7 @@ Harness defines and verifies QA/SRE delivery criteria for projects developed wit
 | Rule language | [OPA Rego v1](https://www.openpolicyagent.org/docs/policy-language) | Stable rule IDs, source mappings and mandatory coverage |
 | Quality evaluation | [Conftest 0.71.1](https://www.conftest.dev/options/) with embedded OPA 1.21.1 | Fixed configuration, pure capabilities, fail-on-warn and exact evidence identity |
 | Rule tests | [OPA CLI 1.21.2](https://www.openpolicyagent.org/docs/policy-testing) and Conftest verify | Exact test IDs, positive/negative cases and cross-engine comparison |
+| Online SLO configuration | [OpenSLO v1 implementation profile](specifications/online/v1/README.md), Prometheus and Alertmanager | Exact service/deployment binding, actual window/freshness evidence and explicit selection |
 | Package and lifecycle | EvoPilot conventions | Source/requirement closure, review, explicit decision, immutable publication and receipts |
 
 Rego and Conftest are upstream formats/tools, **not a universal industry Harness standard**. Read the [adoption table](specifications/v1/adoption.md), [machine-readable support matrix](specifications/v1/support-matrix.json), [directory rules](specifications/v1/directory-layout.json) and [conformance cases](specifications/v1/conformance-cases.json). `specifications/v1` is corrected directly; its actual digest distinguishes it from historical v1 semantics.
@@ -64,3 +65,7 @@ Native approvals bind readable, digest-pinned evidence to the exact review, Work
 ## Execution feedback (v0.4)
 
 v0.4 adds private, source-bound feedback through the public service API. This owner receives protected Runtime evidence and records reviewed impact, exact-version reuse or a new native delivery. Receiving evidence does not approve or publish assets. See [feedback](docs/feedback.md). Native v0.3 standard and contract bytes remain unchanged. Publication and exact installed acceptance are recorded separately.
+
+## Online service assessment
+
+See [online API and supported provider limits](docs/online-harness.md), the [profile/schema/provenance](specifications/online/v1/README.md) and [synthetic policy example](examples/native/online-package.mjs). Configuration is not a measurement. Missing or stale data is incomplete, and a finding cannot authorize a patch release or policy change. The parent supervises the explicitly started worker; Harness owns its durable evaluation records.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 Preview
+
+- Add bounded OpenSLO/Prometheus/Alertmanager integration, immutable native online evaluation and retained incidents.
+- Supervise explicitly selected monitoring independently of Codex; preserve watermarks, pending windows and stopped-state recovery.
+- Deliver trusted findings as reviewable Runtime repair candidates without automatic version/release, policy weakening or ontology changes.
+- Retain corrected native v0.3 standards and historical records; online owner writes use database marker 4.
+- Acceptance and publication require the fixed candidate-bound v0.5 checks; this changelog is not an acceptance record.
+
+
 ## 0.4.0 Preview
 
 - Add explicitly configured registered-Run feedback, durable delivery and retained owner receipt recovery.

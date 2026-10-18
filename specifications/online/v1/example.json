@@ -1,0 +1,52 @@
+{
+  "apiVersion": "openslo/v1",
+  "kind": "SLO",
+  "metadata": {
+    "name": "transport-availability"
+  },
+  "spec": {
+    "service": "example-service",
+    "indicator": {
+      "metadata": {
+        "name": "successful-health-probes"
+      },
+      "spec": {
+        "ratioMetric": {
+          "good": {
+            "metricSource": {
+              "type": "Prometheus",
+              "spec": {
+                "query": "service_probe_success",
+                "freshnessQuery": "timestamp(service_probe_success)",
+                "unit": "events"
+              }
+            }
+          },
+          "total": {
+            "metricSource": {
+              "type": "Prometheus",
+              "spec": {
+                "query": "service_probe_window_total",
+                "freshnessQuery": "timestamp(service_probe_window_total)",
+                "unit": "events"
+              }
+            }
+          }
+        }
+      }
+    },
+    "timeWindow": [
+      {
+        "duration": "10s",
+        "isRolling": true
+      }
+    ],
+    "budgetingMethod": "RatioTimeslices",
+    "objectives": [
+      {
+        "target": 0.95,
+        "timeSliceWindow": "1s"
+      }
+    ]
+  }
+}
