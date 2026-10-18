@@ -11,11 +11,13 @@ export function validateProviders(value: unknown): Providers {
   const descriptors = Object.getOwnPropertyDescriptors(value);
   for (const key of Reflect.ownKeys(descriptors)) {
     const d = Reflect.get(descriptors, key) as PropertyDescriptor;
-    if (!['resolveOntology','nativeToolchain','resolveNativeDependency'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
+    if (!['resolveOntology','nativeToolchain','resolveNativeDependency','readFeedback','resolveFeedbackMaterial'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
     if (key !== 'nativeToolchain' && typeof d.value !== 'function') fail('INVALID_PROVIDER','Expected trusted callback');
     if (key === 'nativeToolchain') nativeAssertJSON(d.value);
   }
   return Object.freeze({
+    ...(descriptors.readFeedback?{readFeedback:descriptors.readFeedback.value}:{}),
+    ...(descriptors.resolveFeedbackMaterial?{resolveFeedbackMaterial:descriptors.resolveFeedbackMaterial.value}:{}),
     ...(descriptors.resolveOntology ? {resolveOntology:descriptors.resolveOntology.value}:{}),
     ...(descriptors.nativeToolchain ? {nativeToolchain:nativeFrozenClone(descriptors.nativeToolchain.value as NativeToolchain)}:{}),
     ...(descriptors.resolveNativeDependency ? {resolveNativeDependency:descriptors.resolveNativeDependency.value}:{})

@@ -4,7 +4,7 @@
 
 Harness defines and verifies QA/SRE delivery criteria for projects developed with a third-party AI assistant. It turns explicit project requirements into reusable native policies, validates evidence, and preserves reviewed immutable deliveries. It does not run business builds, deployments or autonomous repairs.
 
-The current development implements the **v0.3 standards correction**. Existing published versions remain historical releases; implementation and tests alone do not mean this candidate has been released or that a real project has passed acceptance.
+**v0.4.0 Preview** adds reviewed regression feedback while preserving the corrected native v1 standards. Use the Downloads page for published artifacts. Source and synthetic tests alone do not establish real-project acceptance.
 
 ## Adopted standards
 
@@ -60,3 +60,7 @@ Historical JSON operations and deliveries are retained read-only. Current writes
 Navigation takes inspiration from [OpenHands](https://github.com/OpenHands/OpenHands); wording is original and no affiliation is implied. Preview software and technical validation do not constitute a stable v1.0 or production-readiness guarantee.
 
 Native approvals bind readable, digest-pinned evidence to the exact review, Workspace and operation. See [decision evidence](docs/native-decisions.md) for the format, historical readback and trusted-operator boundary.
+
+## Execution feedback (v0.4)
+
+v0.4 adds private, source-bound feedback through the public service API. This owner receives protected Runtime evidence and records reviewed impact, exact-version reuse or a new native delivery. Receiving evidence does not approve or publish assets. See [feedback](docs/feedback.md). Native v0.3 standard and contract bytes remain unchanged. Publication and exact installed acceptance are recorded separately.

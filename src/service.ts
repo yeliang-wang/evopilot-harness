@@ -1,3 +1,6 @@
+import {createOwnerFeedback,OWNER_FEEDBACK_OPERATIONS} from '../vendor/compatibility/feedback/v1/owner.mjs';
+import type {FeedbackEnvelope} from '../vendor/compatibility/feedback/v1/feedback.mjs';
+export type * from '../vendor/compatibility/feedback/v1/feedback.mjs';
 import { executeNativeHarness, NATIVE_OPERATIONS } from './native-service.js';
 import { inspectHarnessStandard } from './native-standard.js';
 import type { NativeRequest, NativeOperation, NativeResponse } from './native-types.js';
@@ -16,7 +19,7 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
   bounded(options); exactFields(options, ['workspaceRoot', 'workspaceId']);
   const { workspaceRoot, workspaceId } = options;
   let store: Store | null = null, closed = false, activeNative = 0;
-  const capabilities = () => frozenClone({ product: 'harness', version: '0.3.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
+  const capabilities = () => frozenClone({ product: 'harness', version: '0.4.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
   function initialize() {
     if (closed) fail('CLOSED', 'Service is closed');
     if (!store) store = openState(workspaceRoot, workspaceId);
@@ -100,6 +103,8 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
     activeNative++;
     try { return await executeNativeHarness(store,request,providers) as NativeResponse<NativeOperation>; } finally { activeNative--; }
   }
-  function close() { if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
-  return Object.freeze({ capabilities, initialize, execute, native, close });
+  let activeFeedback=0;
+  async function feedback(request:FeedbackEnvelope):Promise<unknown>{if(closed)fail('CLOSED','Service closed');if(!store)fail('NOT_INITIALIZED','Explicit initialize required');activeFeedback++;try{return await createOwnerFeedback(store,'harness',providers).feedback(request);}finally{activeFeedback--;}}
+  function close() { if(activeFeedback)fail('BUSY','Feedback operation is still in progress'); if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
+  return Object.freeze({ capabilities, initialize, execute, native, feedback, close });
 }

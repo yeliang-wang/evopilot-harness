@@ -89,3 +89,7 @@ The goals below are **NOT SCHEDULED**. `CANDIDATE` records a follow-up direction
 **Acceptance:** declare the supported upstream version/subset and field mappings; test met/violated objectives, missing or partial windows, stale data, mismatched service/source, wrong units, zero/undefined denominators and inaccessible providers. Retain the raw source result and exact mapping; repeat native/provider readback for the same bounded window and prove that stale or incomplete observations cannot pass. Snapshot evidence must not be presented as continuous monitoring. A quality warning cannot automatically create a patch release or lower an objective.
 
 **Non-goals:** operating metrics collectors, Prometheus servers, dashboards, alert routing, on-call management or a replacement SRE platform. A future adapter does not claim full OpenSLO or Sloth support until its explicit compatibility and acceptance checks pass.
+
+## Approved v0.4 execution feedback
+
+Status: implementing the parent [36-variant Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/feedback-v04.json). Add this owner's capture/delivery or impact-review responsibilities through public APIs, preserve native v0.3 standards and historical records, and verify real Host, restart, upgrade, source CI and release readback. v0.5 online Harness work remains a separate target; neither authorizes v1.0.
