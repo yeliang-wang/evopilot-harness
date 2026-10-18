@@ -22,11 +22,11 @@ These describe the source interfaces, not evidence that a particular candidate h
 
 ## v0.2.0 Workspace scope
 
-The package currently identifies as v0.2.0. The parent owns first-use Workspace initialization, the private editable project root, Expert guidance and connection changes. Harness owns its protected service state and the [snapshot and relocation API](service.md#same-host-workspace-snapshots-and-relocation). The owner verifies identity, retained record and blob digests, and same-host location lineage; it does not copy an entire Workspace or switch the Host connection. Relocation preserves existing decisions, immutable deliveries, receipts and audit records. These interfaces and their stated limits are not a claim of candidate-specific cutover or release acceptance.
+v0.2.0 introduced independent Workspace support. The parent owns first-use Workspace initialization, the private editable project root, Expert guidance and connection changes. Harness owns its protected service state and the [snapshot and relocation API](service.md#same-host-workspace-snapshots-and-relocation). The owner verifies identity, retained record and blob digests, and same-host location lineage; it does not copy an entire Workspace or switch the Host connection. Relocation preserves existing decisions, immutable deliveries, receipts and audit records. These interfaces and their stated limits are not a claim of candidate-specific cutover or release acceptance.
 
 ## v0.3.0 Preview: standards correction
 
-Status: **IMPLEMENTING** under the user-approved parent `governance/standards-v03.json` Target. Exact-candidate acceptance and conditional Preview release remain pending; this Roadmap is not a certificate.
+Published in the v0.3.0 Preview under the approved parent `governance/standards-v03.json` Target. This section retains that standards-correction scope; actual project decisions and candidate-specific evidence remain private.
 
 Directly correct `specifications/v1`; do not create `specifications/v2` to avoid repairing the existing definition. Adopt native Rego v1 with OPA and Conftest, with explicit supported semantics, exact tool/configuration identities, and upstream positive/negative conformance examples. Clearly distinguish upstream policy semantics from EvoPilot's package, source, directory, evidence and decision conventions.
 
@@ -92,11 +92,11 @@ The goals below are **NOT SCHEDULED**. `CANDIDATE` records a follow-up direction
 
 ## Approved v0.4 execution feedback
 
-Status: implementing the parent [36-variant Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/feedback-v04.json). Add this owner's capture/delivery or impact-review responsibilities through public APIs, preserve native v0.3 standards and historical records, and verify real Host, restart, upgrade, source CI and release readback. v0.5 online Harness work remains a separate target; neither authorizes v1.0.
+Published in the v0.4 Preview under the parent [36-variant Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/feedback-v04.json). This owner participates in registered execution feedback through its public APIs while preserving native v0.3 standards and historical records. Candidate-specific Host, recovery and release evidence remain private. v0.5 online Harness has the separate scope below; neither version authorizes v1.0.
 
 ## Approved v0.5: online Harness
 
-The fixed [36-variant parent Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/online-harness-v05.json) follows the published v0.4 Preview. This checkout is implementing that scope; exact candidate acceptance and release receipts remain external.
+The fixed [36-variant parent Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/online-harness-v05.json) follows the published v0.4 Preview. This checkout implements that scope; exact candidate acceptance and release receipts remain external.
 
 Harness owns immutable service/environment/deployment/SLO/policy bindings, actual Prometheus measurements, authenticated Alertmanager findings, native Rego evaluation, retained incidents and reviewable regression comparisons. Runtime receives trusted repair candidates; it does not infer a software version or dispatch an autonomous repair. Ontology standards and reviewed semantic evolution remain unchanged. The parent provides the explicitly enabled independent local worker and Expert journeys, with actual installed Codex acceptance.
 
