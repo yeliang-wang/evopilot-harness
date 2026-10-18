@@ -1,3 +1,4 @@
+import type {FeedbackOwnerProviders as importFeedbackProviders} from '../vendor/compatibility/feedback/v1/feedback.mjs';
 import type { inspectHarnessStandard } from './native-standard.js';
 import type { NativePackage, NativeReference, NativeScope, NativeToolchain, NativeValidationContext, NativeJSON } from '../vendor/compatibility/v1/native.mjs';
 export type { NativePackage, NativeReference, NativeScope, NativeToolchain, NativeValidationContext } from '../vendor/compatibility/v1/native.mjs';
@@ -16,7 +17,7 @@ export interface HarnessObservation {
     };
     sourceScopeDigest?: string;
 }
-export interface NativeHarnessProviders {
+export interface NativeHarnessProviders extends importFeedbackProviders {
     nativeToolchain?: NativeToolchain;
     resolveNativeDependency?: (request: {
         workspaceId: string;

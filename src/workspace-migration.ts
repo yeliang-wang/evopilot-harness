@@ -88,7 +88,7 @@ function verifyNativeMaterials(records: SnapshotRecords, blobs: BlobInventory[])
 }
 function snapshot(db: DatabaseSync, identity: WorkspaceIdentity, root: string): { manifest: WorkspaceSnapshot; records: SnapshotRecords } {
   const records = inspectRecords(db, value => validateState(value as Parameters<typeof validateState>[0]));
-  const lineage = readRelocations(db, identity, product), blobs = inspectBlobs(root, product, db.prepare('PRAGMA user_version').get()?.user_version === 2 ? NATIVE_LIMITS.packageBytes : undefined);
+  const lineage = readRelocations(db, identity, product), blobs = inspectBlobs(root, product, db.prepare("SELECT name FROM sqlite_master WHERE name='native_packages'").get() ? NATIVE_LIMITS.packageBytes : undefined);
   for (const binding of collectBindings(records.state)) {
     if (stableSerialize(binding.workspace) !== stableSerialize(identity) && !lineage.some(record => record.bindings.some(retained => stableSerialize(retained) === stableSerialize(binding)))) migrationFail('CORRUPT_STATE', 'Unattested historical owner identity');
   }
