@@ -1,6 +1,6 @@
 {
   "name": "@evopilot-next/harness",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "bin": {
     "evopilot-next-harness": "dist/cli.js"
@@ -45,6 +45,10 @@
     "./native": {
       "types": "./dist/native.d.ts",
       "import": "./dist/native.js"
+    },
+    "./online": {
+      "types": "./dist/online.d.ts",
+      "import": "./dist/online.js"
     }
   },
   "scripts": {

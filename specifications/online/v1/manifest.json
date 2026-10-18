@@ -1,0 +1,9 @@
+{
+  "schema": "evopilot-online-standard/v1",
+  "profile": "openslo-v1-ratio-timeslices",
+  "files": {
+    "sources.json": "8d245f18285dc5cb49e9b86d4b5399f44c03fcfaa6d62d8b913b2693c1670bab",
+    "profile.schema.json": "ccc5d964c0e6186522d8085af96416a8619337238641781614048d6051b7b019",
+    "example.json": "380c9306d2ed8cb1092a2d140658a05b7966c5c2102ffe370ada1c0ec928db60"
+  }
+}
