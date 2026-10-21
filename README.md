@@ -4,9 +4,7 @@
 
 Harness defines and verifies QA/SRE delivery criteria for projects developed with a third-party AI assistant. It turns explicit project requirements into reusable native policies, validates evidence, and preserves reviewed immutable deliveries. It does not run business builds, deployments or autonomous repairs.
 
-**v0.5.0 Preview** adds bounded online SLO measurements, authenticated alerts, native evaluation and reviewable repair/regression feedback while preserving the corrected native v1 standards. Use the Downloads page for published artifacts. Source and synthetic tests alone do not establish real-project acceptance.
-
-This **v0.6.0 candidate** adds published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history. Read [the implementation guide](docs/response.md). Acceptance and installation require exact-candidate evidence; the v0.5 downloads below remain the previously published release. Core implementation uses strict TypeScript; generated JavaScript is the installed runtime format.
+**v0.6.0 Preview** adds published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history. It retains the bounded online SLO measurements, authenticated alerts, native evaluation and execution feedback introduced in earlier versions. Read [response guidance](docs/response.md) and the [v0.6.0 release page](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) for distribution and publication records. Source and synthetic tests alone do not establish real-project acceptance.
 
 ## Adopted standards
 
@@ -33,9 +31,15 @@ The parent supplies the Codex plugin; Harness does not require a separate plugin
 
 ## Quickstart
 
-Use Node 24.14.0 and the parent-installed pinned native toolchain:
+For Codex, use the [parent installation and first-use guide](https://github.com/yeliang-wang/evopilot/blob/main/README.md#install-a-published-bundle). It supplies the unified plugin, private Workspace and pinned native toolchain; no separate Harness plugin is required.
+
+For standalone library integration, obtain `evopilot-next-harness-0.6.0.tgz`, `harness-dependency-lock.json` and `SHA256SUMS` from the [v0.6.0 assets](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0). Verify the downloaded bytes against `SHA256SUMS` before installation. The package contains compiled JavaScript and declarations; source-development commands below are not commands for an installed tarball. Packages are distributed through GitHub Releases, not an npm registry publication.
+
+To develop from a source checkout, use Node 24.14.0 and a verified native toolchain prepared by the parent:
 
 ```sh
+git clone --branch v0.6.0 https://github.com/yeliang-wang/evopilot-harness.git
+cd evopilot-harness
 npm ci --ignore-scripts
 npm run build
 npm run check
@@ -71,3 +75,9 @@ v0.4 adds private, source-bound feedback through the public service API. This ow
 ## Online service assessment
 
 See [online API and supported provider limits](docs/online-harness.md), the [profile/schema/provenance](specifications/online/v1/README.md) and [synthetic policy example](examples/native/online-package.mjs). Configuration is not a measurement. Missing or stale data is incomplete, and a finding cannot authorize a patch release or policy change. The parent supervises the explicitly started worker; Harness owns its durable evaluation records.
+
+## Response guidance and implementation languages
+
+In v0.6, an immutable native package can carry a runbook whose exact service, environment, source, parameters and prerequisites must match the proposed response. Problem assessments preserve observed, suspected and confirmed explanations separately. Verified closure requires retained recovery and Runtime's independent verification; deferral and risk acceptance preserve the original quality result. See [the response API](docs/response.md), including schema-5 upgrade and recovery requirements.
+
+Maintained service and decision logic uses strict TypeScript. Installed entry points run generated JavaScript; handwritten JavaScript is limited to build, packaging, checks, examples and tests. Harness rules remain native Rego, with JSON/YAML configuration. The parent owns the [cross-product language policy](https://github.com/yeliang-wang/evopilot/blob/main/docs/language-policy.md); the RDF/SHACL Python adapter belongs to Ontology, not Harness orchestration.

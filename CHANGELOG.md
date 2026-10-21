@@ -1,10 +1,14 @@
 # Changelog
 
-## 0.6.0 Preview — candidate, not published
+## 0.6.0 Preview
 
 - Add published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history.
+- Correlate authenticated Alertmanager recovery with independent native regression evidence; a resolved alert alone cannot close a problem.
+- Retain reviewed history checkpoints, preventive followups, scoped deferral/risk decisions and late-fault reassessment without rewriting earlier results.
+- Require schema reader floor 5 for response records; stop services before a consistent backup and retain the matching older installation and snapshot for rollback.
 - Keep new core and contracts in strict TypeScript with compiled runtime/declarations.
 - Preserve native v1 specifications and immutable historical evidence.
+- Synchronize versioned installation instructions and technical guides. The [GitHub release record](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) identifies the distributed commit and assets; this changelog is not an acceptance receipt.
 
 
 ## 0.5.0 Preview
@@ -24,7 +28,7 @@
 - Preserve native v0.3 contracts and historical records; add feedback-state backup/restore and old-reader rejection.
 - Preview publication remains conditional on the fixed v0.4 acceptance, actual Codex journeys and exact source CI.
 
-## 0.3.0 Preview — unreleased candidate
+## 0.3.0 Preview
 
 Correct current v1 native contracts and bind standard content digests. New work uses native RDF/Turtle and SHACL or Rego/OPA/Conftest, protected collection/run receipts, and fixed project completion requirements. Historical JSON records retain their original identity; retired mutation paths cannot create new work. This v0.x correction is incompatible with historical writers. Keep a consistent pre-upgrade snapshot; do not point v0.2 at state written by this candidate. Implementation and tests do not establish acceptance or release.
 

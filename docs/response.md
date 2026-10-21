@@ -1,4 +1,4 @@
-# Reviewed response guidance and problem disposition
+# Reviewed response guidance and problem disposition — v0.6.0 Preview
 
 The v0.6 response service links published Harness guidance, retained online
 findings and reviewed problem assessments to Runtime's isolated execution and
@@ -185,3 +185,20 @@ and idempotency using explicitly synthetic seeded records. These tests do not
 claim a real incident or human decision. Parent integration acceptance separately
 requires actual collection, native engines, installed Codex journeys and
 upgrade/recovery evidence before an installation is declared accepted.
+
+## Upgrade and recovery
+
+Response writes advance the Harness schema reader floor to **5**. A v0.5 reader
+must reject this state. Before upgrading, stop live product connections and the
+independent online worker, then use the parent's supported consistent Workspace
+backup. Retain the matching old installation and pre-upgrade backup together;
+rolling back binaries alone is not a supported downgrade of schema-5 state.
+
+Supported backup/restore preserves problem versions, runbook admissions,
+withdrawals, recovery correlations, decisions and their exact owner references.
+After reconnecting, inspect retained records and current problem status before
+continuing; restoration does not authorize repeating an uncertain action.
+Follow the [parent recovery guide](https://github.com/yeliang-wang/evopilot/blob/main/docs/recovery.md)
+for the coordinated procedure. This is same-machine recovery within the existing
+Workspace trust boundary, not cross-machine migration or production availability
+acceptance.
