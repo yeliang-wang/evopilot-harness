@@ -8,7 +8,7 @@ Use this repository's locked TypeScript 5.9.3 and @types/node 24.19.2 with stric
 
 Do not regenerate frozen vendor bytes; the parent canonical generator owns that operation. Do not suppress type errors, weaken mapped operation inputs/results, or remove failing assertions to pass checks.
 
-The published v0.1.0 Preview is the historical baseline; v0.1.1 repair remains under acceptance as described in [the roadmap](docs/roadmap.md). Parent composition owns MCP, Expert and Codex connection guidance. Capability metadata is not acceptance evidence.
+The published v0.1.0 Preview is the historical baseline; subsequent edition scopes are retained in [the roadmap](docs/roadmap.md). The current source targets v0.6.0 Preview. Parent composition owns MCP, Expert and Codex connection guidance. Capability metadata is not acceptance evidence.
 
 Source changes, technical checks, local asset decisions, Runtime business completion, Host acceptance and software release are separate. Follow the current explicit authorization for remote operations and releases; these instructions add none. Respect retained receipts after uncertain responses and never infer authority to redispatch. Preserve the current request's boundaries for release pipelines and installations.
 
@@ -33,3 +33,9 @@ The approved parent `governance/feedback-v04.json` governs this evolution after 
 After the v0.4 fixed acceptance closes, the approved parent `governance/online-harness-v05.json` governs online service bindings, a bounded OpenSLO v1 profile, actual Prometheus/Alertmanager adapters, durable selected schedules and an explicitly enabled independent worker. Harness owns online evaluation and retained incidents; Runtime receives reviewable repair-target candidates through trusted public owner APIs. Observations never approve ontology changes, weaken rules, choose a patch version or release software.
 
 Preserve native v0.3 specifications/contract bytes, immutable records, daily installations and original project sources. Parent-generated additive contracts remain the sole source of vendor bytes. All 36 fixed variants include real isolated telemetry/fault recovery, actual installed Codex, upgrade/recovery, exact source CI and conditional Preview download/readback. Keep private credentials, service bindings and evidence out of source and assets. No production mutation, second real project, WorkBuddy, new metrics platform or v1.0 release is included.
+
+## Approved v0.6.0 response linkage
+
+The explicit user request to implement the Roadmap and install it in Codex binds the parent `governance/response-v06.json`. Core product behavior, public APIs, state/decision/claim logic, integration and new shared contracts use strict TypeScript. JavaScript is limited to generated runtime files, build/bootstrap/package/test drivers and hash-pinned historical compatibility. Python remains the bounded upstream RDF/SHACL adapter; it does not gain Runtime orchestration or approval logic. Follow the parent language policy and fixed acceptance variants.
+
+Implement optional operations profiles, published Harness guidance, reviewed problem dispositions and Runtime linkage using existing isolated collection and native validation. An actual collection action and a validation Run are distinct. Preserve original project sources and accepted private assets. Native v1 normative bytes remain unchanged. Shared additive contracts are generated only by the parent. Candidate tests do not prove actual Host installation, semantic approval or release authorization.

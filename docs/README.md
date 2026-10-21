@@ -1,12 +1,13 @@
 # Harness documentation
 
-Harness v0.5.0 Preview combines corrected native Rego/Conftest standards, registered execution feedback and bounded online assessment. Historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
+Harness v0.6.0 Preview combines corrected native Rego/Conftest standards, registered execution feedback, bounded online assessment and reviewed response guidance/problem dispositions. Historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
 
 ## Guides and reference
 
 - [Current native guide and typed API](native-harness.md): standards, toolchain, package lifecycle, execution reports and recovery.
 
 - [Registered execution feedback](feedback.md): owner review, exact reuse and new delivery proposals.
+- [Response guidance and problem disposition](response.md): published runbooks, problem review, independent recovery and retained history.
 - [Native decision evidence](native-decisions.md): review-bound human decisions and historical readback.
 - [CLI guide](cli.md): discovery, explicit workspace requests and retained receipts.
 - [Service API](service.md): typed operations, lifecycle, dependencies and persistence limits.
@@ -24,6 +25,10 @@ Harness v0.5.0 Preview combines corrected native Rego/Conftest standards, regist
 
 Preview documentation describes software capabilities; technical checks do not establish business acceptance or production readiness.
 
-## v0.5 online integration
+## Online integration, introduced in v0.5
 
 [Online API](online-harness.md) and [OpenSLO implementation profile](../specifications/online/v1/README.md) define inputs, actual evidence, limits and state recovery.
+
+## v0.6 response guidance
+
+Read [published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history](response.md). The additive response API preserves native v1 specifications and uses schema reader floor 5. Exact installation evidence stays private; the [v0.6.0 release record](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) identifies public distribution. See also the [implementation language boundaries](../README.md#response-guidance-and-implementation-languages).

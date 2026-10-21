@@ -11,11 +11,14 @@ export function validateProviders(value: unknown): Providers {
   const descriptors = Object.getOwnPropertyDescriptors(value);
   for (const key of Reflect.ownKeys(descriptors)) {
     const d = Reflect.get(descriptors, key) as PropertyDescriptor;
-    if (!['resolveOntology','nativeToolchain','resolveNativeDependency','readFeedback','resolveFeedbackMaterial','collectOnline','deliverOnlineFinding','readOnlineRepair','inspectOnlineAlert'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
+    if (!['resolveOntology','nativeToolchain','resolveNativeDependency','readFeedback','resolveFeedbackMaterial','collectOnline','deliverOnlineFinding','readOnlineRepair','inspectOnlineAlert','readResponseEvidence','readResponseRecovery','readResponseExecution'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
     if (key !== 'nativeToolchain' && typeof d.value !== 'function') fail('INVALID_PROVIDER','Expected trusted callback');
     if (key === 'nativeToolchain') nativeAssertJSON(d.value);
   }
   return Object.freeze({
+    ...(descriptors.readResponseEvidence?{readResponseEvidence:descriptors.readResponseEvidence.value}:{}),
+    ...(descriptors.readResponseRecovery?{readResponseRecovery:descriptors.readResponseRecovery.value}:{}),
+    ...(descriptors.readResponseExecution?{readResponseExecution:descriptors.readResponseExecution.value}:{}),
     ...(descriptors.collectOnline?{collectOnline:descriptors.collectOnline.value}:{}),
     ...(descriptors.deliverOnlineFinding?{deliverOnlineFinding:descriptors.deliverOnlineFinding.value}:{}),
     ...(descriptors.readOnlineRepair?{readOnlineRepair:descriptors.readOnlineRepair.value}:{}),

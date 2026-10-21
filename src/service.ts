@@ -1,5 +1,9 @@
 import {createOwnerFeedback,OWNER_FEEDBACK_OPERATIONS} from '../vendor/compatibility/feedback/v1/owner.mjs';
 import {createOnlineHarness,ONLINE_OPERATIONS} from './online-service.js';
+import {createHarnessResponse,RESPONSE_HARNESS_OPERATIONS} from './response.js';
+import type {ResponseEnvelope} from '../vendor/compatibility/response/v1/response.mjs';
+export type * from '../vendor/compatibility/response/v1/response.mjs';
+export type {ResponseHarnessProviders,ResponseAssessment} from './response.js';
 import type {OnlineEnvelope} from '../vendor/compatibility/online/v1/online.mjs';
 import type {FeedbackEnvelope} from '../vendor/compatibility/feedback/v1/feedback.mjs';
 export type * from '../vendor/compatibility/feedback/v1/feedback.mjs';
@@ -20,9 +24,9 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
   const providers = validateProviders(trustedProviders);
   bounded(options); exactFields(options, ['workspaceRoot', 'workspaceId']);
   const { workspaceRoot, workspaceId } = options;
-  let store: Store | null = null, closed = false, activeNative = 0,activeOnline=0;
+  let store: Store | null = null, closed = false, activeNative = 0,activeOnline=0,activeResponse=0;
   let onlineService:ReturnType<typeof createOnlineHarness>|null=null;
-  const capabilities = () => frozenClone({ product: 'harness', version: '0.5.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, onlineOperations:ONLINE_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
+  const capabilities = () => frozenClone({ product: 'harness', version: '0.6.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, onlineOperations:ONLINE_OPERATIONS, responseOperations:RESPONSE_HARNESS_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
   function initialize() {
     if (closed) fail('CLOSED', 'Service is closed');
     if (!store) store = openState(workspaceRoot, workspaceId);
@@ -109,6 +113,7 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
   let activeFeedback=0;
   async function feedback(request:FeedbackEnvelope):Promise<unknown>{if(closed)fail('CLOSED','Service closed');if(!store)fail('NOT_INITIALIZED','Explicit initialize required');activeFeedback++;try{return await createOwnerFeedback(store,'harness',providers).feedback(request);}finally{activeFeedback--;}}
   async function online(request:OnlineEnvelope):Promise<unknown>{if(closed)fail('CLOSED','Service closed');if(!store)fail('NOT_INITIALIZED','Explicit initialize required');if(!onlineService)onlineService=createOnlineHarness(store,providers);activeOnline++;try{return await onlineService.online(request);}finally{activeOnline--;}}
-  function close() { if(activeOnline)fail('BUSY','Online operation is still in progress'); if(activeFeedback)fail('BUSY','Feedback operation is still in progress'); if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
-  return Object.freeze({ capabilities, initialize, execute, native, feedback, online, close });
+  async function response(request:ResponseEnvelope):Promise<unknown>{if(closed)fail('CLOSED','Service closed');if(!store)fail('NOT_INITIALIZED','Explicit initialize required');activeResponse++;try{return await createHarnessResponse(store,providers).response(request);}finally{activeResponse--;}}
+  function close() { if(activeResponse)fail('BUSY','Response operation is still in progress'); if(activeOnline)fail('BUSY','Online operation is still in progress'); if(activeFeedback)fail('BUSY','Feedback operation is still in progress'); if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
+  return Object.freeze({ capabilities, initialize, execute, native, feedback, online, response, close });
 }
