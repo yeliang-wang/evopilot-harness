@@ -27,3 +27,7 @@ Preview documentation describes software capabilities; technical checks do not e
 ## v0.5 online integration
 
 [Online API](online-harness.md) and [OpenSLO implementation profile](../specifications/online/v1/README.md) define inputs, actual evidence, limits and state recovery.
+
+## v0.6 candidate
+
+Read [published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history](response.md). The optional/additive response work preserves native v1 specifications. Current source implementation is distinct from accepted installation or a published release.

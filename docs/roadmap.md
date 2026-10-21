@@ -90,6 +90,22 @@ The goals below are **NOT SCHEDULED**. `CANDIDATE` records a follow-up direction
 
 **Non-goals:** operating metrics collectors, Prometheus servers, dashboards, alert routing, on-call management or a replacement SRE platform. A future adapter does not claim full OpenSLO or Sloth support until its explicit compatibility and acceptance checks pass.
 
+### HAR-F04 — Response guidance and verified problem disposition
+
+**Status:** `CANDIDATE`; not scheduled. This is Harness's part of [EVO-F04](https://github.com/yeliang-wang/evopilot/blob/main/docs/roadmap.md#evo-f04--incident-response-and-asset-learning), expanding the existing reviewed repair linkage candidate; no version/date or additional v1.0 gate is assigned.
+
+**Trigger:** a real project needs the quality evidence for an incident connected to applicable response guidance, explicit disposition and regression learning.
+
+**Scope:** define versioned diagnostic and verification guidance with applicability, symptoms, prerequisites, required inputs, expected checks, stop conditions and immutable references to response steps. Bind the rule, service/environment/deployment and guidance revision; Runtime owns executable action plans and authority, while Ontology defines domain meaning. A runbook is not an executable authorization. An actual target must specify the package/validation contract before implementation; Markdown prose alone does not certify executable conformance.
+
+Distinguish an observed incident, a reviewed problem/root-cause assessment and a quality disposition. Firing/resolved remains observation history; root-cause removal and prevention require separate evidence. Proposed deferral/risk-acceptance records must retain actor, rationale, exact scope, expiry/review time and append-only history. They cannot erase failed measurements, suppress required rules, or convert FAIL, UNKNOWN or missing data into PASS. Expiry must be visible and re-reviewable. Duplicate/late events must not invalidate a later recovery or decision incorrectly.
+
+**Learning:** a postmortem may propose a new regression case, changed guidance or rule improvement through existing review/delivery mechanisms. Preserve the source incident, policy/configuration, actual evidence and prior asset version. Use HAR-F01 for broader calibration or mutation-quality work rather than quietly expanding this candidate. Private incident examples and SOPs stay private; public templates use synthetic examples.
+
+**Future acceptance:** own observation/guidance/disposition assertions for EVO-F04-E01–E03, E05 and E07–E08, and participate in E04, E06 and E09–E10. Test actual failure/recovery windows, missing/stale/partial evidence, mismatched guidance, false recovery, expired exceptions, changed policy thresholds, late events and duplicate delivery. A command succeeding or an alert disappearing must not prove the problem is fixed. New regression cases must fail against a demonstrated fault and pass against the repaired case under pinned rules and effective configuration; historical failures remain readable. Implement cases under existing `tests/e2e` and verify public API integration through parent E2E.
+
+**References and limits:** [Prometheus alert rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) provide labels/annotations, not trusted execution instructions. [Google SRE postmortems](https://sre.google/sre-book/postmortem-culture/) inform impact, causes, mitigation and preventive actions; EvoPilot must define its own explicit supported fields and lifecycle. No replacement alert-routing/on-call platform, automatic rule weakening or automatic software release is included. Current `specifications/v1`, immutable records and the bounded online profile remain unchanged by this roadmap entry.
+
 ## Approved v0.4 execution feedback
 
 Published in the v0.4 Preview under the parent [36-variant Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/feedback-v04.json). This owner participates in registered execution feedback through its public APIs while preserving native v0.3 standards and historical records. Candidate-specific Host, recovery and release evidence remain private. v0.5 online Harness has the separate scope below; neither version authorizes v1.0.
@@ -108,7 +124,11 @@ The delivered scope is a bounded OpenSLO v1 RatioTimeslices profile and macOS ar
 |---|---|---|
 | Online retention and scale | Real projects reach bounded history/backlog limits | Reviewed retention/export semantics, immutable historical evidence, restart/load tests and explicit no-loss acceptance; no silent pruning |
 | Additional supervisors/providers | A concrete project requires another platform or telemetry source | Pinned supported subset, real provider/Host E2E, credentials/network isolation and owned stop/recovery; no blanket compatibility claim |
-| Reviewed repair execution linkage | Real users need repair candidates connected to a concrete approved Target | Explicit candidate/Target/source/version mapping, reviewed authority, real executor receipts, failure/recovery tests; never automatic patch release from Warning |
+| [Reviewed repair execution linkage — EVO-F04](https://github.com/yeliang-wang/evopilot/blob/main/docs/roadmap.md#evo-f04--incident-response-and-asset-learning) | Real users need repair candidates connected to a concrete approved Target | See the shared EVO-F04 scenarios and owner candidates; exact authority, actual execution, recovery and reviewed asset learning remain required |
 | Additional SLO semantics | Several projects need calendar/composite/other budgeting methods | Versioned profile compatibility, upstream field/calculation comparisons, negative cases and preserved earlier approvals |
 
 These candidates are not uncompleted v0.5 criteria and have no assigned release date. They require their own reviewed Target. Existing v1.0 readiness conditions remain unchanged.
+
+## Current v0.6.0 implementation
+
+HAR-F04 is now bound to the approved parent [v0.6 response Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/response-v06.json). Earlier CANDIDATE wording records the reviewed proposal; the Target fixes the current bounded implementation and 36 required variants. It does not claim acceptance or publication. Maintained core source uses strict TypeScript; native standards and historical records stay intact.

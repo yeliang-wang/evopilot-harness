@@ -6,6 +6,8 @@ Harness defines and verifies QA/SRE delivery criteria for projects developed wit
 
 **v0.5.0 Preview** adds bounded online SLO measurements, authenticated alerts, native evaluation and reviewable repair/regression feedback while preserving the corrected native v1 standards. Use the Downloads page for published artifacts. Source and synthetic tests alone do not establish real-project acceptance.
 
+This **v0.6.0 candidate** adds published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history. Read [the implementation guide](docs/response.md). Acceptance and installation require exact-candidate evidence; the v0.5 downloads below remain the previously published release. Core implementation uses strict TypeScript; generated JavaScript is the installed runtime format.
+
 ## Adopted standards
 
 | Part | Basis | What EvoPilot adds |
