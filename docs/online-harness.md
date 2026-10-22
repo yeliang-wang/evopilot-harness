@@ -1,6 +1,6 @@
 # Online Harness API
 
-For integrators using the v0.7 candidate, `createHarnessService(...).online(envelope)` is the owning online API introduced in v0.5. The parent supplies configured providers and the independent worker. Construction, registration and inspection do not select or start monitoring. The [response API](response.md) links retained findings to reviewed guidance and dispositions; alert recovery alone does not establish a verified problem closure.
+For integrators using the v0.7.0 Preview, `createHarnessService(...).online(envelope)` is the owning online API introduced in v0.5. The parent supplies configured providers and the independent worker. Construction, registration and inspection do not select or start monitoring. The [response API](response.md) links retained findings to reviewed guidance and dispositions; alert recovery alone does not establish a verified problem closure.
 
 Import adapter factories and profile types from `@evopilot-next/harness/online`. `createPrometheusCollector` accepts trusted private connection configuration; `createAlertmanagerReceiver` authenticates real receiver traffic before exposing a temporary trusted receipt. Neither callback is accepted through an MCP request. The standalone CLI registers no external provider.
 

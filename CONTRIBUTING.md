@@ -16,3 +16,7 @@ Build compiles strict TypeScript and cleans only generated dist. Check verifies 
 Harness owns declarative QA, evidence evaluation and its asset lifecycle. Runtime and Ontology changes belong in their respective owner repositories. The [parent composition](https://github.com/yeliang-wang/evopilot) tracks product revisions through Git submodule gitlinks: land the owner change first, then propose an explicit parent gitlink update to that real commit. Do not copy sibling implementations into Harness.
 
 Describe behavior, compatibility and validation in each pull request. Technical success does not grant Host acceptance or release authority. Follow the [parent release procedure](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md) under the current explicit release authorization.
+
+## Documentation consistency
+
+`npm run check` includes `scripts/check-documentation.mjs`. Keep the README, documentation index, current changelog section and default installation examples aligned with `package.json`; retain explicitly historical version records. Run `node --test tests/e2e/documentation.test.mjs` for the gate regression cases. Source documentation updates do not replace existing tags or release archives.

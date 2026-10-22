@@ -1,3 +1,4 @@
+import { checkDocumentation } from './check-documentation.mjs';
 import assert from 'node:assert/strict';
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -79,6 +80,7 @@ async function files(directory) {
 }
 
 export async function checkSource() {
+  await checkDocumentation();
   const typecheck = spawnSync(process.execPath, [resolve(ROOT, 'node_modules/typescript/bin/tsc'), '--noEmit'], { cwd: ROOT, encoding: 'utf8' });
   assert.ifError(typecheck.error); assert.equal(typecheck.status, 0, typecheck.stdout + typecheck.stderr);
   // Resolve consumer types through real compiled package exports; build first.
