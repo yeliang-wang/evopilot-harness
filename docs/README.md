@@ -32,3 +32,7 @@ Preview documentation describes software capabilities; technical checks do not e
 ## v0.6 response guidance
 
 Read [published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history](response.md). The additive response API preserves native v1 specifications and uses schema reader floor 5. Exact installation evidence stays private; the [v0.6.0 release record](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) identifies public distribution. See also the [implementation language boundaries](../README.md#response-guidance-and-implementation-languages).
+
+## v0.7 candidate
+
+Read [owner-readable API](readable-api.md) for exact snapshots, table-first reports and bounded comparisons. Native v1 formats and validators remain unchanged. Candidate verification does not establish installed Host acceptance.

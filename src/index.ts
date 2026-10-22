@@ -1,6 +1,6 @@
 import { inspectReference } from '../vendor/compatibility/v1/reference.mjs';
 
-export const VERSION = '0.6.0';
+export const VERSION = '0.7.0';
 export const PRODUCT = 'harness';
 
 export function capabilities() {

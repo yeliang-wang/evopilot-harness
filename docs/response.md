@@ -1,4 +1,4 @@
-# Reviewed response guidance and problem disposition — v0.6.0 Preview
+# Reviewed response guidance and problem disposition — v0.7.0 candidate
 
 The v0.6 response service links published Harness guidance, retained online
 findings and reviewed problem assessments to Runtime's isolated execution and

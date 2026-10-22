@@ -1,5 +1,7 @@
 # Harness roadmap
 
+Current edition: [HAR-F05 / v0.7 readable policy results](#har-f05--v07-readable-policy-results). Implemented for the v0.7 edition; exact publication and download records remain on the versioned Release page.
+
 Harness owns project QA and delivery rules, evidence evaluation, and immutable Harness deliveries. Runtime owns execution, project decisions and business completion; Ontology owns domain models. The [parent roadmap](https://github.com/yeliang-wang/evopilot/blob/main/docs/roadmap.md) coordinates cross-product goals and v1.0 readiness. Recording a future goal here is not implementation, acceptance or release authority.
 
 The [published v0.1.0 Preview](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.1.0) is the historical baseline. Its published specifications, fixtures, archived sources and provenance remain retained unchanged. The approved correction of the current `specifications/v1` below does not rewrite those historical records.
@@ -56,7 +58,7 @@ Goals marked `CANDIDATE` remain **NOT SCHEDULED**; `CONDITIONAL_RESEARCH` first 
 
 ### HAR-F01 — Policy quality, diagnostics and scale
 
-**Status:** `CANDIDATE`; not scheduled.
+**Status:** `CANDIDATE`; broader policy quality/scale work is not scheduled. The bounded readable-diagnostics portion is included in HAR-F05's accepted v0.7 plan below; implementation is isolated.
 
 **Trigger:** real project adoption reveals gaps that required rule IDs and positive/negative cases cannot adequately diagnose, or a measured policy/evidence workload exceeds the current bounded operating profile.
 
@@ -131,3 +133,19 @@ These candidates are not uncompleted v0.5 criteria and have no assigned release 
 ## v0.6.0 Preview implementation
 
 HAR-F04 is implemented under the approved parent [v0.6 response Target](https://github.com/yeliang-wang/evopilot/blob/main/governance/response-v06.json), which fixes the bounded implementation and 36 cross-product variants. Published runbooks, reviewed problem dispositions, immutable history checkpoints and exact recovery references are described in [response guidance](response.md). The [release record](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) identifies the distributed source and assets; actual project and Host acceptance remain private evidence. Maintained core source uses strict TypeScript, and native standards and historical records stay intact. The remaining follow-ups above do not become implicit v0.6 requirements.
+
+## HAR-F05 — v0.7 readable policy results
+
+**Status:** `IMPLEMENTED` for v0.7.0 Preview. The parent execution Target fixes 50 acceptance variants. Actual source, installed Host, recovery and release evidence remain private and candidate-bound; this roadmap does not itself grant authority.
+
+**Scope:** own the Harness part of V07-T1–T3: preflight the complete required rule/test/observation inventory before candidate freeze; expose readable, scoped policy catalogs and verified diagnostic projections; support the parent's Codex reports through public owner APIs. Show rule identity/name, applicability, input/parameter references, expected/actual outcomes, test verdict, evidence origin and source/report/receipt references. Preserve native messages and exact rule/query identity; display absent explanatory metadata honestly.
+
+Native Rego/OPA/Conftest, frozen `specifications/v1`, supported online semantics and immutable historical assets remain authoritative. Prefer native [OPA metadata](https://www.openpolicyagent.org/docs/policy-language#metadata) and existing declared fields; version additive presentation contracts separately. Changed policy bytes require a new candidate and review. An expected negative case that is rejected passes its test, not the underlying business policy. Keep source declarations, synthetic cases, actual execution and online findings distinct. Grouping review items does not merge their decisions, permit automatic REUSE or weaken a warning gate.
+
+**Acceptance mapping:** V07-E01 specific owner prerequisites and safe error context; E02 missing required observations/cases rejected before freeze; E03 native messages plus expected/actual/test-verdict agreement; E04 no asset PASS presented as overall product acceptance; E05 bounded rule/parameter changes with affected references; E06 complete paginated/filterable results and cross-format agreement; E07 preserved owner history/receipts through parent maintenance; E08 isolated read-only queries, installed guides and accessible reports. Bind positive, negative, missing/stale and recovery variants in `tests/e2e` and parent integration E2E before implementation. No results are claimed here.
+
+Reference [Policy Reporter UI](https://kyverno.github.io/policy-reporter-docs/policy-reporter-ui/introduction.html) for grouping and navigation without importing its Kubernetes lifecycle as EvoPilot's contract. HAR-F01's broader coverage, mutation calibration and performance work remains separate. The parent composes Codex reports; Dashboard implementation and a second Harness database are excluded. Real project cases remain private; v1.0 criteria are unchanged; installing a newer version is a separate operation.
+
+### v0.7 project planning addition
+
+The approved parent V07-T0 adds project-scoped conversation provenance, immutable planning revisions and Runtime-owned Roadmap decisions/execution bindings. Ontology and Harness assets retain independent native validation and review. User planning stays private; native specifications/v1 remain unchanged. Installation changes follow the separately authorized stopped-state backup, recovery and Host verification procedure. See the parent [planning decision](https://github.com/yeliang-wang/evopilot/blob/main/docs/adr-planning.md).

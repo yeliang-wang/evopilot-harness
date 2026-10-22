@@ -4,7 +4,9 @@
 
 Harness defines and verifies QA/SRE delivery criteria for projects developed with a third-party AI assistant. It turns explicit project requirements into reusable native policies, validates evidence, and preserves reviewed immutable deliveries. It does not run business builds, deployments or autonomous repairs.
 
-**v0.6.0 Preview** adds published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history. It retains the bounded online SLO measurements, authenticated alerts, native evaluation and execution feedback introduced in earlier versions. Read [response guidance](docs/response.md) and the [v0.6.0 release page](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) for distribution and publication records. Source and synthetic tests alone do not establish real-project acceptance.
+Earlier **v0.6.0 Preview** introduced published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history. It retains the bounded online SLO measurements, authenticated alerts, native evaluation and execution feedback introduced in earlier versions. Read [response guidance](docs/response.md) and the [v0.6.0 release page](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) for distribution and publication records. Source and synthetic tests alone do not establish real-project acceptance.
+
+v0.7 adds [readable owner reports](docs/readable-api.md), exact-version pagination and explicit evidence boundaries. Native standards and decision authority are unchanged. Publication records are on the [v0.7.0 release page](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.7.0).
 
 ## Adopted standards
 
@@ -81,3 +83,7 @@ See [online API and supported provider limits](docs/online-harness.md), the [pro
 In v0.6, an immutable native package can carry a runbook whose exact service, environment, source, parameters and prerequisites must match the proposed response. Problem assessments preserve observed, suspected and confirmed explanations separately. Verified closure requires retained recovery and Runtime's independent verification; deferral and risk acceptance preserve the original quality result. See [the response API](docs/response.md), including schema-5 upgrade and recovery requirements.
 
 Maintained service and decision logic uses strict TypeScript. Installed entry points run generated JavaScript; handwritten JavaScript is limited to build, packaging, checks, examples and tests. Harness rules remain native Rego, with JSON/YAML configuration. The parent owns the [cross-product language policy](https://github.com/yeliang-wang/evopilot/blob/main/docs/language-policy.md); the RDF/SHACL Python adapter belongs to Ontology, not Harness orchestration.
+
+### Isolated v0.7 candidate
+
+The approved candidate adds a [readable API](docs/readable-api.md) with pinned snapshots, fixed denominators and explicit evidence limits. Candidate validation is ongoing; this is not a v0.7 release or daily installation claim.

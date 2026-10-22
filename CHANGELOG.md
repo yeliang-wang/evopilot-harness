@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 Preview candidate — unreleased
+
+- Add owner-verified, table-first reports with exact references and explicit unknown, missing, not-executed and tool-error states. Expected rejection remains distinct from business success.
+- Preserve corrected native v1 standards, immutable history and independent decision/release authority. No Dashboard is included.
+- Expose native rule inputs, effective parameters, required policy and fixed case outcomes without inventing severity or weakening Rego rules.
+- Candidate verification is in progress; shared maintenance and daily installation cutover remain deferred. This entry is not a release or acceptance receipt.
+
+
 ## 0.6.0 Preview
 
 - Add published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history.

@@ -42,7 +42,7 @@ function conftestRow(value: unknown): Record<string, unknown> {
 }
 function astDeclarations(ast: unknown) { const root = object(ast), pkg = object(root.package), namespace = rows(pkg.path).map(x => object(x).value).join('.'); const names = rows(root.rules ?? []).map(r => { const head = object(object(r).head); if (typeof head.name !== 'string')
     throw new TypeError('Unsupported dynamic/native rule head'); return head.name; }); return { namespace, names }; }
-function conftestResults(raw: unknown, catalog: HarnessRule[]) { const failures: string[] = [], warnings: string[] = []; let successes = 0; for (const rawRow of rows(raw)) {
+export function conftestResults(raw: unknown, catalog: HarnessRule[]) { const failures: string[] = [], warnings: string[] = []; let successes = 0; for (const rawRow of rows(raw)) {
     const r = conftestRow(rawRow);
     if (typeof r.successes !== 'number' || !Number.isSafeInteger(r.successes) || r.successes < 0 || r.skipped || r.exceptions)
         throw new TypeError('Unexpected Conftest result');
