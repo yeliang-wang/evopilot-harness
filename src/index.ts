@@ -1,6 +1,6 @@
 import { inspectReference } from '../vendor/compatibility/v1/reference.mjs';
 
-export const VERSION = '0.7.0';
+export const VERSION = '0.8.0';
 export const PRODUCT = 'harness';
 
 export function capabilities() {
@@ -32,3 +32,16 @@ export { createHarnessSemanticRequirements, evaluateSemanticCompatibility } from
 export type * from './types.js';
 
 export { inspectHarnessStandard, inspectHarnessPackage, validateNativeHarness } from './native.js';
+
+export {preflightUsability} from './usability.js';
+export type {UsabilityReaders,UsabilityPreflight,UsabilityPreflightRequest} from './usability.js';
+export {USABILITY_LEVELS,USABILITY_STANDARD_DIGEST,ASSESSMENT_STATES,BEHAVIOR_FACETS,USABILITY_LIMITS,usabilityDigest,usabilityBytesDigest,validateUsabilityInventory,validateUsabilitySpecification} from './usability.js';
+export type {UsabilityInventory,UsabilitySpecification,UsabilityCitation,UsabilityPins,UsabilityScope,UsabilityLevel,BehaviorFacet} from './usability.js';
+
+export {semanticCriteria,semanticReportDigest,validateSemanticReport} from '../vendor/usability/v1/assessment.mjs';
+export type {UsabilitySemanticReport,UsabilityAssessmentResult} from '../vendor/usability/v1/assessment.mjs';
+export type {UsabilityRequest,UsabilityInputs,UsabilityResults,UsabilityResponse,UsabilityOperation,UsabilityAssessmentProviders,UsabilityInventoryRecord,UsabilityAssetBinding} from './usability-assessment.js';
+
+export type {OracleInputs,OracleResults,OracleBinding,OracleEvaluation,OracleProviders} from './usability-oracle.js';
+export type {BehaviorOracle,BehaviorObservation,OracleTolerance,ReconstructionObservation,BehaviorOracleResult} from '../vendor/usability/v1/oracle.mjs';
+export {behaviorOracleDigest,validateBehaviorOracle,compareBehavior,validateReconstructionObservation} from '../vendor/usability/v1/oracle.mjs';

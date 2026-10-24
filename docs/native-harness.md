@@ -31,7 +31,7 @@ import { inspectHarnessStandard } from '@evopilot-next/harness/native';
 const standard = inspectHarnessStandard();
 const service = createHarnessService(
   { workspaceRoot: absolutePrivateStateRoot, workspaceId: 'my-workspace' },
-  { nativeToolchain: trustedInstalledToolchain }
+  { nativeToolchain: trustedInstalledToolchain, resolveNativeAuthoring: trustedProjectAuthoringResolver }
 );
 service.initialize();
 const scope = { visibility: 'private', projectId: 'my-project' };
@@ -108,3 +108,14 @@ EVOPILOT_TEST_NATIVE_TOOLCHAIN=/absolute/path/to/verified/native-toolchain.json 
 The variable supplies host test construction, not a product request. Missing tools fail E2E; tests do not silently skip. Historical fixture writers exist only under `tests/fixtures`, are pinned to the old source commit, and are excluded from installed package files. They construct synthetic historical states for readback/corruption/relocation tests; they do not enable legacy writes in the current service.
 
 Before a new decision, retain the actual authorization source and bind it using the [decision evidence format](native-decisions.md). Opaque approval labels no longer authorize new native work; historical receipts remain unchanged.
+
+
+## v0.8 source candidate: trusted authoring admission
+
+`trustedProjectAuthoringResolver` in the example is host configuration, not a request flag. Supply `resolveNativeAuthoring` when constructing the service for new authoring. The synchronous callback must use bounded local reads of reviewed project/source state. Its typed `evopilot-native-authoring-admission/v1` result binds Workspace, scope, owner, exact package/source-binding digests and direction, plus candidate, source-inventory and requirement digests. Reverse sources require the actual modeling-intent digest and target L1/L2/L3. Forward sources require trusted forward context and null intent/target. Async or malformed results fail closed. `authority: false` never awards a level or approves publication.
+
+The parent HTTP/MCP host supplies this callback from frozen, materialized projects. Direct SDK hosts must configure it themselves. The standalone CLI rejects new authoring without project context with `AUTHORING_CONTEXT_REQUIRED`; it still reads and validates published packages. The synthetic tutorial uses a clearly marked synthetic host fixture, which must never approve real project assets.
+
+The owner retains admission beside package bytes and rechecks draft validation, review, decision and publication, including after asynchronous work. Changed admission retains a failed receipt instead of a passing draft report. Exact old receipts replay; published asset bytes and consumption are unchanged. Legacy unfinished drafts require a new bound put under a new request ID.
+
+The first admitted authoring write raises the state marker to 6. Upgraded snapshot/relocation APIs accept it; old v0.7 writers reject it. Retain a stopped complete backup before upgrade and restore it to revert. Never lower the marker or rewrite historical receipts. This source candidate does not upgrade the daily v0.7 installation.

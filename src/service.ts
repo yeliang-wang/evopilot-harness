@@ -1,3 +1,6 @@
+import {createUsabilityAssessment,USABILITY_OPERATIONS} from './usability-assessment.js';
+import type {UsabilityRequest,UsabilityOperation,UsabilityResponse} from './usability-assessment.js';
+export type {UsabilityRequest,UsabilityInputs,UsabilityResults,UsabilityResponse,UsabilityOperation,UsabilityAssessmentProviders,UsabilityInventoryRecord,UsabilityAssetBinding} from './usability-assessment.js';
 import type {NativeHarnessRecord} from './native-types.js';
 import type {ReadRequest} from '../vendor/readability/v1/readability.mjs';
 import {createReadableAPI,READABLE_OPERATIONS} from '../vendor/readability/v1/readability.mjs';
@@ -31,7 +34,7 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
   const { workspaceRoot, workspaceId } = options;
   let store: Store | null = null, closed = false, activeNative = 0,activeOnline=0,activeResponse=0;
   let onlineService:ReturnType<typeof createOnlineHarness>|null=null;
-  const capabilities = () => frozenClone({ product: 'harness', version: '0.7.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, readableOperations:READABLE_OPERATIONS, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, onlineOperations:ONLINE_OPERATIONS, responseOperations:RESPONSE_HARNESS_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
+  const capabilities = () => frozenClone({ product: 'harness', version: '0.8.0', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, readableOperations:READABLE_OPERATIONS, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, usabilityOperations:USABILITY_OPERATIONS, onlineOperations:ONLINE_OPERATIONS, responseOperations:RESPONSE_HARNESS_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
   function initialize() {
     if (closed) fail('CLOSED', 'Service is closed');
     if (!store) store = openState(workspaceRoot, workspaceId);
@@ -122,6 +125,11 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
   let activeReadable=0;
   const readableAPI=createReadableAPI({kind:'asset',list:async scope=>(await native({operation:'native.package.list',scope,input:{}})).map(r=>({id:r.reference.id,version:r.reference.version,published:r.published,packageDigest:r.reference.digest})),get:async(scope,identity)=>harnessReadSnapshot(await native({operation:'native.package.inspect',scope,input:{id:identity.id,version:identity.version!}}) as NativeHarnessRecord,options.workspaceId,scope)});
   async function readable(request:ReadRequest):Promise<unknown>{if(closed)fail('CLOSED','Service is closed');if(!store)fail('NOT_INITIALIZED','Explicit initialize required');activeReadable++;try{return await readableAPI(request);}finally{activeReadable--;}}
-  function close() { if(activeReadable)fail('BUSY','Readable snapshot is in progress'); if(activeResponse)fail('BUSY','Response operation is still in progress'); if(activeOnline)fail('BUSY','Online operation is still in progress'); if(activeFeedback)fail('BUSY','Feedback operation is still in progress'); if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
-  return Object.freeze({ capabilities, initialize, execute, native, readable, feedback, online, response, close });
+  let activeUsability=0;
+  async function usability<K extends UsabilityOperation>(request:UsabilityRequest<K>):Promise<UsabilityResponse<K>>{if(closed)fail('CLOSED','Service closed');if(!store)fail('NOT_INITIALIZED','Explicit initialize required');activeUsability++;try{return await createUsabilityAssessment(store,providers).usability(request);}finally{activeUsability--;}}
+  function close() { if(activeUsability)fail('BUSY','Usability assessment in progress'); if(activeReadable)fail('BUSY','Readable snapshot is in progress'); if(activeResponse)fail('BUSY','Response operation is still in progress'); if(activeOnline)fail('BUSY','Online operation is still in progress'); if(activeFeedback)fail('BUSY','Feedback operation is still in progress'); if (activeNative) fail('BUSY', 'Native operation is still in progress'); if (store) { store.db.close(); store = null; } closed = true; }
+  return Object.freeze({ capabilities, initialize, execute, native, readable, feedback, online, response, usability, close });
 }
+
+export type {OracleInputs,OracleResults,OracleBinding,OracleEvaluation,OracleProviders} from './usability-oracle.js';
+export type {BehaviorOracle,BehaviorObservation,OracleTolerance,ReconstructionObservation,BehaviorOracleResult} from '../vendor/usability/v1/oracle.mjs';

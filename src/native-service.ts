@@ -1,4 +1,4 @@
-import { nativeExact, nativeSha256, nativeStableSerialize, nativeFrozenClone, nativeText, referenceForPackage, validateNativeReference, validateNativePackage } from '../vendor/compatibility/v1/native.mjs';
+import { nativeExact, nativeSha256, nativeStableSerialize, nativeFrozenClone, nativeText, nativePackageDigest, referenceForPackage, validateNativeReference, validateNativePackage } from '../vendor/compatibility/v1/native.mjs';
 import type { NativeReference, NativeScope } from '../vendor/compatibility/v1/native.mjs';
 import type { NativeRequest, NativeOperation, NativeHarnessProviders, NativeHarnessRecord, NativeHarnessReceipt, NativeHarnessReport, NativeHarnessReview, NativeHarnessDecision } from './native-types.js';
 import type { Store } from './types.js';
@@ -7,6 +7,7 @@ import { inspectHarnessStandard } from './native-standard.js';
 import { inspectHarnessPackage } from './native-package.js';
 import { validateNativeHarness } from './native-evaluation.js';
 import { verifyDecisionEvidence } from '../vendor/compatibility/v1/decision-evidence.mjs';
+import {requireNativeAuthoring, type NativeAuthoringAdmission} from '../vendor/usability/v1/authoring.mjs';
 export const NATIVE_OPERATIONS: NativeOperation[] = ['standard.inspect', 'native.package.put', 'native.package.inspect', 'native.package.list', 'native.package.validate', 'native.package.review', 'native.package.decide', 'native.package.publish', 'native.package.readback', 'native.receipt.inspect'];
 const mutations = new Set(['native.package.put', 'native.package.validate', 'native.package.review', 'native.package.decide', 'native.package.publish']);
 const fields: Record<NativeOperation, string[]> = { 'standard.inspect': [], 'native.package.put': ['package'], 'native.package.inspect': ['id', 'version'], 'native.package.list': [], 'native.package.validate': ['id', 'version'], 'native.package.review': ['id', 'version'], 'native.package.decide': ['id', 'version', 'reviewDigest', 'decision', 'humanEvidenceRef'], 'native.package.publish': ['id', 'version'], 'native.package.readback': ['id', 'version'], 'native.receipt.inspect': ['requestId'] };
@@ -25,6 +26,10 @@ function readRecord(store: Store, scope: NativeScope, id: string, version: strin
 } return r; }
 function saveRecord(store: Store, r: NativeHarnessRecord) { store.db.prepare('INSERT INTO native_packages(scope,id,version,record) VALUES(?,?,?,?) ON CONFLICT(scope,id,version) DO UPDATE SET record=excluded.record').run(nativeStableSerialize(r.scope), r.reference.id, r.reference.version, nativeStableSerialize(r)); }
 function readReceipt(store: Store, scope: NativeScope, id: string) { const row = table(store) ? store.db.prepare('SELECT intent_digest,receipt FROM native_receipts WHERE scope=? AND request_id=?').get(nativeStableSerialize(scope), id) : undefined; return row ? { digest: row.intent_digest as string, receipt: JSON.parse(row.receipt as string) as NativeHarnessReceipt } : null; }
+function authoring(store:Store,providers:NativeHarnessProviders,scope:NativeScope,pkg:NativeHarnessRecord['package'],retained?:NativeAuthoringAdmission):NativeAuthoringAdmission {
+    const bindings=JSON.parse(pkg.files[pkg.manifest.sourceBindingRef]);
+    return requireNativeAuthoring(providers.resolveNativeAuthoring,{workspaceId:store.identity.id,scope,owner:'harness',packageDigest:nativePackageDigest(pkg),sourceBindingsDigest:nativeSha256(bindings),sourceDirection:bindings.direction},retained);
+}
 async function dependencies(store: Store, r: NativeHarnessRecord, p: NativeHarnessProviders) { const values: unknown[] = []; for (const ref of r.package.manifest.dependencies) {
     if (ref.product === 'harness') {
         const resolved = readRecord(store, { visibility: ref.visibility, projectId: r.scope.projectId }, ref.id, ref.version);
@@ -85,6 +90,20 @@ export async function executeNativeHarness(store: Store, request: NativeRequest,
             fail('REQUEST_CONFLICT', 'Native request ID binds another intent');
         return nativeFrozenClone(prior.receipt);
     }
+    // Fail admission before any durable claim or asset bytes. Published validation
+    // consumes existing immutable material; it does not start new authoring.
+    let admittedAuthoring:NativeAuthoringAdmission|undefined;
+    if(r.operation==='native.package.put') {
+        const {pkg}=inspectHarnessPackage(r.input.package);
+        if(pkg.manifest.visibility!==r.scope.visibility)fail('SCOPE_MISMATCH','Package visibility differs');
+        admittedAuthoring=authoring(store,providers,r.scope,pkg);
+    } else if('id' in r.input) {
+        const record=readRecord(store,r.scope,r.input.id,r.input.version);
+        if(!record.published){
+            if(!record.authoring)fail('AUTHORING_CONTEXT_REQUIRED','Legacy draft requires a new bound authoring admission');
+            admittedAuthoring=authoring(store,providers,r.scope,record.package,record.authoring);
+        }
+    }
     // A durable claim precedes all native subprocess activity. A process crash leaves RUNNING;
     // replay reads that claim and never redispatches it. The host reconciles explicitly.
     store.db.exec('BEGIN IMMEDIATE');
@@ -94,6 +113,7 @@ export async function executeNativeHarness(store: Store, request: NativeRequest,
         if (revision(store) !== r.expectedRevision)
             fail('REVISION_CONFLICT', 'Global product revision changed');
         initializeTables(store);
+        if(admittedAuthoring&&Number(store.db.prepare('PRAGMA user_version').get()!.user_version)<6)store.db.exec('PRAGMA user_version=6');
         claim = { requestId: r.requestId, operation: r.operation, scope: r.scope, requestDigest: intent, revision: advance(store), status: 'RUNNING', result: null, authority: false };
         store.db.prepare('INSERT INTO native_receipts VALUES(?,?,?,?)').run(nativeStableSerialize(r.scope), r.requestId, intent, nativeStableSerialize(claim));
         audit(store, claim);
@@ -125,7 +145,7 @@ export async function executeNativeHarness(store: Store, request: NativeRequest,
             if (old?.published)
                 fail('IMMUTABLE_VERSION', 'Published native version cannot change');
             store.blob(r.scope, pkg);
-            candidate = { scope: r.scope, package: pkg, reference: referenceForPackage(pkg) as NativeReference, validation: null, review: null, decision: null, published: false, dependencyDigest: null };
+            candidate = { authoring: admittedAuthoring!, scope: r.scope, package: pkg, reference: referenceForPackage(pkg) as NativeReference, validation: null, review: null, decision: null, published: false, dependencyDigest: null };
             result = { reference: candidate.reference };
         }
         else if ('id' in r.input) {
@@ -186,6 +206,7 @@ export async function executeNativeHarness(store: Store, request: NativeRequest,
         store.db.exec('BEGIN IMMEDIATE');
         transaction = true;
         if (candidate) {
+            if(admittedAuthoring)authoring(store,providers,r.scope,candidate.package,admittedAuthoring);
             let current: NativeHarnessRecord | undefined;
             try {
                 current = readRecord(store, r.scope, candidate.reference.id, candidate.reference.version);

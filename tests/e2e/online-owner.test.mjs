@@ -1,3 +1,4 @@
+import {syntheticAuthoring} from '../fixtures/native/authoring.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {DatabaseSync} from 'node:sqlite';
@@ -13,7 +14,7 @@ async function setup(t){
  const tokenFile=path.join(root,'token'),token='synthetic-alert-token-1234';fs.writeFileSync(tokenFile,token,{mode:0o600});
  const receiver=createAlertmanagerReceiver([{id:'alerts',bearerTokenFile:tokenFile}]);
  let ratio=1,reason=null,calls=0,service;
- const providers={nativeToolchain:JSON.parse(fs.readFileSync(process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN)),inspectOnlineAlert:receiver.inspect,collectOnline:async({binding,windowEnd})=>{
+ const providers={resolveNativeAuthoring:syntheticAuthoring,nativeToolchain:JSON.parse(fs.readFileSync(process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN)),inspectOnlineAlert:receiver.inspect,collectOnline:async({binding,windowEnd})=>{
   calls++;const points=[];for(let time=windowEnd-binding.slo.windowSeconds+1;time<=windowEnd;time++)points.push({time,good:ratio,total:1,goodSourceTime:time,totalSourceTime:time});
   const body=measurementBody(binding,windowEnd,points,reason?[reason]:[],[nativeSha256('synthetic-provider')]);return {...body,digest:nativeSha256(body)};
  }};
@@ -53,7 +54,7 @@ test('online native fault and recovery retain reports, same-window replay, incid
  const state=await e.read('online.inspect');assert.equal(state.incidents[0].state,'RESOLVED');assert.equal(state.incidents[0].history.length,2);assert.equal(state.findings.length,2);
  const regression=(await e.write('online.regression.verify',{faultId:failed.id,recoveryId:recovered.id})).result;assert.equal(regression.status,'REVIEW_REQUIRED');assert.equal(regression.fault.outcome,'FAIL');assert.equal(regression.recovery.outcome,'PASS');assert.equal(regression.policyMutation,false);
  const before=inspectWorkspaceSnapshot(e.options);e.restart();assert.equal((await e.read('online.observation.inspect',{id:failed.id})).digest,failed.digest);assert.equal(inspectWorkspaceSnapshot(e.options).snapshotDigest,before.snapshotDigest);
- const db=new DatabaseSync(path.join(e.options.workspaceRoot,'state/harness/harness.db'));assert.equal(db.prepare('PRAGMA user_version').get().user_version,4);db.close();
+ const db=new DatabaseSync(path.join(e.options.workspaceRoot,'state/harness/harness.db'));assert.equal(db.prepare('PRAGMA user_version').get().user_version,6);db.close();
 });
 test('online incomplete collection has no healthy result or false incident recovery',async t=>{
  const e=await setup(t);await e.approve();await e.select(true);const end=Math.floor(Date.now()/1000)-5;e.setRatio(0);await e.evaluate(end);e.setRatio(1);e.setReason('STALE_SAMPLES');

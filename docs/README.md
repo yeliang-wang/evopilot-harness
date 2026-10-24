@@ -1,6 +1,6 @@
 # Harness documentation
 
-Harness v0.7.0 Preview adds readable policy reports and exact-version comparisons to corrected native Rego/Conftest standards, registered execution feedback, bounded online assessment and reviewed response guidance/problem dispositions. Historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
+Harness v0.8.0 Preview adds readable policy reports and exact-version comparisons to corrected native Rego/Conftest standards, registered execution feedback, bounded online assessment and reviewed response guidance/problem dispositions. Historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
 
 ## Guides and reference
 
@@ -40,3 +40,12 @@ Read [owner-readable API](readable-api.md) for exact snapshots, table-first repo
 ## Documentation maintenance
 
 This default branch includes post-release documentation corrections for v0.7.0. Original tagged archives are immutable. See the [documentation correction policy](https://github.com/yeliang-wang/evopilot/blob/main/docs/github-release.md#documentation-corrections-after-publication).
+
+## v0.8 authoring admission
+
+The additive [usability preflight SDK](usability.md) checks scoped L1/L2 specification coverage and exposes gaps. It does not award a verified level. This source candidate is not part of the installed v0.7 release.
+
+
+## v0.8.0 Preview
+
+v0.8 adds independent asset consumption, explicit L1/L2/L3 usability assessment, mandatory purpose/scope/level admission before reverse modeling, and controlled reconstruction with an independent fixed oracle. Verified L3 is limited to the reviewed functional slice and requires two clean complete reconstructions; it does not mean byte-identical source, whole-project coverage, production readiness or automatic release. Read [the current workflow/API](usability.md). Publication and project acceptance retain separate evidence.

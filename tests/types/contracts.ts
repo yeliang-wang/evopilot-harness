@@ -64,3 +64,58 @@ export async function consumeNative() {
   // @ts-expect-error The request cannot replace the trusted binary executable.
   service.native({operation:'native.package.validate',scope,input:{id:'example',version:'1.0.0',executable:'/tmp/opa'},requestId:'bad',expectedRevision:0});
 }
+
+import { preflightUsability } from '@evopilot-next/harness';
+import type { UsabilityPreflightRequest, UsabilityReaders, UsabilityLevel } from '@evopilot-next/harness';
+export async function consumeUsability(request: UsabilityPreflightRequest, readers: UsabilityReaders) {
+  const result = await preflightUsability(request, readers);
+  const level: UsabilityLevel = result.targetLevel;
+  const verified: null = result.verifiedLevel;
+  const authority: false = result.authority;
+  // @ts-expect-error Preflight cannot award a level.
+  const awarded: 'L3' = result.verifiedLevel;
+  // @ts-expect-error Preflight status is never a verification certificate.
+  const certified: 'VERIFIED' = result.assessmentStatus;
+  return {level, verified, authority};
+}
+
+// Authoring callbacks are trusted host configuration, never a boolean bypass.
+createHarnessService({workspaceRoot:'/explicit/workspace',workspaceId:'consumer'},{resolveNativeAuthoring:request=>({...request,schema:'evopilot-native-authoring-admission/v1',candidateDigest:'sha256:'+'a'.repeat(64),sourceInventoryDigest:'sha256:'+'b'.repeat(64),requirementsDigest:'sha256:'+'c'.repeat(64),modelingIntentDigest:null,targetLevel:null,authority:false})});
+// @ts-expect-error A caller flag cannot replace a typed trusted authoring resolver.
+createHarnessService({workspaceRoot:'/explicit/workspace',workspaceId:'consumer'},{resolveNativeAuthoring:true});
+
+export async function consumeAssessment() {
+  const start=await service.usability({operation:'usability.assessment.start',scope,input:{id:'l3-slice',inventoryDigest:'sha256:'+'a'.repeat(64),specificationDigest:'sha256:'+'b'.repeat(64),reconstructionEvaluationIds:['first','second']},requestId:'start-l3',expectedRevision:0});
+  const selected:string[]|undefined=start.result.reconstructionEvaluationIds;
+  // @ts-expect-error Reconstruction selection is an ID list, not an inline result or grade.
+  service.usability({operation:'usability.assessment.start',scope,input:{id:'l3-slice',inventoryDigest:'sha256:'+'a'.repeat(64),specificationDigest:'sha256:'+'b'.repeat(64),reconstructionEvaluationIds:[{verifiedLevel:'L3'}]},requestId:'bad-l3',expectedRevision:0});
+  const result=await service.usability({operation:'usability.assessment.read',scope,input:{id:'slice'}});
+  const target:UsabilityLevel=result.targetLevel;
+  const verified:UsabilityLevel|null=result.verifiedLevel;
+  const authority:false=result.authority;
+  // @ts-expect-error Read-only assessment is not a mutation receipt.
+  result.result;
+  // @ts-expect-error A request flag cannot certify a level.
+  service.usability({operation:'usability.assessment.read',scope,input:{id:'slice',verifiedLevel:'L3'}});
+  // @ts-expect-error Evaluation requires request identity and CAS.
+  service.usability({operation:'usability.assessment.evaluate',scope,input:{id:'slice'}});
+  const evaluated=await service.usability({operation:'usability.assessment.evaluate',scope,input:{id:'slice'},requestId:'evaluation',expectedRevision:0});
+  const resultDigest:string|null=evaluated.evaluation.result?.digest??null;
+  // @ts-expect-error A retained claim is not itself a release decision.
+  evaluated.evaluation.releaseApproved;
+  return {target,verified,authority,resultDigest};
+}
+
+export async function consumeBehaviorOracle() {
+  const view = await service.usability({operation:'usability.oracle.evaluation',scope,input:{id:'evaluation'}});
+  const freshness: 'CURRENT'|'STALE'|'UNKNOWN' = view.freshness;
+  const result = await service.usability({operation:'usability.oracle.version',scope,input:{digest:'sha256:'+'a'.repeat(64)}});
+  const level: null = result.verifiedLevel;
+  // @ts-expect-error Raw caller observations cannot substitute for protected Runtime evidence.
+  service.usability({operation:'usability.oracle.evaluate',scope,input:{bindingDigest:'pin',attemptId:'attempt',observations:[]},requestId:'evaluate',expectedRevision:0});
+  // @ts-expect-error Oracle mutation requires an exact request identity and revision.
+  service.usability({operation:'usability.oracle.reconcile',scope,input:{id:'evaluation'}});
+  // @ts-expect-error An oracle verdict never has release authority.
+  const released: true = result.softwareRelease;
+  return {freshness,level};
+}

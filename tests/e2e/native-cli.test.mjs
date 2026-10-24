@@ -1,31 +1,38 @@
-import { syntheticDecisionEvidence } from '../fixtures/native/decision-evidence.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { syntheticHarnessPackage } from '../../examples/native/package.mjs';
-const scope = { visibility: 'private', projectId: 'synthetic' };
-test('C01/H01: public CLI performs native validation and publication with pinned tools', () => {
-  assert(process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN, 'Verified native toolchain required');
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'harness-native-cli-')));
-  try {
-    const args = [fileURLToPath(new URL('../../dist/cli.js', import.meta.url)), 'request', '--workspace', join(root, 'workspace'), '--workspace-id', 'cli', '--toolchain', process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN];
-    const call = request => { const p = spawnSync(process.execPath, args, { input: JSON.stringify(request), encoding: 'utf8' }); assert.ifError(p.error); return { exit: p.status, output: JSON.parse(p.stdout) }; };
-    let revision = 0;
-    const write = (operation, input, requestId) => { if(input.humanEvidenceRef?.startsWith('synthetic'))input={...input,humanEvidenceRef:syntheticDecisionEvidence(root,{owner:'harness',operation,workspaceId:'cli',scope,reviewDigest:input.reviewDigest,decision:input.decision})};const r = call({ operation, scope, input, requestId, expectedRevision: revision }); assert.equal(r.exit, 0, JSON.stringify(r.output)); revision = r.output.result.revision; return r.output.result.result; };
-    const pkg = syntheticHarnessPackage(), id = { id: pkg.manifest.id, version: pkg.manifest.version };
-    write('native.package.put', { package: pkg }, 'put');
-    const valid = write('native.package.validate', id, 'validate');
-    assert.equal(valid.qualityStatus, 'PASS'); assert.equal(valid.executionStatus, 'SUCCEEDED');
-    const review = write('native.package.review', id, 'review');
-    write('native.package.decide', { ...id, reviewDigest: review.reviewDigest, decision: 'APPROVE', humanEvidenceRef: 'synthetic-cli-decision' }, 'decide');
-    assert.equal(write('native.package.publish', id, 'publish').published, true);
-    assert.equal(call({ operation: 'native.package.readback', scope, input: id }).exit, 0);
-    const retired = call({ operation: 'asset.put', scope, input: { asset: {} }, requestId: 'old', expectedRevision: revision });
-    assert.equal(retired.exit, 1); assert.equal(retired.output.error.code, 'HISTORICAL_READ_ONLY');
-    assert.notEqual(call({ operation: 'native.package.inspect', scope, input: { ...id, executable: '/forbidden' } }).exit, 0);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+import {spawnSync} from 'node:child_process';
+import {mkdtempSync,realpathSync,rmSync,readFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHarnessService} from '../../dist/service.js';
+import {syntheticAuthoring} from '../fixtures/native/authoring.mjs';
+import {syntheticDecisionEvidence} from '../fixtures/native/decision-evidence.mjs';
+import {syntheticHarnessPackage as packageFixture} from '../../examples/native/package.mjs';
+const scope={visibility:'private',projectId:'synthetic'};
+test('harness CLI blocks unbound new authoring and preserves published read/actual validation and retired-write rejection',async()=>{
+ assert(process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN,'Verified native toolchain required');
+ const root=realpathSync(mkdtempSync(join(tmpdir(),'harness-native-cli-'))),options={workspaceRoot:join(root,'workspace'),workspaceId:'cli'};
+ let service;
+ try{
+  const args=[fileURLToPath(new URL('../../dist/cli.js',import.meta.url)),'request','--workspace',options.workspaceRoot,'--workspace-id',options.workspaceId,'--toolchain',process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN];
+  const call=request=>{const p=spawnSync(process.execPath,args,{input:JSON.stringify(request),encoding:'utf8'});assert.ifError(p.error);return{exit:p.status,output:JSON.parse(p.stdout)};};
+  const pkg=packageFixture(),identity={id:pkg.manifest.id,version:pkg.manifest.version};
+  const blocked=call({operation:'native.package.put',scope,input:{package:pkg},requestId:'unbound',expectedRevision:0});
+  assert.equal(blocked.exit,1);assert.equal(blocked.output.error.code,'AUTHORING_CONTEXT_REQUIRED');
+  service=createHarnessService(options,{nativeToolchain:JSON.parse(readFileSync(process.env.EVOPILOT_TEST_NATIVE_TOOLCHAIN)),resolveNativeAuthoring:syntheticAuthoring});service.initialize();
+  const write=(operation,input,requestId)=>service.native({operation,scope,input,requestId,expectedRevision:service.execute({operation:'workspace.inspect',scope,input:{}}).revision});
+  assert.equal(service.execute({operation:'workspace.inspect',scope,input:{}}).revision,0,'Blocked CLI creates no owner mutation');
+  // Synthetic trusted host prepares a published fixture; this is not CLI authoring acceptance.
+  await write('native.package.put',{package:pkg},'put');await write('native.package.validate',identity,'validate');
+  const review=(await write('native.package.review',identity,'review')).result;
+  const humanEvidenceRef=syntheticDecisionEvidence(root,{owner:'harness',operation:'native.package.decide',workspaceId:options.workspaceId,scope,reviewDigest:review.reviewDigest,decision:'APPROVE'});
+  await write('native.package.decide',{...identity,reviewDigest:review.reviewDigest,decision:'APPROVE',humanEvidenceRef},'decide');await write('native.package.publish',identity,'publish');
+  const revision=service.execute({operation:'workspace.inspect',scope,input:{}}).revision;service.close();service=null;
+  assert.equal(call({operation:'native.package.readback',scope,input:identity}).exit,0);
+  const validated=call({operation:'native.package.validate',scope,input:identity,requestId:'consume-published',expectedRevision:revision});assert.equal(validated.exit,0,JSON.stringify(validated.output));
+  assert.equal(validated.output.result.result.qualityStatus,'PASS');
+  const old=call({operation:'asset.put',scope,input:{asset:{}},requestId:'retired',expectedRevision:validated.output.result.revision});assert.equal(old.exit,1);assert.equal(old.output.error.code,'HISTORICAL_READ_ONLY');
+  assert.notEqual(call({operation:'native.package.inspect',scope,input:{...identity,executable:'/forbidden'}}).exit,0);
+ }finally{service?.close();rmSync(root,{recursive:true,force:true});}
 });

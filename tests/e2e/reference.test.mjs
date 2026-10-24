@@ -38,7 +38,7 @@ test('package boundary: changed bindings and unsupported input fail closed', () 
 });
 
 test('package boundary: default capabilities are truthful immutable data', () => {
-  assert.equal(api.VERSION, '0.7.0');
+  assert.equal(api.VERSION, '0.8.0');
   assert.equal(api.PRODUCT, 'harness');
   const capabilities = api.capabilities();
   assert.equal(capabilities.businessOperationsReady, true);
@@ -48,7 +48,7 @@ test('package boundary: default capabilities are truthful immutable data', () =>
   assert.equal(capabilities.authority, false);
   assert(Object.isFrozen(capabilities));
   assert(Object.isFrozen(capabilities.referenceApi));
-  assert.deepEqual(Object.keys(api).sort(), ['PRODUCT', 'VERSION', 'capabilities', 'inspectHarnessPackage', 'inspectHarnessStandard', 'inspectOntologyReference', 'validateHarness', 'validateNativeHarness', 'evaluateHarness', 'buildDelivery', 'verifyDelivery', 'createHarnessSemanticRequirements', 'evaluateSemanticCompatibility'].sort());
+  assert.deepEqual(Object.keys(api).sort(), ['PRODUCT', 'VERSION', 'capabilities', 'inspectHarnessPackage', 'inspectHarnessStandard', 'inspectOntologyReference', 'validateHarness', 'validateNativeHarness', 'evaluateHarness', 'buildDelivery', 'verifyDelivery', 'createHarnessSemanticRequirements', 'evaluateSemanticCompatibility', 'ASSESSMENT_STATES', 'BEHAVIOR_FACETS', 'USABILITY_LEVELS', 'USABILITY_LIMITS', 'USABILITY_STANDARD_DIGEST', 'preflightUsability', 'usabilityBytesDigest', 'usabilityDigest', 'validateUsabilityInventory', 'validateUsabilitySpecification', 'semanticCriteria', 'semanticReportDigest', 'validateSemanticReport', 'behaviorOracleDigest', 'validateBehaviorOracle', 'compareBehavior', 'validateReconstructionObservation'].sort());
 });
 
 test('vendored v1 wire and public boundary are independent of implementation revision', () => {

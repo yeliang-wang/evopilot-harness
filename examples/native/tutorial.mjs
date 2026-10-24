@@ -1,3 +1,4 @@
+import {syntheticAuthoring} from './authoring.mjs';
 import { syntheticDecisionEvidence } from './decision-evidence.mjs';
 // A self-contained synthetic SDK tutorial; never opens a user's project/Workspace.
 import { readFileSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
@@ -11,7 +12,7 @@ if (process.argv.length !== 3 || !isAbsolute(process.argv[2])) {
 }
 const nativeToolchain = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const root = mkdtempSync(join(realpathSync(tmpdir()), 'evopilot-native-tutorial-'));
-const service = createHarnessService({ workspaceRoot: join(root, 'workspace'), workspaceId: 'synthetic-tutorial' }, { nativeToolchain });
+const service = createHarnessService({ workspaceRoot: join(root, 'workspace'), workspaceId: 'synthetic-tutorial' }, { nativeToolchain, resolveNativeAuthoring:syntheticAuthoring });
 const scope = { visibility: 'private', projectId: 'synthetic' };
 service.initialize();
 try {

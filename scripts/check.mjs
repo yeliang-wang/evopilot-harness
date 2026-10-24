@@ -12,7 +12,7 @@ const PRODUCT = 'harness';
 const PIN = 'df4f7246ae35ef9114e2b93663d520e7ff4f44f14f886ac8ba43e9fc080ddc9a';
 const expected = {
   "name": "@evopilot-next/harness",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -139,6 +139,14 @@ export async function checkSource() {
   const readabilityImports=['readability.mjs','presentation.mjs'].map(name=>resolve(readabilityRoot,name));
 
 
+  const usabilityRoot=resolve(ROOT,'vendor/usability/v1');
+  const usabilityManifest=JSON.parse(await readFile(resolve(usabilityRoot,'manifest.json'),'utf8'));
+  assert.equal(usabilityManifest.schema,'evopilot-usability-distribution/v1');
+  assert.equal(usabilityManifest.nativeContractUnchanged,true);
+  assert.deepEqual(Object.keys(usabilityManifest.files).sort(),['assessment.d.mts','assessment.mjs','authoring.d.mts','authoring.mjs','contract.d.mts','contract.mjs','oracle.d.mts','oracle.mjs']);
+  for(const [name,hash] of Object.entries(usabilityManifest.files))assert.equal(createHash('sha256').update(await readFile(resolve(usabilityRoot,name))).digest('hex'),hash);
+  const usabilityImports=['contract.mjs','authoring.mjs','assessment.mjs','oracle.mjs'].map(name=>resolve(usabilityRoot,name));
+
   const sources = [...await files(resolve(ROOT, 'src')), ...await files(resolve(ROOT, 'vendor'))];
   for (const path of sources) {
     if (!path.endsWith('.mjs') && !path.endsWith('.ts') && !path.startsWith(generatedRoot + sep)) continue;
@@ -156,7 +164,7 @@ export async function checkSource() {
       assert(specifier.startsWith('.'), 'Undeclared import: ' + specifier);
       const resolved = resolve(dirname(path), specifier);
       const target = path.endsWith(".ts") && resolved.endsWith(".js") ? resolved.slice(0, -3) + ".ts" : resolved;
-      assert(target.startsWith(resolve(ROOT, 'src') + sep) || feedbackImports.includes(target) || onlineImports.includes(target) || responseImports.includes(target) || readabilityImports.includes(target) || path.startsWith(generatedRoot + sep) && target.startsWith(generatedRoot + sep) || [resolve(vendor,'reference.mjs'),resolve(vendor,'native.mjs'),resolve(vendor,'decision-evidence.mjs')].includes(target), 'Foreign source import');
+      assert(target.startsWith(resolve(ROOT, 'src') + sep) || feedbackImports.includes(target) || onlineImports.includes(target) || responseImports.includes(target) || readabilityImports.includes(target) || usabilityImports.includes(target) || path.startsWith(generatedRoot + sep) && target.startsWith(generatedRoot + sep) || [resolve(vendor,'reference.mjs'),resolve(vendor,'native.mjs'),resolve(vendor,'decision-evidence.mjs')].includes(target), 'Foreign source import');
       assert((await lstat(target)).isFile(), 'Import must be an owned regular file');
     }
   }
@@ -164,7 +172,7 @@ export async function checkSource() {
     "import assert from 'node:assert/strict';",
     'const api = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'dist/index.js')).href) + ');',
     'assert.equal(api.PRODUCT, ' + JSON.stringify(PRODUCT) + ');',
-    "assert.equal(api.VERSION, '0.7.0');",
+    "assert.equal(api.VERSION, '0.8.0');",
     'assert.equal(api.capabilities().authority, false);',
     'assert.equal(api.capabilities().businessOperationsReady, true);',
     'const serviceAPI = await import(' + JSON.stringify(pathToFileURL(resolve(ROOT, 'dist/service.js')).href) + ');',
