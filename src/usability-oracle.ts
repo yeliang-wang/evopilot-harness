@@ -81,7 +81,7 @@ export function createUsabilityOracle(store:Store,providers:UsabilityAssessmentP
         const r=validateReconstructionObservation(await bounded(signal=>providers.readReconstructionEvidence!({workspaceId:store.identity.id,scope,attemptId},signal),deadline));
         if(r.workspaceId!==store.identity.id||!same(r.scope,scope)||r.attemptId!==attemptId)fail('ORACLE_SCOPE');
         for(const [k,v] of Object.entries({inventoryDigest:b.inventoryDigest,specificationDigest:b.specificationDigest,oracleDigest:b.oracleDigest,inputManifestDigest:i.pins.inputManifestDigest,environmentDigest:i.pins.environmentDigest,dependenciesDigest:i.pins.dependenciesDigest}))if(r[k as keyof ReconstructionObservation]!==v)fail('ORACLE_PIN');
-        if(r.schema==='evopilot-reconstruction-observation/v2')mark(8);
+        if(r.schema==='evopilot-reconstruction-observation/v3')mark(9);else if(r.schema==='evopilot-reconstruction-observation/v2')mark(8);
         body.observationDigest=r.digest;body.outputDigest=r.outputDigest;
         if(r.cases.some(c=>!b.oracle.cases.some(expected=>c.caseId===expected.id)))fail('ORACLE_UNDECLARED_CASE');
         body.results=b.oracle.cases.map(c=>{
