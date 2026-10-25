@@ -52,7 +52,7 @@ export function createUsabilityOracle(store:Store,providers:UsabilityAssessmentP
   const records=createFeedbackStore(store,'harness');
   function get<T>(scope:UsabilityScope,kind:string,id:string):T{const r=records.get<T>(scope,'usability-'+kind,id);if(!r)fail('ORACLE_NOT_FOUND');return r;}
   function retain(scope:UsabilityScope,kind:string,id:string,value:unknown){const old=records.get(scope,'usability-'+kind,id);if(old&&!same(old,value))fail('ORACLE_IMMUTABLE');if(!old)records.put(scope,'usability-'+kind,id,value);}
-  function mark(){if(Number(store.db.prepare('PRAGMA user_version').get()!.user_version)<7)store.db.exec('PRAGMA user_version=7');}
+  function mark(version=7){if(Number(store.db.prepare('PRAGMA user_version').get()!.user_version)<version)store.db.exec('PRAGMA user_version='+version);}
   function inventory(scope:UsabilityScope,digest:string){return get<UsabilityInventoryRecord>(scope,'inventory',digest);}
   function review(scope:UsabilityScope,input:OracleInputs['usability.oracle.review']):OracleBinding{
     validateUsabilityDigest(input.inventoryDigest);validateUsabilityDigest(input.specificationDigest);
@@ -81,6 +81,7 @@ export function createUsabilityOracle(store:Store,providers:UsabilityAssessmentP
         const r=validateReconstructionObservation(await bounded(signal=>providers.readReconstructionEvidence!({workspaceId:store.identity.id,scope,attemptId},signal),deadline));
         if(r.workspaceId!==store.identity.id||!same(r.scope,scope)||r.attemptId!==attemptId)fail('ORACLE_SCOPE');
         for(const [k,v] of Object.entries({inventoryDigest:b.inventoryDigest,specificationDigest:b.specificationDigest,oracleDigest:b.oracleDigest,inputManifestDigest:i.pins.inputManifestDigest,environmentDigest:i.pins.environmentDigest,dependenciesDigest:i.pins.dependenciesDigest}))if(r[k as keyof ReconstructionObservation]!==v)fail('ORACLE_PIN');
+        if(r.schema==='evopilot-reconstruction-observation/v3')mark(9);else if(r.schema==='evopilot-reconstruction-observation/v2')mark(8);
         body.observationDigest=r.digest;body.outputDigest=r.outputDigest;
         if(r.cases.some(c=>!b.oracle.cases.some(expected=>c.caseId===expected.id)))fail('ORACLE_UNDECLARED_CASE');
         body.results=b.oracle.cases.map(c=>{

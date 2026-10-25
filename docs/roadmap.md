@@ -1,6 +1,6 @@
 # Harness roadmap
 
-Current edition: [HAR-F05 / v0.7 readable policy results](#har-f05--v07-readable-policy-results). Implemented for the v0.7 edition; exact publication and download records remain on the versioned Release page.
+Current edition: [HAR-F06 / v0.8 scoped asset usability and behavioral equivalence](#har-f06--v08-scoped-asset-usability-and-behavioral-equivalence), delivered in [v0.8.0 Preview](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.8.0). Earlier v0.7 capabilities remain available. Exact publication, installation and project acceptance are separate records.
 
 Harness owns project QA and delivery rules, evidence evaluation, and immutable Harness deliveries. Runtime owns execution, project decisions and business completion; Ontology owns domain models. The [parent roadmap](https://github.com/yeliang-wang/evopilot/blob/main/docs/roadmap.md) coordinates cross-product goals and v1.0 readiness. Recording a future goal here is not implementation, acceptance or release authority.
 
@@ -149,3 +149,11 @@ Reference [Policy Reporter UI](https://kyverno.github.io/policy-reporter-docs/po
 ### v0.7 project planning addition
 
 The approved parent V07-T0 adds project-scoped conversation provenance, immutable planning revisions and Runtime-owned Roadmap decisions/execution bindings. Ontology and Harness assets retain independent native validation and review. User planning stays private; native specifications/v1 remain unchanged. Installation changes follow the separately authorized stopped-state backup, recovery and Host verification procedure. See the parent [planning decision](https://github.com/yeliang-wang/evopilot/blob/main/docs/adr-planning.md).
+
+## HAR-F06 — v0.8 scoped asset usability and behavioral equivalence
+
+**Status:** `RELEASED_PREVIEW`. See the [current guide](usability.md) and [v0.8.0 release](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.8.0).
+
+Harness owns the L1/L2/L3 assessment standard, fixed required inventories, semantic review, independent behavioral oracles and exact-current evidence. Target level and verified level remain distinct. Missing, skipped, stale, unsupported or synthetic-only required results cannot establish L3. Two independently reconstructed implementations must pass the full reviewed scope; source-model conformance alone is insufficient.
+
+The [parent v0.8 plan](https://github.com/yeliang-wang/evopilot/blob/main/docs/asset-usability-v08.md) retains 18 requirements and 20 acceptance IDs. Planning projections and synthetic examples are not completed execution evidence. Published software does not automatically upgrade original project assets, prove whole-project functional equivalence or authorize a later correction release. Preserve native specifications, immutable history and exact candidate evidence. Project-specific environment deferrals stay in private acceptance records and never count as passed requirements.
