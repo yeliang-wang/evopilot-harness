@@ -8,7 +8,7 @@ Use this repository's locked TypeScript 5.9.3 and @types/node 24.19.2 with stric
 
 Do not regenerate frozen vendor bytes; the parent canonical generator owns that operation. Do not suppress type errors, weaken mapped operation inputs/results, or remove failing assertions to pass checks.
 
-The published v0.1.0 Preview is the historical baseline; subsequent edition scopes are retained in [the roadmap](docs/roadmap.md). The current source targets v0.7.0 Preview. Parent composition owns MCP, Expert and Codex connection guidance. Capability metadata is not acceptance evidence.
+The published v0.1.0 Preview is the historical baseline; subsequent edition scopes are retained in [the roadmap](docs/roadmap.md). The current published edition is v0.8.0 Preview; later correction work retains its own candidate-bound acceptance. Parent composition owns MCP, Expert and Codex connection guidance. Capability metadata is not acceptance evidence.
 
 Source changes, technical checks, local asset decisions, Runtime business completion, Host acceptance and software release are separate. Follow the current explicit authorization for remote operations and releases; these instructions add none. Respect retained receipts after uncertain responses and never infer authority to redispatch. Preserve the current request's boundaries for release pipelines and installations.
 
