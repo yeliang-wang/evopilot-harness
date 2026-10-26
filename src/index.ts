@@ -1,6 +1,6 @@
 import { inspectReference } from '../vendor/compatibility/v1/reference.mjs';
 
-export const VERSION = '0.8.0';
+export const VERSION = '0.8.1';
 export const PRODUCT = 'harness';
 
 export function capabilities() {
@@ -45,3 +45,7 @@ export type {UsabilityRequest,UsabilityInputs,UsabilityResults,UsabilityResponse
 export type {OracleInputs,OracleResults,OracleBinding,OracleEvaluation,OracleProviders} from './usability-oracle.js';
 export type {BehaviorOracle,BehaviorObservation,OracleTolerance,ReconstructionObservation,BehaviorOracleResult} from '../vendor/usability/v1/oracle.mjs';
 export {behaviorOracleDigest,validateBehaviorOracle,compareBehavior,validateReconstructionObservation} from '../vendor/usability/v1/oracle.mjs';
+
+export {READINESS_CLOSURE,READINESS_FACETS,READINESS_SPEC_PATH,READINESS_STANDARD,READINESS_STANDARD_DIGEST,assertReadinessVersion,boundedReadiness,noReconstruction,readinessBytesDigest,readinessCriteria,readinessDigest,readinessFail,readinessId,readinessPath,readinessText,validateReadinessIntent,validateReadinessReconstruction,validateReadinessReview,validateReadinessSpecification,verifyReadinessProjection} from '../vendor/compatibility/usability/v2/contract.mjs';
+export type {ReadinessLevel,ReadinessSource,ReadinessRequirement,ReadinessIntent,ReadinessIntentRecord,ReadinessCitation,ReadinessStatement,ReadinessSpecification,ReadinessProjection,ReadinessReview,ReadinessReconstruction,ReadinessResult} from '../vendor/compatibility/usability/v2/contract.mjs';
+export {assessReadinessContent} from './readiness.js';

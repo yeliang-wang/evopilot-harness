@@ -1,3 +1,4 @@
+import type {ReadinessAuthoringResolver} from '../vendor/compatibility/usability/v2/authoring.mjs';
 import type {NativeAuthoringResolver, NativeAuthoringAdmission} from '../vendor/usability/v1/authoring.mjs';
 import type {FeedbackOwnerProviders as importFeedbackProviders} from '../vendor/compatibility/feedback/v1/feedback.mjs';
 import type {OnlineHarnessProviders} from '../vendor/compatibility/online/v1/online.mjs';
@@ -21,6 +22,7 @@ export interface HarnessObservation {
 }
 export interface NativeHarnessProviders extends importFeedbackProviders,OnlineHarnessProviders {
     resolveNativeAuthoring?: NativeAuthoringResolver;
+  resolveReadinessAuthoring?:ReadinessAuthoringResolver;
     nativeToolchain?: NativeToolchain;
     resolveNativeDependency?: (request: {
         workspaceId: string;

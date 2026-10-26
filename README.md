@@ -1,4 +1,4 @@
-# EvoPilot Harness · v0.8.0 Preview
+# EvoPilot Harness · v0.8.1 Preview
 
 [Quickstart](#quickstart) · [Documentation](docs/README.md) · [Standards](specifications/v1/README.md) · [Downloads](https://github.com/yeliang-wang/evopilot-harness/releases) · [Contribute](CONTRIBUTING.md)
 
@@ -6,7 +6,7 @@ Harness defines and verifies QA/SRE delivery criteria for projects developed wit
 
 Earlier **v0.6.0 Preview** introduced published runbook applicability, evidence-bound problem assessments and reviewed dispositions with preserved incident history. It retains the bounded online SLO measurements, authenticated alerts, native evaluation and execution feedback introduced in earlier versions. Read [response guidance](docs/response.md) and the [v0.6.0 release page](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.6.0) for distribution and publication records. Source and synthetic tests alone do not establish real-project acceptance.
 
-v0.8 adds independent asset consumption, explicit L1/L2/L3 usability assessment, mandatory purpose/scope/level admission before reverse modeling, and controlled reconstruction with an independent fixed oracle. Verified L3 is limited to the reviewed functional slice and requires two clean complete reconstructions; it does not mean byte-identical source, whole-project coverage, production readiness or automatic release. See [the owning API](docs/usability.md) and the [v0.8.0 release](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.8.0).
+v0.8.1 adds explicit usability **v2** content grades: L1 domain understanding, L2 implementation specification and L3 reconstruction specification closure. L3 does not require running the original environment or reconstructing software. Content assessment and optional reconstruction verification are separate; `v2 / L3 / NOT_REQUESTED` is valid. It does not establish generated functional equivalence, byte-identical source, production readiness or release authority. Historical usability v1 APIs and records retain their original meaning. Read [the v2 API](docs/readiness-v2.md).
 
 ## Adopted standards
 
@@ -35,12 +35,12 @@ The parent supplies the Codex plugin; Harness does not require a separate plugin
 
 For Codex, use the [parent installation and first-use guide](https://github.com/yeliang-wang/evopilot/blob/main/README.md#install-a-published-bundle). It supplies the unified plugin, private Workspace and pinned native toolchain; no separate Harness plugin is required.
 
-For standalone library integration, obtain `evopilot-next-harness-0.8.0.tgz`, `harness-dependency-lock.json` and `SHA256SUMS` from the [v0.8.0 assets](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.8.0). Verify the downloaded bytes against `SHA256SUMS` before installation. The package contains compiled JavaScript and declarations; source-development commands below are not commands for an installed tarball. Packages are distributed through GitHub Releases, not an npm registry publication.
+For standalone library integration, obtain `evopilot-next-harness-0.8.1.tgz`, `harness-dependency-lock.json` and `SHA256SUMS` from the [v0.8.1 assets](https://github.com/yeliang-wang/evopilot-harness/releases/tag/v0.8.1). Verify the downloaded bytes against `SHA256SUMS` before installation. The package contains compiled JavaScript and declarations; source-development commands below are not commands for an installed tarball. Packages are distributed through GitHub Releases, not an npm registry publication.
 
 To develop from a source checkout, use Node 24.14.0 and a verified native toolchain prepared by the parent:
 
 ```sh
-git clone --branch v0.8.0 https://github.com/yeliang-wang/evopilot-harness.git
+git clone --branch v0.8.1 https://github.com/yeliang-wang/evopilot-harness.git
 cd evopilot-harness
 npm ci --ignore-scripts
 npm run build

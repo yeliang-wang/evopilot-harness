@@ -1,3 +1,4 @@
+import {requireReadinessAuthoring} from '../vendor/compatibility/usability/v2/authoring.mjs';
 import { nativeExact, nativeSha256, nativeStableSerialize, nativeFrozenClone, nativeText, nativePackageDigest, referenceForPackage, validateNativeReference, validateNativePackage } from '../vendor/compatibility/v1/native.mjs';
 import type { NativeReference, NativeScope } from '../vendor/compatibility/v1/native.mjs';
 import type { NativeRequest, NativeOperation, NativeHarnessProviders, NativeHarnessRecord, NativeHarnessReceipt, NativeHarnessReport, NativeHarnessReview, NativeHarnessDecision } from './native-types.js';
@@ -28,7 +29,8 @@ function saveRecord(store: Store, r: NativeHarnessRecord) { store.db.prepare('IN
 function readReceipt(store: Store, scope: NativeScope, id: string) { const row = table(store) ? store.db.prepare('SELECT intent_digest,receipt FROM native_receipts WHERE scope=? AND request_id=?').get(nativeStableSerialize(scope), id) : undefined; return row ? { digest: row.intent_digest as string, receipt: JSON.parse(row.receipt as string) as NativeHarnessReceipt } : null; }
 function authoring(store:Store,providers:NativeHarnessProviders,scope:NativeScope,pkg:NativeHarnessRecord['package'],retained?:NativeAuthoringAdmission):NativeAuthoringAdmission {
     const bindings=JSON.parse(pkg.files[pkg.manifest.sourceBindingRef]);
-    return requireNativeAuthoring(providers.resolveNativeAuthoring,{workspaceId:store.identity.id,scope,owner:'harness',packageDigest:nativePackageDigest(pkg),sourceBindingsDigest:nativeSha256(bindings),sourceDirection:bindings.direction},retained);
+    requireReadinessAuthoring(pkg,store.identity.id,scope,providers.resolveReadinessAuthoring);
+  return requireNativeAuthoring(providers.resolveNativeAuthoring,{workspaceId:store.identity.id,scope,owner:'harness',packageDigest:nativePackageDigest(pkg),sourceBindingsDigest:nativeSha256(bindings),sourceDirection:bindings.direction},retained);
 }
 async function dependencies(store: Store, r: NativeHarnessRecord, p: NativeHarnessProviders) { const values: unknown[] = []; for (const ref of r.package.manifest.dependencies) {
     if (ref.product === 'harness') {
@@ -114,6 +116,7 @@ export async function executeNativeHarness(store: Store, request: NativeRequest,
             fail('REVISION_CONFLICT', 'Global product revision changed');
         initializeTables(store);
         if(admittedAuthoring&&Number(store.db.prepare('PRAGMA user_version').get()!.user_version)<6)store.db.exec('PRAGMA user_version=6');
+        if(r.operation==='native.package.put'&&Object.hasOwn(r.input.package.files,'readiness/specification-v2.json'))store.db.exec('PRAGMA user_version=8');
         claim = { requestId: r.requestId, operation: r.operation, scope: r.scope, requestDigest: intent, revision: advance(store), status: 'RUNNING', result: null, authority: false };
         store.db.prepare('INSERT INTO native_receipts VALUES(?,?,?,?)').run(nativeStableSerialize(r.scope), r.requestId, intent, nativeStableSerialize(claim));
         audit(store, claim);

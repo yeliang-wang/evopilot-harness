@@ -11,11 +11,15 @@ export function validateProviders(value: unknown): Providers {
   const descriptors = Object.getOwnPropertyDescriptors(value);
   for (const key of Reflect.ownKeys(descriptors)) {
     const d = Reflect.get(descriptors, key) as PropertyDescriptor;
-    if (!['readReconstructionEvidence','readUsabilityPins','resolveNativeAuthoring','resolveOntology','nativeToolchain','resolveNativeDependency','readFeedback','resolveFeedbackMaterial','collectOnline','deliverOnlineFinding','readOnlineRepair','inspectOnlineAlert','readResponseEvidence','readResponseRecovery','readResponseExecution'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
+    if (!['resolveReadinessAuthoring','readReadinessIntent','readReadinessProjection','readReadinessReconstruction','readReconstructionEvidence','readUsabilityPins','resolveNativeAuthoring','resolveOntology','nativeToolchain','resolveNativeDependency','readFeedback','resolveFeedbackMaterial','collectOnline','deliverOnlineFinding','readOnlineRepair','inspectOnlineAlert','readResponseEvidence','readResponseRecovery','readResponseExecution'].includes(String(key)) || !Object.hasOwn(d,'value')) fail('INVALID_PROVIDER','Unknown host provider');
     if (key !== 'nativeToolchain' && typeof d.value !== 'function') fail('INVALID_PROVIDER','Expected trusted callback');
     if (key === 'nativeToolchain') nativeAssertJSON(d.value);
   }
   return Object.freeze({
+    ...(descriptors.resolveReadinessAuthoring?{resolveReadinessAuthoring:descriptors.resolveReadinessAuthoring.value}:{}),
+    ...(descriptors.readReadinessIntent?{readReadinessIntent:descriptors.readReadinessIntent.value}:{}),
+    ...(descriptors.readReadinessProjection?{readReadinessProjection:descriptors.readReadinessProjection.value}:{}),
+    ...(descriptors.readReadinessReconstruction?{readReadinessReconstruction:descriptors.readReadinessReconstruction.value}:{}),
     ...(descriptors.readReconstructionEvidence?{readReconstructionEvidence:descriptors.readReconstructionEvidence.value}:{}),
     ...(descriptors.readUsabilityPins?{readUsabilityPins:descriptors.readUsabilityPins.value}:{}),
     ...(descriptors.resolveNativeAuthoring?{resolveNativeAuthoring:descriptors.resolveNativeAuthoring.value}:{}),
