@@ -2,6 +2,8 @@
 
 Harness v0.8.3 Preview adds readable policy reports and exact-version comparisons to corrected native Rego/Conftest standards, registered execution feedback, bounded online assessment and reviewed response guidance/problem dispositions. Historical Preview records remain readable. Start with the [quickstart](../README.md#quickstart).
 
+English | [简体中文](zh-CN/README.md)
+
 ## Guides and reference
 
 - [Current native guide and typed API](native-harness.md): standards, toolchain, package lifecycle, execution reports and recovery.
