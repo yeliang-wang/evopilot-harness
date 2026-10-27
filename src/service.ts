@@ -37,7 +37,7 @@ export function createHarnessService(options: WorkspaceOptions, trustedProviders
   const { workspaceRoot, workspaceId } = options;
   let store: Store | null = null, closed = false, activeNative = 0,activeOnline=0,activeResponse=0;
   let onlineService:ReturnType<typeof createOnlineHarness>|null=null;
-  const capabilities = () => frozenClone({ product: 'harness', version: '0.8.2', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, readinessOperations:READINESS_HARNESS_OPERATIONS, readableOperations:READABLE_OPERATIONS, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, usabilityOperations:USABILITY_OPERATIONS, onlineOperations:ONLINE_OPERATIONS, responseOperations:RESPONSE_HARNESS_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
+  const capabilities = () => frozenClone({ product: 'harness', version: '0.8.3', stage: 'NATIVE_STANDARDS', businessOperationsReady: true, readinessOperations:READINESS_HARNESS_OPERATIONS, readableOperations:READABLE_OPERATIONS, operations: operations.filter(op => !mutations.includes(op)), historicalOperationsReadOnly: true, nativeOperations: NATIVE_OPERATIONS, feedbackOperations: OWNER_FEEDBACK_OPERATIONS, usabilityOperations:USABILITY_OPERATIONS, onlineOperations:ONLINE_OPERATIONS, responseOperations:RESPONSE_HARNESS_OPERATIONS, limits: LIMITS, authority: false, softwareRelease: false, composedEvaluation: true, pending: ['exact-candidate acceptance'] });
   function initialize() {
     if (closed) fail('CLOSED', 'Service is closed');
     if (!store) store = openState(workspaceRoot, workspaceId);
